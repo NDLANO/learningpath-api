@@ -34,6 +34,6 @@ API for Learningpaths from NDLA
     ndla index local ndla/learningpath-api
     
 ## Test
-    curl http://$DOCKER_ADDR:30005/learningpath/
+    curl http://$DOCKER_ADDR:30008/learningpaths/
     
 
