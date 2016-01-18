@@ -11,7 +11,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
-  protected implicit override val jsonFormats: Formats = DefaultFormats + new EnumNameSerializer(PublishState)
+  protected implicit override val jsonFormats: Formats = DefaultFormats
 
   protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
   val getLearningpaths =
