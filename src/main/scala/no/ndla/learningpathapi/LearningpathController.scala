@@ -35,7 +35,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key. May be omitted to access api anonymously, but rate limiting may apply on anonymous access."),
-      queryParam[Option[String]]("learningpath_id").description("The id of the learningpath.")
+      queryParam[Option[String]]("path_id").description("The id of the learningpath.")
       )
       )
 
@@ -60,7 +60,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("learningpath_id").description("The id of the learningpath.")
+      queryParam[Option[String]]("path_id").description("The id of the learningpath.")
       )
       )
 
@@ -79,15 +79,15 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     public_learningpaths
   }
 
-  get("/:learningpath_id", operation(getLearningpath)) {
+  get("/:path_id", operation(getLearningpath)) {
     public_learningpaths.head
   }
 
-  get("/private/", operation(getPrivateLearningpaths)) {
+  get("/private", operation(getPrivateLearningpaths)) {
     private_learningpaths
   }
 
-  get ("/private/:learningpath_id", operation(getPrivateLearningpath)){
+  get ("/private/:path_id", operation(getPrivateLearningpath)){
     private_learningpaths.head
   }
 
@@ -101,7 +101,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       Description("Kurset dekker innføring og vil gi deg grunnleggende forståelse for vanlige begrep i kunst og kultur verden. Kurset fokuserer på kunst og kultur på et verdensperspektiv.", Some("nb")),
       Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
       Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
-    "http://api.test.ndla.no/learningpaths/1",
+    "http://api.test.ndla.no/paths/1",
     1080,
     "PUBLISHED",
     Author("Forfatter", "Snurre Sprett")),
@@ -113,7 +113,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       List(
         Description("Uttrykkene \"leselighet\" og \"lesbarhet\" brukes om hverandre i norsk fagterminologi, og ofte uten klare forestillinger om hva begrepene står for.", Some("nb")),
         Description("Uttrykka \"leselighet\" og \"lesbarhet\" vert brukt om kvarandre i norsk fagterminologi, og ofte utan klåre førestillingar om kva omgrepa står for.", Some("nn"))),
-      "http://api.test.ndla.no/learningpaths/2",
+      "http://api.test.ndla.no/paths/2",
       1080,
       "PUBLISHED",
       Author("Forfatter", "Kaptein Sabeltann"))
@@ -127,9 +127,21 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       List(
         Description("Ved skrift forstås først og fremmest tegn, der gengiver menneskelig tale sådan som fx vores alfabetiske skrift, men begrebet skrift kan også, i bredere forstand.", Some("nb")),
         Description("Ved skrift vert først forstått og fremst teikn, der gengiver menneskeleg tale såleis som fx vores alfabetiske skrift, men begrebet skrift kan òg, i breiare forstand.", Some("nn"))),
-      "http://api.test.ndla.no/learningpaths/private/3",
+      "http://api.test.ndla.no/paths/private/3",
       1080,
       "PRIVATE",
-      Author("Forfatter", "Sjonkel Rolf"))
+      Author("Forfatter", "Sjonkel Rolf")),
+
+    LearningpathSummary("4",
+      List(
+        Title("Musikkens historie", Some("nb")),
+        Title("Historia til musikken", Some("nn"))),
+      List(
+        Description("Ved balbla bokmål.", Some("nb")),
+        Description("Ved blabla nynorsk.", Some("nn"))),
+      "http://api.test.ndla.no/paths/private/4",
+      1080,
+      "PRIVATE",
+      Author("Forfatter", "Titten tei"))
   )
 }
