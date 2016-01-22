@@ -6,7 +6,7 @@ import no.ndla.learningpathapi.service.{PrivateLearningpathsService, PublicLearn
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{Ok, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
@@ -73,6 +73,16 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
       )
 
+  val addNewLearningpath =
+    (apiOperation[Learningpath]("addLearningpath")
+      summary "Adds the given learningpath"
+      notes "Adds the given learningpath"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      headerParam[Option[String]]("app-key").description("Your app-key."),
+      bodyParam[Learningpath]
+      )
+      )
 
   before() {
     contentType = formats("json")
@@ -136,5 +146,44 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   get("/private/:path_id/learningsteps/:step_id", operation(getLearningstep)) {
     privates.learningstepFor(params.get("path_id"), params.get("step_id"))
   }
+
+  // ADD ELEMENTS
+  post("/", operation(addNewLearningpath)) {
+    logger.info(s"ADD LEARNINGPATH = ${request.body}")
+    Ok(body = request.body)
+  }
+
+  post("/:path_id/learningsteps/") {
+    logger.info(s"ADD LEARNINGSTEP = ${request.body}")
+    Ok(body = request.body)
+  }
+
+  // UPDATE ELEMENTS
+  put("/:path_id/") {
+    logger.info(s"UPDATE LEARNINGPATH = ${request.body}")
+    Ok(body = request.body)
+  }
+
+  put("/:path_id/learningsteps/:step_id/") {
+    logger.info(s"UPDATE LEARNINGSTEP = ${request.body}")
+    Ok(body = request.body)
+  }
+
+  put("/:path_id/status/") {
+    logger.info(s"UPDATE PUBLISHSTATUS = ${request.body}")
+    Ok(body = request.body)
+  }
+
+  // DELETE ELEMENTS
+  delete("/:path_id") {
+    logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")}")
+    halt(status = 204)
+  }
+
+  delete("/:path_id/learningsteps/:step_id") {
+    logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")} AND STEP ID: ${params.get("step_id")}")
+    halt(status = 204)
+  }
+
 
 }
