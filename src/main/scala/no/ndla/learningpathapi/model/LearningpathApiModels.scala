@@ -7,7 +7,12 @@ import scala.annotation.meta.field
 
 @ApiModel(description = "Meta information for a learningpath")
 case class Learningpath(
-  @(ApiModelProperty @field)(description = "The unique id of the learningpath") id:String
+  @(ApiModelProperty @field)(description = "The unique id of the learningpath") id:String = "0"
+)
+
+@ApiModel(description = "Status information about a learningpath")
+case class LearningpathStatus(
+  @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String
 )
 
 @ApiModel(description = "Summary of meta information for a learningpath")
@@ -21,9 +26,24 @@ case class LearningpathSummary(
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author
 )
 
-@ApiModel(description = "The title of the learningpath")
+@ApiModel(description = "Summary of meta information for a learningpath")
+case class Learningstep(
+  @(ApiModelProperty @field)(description = "The sequence number for the step") seqNo:Int,
+  @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
+  @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
+  @(ApiModelProperty @field)(description = "The type of the step. One of YOUTUBE|TEXT|ETC..") `type`:String,
+  @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningstep can be found") metaUrl:String
+)
+
+@ApiModel(description = "Representation of a title")
 case class Title(
   @(ApiModelProperty @field)(description = "The title of the content") title:String,
+  @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in title") language:Option[String]
+)
+
+@ApiModel(description = "Representation of an embeddable url")
+case class EmbedUrl(
+  @(ApiModelProperty @field)(description = "The url") url:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in title") language:Option[String]
 )
 

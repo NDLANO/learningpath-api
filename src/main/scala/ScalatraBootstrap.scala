@@ -7,7 +7,8 @@
 
 import javax.servlet.ServletContext
 
-import no.ndla.learningpathapi.{LearningpathController, ResourcesApp, LearningpathSwagger}
+import no.ndla.learningpathapi.controller.LearningpathController
+import no.ndla.learningpathapi.{ResourcesApp, LearningpathSwagger}
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {
