@@ -1,5 +1,8 @@
 package no.ndla.learningpathapi.model
 
+
+import java.util.Date
+
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -16,6 +19,7 @@ case class Learningpath(
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
   @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String,
+  @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author
 )
 
@@ -33,6 +37,7 @@ case class LearningpathSummary(
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
   @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String,
+  @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author
 )
 

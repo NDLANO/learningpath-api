@@ -1,5 +1,7 @@
 package no.ndla.learningpathapi.controller
 
+import java.util.Date
+
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.service.{PrivateLearningpathsService, PublicLearningpathsService}

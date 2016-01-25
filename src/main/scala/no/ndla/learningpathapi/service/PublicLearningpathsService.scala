@@ -1,5 +1,6 @@
 package no.ndla.learningpathapi.service
 
+import java.util.Date
 import no.ndla.learningpathapi.model._
 
 
@@ -43,6 +44,7 @@ class PublicLearningpathsService {
     Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
     1080,
     "PUBLISHED",
+    new Date(),
     Author("Forfatter", "Kaptein Sabeltann")
   )
 
@@ -60,6 +62,7 @@ class PublicLearningpathsService {
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       "PUBLISHED",
+      new Date(),
       Author("Forfatter", "Snurre Sprett")),
 
     LearningpathSummary("2",
@@ -73,6 +76,7 @@ class PublicLearningpathsService {
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       "PUBLISHED",
+      new Date(),
       Author("Forfatter", "Kaptein Sabeltann"))
   )
 
