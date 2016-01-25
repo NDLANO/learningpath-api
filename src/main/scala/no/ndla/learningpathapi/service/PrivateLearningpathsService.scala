@@ -24,8 +24,8 @@ class PrivateLearningpathsService {
     private_learningpaths
   }
 
-  val learningstep1 = Learningstep(1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", "http://api.test.ndla.no/paths/3/learningsteps/1")
-  val learningstep2 = Learningstep(2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", "http://api.test.ndla.no/paths/3/learningsteps/2")
+  val learningstep1 = Learningstep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", "http://api.test.ndla.no/paths/3/learningsteps/1")
+  val learningstep2 = Learningstep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", "http://api.test.ndla.no/paths/3/learningsteps/2")
 
   val detailed_learningpath = Learningpath(
     "1",

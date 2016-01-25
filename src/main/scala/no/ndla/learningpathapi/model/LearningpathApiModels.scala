@@ -38,6 +38,7 @@ case class LearningpathSummary(
 
 @ApiModel(description = "Summary of meta information for a learningpath")
 case class Learningstep(
+  @(ApiModelProperty @field)(description = "The id of the learningstep") id:Int,
   @(ApiModelProperty @field)(description = "The sequence number for the step") seqNo:Int,
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
