@@ -14,6 +14,19 @@ object LearningpathApiProperties extends LazyLogging {
   val HostAddr = get("HOST_ADDR")
   val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
 
+  val MetaUserName = get("DB_USER_NAME")
+  val MetaPassword = get("DB_PASSWORD")
+  val MetaResource = get("DB_RESOURCE")
+  val MetaServer = get("DB_SERVER")
+  val MetaPort = getInt("DB_PORT")
+  val MetaInitialConnections = getInt("DB_INITIAL_CONNECTIONS")
+  val MetaMaxConnections = getInt("DB_MAX_CONNECTIONS")
+  val MetaSchema = get("DB_SCHEMA")
+
+  val Published = "PUBLISHED"
+  val Private = "PRIVATE"
+  val UsernameHeader = "X-Consumer-Username"
+
   def verify() = {
     val missingProperties = LearningpathApiProps.filter(entry => entry._2.isEmpty).toList
     if (missingProperties.nonEmpty) {

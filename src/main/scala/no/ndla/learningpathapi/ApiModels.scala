@@ -1,5 +1,4 @@
-package no.ndla.learningpathapi.model
-
+package no.ndla.learningpathapi
 
 import java.util.Date
 
@@ -9,13 +8,12 @@ import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 import scala.annotation.meta.field
 
 @ApiModel(description = "Meta information for a learningpath")
-case class Learningpath(
-  @(ApiModelProperty @field)(description = "The unique id of the learningpath") id:String,
+case class LearningPath(
+  @(ApiModelProperty @field)(description = "The unique id of the learningpath") id:Long,
   @(ApiModelProperty @field)(description = "The titles of the learningpath") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningpath") description:List[Description],
-  @(ApiModelProperty @field)(description = "The learningsteps for this learningpath") learningsteps:List[Learningstep],
+  @(ApiModelProperty @field)(description = "The learningsteps for this learningpath") learningsteps:List[LearningStep],
   @(ApiModelProperty @field)(description = "The full url to where the learningsteps can be found") learningstepUrl:String,
-  @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningpath can be found") metaUrl:String,
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
   @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String,
@@ -24,13 +22,13 @@ case class Learningpath(
 )
 
 @ApiModel(description = "Status information about a learningpath")
-case class LearningpathStatus(
+case class LearningPathStatus(
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String
 )
 
 @ApiModel(description = "Summary of meta information for a learningpath")
-case class LearningpathSummary(
-  @(ApiModelProperty @field)(description = "The unique id of the learningpath") id:String,
+case class LearningPathSummary(
+  @(ApiModelProperty @field)(description = "The unique id of the learningpath") id:Long,
   @(ApiModelProperty @field)(description = "The titles of the learningpath") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningpath") description:List[Description],
   @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningpath can be found") metaUrl:String,
@@ -42,8 +40,8 @@ case class LearningpathSummary(
 )
 
 @ApiModel(description = "Summary of meta information for a learningpath")
-case class Learningstep(
-  @(ApiModelProperty @field)(description = "The id of the learningstep") id:Int,
+case class LearningStep(
+  @(ApiModelProperty @field)(description = "The id of the learningstep") id:Long,
   @(ApiModelProperty @field)(description = "The sequence number for the step") seqNo:Int,
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],

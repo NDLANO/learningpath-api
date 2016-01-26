@@ -1,23 +1,28 @@
 package no.ndla.learningpathapi.controller
 
-import java.util.Date
+import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.service.{PrivateLearningpathsService, PublicLearningpathsService}
+import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
+import no.ndla.learningpathapi.model.{Error, HeaderMissingException}
+import no.ndla.learningpathapi.service.LearningpathService
+import no.ndla.learningpathapi._
 import no.ndla.logging.LoggerContext
+import no.ndla.network
 import no.ndla.network.ApplicationUrl
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{Ok, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.{Ok, ScalatraServlet}
+
+import scala.Error
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
 
   protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
   val getLearningpaths =
-    (apiOperation[List[LearningpathSummary]]("getLearningpaths")
+    (apiOperation[List[LearningPathSummary]]("getLearningpaths")
       summary "Show all learningpaths"
       notes "Shows all the learningpaths."
       parameters(
@@ -31,7 +36,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
 
   val getLearningpath =
-    (apiOperation[Learningpath]("getLearningpath")
+    (apiOperation[LearningPath]("getLearningpath")
       summary "Show details about the specified learningpath"
       notes "Shows all information about the specified learningpath."
       parameters(
@@ -42,7 +47,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
 
   val getLearningpathStatus =
-    (apiOperation[LearningpathStatus]("getLearningpathStatus")
+    (apiOperation[LearningPathStatus]("getLearningpathStatus")
       summary "Show publishingstatus for the learningpath"
       notes "Shows publishingstatus for the learningpath"
       parameters(
@@ -53,7 +58,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
 
   val getLearningsteps =
-    (apiOperation[List[Learningstep]]("getLearningsteps")
+    (apiOperation[List[LearningStep]]("getLearningsteps")
       summary "Show all learningsteps for given learningpath id"
       notes "Show all learningsteps for given learningpath id"
       parameters(
@@ -64,7 +69,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
 
   val getLearningstep =
-    (apiOperation[Learningstep]("getLearningstep")
+    (apiOperation[LearningStep]("getLearningstep")
       summary "Show the given learningstep for the given learningpath"
       notes "Show the given learningstep for the given learningpath"
       parameters(
@@ -76,13 +81,13 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
 
   val addNewLearningpath =
-    (apiOperation[Learningpath]("addLearningpath")
+    (apiOperation[LearningPath]("addLearningpath")
       summary "Adds the given learningpath"
       notes "Adds the given learningpath"
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      bodyParam[Learningpath]
+      bodyParam[LearningPath]
       )
       )
 
@@ -98,14 +103,15 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   error{
+    case h:HeaderMissingException => halt(status = 403, body = Error(Error.HEADER_MISSING, h.getMessage))
     case t:Throwable => {
       logger.error(t.getMessage)
       halt(status = 500, body = Error.GenericError)
     }
   }
 
-  val publics = new PublicLearningpathsService()
-  val privates = new PrivateLearningpathsService()
+  val publics = new LearningpathService(LearningpathApiProperties.Published)
+  val privates = new LearningpathService(LearningpathApiProperties.Private)
 
   // PUBLIC GET
   get("/", operation(getLearningpaths)) {
@@ -113,40 +119,64 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   get("/:path_id", operation(getLearningpath)) {
-    publics.withId(params.get("path_id"))
+    publics.withId(params("path_id")) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+    }
   }
 
   get("/:path_id/status", operation(getLearningpathStatus)) {
-    publics.statusFor(params.get("path_id"))
+    publics.statusFor(params("path_id")) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+    }
   }
 
   get("/:path_id/learningsteps", operation(getLearningsteps)) {
-    publics.learningstepsFor(params.get("path_id"))
+    publics.learningstepsFor(params("path_id")) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+    }
   }
 
   get("/:path_id/learningsteps/:step_id", operation(getLearningstep)) {
-    publics.learningstepFor(params.get("path_id"), params.get("step_id"))
+    publics.learningstepFor(params("path_id"), params("step_id")) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+    }
   }
 
   // PRIVATE GET
   get("/private", operation(getLearningpaths)) {
-    privates.all()
+    privates.all(owner = requireHeader(UsernameHeader))
   }
 
   get ("/private/:path_id", operation(getLearningpath)){
-    privates.withId(params.get("path_id"))
+    privates.withId(params("path_id"), owner = requireHeader(UsernameHeader)) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+    }
   }
 
   get("/private/:path_id/status", operation(getLearningpathStatus)) {
-    privates.statusFor(params.get("path_id"))
+    privates.statusFor(params("path_id"), owner = requireHeader(UsernameHeader)) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+    }
   }
 
   get("/private/:path_id/learningsteps", operation(getLearningsteps)) {
-    privates.learningstepsFor(params.get("path_id"))
+    privates.learningstepsFor(params("path_id"), owner = requireHeader(UsernameHeader)) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+    }
   }
 
   get("/private/:path_id/learningsteps/:step_id", operation(getLearningstep)) {
-    privates.learningstepFor(params.get("path_id"), params.get("step_id"))
+    privates.learningstepFor(params("path_id"), params("step_id"), owner = requireHeader(UsernameHeader)) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+    }
   }
 
   // ADD ELEMENTS
@@ -187,5 +217,14 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     halt(status = 204)
   }
 
+  def requireHeader(headerName: String)(implicit request: HttpServletRequest): Option[String] = {
+    request.header(headerName) match {
+      case Some(h) => Some(h)
+      case None => {
+        logger.warn(s"Request made to ${request.getRequestURI} without required header $headerName.")
+        throw new HeaderMissingException(s"The required header $headerName is missing.")
+      }
+    }
+  }
 
 }
