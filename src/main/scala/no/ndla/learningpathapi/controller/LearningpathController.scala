@@ -113,7 +113,6 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   val publics = new LearningpathService(LearningpathApiProperties.Published)
   val privates = new LearningpathService(LearningpathApiProperties.Private)
 
-  // PUBLIC GET
   get("/", operation(getLearningpaths)) {
     publics.all()
   }
@@ -146,7 +145,6 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
-  // PRIVATE GET
   get("/private", operation(getLearningpaths)) {
     privates.all(owner = usernameFromHeader)
   }

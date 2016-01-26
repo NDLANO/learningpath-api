@@ -18,12 +18,12 @@ class LearningpathService(publishingStatus: String) {
 
   def learningstepsFor(learningPathId: String, owner:Option[String] = None): Option[List[LearningStep]] = {
     val learningPath = owner match {
-      case None => learningpathData.withIdAndStatus(learningPathId.toLong, publishingStatus).map(lp => lp.learningsteps)
-      case Some(o) => learningpathData.withIdStatusAndOwner(learningPathId.toLong, publishingStatus, o).map(lp => lp.learningsteps)
+      case None => learningpathData.withIdAndStatus(learningPathId.toLong, publishingStatus)
+      case Some(o) => learningpathData.withIdStatusAndOwner(learningPathId.toLong, publishingStatus, o)
     }
 
     learningPath match {
-      case Some(a) => Some(a.map(asApiLearningStep))
+      case Some(lp) => Some(lp.learningsteps.map(ls => asApiLearningStep(ls, lp)))
       case None => None
     }
   }
