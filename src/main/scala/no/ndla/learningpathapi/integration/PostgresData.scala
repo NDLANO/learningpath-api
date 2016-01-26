@@ -27,7 +27,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     }
   }
 
-  override def update(learningpath: LearningPath, userId: String): LearningPath = {
+  override def update(learningpath: LearningPath): LearningPath = {
     // TODO: Get converting to JSON to not save id (this is our primary key)
     if(learningpath.id.isEmpty) {
       throw new RuntimeException("A non-persisted learningpath cannot be updated without being saved first.")
@@ -74,7 +74,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     }
   }
 
-  override def insert(learningpath: LearningPath, userId: String): LearningPath = {
+  override def insert(learningpath: LearningPath): LearningPath = {
     implicit val formats = org.json4s.DefaultFormats
 
     val dataObject = new PGobject()

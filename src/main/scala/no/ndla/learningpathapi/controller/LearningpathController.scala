@@ -148,31 +148,44 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   // PRIVATE GET
   get("/private", operation(getLearningpaths)) {
-    privates.all(owner = requireHeader(UsernameHeader))
+    val owner = requireHeader(UsernameHeader)
+    logger.info("GET /private with params X-Consumer-Username='{}'", owner)
+    privates.all(owner = owner)
   }
 
   get ("/private/:path_id", operation(getLearningpath)){
-    privates.withId(params("path_id"), owner = requireHeader(UsernameHeader)) match {
+    val owner = requireHeader(UsernameHeader)
+    logger.info(s"GET /private/${params("path_id")} with params X-Consumer-Username='{}'", owner)
+    privates.withId(params("path_id"), owner = owner) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/private/:path_id/status", operation(getLearningpathStatus)) {
-    privates.statusFor(params("path_id"), owner = requireHeader(UsernameHeader)) match {
+    val owner = requireHeader(UsernameHeader)
+    logger.info(s"GET /private/${params("path_id")}/status with params X-Consumer-Username='{}'", owner)
+
+    privates.statusFor(params("path_id"), owner = owner) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/private/:path_id/learningsteps", operation(getLearningsteps)) {
-    privates.learningstepsFor(params("path_id"), owner = requireHeader(UsernameHeader)) match {
+    val owner = requireHeader(UsernameHeader)
+    logger.info(s"GET /private/${params("path_id")}/learningsteps with params X-Consumer-Username='{}'", owner)
+
+    privates.learningstepsFor(params("path_id"), owner = owner) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/private/:path_id/learningsteps/:step_id", operation(getLearningstep)) {
+    val owner = requireHeader(UsernameHeader)
+    logger.info(s"GET /private/${params("path_id")}/learningsteps/${params("step_id")} with params X-Consumer-Username='{}'", owner)
+
     privates.learningstepFor(params("path_id"), params("step_id"), owner = requireHeader(UsernameHeader)) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))

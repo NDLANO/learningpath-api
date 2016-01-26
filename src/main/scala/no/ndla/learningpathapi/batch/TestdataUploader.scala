@@ -26,7 +26,8 @@ object TestdataUploader {
     1080,
     LearningpathApiProperties.Published,
     new Date(),
-    "kes-kes-kes"),
+    "e646b7f6-60ce-4364-9e77-2a88754b95db"),
+
     LearningPath(Some(2),
       List(
         Title("Hva er kunst og kultur?", Some("nb")),
@@ -43,7 +44,7 @@ object TestdataUploader {
       1080,
       LearningpathApiProperties.Private,
       new Date(),
-      "kes-kes-kes"))
+      "e646b7f6-60ce-4364-9e77-2a88754b95db"))
 
 
   def main(args: Array[String]) {
@@ -51,8 +52,8 @@ object TestdataUploader {
 
     testdata.foreach(learningpath => {
       learningpathData.exists(learningpath) match {
-        case true => learningpathData.update(learningpath, "kes-kes-kes")
-        case false => learningpathData.insert(learningpath, "kes-kes-kes")
+        case true => learningpathData.update(learningpath)
+        case false => learningpathData.insert(learningpath)
       }
     })
   }
