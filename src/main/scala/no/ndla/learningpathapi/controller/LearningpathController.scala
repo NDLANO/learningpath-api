@@ -148,45 +148,32 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   // PRIVATE GET
   get("/private", operation(getLearningpaths)) {
-    val owner = requireHeader(UsernameHeader)
-    logger.info("GET /private with params X-Consumer-Username='{}'", owner)
-    privates.all(owner = owner)
+    privates.all(owner = usernameFromHeader)
   }
 
   get ("/private/:path_id", operation(getLearningpath)){
-    val owner = requireHeader(UsernameHeader)
-    logger.info(s"GET /private/${params("path_id")} with params X-Consumer-Username='{}'", owner)
-    privates.withId(params("path_id"), owner = owner) match {
+    privates.withId(params("path_id"), owner = usernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/private/:path_id/status", operation(getLearningpathStatus)) {
-    val owner = requireHeader(UsernameHeader)
-    logger.info(s"GET /private/${params("path_id")}/status with params X-Consumer-Username='{}'", owner)
-
-    privates.statusFor(params("path_id"), owner = owner) match {
+    privates.statusFor(params("path_id"), owner = usernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/private/:path_id/learningsteps", operation(getLearningsteps)) {
-    val owner = requireHeader(UsernameHeader)
-    logger.info(s"GET /private/${params("path_id")}/learningsteps with params X-Consumer-Username='{}'", owner)
-
-    privates.learningstepsFor(params("path_id"), owner = owner) match {
+    privates.learningstepsFor(params("path_id"), owner = usernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/private/:path_id/learningsteps/:step_id", operation(getLearningstep)) {
-    val owner = requireHeader(UsernameHeader)
-    logger.info(s"GET /private/${params("path_id")}/learningsteps/${params("step_id")} with params X-Consumer-Username='{}'", owner)
-
-    privates.learningstepFor(params("path_id"), params("step_id"), owner = requireHeader(UsernameHeader)) match {
+    privates.learningstepFor(params("path_id"), params("step_id"), owner = usernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
     }
@@ -228,6 +215,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   delete("/:path_id/learningsteps/:step_id") {
     logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")} AND STEP ID: ${params.get("step_id")}")
     halt(status = 204)
+  }
+
+  def usernameFromHeader(implicit request: HttpServletRequest): Option[String] = {
+    Some(requireHeader(UsernameHeader).get.replace("ndla-", ""))
   }
 
   def requireHeader(headerName: String)(implicit request: HttpServletRequest): Option[String] = {
