@@ -6,6 +6,7 @@ import scala.io.Source
 
 object LearningpathApiProperties extends LazyLogging {
 
+
   val EnvironmentFile = "/learningpath-api.env"
   val LearningpathApiProps = readPropertyFile()
 
@@ -25,6 +26,10 @@ object LearningpathApiProperties extends LazyLogging {
 
   val Published = "PUBLISHED"
   val Private = "PRIVATE"
+  val External = "EXTERNAL"
+  val CreatedByNDLA = "CREATED_BY_NDLA"
+  val VerifiedByNDLA = "VERIFIED_BY_NDLA"
+
   val UsernameHeader = "X-Consumer-Username"
 
   def verify() = {

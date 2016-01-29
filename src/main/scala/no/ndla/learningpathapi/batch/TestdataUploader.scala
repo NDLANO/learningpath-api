@@ -21,12 +21,14 @@ object TestdataUploader {
       Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
       Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
     List(
-      LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT"),
-      LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT")),
+      LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
+      LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa"))),
     Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
     1080,
     LearningpathApiProperties.Published,
+    LearningpathApiProperties.CreatedByNDLA,
     new Date(),
+    List(LearningPathTag("kenneth", Some("nb"))),
     "e646b7f6-60ce-4364-9e77-2a88754b95db"),
 
     // KES
@@ -40,12 +42,14 @@ object TestdataUploader {
         Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       List(
-        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT"),
-        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT")),
+        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
+        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None)),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       LearningpathApiProperties.Private,
+      LearningpathApiProperties.VerifiedByNDLA,
       new Date(),
+      List(LearningPathTag("kenneth", Some("nb"))),
       "e646b7f6-60ce-4364-9e77-2a88754b95db"),
 
     // RST
@@ -59,12 +63,14 @@ object TestdataUploader {
         Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       List(
-        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT"),
-        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT")),
+        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
+        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None)),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       LearningpathApiProperties.Private,
+      LearningpathApiProperties.External,
       new Date(),
+      List(LearningPathTag("rune", Some("nb"))),
       "d6b2bbd0-2dd4-485a-9d9a-af2e7c9d57ad"),
 
     // KW
@@ -78,12 +84,14 @@ object TestdataUploader {
         Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       List(
-        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT"),
-        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT")),
+        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
+        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None)),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       LearningpathApiProperties.Private,
+      LearningpathApiProperties.VerifiedByNDLA,
       new Date(),
+      List(LearningPathTag("kristofer", Some("nb"))),
       "ddd2ff24-616a-484d-8172-55ddba52cd7a"),
 
     // Remi
@@ -97,12 +105,14 @@ object TestdataUploader {
         Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       List(
-        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT"),
-        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT")),
+        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
+        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None)),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       LearningpathApiProperties.Private,
+      LearningpathApiProperties.External,
       new Date(),
+      List(LearningPathTag("remi", Some("nb"))),
       "a62debc3-74a7-43f3-88c9-d35837a41698"),
 
     // Christer
@@ -116,12 +126,14 @@ object TestdataUploader {
         Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       List(
-        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT"),
-        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT")),
+        LearningStep(1, 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
+        LearningStep(2, 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None)),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
       LearningpathApiProperties.Private,
+      LearningpathApiProperties.CreatedByNDLA,
       new Date(),
+      List(LearningPathTag("christer", Some("nb"))),
       "6e74cde7-1e83-49c8-8dcd-9bbef458f477"))
 
 

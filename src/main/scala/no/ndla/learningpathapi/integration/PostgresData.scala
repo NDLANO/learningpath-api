@@ -1,5 +1,6 @@
 package no.ndla.learningpathapi.integration
 
+import java.util.Date
 import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
@@ -10,6 +11,7 @@ import org.postgresql.util.PGobject
 import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
 
 class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLogging {
+  implicit val formats = org.json4s.DefaultFormats
 
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -33,8 +35,6 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
       throw new RuntimeException("A non-persisted learningpath cannot be updated without being saved first.")
     }
 
-    implicit val formats = org.json4s.DefaultFormats
-
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(write(learningpath))
@@ -45,6 +45,19 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
       learningpath
     }
   }
+
+  override def withId(id: Long): Option[LearningPath] = {
+    DB readOnly{implicit session =>
+      sql"select id, document from learningpaths where id = ${id}".map(rs => asLearningPath(rs.long("id"), rs.string("document"))).single().apply()
+    }
+  }
+
+  override def withIdAndOwner(id: Long, owner: String): Option[LearningPath] = {
+    DB readOnly{implicit session =>
+      sql"select id, document from learningpaths where id = ${id} and document->>'owner' = ${owner}".map(rs => asLearningPath(rs.long("id"), rs.string("document"))).single().apply()
+    }
+  }
+
 
   override def withIdAndStatus(id: Long, status: String): Option[LearningPath] = {
     DB readOnly{implicit session =>
@@ -75,8 +88,6 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
   }
 
   override def insert(learningpath: LearningPath): LearningPath = {
-    implicit val formats = org.json4s.DefaultFormats
-
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(write(learningpath))
@@ -84,7 +95,17 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     DB localTx {implicit session =>
       val id:Long = sql"insert into learningpaths(document) values(${dataObject})".updateAndReturnGeneratedKey().apply
       logger.info(s"Inserted learningpath with id ${id}")
-      LearningPath(Some(id), learningpath.title, learningpath.description, learningpath.learningsteps, learningpath.coverPhotoUrl, learningpath.duration, learningpath.status, learningpath.lastUpdated, learningpath.owner)
+      LearningPath(Some(id),
+        learningpath.title,
+        learningpath.description,
+        learningpath.learningsteps,
+        learningpath.coverPhotoUrl,
+        learningpath.duration,
+        learningpath.status,
+        learningpath.verificationStatus,
+        learningpath.lastUpdated,
+        learningpath.tags,
+        learningpath.owner)
     }
   }
 
@@ -99,7 +120,9 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
       meta.coverPhotoUrl,
       meta.duration,
       meta.status,
+      meta.verificationStatus,
       meta.lastUpdated,
+      meta.tags,
       meta.owner)
   }
 }
