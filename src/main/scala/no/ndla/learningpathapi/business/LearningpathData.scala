@@ -6,9 +6,10 @@ import no.ndla.learningpathapi.model.LearningPath
 trait LearningpathData {
 
 
-  def exists(learningpath: LearningPath):Boolean
   def insert(learningpath: LearningPath): LearningPath
+  def exists(learningPathId: Long):Boolean
   def update(learningpath: LearningPath): LearningPath
+  def delete(learningPathId: Long)
 
   def withId(id: Long): Option[LearningPath]
   def withIdAndOwner(id: Long, owner: String): Option[LearningPath]

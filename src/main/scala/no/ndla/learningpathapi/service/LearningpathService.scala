@@ -8,7 +8,44 @@ import no.ndla.learningpathapi.service.ModelConverters._
 
 
 class LearningpathService(publishingStatus: String) {
+
   val learningpathData = AmazonIntegration.getLearningpathData()
+
+  def deleteLearningPath(learningPathId: String, owner: String): Boolean = {
+    learningpathData.exists(learningPathId.toLong) match {
+      case false => false
+      case true => {
+        learningpathData.delete(learningPathId.toLong)
+        true
+      }
+    }
+  }
+
+  def deleteLearningStep(learningPathId: String, learningStepId: String, owner: String): Boolean = {
+    withIdInternal(learningPathId, Some(owner)) match {
+      case None => false
+      case Some(learningPath) => {
+        learningPath.learningsteps.find(_.id == learningStepId.toLong) match {
+          case None => false
+          case Some(learningStep) => {
+            val toUpdate = model.LearningPath(
+              learningPath.id,
+              learningPath.title,
+              learningPath.description,
+              learningPath.learningsteps.filterNot(_.id == learningStepId.toLong),
+              learningPath.coverPhotoUrl,
+              learningPath.duration,
+              learningPath.status,
+              learningPath.verificationStatus,
+              new Date(), learningPath.tags, learningPath.owner)
+
+            learningpathData.update(toUpdate)
+            true
+          }
+        }
+      }
+    }
+  }
 
   def updateLearningPathStatus(learningPathId: String, status: LearningPathStatus, owner: String): Option[LearningPath] = {
     status.validate()

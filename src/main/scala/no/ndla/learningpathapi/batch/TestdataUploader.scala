@@ -141,7 +141,7 @@ object TestdataUploader {
     val learningpathData = AmazonIntegration.getLearningpathData()
 
     testdata.foreach(learningpath => {
-      learningpathData.exists(learningpath) match {
+      learningpathData.exists(learningpath.id.get) match {
         case true => learningpathData.update(learningpath)
         case false => learningpathData.insert(learningpath)
       }

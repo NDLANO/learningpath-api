@@ -15,16 +15,11 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
 
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
-  override def exists(learningpath: LearningPath): Boolean = {
-    learningpath.id match {
-      case None => false
-      case Some(x) => {
-        DB readOnly {implicit session =>
-          sql"select exists(select 1 from learningpaths where id=${x})".map(rs => (rs.boolean(1))).single.apply match {
-            case Some(t) => t
-            case None => false
-          }
-        }
+  override def exists(learningPathId: Long): Boolean = {
+    DB readOnly {implicit session =>
+      sql"select exists(select 1 from learningpaths where id=${learningPathId})".map(rs => (rs.boolean(1))).single.apply match {
+        case Some(t) => t
+        case None => false
       }
     }
   }
@@ -43,6 +38,12 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
       sql"update learningpaths set document = ${dataObject} where id = ${learningpath.id}".update().apply
       logger.info(s"Updated learningpath with id ${learningpath.id}")
       learningpath
+    }
+  }
+
+  override def delete(learningPathId: Long) = {
+    DB localTx {implicit session =>
+      sql"delete from learningpaths where id = ${learningPathId}".update().apply
     }
   }
 

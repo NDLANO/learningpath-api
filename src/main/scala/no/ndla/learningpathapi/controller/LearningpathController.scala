@@ -315,15 +315,27 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
-  // DELETE ELEMENTS -- TODO:
   delete("/:path_id", operation(deleteLearningPath)) {
-    logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")}")
-    halt(status = 204)
+    val deleted = privates.deleteLearningPath(params("path_id"), usernameFromHeader)
+    deleted match {
+      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case true => {
+        logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")}")
+        halt(status = 204)
+      }
+    }
   }
 
   delete("/:path_id/learningsteps/:step_id", operation(deleteLearningStep)) {
-    logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")} AND STEP ID: ${params.get("step_id")}")
-    halt(status = 204)
+    val deleted = privates.deleteLearningStep(params("path_id"), params("step_id"), usernameFromHeader)
+
+    deleted match {
+      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
+      case true => {
+        logger.info(s"Deleted learningstep with id: ${params.get("step_id")} for learningPath with id: ${params.get("path_id")}")
+        halt(status = 204)
+      }
+    }
   }
 
   def usernameFromHeader(implicit request: HttpServletRequest): String = {
