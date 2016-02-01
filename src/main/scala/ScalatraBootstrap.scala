@@ -16,7 +16,7 @@ class ScalatraBootstrap extends LifeCycle {
   implicit val swagger = new LearningpathSwagger
 
   override def init(context: ServletContext) {
-    context.mount(new LearningpathController, "/paths", "paths")
+    context.mount(new LearningpathController, "/learningpaths", "learningpaths")
     context.mount(new ResourcesApp, "/api-docs")
   }
 }
