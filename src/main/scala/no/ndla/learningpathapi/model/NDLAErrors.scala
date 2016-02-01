@@ -11,9 +11,12 @@ object Error {
   val NOT_FOUND = "2"
   val INDEX_MISSING = "3"
   val HEADER_MISSING = "4"
+  val VALIDATION = "5"
 
   val GenericError = Error(GENERIC, s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists.")
 }
 
 case class Error(code:String, description:String, occuredAt:String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
+
 class HeaderMissingException(message: String) extends RuntimeException(message)
+class ValidationException(message: String) extends RuntimeException(message)

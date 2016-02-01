@@ -2,6 +2,7 @@ package no.ndla.learningpathapi
 
 import java.util.Date
 
+import no.ndla.learningpathapi.model.ValidationException
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -39,7 +40,7 @@ case class LearningPathStatus(
 ) {
   def validate() = {
     if(LearningpathApiProperties.Private != status && LearningpathApiProperties.Published != status) {
-      throw new RuntimeException("Invalid publishingstatus")
+      throw new ValidationException(s"'$status' is not a valid publishingstatus.")
     }
   }
 }
