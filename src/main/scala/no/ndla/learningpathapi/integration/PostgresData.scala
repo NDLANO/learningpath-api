@@ -36,18 +36,6 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     learningPathWhere(sqls"lp.id = $id")
   }
 
-  override def withIdAndOwner(id: Long, owner: String): Option[LearningPath] = {
-    learningPathWhere(sqls"lp.id = $id and lp.document->>'owner' = $owner")
-  }
-
-  override def withIdAndStatus(id: Long, status: String): Option[LearningPath] = {
-    learningPathWhere(sqls"lp.id = $id and lp.document->>'status' = $status")
-  }
-
-  override def withIdStatusAndOwner(id: Long, status: String, owner: String): Option[LearningPath] = {
-    learningPathWhere(sqls"lp.id = $id and lp.document->>'status' = $status and lp.document->>'owner' = $owner")
-  }
-
   override def withStatus(status: String): List[LearningPath] = {
     learningPathsWhere(sqls"lp.document->>'status' = $status")
   }
@@ -83,17 +71,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
       })
 
       logger.info(s"Inserted learningpath with id $learningPathId")
-      LearningPath(Some(learningPathId),
-        learningpath.title,
-        learningpath.description,
-        learningpath.coverPhotoUrl,
-        learningpath.duration,
-        learningpath.status,
-        learningpath.verificationStatus,
-        learningpath.lastUpdated,
-        learningpath.tags,
-        learningpath.owner,
-        learningSteps)
+      learningpath.copy(id = Some(learningPathId), learningsteps = learningSteps)
     }
   }
 
@@ -176,13 +154,6 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
 
     val learningStepId:Long = sql"insert into learningsteps(learning_path_id, document) values (${learningStep.learningPathId}, $stepObject)".updateAndReturnGeneratedKey().apply
     logger.info(s"Inserted learningstep with id $learningStepId")
-    LearningStep(Some(learningStepId),
-      learningStep.learningPathId,
-      learningStep.seqNo,
-      learningStep.title,
-      learningStep.description,
-      learningStep.embedUrl,
-      learningStep.`type`,
-      learningStep.license)
+    learningStep.copy(id = Some(learningStepId))
   }
 }

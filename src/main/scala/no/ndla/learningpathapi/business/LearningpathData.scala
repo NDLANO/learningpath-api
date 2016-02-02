@@ -18,11 +18,8 @@ trait LearningpathData {
   def deleteLearningStep(learningStepId: Long)
 
   def withId(id: Long): Option[LearningPath]
-  def withIdAndOwner(id: Long, owner: String): Option[LearningPath]
   def withStatus(status:String): List[LearningPath]
   def withStatusAndOwner(status:String, owner:String): List[LearningPath]
-  def withIdAndStatus(id:Long, status:String): Option[LearningPath]
-  def withIdStatusAndOwner(id:Long, status:String, owner:String): Option[LearningPath]
 
   def learningStepsFor(learningPathId: Long): List[LearningStep]
   def learningStepWithId(learningPathId: Long, learningStepId: Long): Option[LearningStep]

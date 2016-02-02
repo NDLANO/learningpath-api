@@ -46,7 +46,7 @@ class LearningpathService {
       newLearningPath.description.map(asDescription),
       newLearningPath.coverPhotoUrl,
       newLearningPath.duration, LearningpathApiProperties.Private,
-      LearningpathApiProperties.External, // TODO: Regler for å sette disse
+      LearningpathApiProperties.External,
       new Date(), newLearningPath.tags.map(asLearningPathTag), owner, List())
 
     asApiLearningpath(learningpathData.insert(learningPath))
@@ -120,7 +120,9 @@ class LearningpathService {
           newLearningStep.`type`,
           newLearningStep.license)
 
-        Some(asApiLearningStep(learningpathData.insertLearningStep(newStep), learningPath))
+        val inserted = learningpathData.insertLearningStep(newStep)
+        val updated = learningpathData.update(learningPath.copy(lastUpdated = new Date()))
+        Some(asApiLearningStep(inserted, updated))
       }
     }
   }
@@ -139,7 +141,9 @@ class LearningpathService {
               `type` = newLearningStep.`type`,
               license = newLearningStep.license)
 
-            Some(asApiLearningStep(learningpathData.updateLearningStep(toUpdate), learningPath))
+            val updatedStep = learningpathData.updateLearningStep(toUpdate)
+            val updatedPath = learningpathData.update(learningPath.copy(lastUpdated = new Date()))
+            Some(asApiLearningStep(updatedStep, updatedPath))
           }
         }
       }
@@ -151,6 +155,7 @@ class LearningpathService {
       case None => false
       case Some(existing) => {
         learningpathData.deleteLearningStep(learningStepId)
+        learningpathData.update(existing.copy(lastUpdated = new Date()))
         true
       }
     }
