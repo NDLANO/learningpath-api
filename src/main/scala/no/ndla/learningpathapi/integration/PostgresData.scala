@@ -4,13 +4,13 @@ import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.model.{LearningPath, LearningStep}
+import no.ndla.learningpathapi.model.{JSONSerializers, LearningPath, LearningStep}
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
 
 class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLogging {
-  implicit val formats = org.json4s.DefaultFormats
+  implicit val formats = org.json4s.DefaultFormats + JSONSerializers.LearningPathSerializer + JSONSerializers.LearningStepSerializer
 
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -104,7 +104,6 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
   }
 
   override def update(learningpath: LearningPath): LearningPath = {
-    // TODO: Get converting to JSON to not save id (this is our primary key)
     if(learningpath.id.isEmpty) {
       throw new RuntimeException("A non-persisted learningpath cannot be updated without being saved first.")
     }

@@ -3,6 +3,8 @@ package no.ndla.learningpathapi.model
 import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
+import org.json4s.FieldSerializer
+import org.json4s.FieldSerializer._
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
@@ -15,6 +17,7 @@ case class LearningPath(id:Option[Long], title: List[Title], description: List[D
     status == LearningpathApiProperties.Private
   }
 }
+
 
 case class LearningStep(id:Option[Long], learningPathId: Option[Long], seqNo:Int, title:List[Title], description:List[Description], embedUrl:List[EmbedUrl], `type`:String, license:Option[String])
 case class Title(title:String, language:Option[String])
@@ -50,6 +53,17 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
   def opt(ls: ResultName[LearningStep])(rs: WrappedResultSet): Option[LearningStep] = rs.longOpt(ls.c("id")).map(_ => LearningStep(ls)(rs))
 }
 
+object JSONSerializers {
+  val LearningPathSerializer = FieldSerializer[LearningPath](
+    ignore("id") orElse
+    ignore("learningsteps")
+  )
+
+  val LearningStepSerializer = FieldSerializer[LearningStep](
+    ignore("id") orElse
+    ignore("learningPathId")
+  )
+}
 
 
 
