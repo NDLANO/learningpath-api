@@ -11,43 +11,27 @@ class LearningpathService(publishingStatus: String) {
 
   val learningpathData = AmazonIntegration.getLearningpathData()
 
-  def deleteLearningPath(learningPathId: String, owner: String): Boolean = {
-    learningpathData.exists(learningPathId.toLong) match {
+  def deleteLearningPath(learningPathId: Long, owner: String): Boolean = {
+    learningpathData.exists(learningPathId) match {
       case false => false
       case true => {
-        learningpathData.delete(learningPathId.toLong)
+        learningpathData.delete(learningPathId)
         true
       }
     }
   }
 
-  def deleteLearningStep(learningPathId: String, learningStepId: String, owner: String): Boolean = {
-    withIdInternal(learningPathId, Some(owner)) match {
-      case None => false
-      case Some(learningPath) => {
-        learningPath.learningsteps.find(_.id == learningStepId.toLong) match {
-          case None => false
-          case Some(learningStep) => {
-            val toUpdate = model.LearningPath(
-              learningPath.id,
-              learningPath.title,
-              learningPath.description,
-              learningPath.learningsteps.filterNot(_.id == learningStepId.toLong),
-              learningPath.coverPhotoUrl,
-              learningPath.duration,
-              learningPath.status,
-              learningPath.verificationStatus,
-              new Date(), learningPath.tags, learningPath.owner)
-
-            learningpathData.update(toUpdate)
-            true
-          }
-        }
+  def deleteLearningStep(learningPathId: Long, learningStepId: Long, owner: String): Boolean = {
+    learningpathData.exists(learningPathId, learningStepId) match {
+      case false => false
+      case true => {
+        learningpathData.deleteLearningStep(learningStepId)
+        true
       }
     }
   }
 
-  def updateLearningPathStatus(learningPathId: String, status: LearningPathStatus, owner: String): Option[LearningPath] = {
+  def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus, owner: String): Option[LearningPath] = {
     status.validate()
 
     withIdInternal(learningPathId, Some(owner)) match {
@@ -57,70 +41,51 @@ class LearningpathService(publishingStatus: String) {
           existing.id,
           existing.title,
           existing.description,
-          existing.learningsteps,
           existing.coverPhotoUrl,
           existing.duration,
           status.status,
           existing.verificationStatus,
-          new Date(), existing.tags, owner)
+          new Date(), existing.tags, owner, existing.learningsteps)
 
         Some(asApiLearningpath(learningpathData.update(learningPath)))
       }
     }
   }
 
-  def updateLearningStep(learningPathId: String, learningStepId: String, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
+  def updateLearningStep(learningPathId: Long, learningStepId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
     withIdInternal(learningPathId, Some(owner)) match {
       case None => None
       case Some(learningPath) => {
-        learningPath.learningsteps.find(ls => ls.id == learningStepId.toLong) match {
+        learningpathData.learningStepWithId(learningPathId, learningStepId) match {
           case None => None
-          case Some(existingStep) => {
-            val updatedStep = model.LearningStep(
-              existingStep.id,
-              existingStep.seqNo,
-              newLearningStep.title.map(asTitle),
-              newLearningStep.description.map(asDescription),
-              newLearningStep.embedUrl.map(asEmbedUrl),
-              newLearningStep.`type`,
-              newLearningStep.license)
+          case Some(existing) => {
+            val toUpdate = existing.copy(
+              title = newLearningStep.title.map(asTitle),
+              description = newLearningStep.description.map(asDescription),
+              embedUrl = newLearningStep.embedUrl.map(asEmbedUrl),
+              `type` = newLearningStep.`type`,
+              license = newLearningStep.license)
 
-            val toUpdate = model.LearningPath(
-              learningPath.id,
-              learningPath.title,
-              learningPath.description,
-              (updatedStep :: learningPath.learningsteps.filterNot(_.id == existingStep.id)).reverse,
-              learningPath.coverPhotoUrl,
-              learningPath.duration,
-              learningPath.status,
-              learningPath.verificationStatus,
-              new Date(), learningPath.tags, learningPath.owner)
-
-            Some(asApiLearningStep(updatedStep, learningpathData.update(toUpdate)))
+            Some(asApiLearningStep(learningpathData.updateLearningStep(toUpdate), learningPath))
           }
         }
       }
     }
   }
 
-  // TODO: Mye og rotete kode. Vurder en annen strategi for id-er.
-  // TODO: Må sjekke på seqNo?
-  def addLearningStep(learningPathId: String, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
+
+  def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
     withIdInternal(learningPathId, Some(owner)) match {
       case None => None
       case Some(learningPath) => {
-        val newId = learningPath.learningsteps.isEmpty match {
-          case true => 1
-          case false => learningPath.learningsteps.map(_.id).max + 1
-        }
-
         val newSeqNo = learningPath.learningsteps.isEmpty match {
           case true => 1
           case false => learningPath.learningsteps.map(_.seqNo).max + 1
         }
 
         val newStep = model.LearningStep(
-          newId,
+          None,
+          learningPath.id,
           newSeqNo,
           newLearningStep.title.map(asTitle),
           newLearningStep.description.map(asDescription),
@@ -128,23 +93,12 @@ class LearningpathService(publishingStatus: String) {
           newLearningStep.`type`,
           newLearningStep.license)
 
-        val toUpdate = model.LearningPath(
-          learningPath.id,
-          learningPath.title,
-          learningPath.description,
-          (newStep :: learningPath.learningsteps).reverse,
-          learningPath.coverPhotoUrl,
-          learningPath.duration,
-          learningPath.status,
-          learningPath.verificationStatus,
-          new Date(), learningPath.tags, learningPath.owner)
-
-        Some(asApiLearningStep(newStep, learningpathData.update(toUpdate)))
+        Some(asApiLearningStep(learningpathData.insertLearningStep(newStep), learningPath))
       }
     }
   }
 
-  def updateLearningPath(id:String, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
+  def updateLearningPath(id:Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
     withIdInternal(id, Some(owner)) match {
       case None => None
       case Some(existing) => {
@@ -152,12 +106,11 @@ class LearningpathService(publishingStatus: String) {
           existing.id,
           newLearningPath.title.map(asTitle),
           newLearningPath.description.map(asDescription),
-          existing.learningsteps,
           newLearningPath.coverPhotoUrl,
           newLearningPath.duration,
           existing.status,
           existing.verificationStatus,
-          new Date(), newLearningPath.tags.map(asLearningPathTag), owner)
+          new Date(), newLearningPath.tags.map(asLearningPathTag), owner, existing.learningsteps)
 
         Some(asApiLearningpath(learningpathData.update(learningPath)))
       }
@@ -168,50 +121,48 @@ class LearningpathService(publishingStatus: String) {
     val learningPath = model.LearningPath(None,
       newLearningPath.title.map(asTitle),
       newLearningPath.description.map(asDescription),
-      List(),
       newLearningPath.coverPhotoUrl,
       newLearningPath.duration, publishingStatus,
       LearningpathApiProperties.External, // TODO: Regler for å sette disse
-      new Date(), newLearningPath.tags.map(asLearningPathTag), owner)
+      new Date(), newLearningPath.tags.map(asLearningPathTag), owner, List())
 
     asApiLearningpath(learningpathData.insert(learningPath))
   }
 
-  def learningstepFor(learningpathId: String, learningstepId: String, owner:Option[String] = None): Option[LearningStep] = {
+  def learningstepFor(learningpathId: Long, learningstepId: Long, owner:Option[String] = None): Option[LearningStep] = {
     learningstepsFor(learningpathId, owner) match {
-      case Some(x) => x.find(_.id == learningstepId.toLong)
+      case Some(x) => x.find(_.id == learningstepId)
       case None => None
     }
   }
 
-  def learningstepsFor(learningPathId: String, owner:Option[String] = None): Option[List[LearningStep]] = {
+  def learningstepsFor(learningPathId: Long, owner:Option[String] = None): Option[List[LearningStep]] = {
     val learningPath = owner match {
-      case None => learningpathData.withIdAndStatus(learningPathId.toLong, publishingStatus)
-      case Some(o) => learningpathData.withIdStatusAndOwner(learningPathId.toLong, publishingStatus, o)
+      case None => learningpathData.withIdAndStatus(learningPathId, publishingStatus)
+      case Some(o) => learningpathData.withIdStatusAndOwner(learningPathId, publishingStatus, o)
     }
 
     learningPath match {
-      case Some(lp) => Some(lp.learningsteps.map(ls => asApiLearningStep(ls, lp)))
+      case Some(lp) => Some(learningpathData.learningStepsFor(lp.id.get).map(ls => asApiLearningStep(ls, lp)))
       case None => None
     }
   }
 
-  def statusFor(learningPathId: String, owner:Option[String] = None): Option[LearningPathStatus] = {
+  def statusFor(learningPathId: Long, owner:Option[String] = None): Option[LearningPathStatus] = {
     owner match {
-      case None => learningpathData.withIdAndStatus(learningPathId.toLong, publishingStatus).map(learningpath => LearningPathStatus(learningpath.status))
-      case Some(o) => learningpathData.withIdStatusAndOwner(learningPathId.toLong, publishingStatus, o).map(learningpath => LearningPathStatus(learningpath.status))
+      case None => learningpathData.withIdAndStatus(learningPathId, publishingStatus).map(learningpath => LearningPathStatus(learningpath.status))
+      case Some(o) => learningpathData.withIdStatusAndOwner(learningPathId, publishingStatus, o).map(learningpath => LearningPathStatus(learningpath.status))
     }
-
   }
 
-  def withId(learningPathId: String, owner:Option[String] = None): Option[LearningPath] = {
+  def withId(learningPathId: Long, owner:Option[String] = None): Option[LearningPath] = {
     withIdInternal(learningPathId, owner).map(asApiLearningpath)
   }
 
-  private def withIdInternal(learningPathId: String, owner:Option[String] = None): Option[model.LearningPath] = {
+  private def withIdInternal(learningPathId: Long, owner:Option[String] = None): Option[model.LearningPath] = {
     owner match {
-      case None => learningpathData.withId(learningPathId.toLong)
-      case Some(o) => learningpathData.withIdAndOwner(learningPathId.toLong, o)
+      case None => learningpathData.withId(learningPathId)
+      case Some(o) => learningpathData.withIdAndOwner(learningPathId, o)
     }
   }
 

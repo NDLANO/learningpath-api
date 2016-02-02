@@ -183,28 +183,28 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   get("/:path_id/?", operation(getLearningpath)) {
-    publics.withId(params("path_id")) match {
+    publics.withId(long("path_id")) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/:path_id/status/?", operation(getLearningpathStatus)) {
-    publics.statusFor(params("path_id")) match {
+    publics.statusFor(long("path_id")) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/:path_id/learningsteps/?", operation(getLearningsteps)) {
-    publics.learningstepsFor(params("path_id")) match {
+    publics.learningstepsFor(long("path_id")) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-    publics.learningstepFor(params("path_id"), params("step_id")) match {
+    publics.learningstepFor(long("path_id"), long("step_id")) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
     }
@@ -215,30 +215,35 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   get ("/private/:path_id/?", operation(getLearningpath)){
-    privates.withId(params("path_id"), owner = Some(usernameFromHeader)) match {
+    val pathId = long("path_id")
+    privates.withId(pathId, owner = Some(usernameFromHeader)) match {
       case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
     }
   }
 
   get("/private/:path_id/status/?", operation(getLearningpathStatus)) {
-    privates.statusFor(params("path_id"), owner = Some(usernameFromHeader)) match {
+    val pathId = long("path_id")
+    privates.statusFor(pathId, owner = Some(usernameFromHeader)) match {
       case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
     }
   }
 
   get("/private/:path_id/learningsteps/?", operation(getLearningsteps)) {
-    privates.learningstepsFor(params("path_id"), owner = Some(usernameFromHeader)) match {
+    val pathId = long("path_id")
+    privates.learningstepsFor(pathId, owner = Some(usernameFromHeader)) match {
       case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
     }
   }
 
   get("/private/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-    privates.learningstepFor(params("path_id"), params("step_id"), owner = Some(usernameFromHeader)) match {
+    val pathId = long("path_id")
+    val stepId = long("step_id")
+    privates.learningstepFor(pathId, stepId, owner = Some(usernameFromHeader)) match {
       case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId"))
     }
   }
 
@@ -247,51 +252,53 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       read[NewLearningPath](request.body),
       usernameFromHeader)
 
-    logger.info(s"Created learningPath with ID =  ${createdLearningPath.id}")
+    logger.info(s"CREATED LearningPath with ID =  ${createdLearningPath.id}")
     halt(status = 201, headers = Map("Location" -> createdLearningPath.metaUrl), body = createdLearningPath)
   }
 
   put("/:path_id/?", operation(updateLearningPath)) {
+    val pathId = long("path_id")
     val updatedLearningPath = privates.updateLearningPath(
-      params("path_id"),
+      pathId,
       read[NewLearningPath](request.body),
       usernameFromHeader)
 
     updatedLearningPath match {
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
       case Some(learningPath) => {
-        logger.info(s"Updated learningPath with ID =  ${learningPath.id}")
+        logger.info(s"UPDATED LearningPath with ID =  ${learningPath.id}")
         Ok(body = learningPath)
       }
     }
   }
 
   post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
-    val createdLearningStep = privates.addLearningStep(
-      params("path_id"),
+    val pathId = long("path_id")
+    val createdLearningStep = privates.addLearningStep(pathId,
       read[NewLearningStep](request.body),
       usernameFromHeader)
 
     createdLearningStep match {
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
       case Some(learningStep) => {
-        logger.info(s"Created learningStep with ID =  ${learningStep.id}")
+        logger.info(s"CREATED LearningStep with ID =  ${learningStep.id} for LearningPath with ID = $pathId")
         halt(status = 201, headers = Map("Location" -> learningStep.metaUrl), body = createdLearningStep)
       }
     }
   }
 
   put("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
-    val createdLearningStep = privates.updateLearningStep(
-      params("path_id"),
-      params("step_id"),
+    val pathId = long("path_id")
+    val stepId = long("step_id")
+
+    val createdLearningStep = privates.updateLearningStep(pathId, stepId,
       read[NewLearningStep](request.body),
       usernameFromHeader)
 
     createdLearningStep match {
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
       case Some(learningStep) => {
-        logger.info(s"Updated learningStep with ID =  ${learningStep.id} for LearningPath with ID = ${params("path_id")}")
+        logger.info(s"UPDATED LearningStep with ID = $stepId for LearningPath with ID = $pathId")
         Ok(body = learningStep)
       }
     }
@@ -299,37 +306,40 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   put("/:path_id/status/?", operation(updateLearningPathStatus)) {
     val updatedLearningPath:Option[LearningPath] = privates.updateLearningPathStatus(
-      params("path_id"),
+      long("path_id"),
       read[LearningPathStatus](request.body),
       usernameFromHeader)
 
     updatedLearningPath match {
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       case Some(learningPath) => {
-        logger.info(s"Updated publishing status of learningPath with ID =  ${learningPath.id}")
+        logger.info(s"UPDATED publishing status of LearningPath with ID =  ${learningPath.id}")
         Ok(body = learningPath)
       }
     }
   }
 
   delete("/:path_id/?", operation(deleteLearningPath)) {
-    val deleted = privates.deleteLearningPath(params("path_id"), usernameFromHeader)
+    val pathId = long("path_id")
+    val deleted = privates.deleteLearningPath(pathId, usernameFromHeader)
     deleted match {
-      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
       case true => {
-        logger.info(s"DELETE LEARNINGPATH ID: ${params.get("path_id")}")
+        logger.info(s"DELETED LearningPath with ID: $pathId")
         halt(status = 204)
       }
     }
   }
 
   delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-    val deleted = privates.deleteLearningStep(params("path_id"), params("step_id"), usernameFromHeader)
+    val pathId = long("path_id")
+    val stepId = long("step_id")
+    val deleted = privates.deleteLearningStep(pathId, stepId, usernameFromHeader)
 
     deleted match {
-      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
+      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
       case true => {
-        logger.info(s"Deleted learningstep with id: ${params.get("step_id")} for learningPath with id: ${params.get("path_id")}")
+        logger.info(s"DELETED LearningStep with id: $stepId for LearningPath with id: $pathId")
         halt(status = 204)
       }
     }
@@ -346,6 +356,14 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
         logger.warn(s"Request made to ${request.getRequestURI} without required header $headerName.")
         throw new HeaderMissingException(s"The required header $headerName is missing.")
       }
+    }
+  }
+
+  def long(paramName: String)(implicit request: HttpServletRequest): Long = {
+    val paramValue = params(paramName)
+    paramValue.forall(_.isDigit) match {
+      case true => paramValue.toLong
+      case false => throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
     }
   }
 

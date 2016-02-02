@@ -30,13 +30,12 @@ object ModelConverters {
     LearningPath(None,
       newLearningPath.title.map(asTitle),
       newLearningPath.description.map(asDescription),
-      List(),
       newLearningPath.coverPhotoUrl,
       newLearningPath.duration,
       publishingStatus,
       LearningpathApiProperties.External, // TODO: Regler for å sette disse
       new Date(),
-      newLearningPath.tags.map(asLearningPathTag), "")
+      newLearningPath.tags.map(asLearningPathTag), "", List())
   }
 
   def asApiLearningPathTag(tag: model.LearningPathTag): LearningPathTag = {
@@ -48,7 +47,7 @@ object ModelConverters {
       lp.title.map(asApiTitle),
       lp.description.map(asApiDescription),
       createUrlToLearningPath(lp),
-      lp.learningsteps.map(ls => asApiLearningStep(ls, lp)),
+      lp.learningsteps.map(ls => asApiLearningStep(ls, lp)).toList,
       createUrlToLearningSteps(lp),
       lp.coverPhotoUrl,
       lp.duration,
@@ -75,7 +74,14 @@ object ModelConverters {
 
 
   def asApiLearningStep(ls: LearningStep, lp: LearningPath): learningpathapi.LearningStep = {
-    no.ndla.learningpathapi.LearningStep(ls.id, ls.seqNo, ls.title.map(asApiTitle), ls.description.map(asApiDescription), ls.embedUrl.map(asApiEmbedUrl(_)), ls.`type`, ls.license, createUrlToLearningStep(ls, lp))
+    no.ndla.learningpathapi.LearningStep(
+      ls.id.get,
+      ls.seqNo,
+      ls.title.map(asApiTitle),
+      ls.description.map(asApiDescription),
+      ls.embedUrl.map(asApiEmbedUrl),
+      ls.`type`,
+      ls.license, createUrlToLearningStep(ls, lp))
   }
 
   def asApiTitle(title: no.ndla.learningpathapi.model.Title): no.ndla.learningpathapi.Title = {
@@ -91,7 +97,7 @@ object ModelConverters {
   }
 
   def createUrlToLearningStep(ls: LearningStep, lp: LearningPath): String = {
-    s"${createUrlToLearningSteps(lp)}/${ls.id}"
+    s"${createUrlToLearningSteps(lp)}/${ls.id.get}"
   }
 
   def createUrlToLearningSteps(lp: LearningPath): String = {
