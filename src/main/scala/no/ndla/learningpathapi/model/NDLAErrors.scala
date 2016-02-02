@@ -12,6 +12,7 @@ object Error {
   val INDEX_MISSING = "3"
   val HEADER_MISSING = "4"
   val VALIDATION = "5"
+  val ACCESS_DENIED = "6"
 
   val GenericError = Error(GENERIC, s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists.")
 }
@@ -20,3 +21,4 @@ case class Error(code:String, description:String, occuredAt:String = new SimpleD
 
 class HeaderMissingException(message: String) extends RuntimeException(message)
 class ValidationException(message: String) extends RuntimeException(message)
+class AccessDeniedException(message: String) extends RuntimeException(message)
