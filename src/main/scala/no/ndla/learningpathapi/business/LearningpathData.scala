@@ -23,4 +23,7 @@ trait LearningpathData {
 
   def learningStepsFor(learningPathId: Long): List[LearningStep]
   def learningStepWithId(learningPathId: Long, learningStepId: Long): Option[LearningStep]
+
+  def applyToAllPublic(func: List[LearningPath] => Unit)
+
 }

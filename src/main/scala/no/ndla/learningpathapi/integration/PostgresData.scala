@@ -3,8 +3,9 @@ package no.ndla.learningpathapi.integration
 import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.model.{JSONSerializers, LearningPath, LearningStep}
+import no.ndla.learningpathapi.model.{LearningPath, JSONSerializers, LearningStep}
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
@@ -122,6 +123,41 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
   override def deleteLearningStep(learningStepId: Long): Unit = {
     DB localTx {implicit session =>
       sql"delete from learningsteps where id = $learningStepId".update().apply
+    }
+  }
+
+  override def applyToAllPublic(func: (List[LearningPath]) => Unit): Unit = {
+    val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
+
+    val status = LearningpathApiProperties.Published
+    val (minId, maxId) = minMaxId
+    val groupRanges = Seq.range(minId, maxId+1).grouped(LearningpathApiProperties.IndexBulkSize).map(group => (group.head, group.last))
+
+    DB readOnly { implicit session =>
+      groupRanges.foreach(range => {
+        func(
+          sql"""select ${lp.result.*}, ${ls.result.*}
+               from ${LearningPath.as(lp)}
+               left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId}
+               where lp.document->>'status' = $status
+               and lp.id between ${range._1} and ${range._2}"""
+            .one(LearningPath(lp.resultName))
+            .toMany(LearningStep.opt(ls.resultName))
+            .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps)}
+            .toList.apply()
+        )
+      })
+    }
+  }
+
+  private def minMaxId: (Long,Long) = {
+    DB readOnly { implicit session =>
+      sql"select min(id) as mi, max(id) as ma from learningpaths".map(rs => {
+        (rs.long("mi"),rs.long("ma"))
+      }).single().apply() match {
+        case Some(minmax) => minmax
+        case None => (0L,0L)
+      }
     }
   }
 

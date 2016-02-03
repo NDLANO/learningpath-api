@@ -24,6 +24,15 @@ object LearningpathApiProperties extends LazyLogging {
   val MetaMaxConnections = getInt("DB_MAX_CONNECTIONS")
   val MetaSchema = get("DB_SCHEMA")
 
+  val SearchHost = "search-engine"
+  val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
+  var SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
+  val SearchIndex = get("SEARCH_INDEX")
+  val SearchDocument = get("SEARCH_DOCUMENT")
+  val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
+  val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
+  val IndexBulkSize = getInt("INDEX_BULK_SIZE")
+
   val Published = "PUBLISHED"
   val Private = "PRIVATE"
   val External = "EXTERNAL"

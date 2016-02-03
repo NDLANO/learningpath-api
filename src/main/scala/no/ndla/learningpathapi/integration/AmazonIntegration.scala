@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.integration
 
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.business.LearningpathData
+import no.ndla.learningpathapi.business.{LearningPathIndex, LearningpathData}
 import org.postgresql.ds.PGPoolingDataSource
 
 
@@ -21,4 +21,10 @@ object AmazonIntegration {
     new PostgresData(datasource)
   }
 
+  def getLearningPathIndex(): LearningPathIndex = {
+    new ElasticLearningPathIndex(
+      LearningpathApiProperties.SearchClusterName,
+      LearningpathApiProperties.SearchHost,
+      LearningpathApiProperties.SearchPort)
+  }
 }
