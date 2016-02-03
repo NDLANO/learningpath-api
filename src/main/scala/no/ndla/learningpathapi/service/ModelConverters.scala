@@ -71,7 +71,17 @@ object ModelConverters {
       Author("Forfatter", "TODO: Hent fra Auth"))
   }
 
-
+  def asApiLearningPathSummary(learningPath: no.ndla.learningpathapi.LearningPath): no.ndla.learningpathapi.LearningPathSummary = {
+    LearningPathSummary(learningPath.id,
+      learningPath.title,
+      learningPath.description,
+      createUrlToLearningPath(learningPath),
+      learningPath.coverPhotoUrl,
+      learningPath.duration,
+      learningPath.status,
+      learningPath.lastUpdated,
+      learningPath.author)
+  }
 
   def asApiLearningStep(ls: LearningStep, lp: LearningPath): learningpathapi.LearningStep = {
     no.ndla.learningpathapi.LearningStep(
@@ -108,6 +118,13 @@ object ModelConverters {
     lp.isPrivate match {
       case true => s"${ApplicationUrl.get}private/${lp.id.get}"
       case false => s"${ApplicationUrl.get}${lp.id.get}"
+    }
+  }
+
+  def createUrlToLearningPath(lp: no.ndla.learningpathapi.LearningPath): String = {
+    lp.isPrivate match {
+      case true => s"${ApplicationUrl.get}private/${lp.id}"
+      case false => s"${ApplicationUrl.get}${lp.id}"
     }
   }
 }

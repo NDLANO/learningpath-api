@@ -23,7 +23,11 @@ case class LearningPath(
   @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
   @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags:List[LearningPathTag],
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author
-)
+) {
+  def isPrivate: Boolean = {
+    status == LearningpathApiProperties.Private
+  }
+}
 
 @ApiModel(description = "Meta information for a new learningpath")
 case class NewLearningPath(

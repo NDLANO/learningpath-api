@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.integration.AmazonIntegration
 import no.ndla.learningpathapi.model.{AccessDeniedException, ValidationException, Error, HeaderMissingException}
 import no.ndla.learningpathapi.service.LearningpathService
 import no.ndla.logging.LoggerContext
@@ -14,6 +15,8 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
+
+import scala.util.Try
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
@@ -177,10 +180,25 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   val service = new LearningpathService()
+  val search = AmazonIntegration.getLearningPathSearch()
 
 
   get("/", operation(getLearningpaths)) {
-    service.all()
+    val query = params.get("query")
+    val language = params.get("language")
+    val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
+    val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
+    logger.info("GET / with params query='{}', language={}, page={}, page-size={}", query, language, page, pageSize)
+
+    query match {
+      case Some(q) => search.matchingQuery(
+        query = q.toLowerCase().split(" ").map(_.trim),
+        language = language,
+        page = page,
+        pageSize = pageSize
+      )
+      case None => search.all(page = page, pageSize = pageSize)
+    }
   }
 
   get("/:path_id/?", operation(getLearningpath)) {
