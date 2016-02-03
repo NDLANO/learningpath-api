@@ -39,6 +39,8 @@ object LearningpathApiProperties extends LazyLogging {
   val CreatedByNDLA = "CREATED_BY_NDLA"
   val VerifiedByNDLA = "VERIFIED_BY_NDLA"
 
+  val DefaultLanguage = "nb"
+
   val UsernameHeader = "X-Consumer-Username"
 
   def verify() = {

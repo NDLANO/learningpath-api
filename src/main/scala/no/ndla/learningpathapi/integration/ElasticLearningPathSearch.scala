@@ -6,9 +6,11 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.{LearningPathSearch, SearchIndexer}
 import no.ndla.learningpathapi.service.ModelConverters.asApiLearningPathSummary
+import no.ndla.learningpathapi.model.Sort
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
+import org.elasticsearch.search.sort.{SortBuilder, SortOrder}
 import org.elasticsearch.transport.RemoteTransportException
 import org.json4s.native.Serialization.read
 
@@ -28,13 +30,12 @@ class ElasticLearningPathSearch(clusterName: String, clusterHost: String, cluste
     }
   }
 
-  override def all(page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
+  override def all(sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
     val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument
-    theSearch.sort(field sort "id")
-    executeSearch(theSearch, page, pageSize)
+    executeSearch(theSearch, sort, language, page, pageSize)
   }
 
-  override def matchingQuery(query: Iterable[String], language: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
+  override def matchingQuery(query: Iterable[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
     val titleSearch = new ListBuffer[QueryDefinition]
     titleSearch += matchQuery("title.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("title.language", lang))
@@ -70,16 +71,41 @@ class ElasticLearningPathSearch(clusterName: String, clusterHost: String, cluste
         )
       }
     }
-    theSearch.sort(field sort "id")
-    executeSearch(theSearch, page, pageSize)
+
+    executeSearch(theSearch, sort, language, page, pageSize)
   }
 
-  def executeSearch(search: SearchDefinition, page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
+  def getSortDefinition(sort: Sort.Value, language: Option[String]): SortDefinition = {
+    val sortingLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
+
+    sort match {
+      case (Sort.ByDurationAsc) => fieldSort("duration").order(SortOrder.ASC).missing("_last")
+      case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
+      case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+      case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
+      case (Sort.ByTitleAsc) => fieldSort("title.title.raw").nestedPath("title").nestedFilter(termFilter("title.language", sortingLanguage)).order(SortOrder.ASC).missing("_last")
+      case (Sort.ByTitleDesc) => fieldSort("title.title.raw").nestedPath("title").nestedFilter(termFilter("title.language", sortingLanguage)).order(SortOrder.DESC).missing("_last")
+      case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
+      case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
+    }
+  }
+
+  def executeSearch(search: SearchDefinition, sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
     val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
     try {
-      client.execute {
-        search start startAt limit numResults
-      }.await.as[LearningPathSummary]
+
+      search.sort(getSortDefinition(sort, language))
+
+      val actualSearch = search start startAt limit numResults
+      logger.info(actualSearch.show)
+      val response = client.execute {
+        actualSearch
+      }.await
+
+      logger.info("\nRESPONSE:")
+      logger.info(response.toString)
+
+      response.as[LearningPathSummary]
     } catch {
       case e: RemoteTransportException => errorHandler(e.getCause)
     }

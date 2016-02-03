@@ -96,7 +96,7 @@ class ElasticLearningPathIndex(clusterName: String, clusterHost: String, cluster
         LearningpathApiProperties.SearchDocument as(
           "id" typed IntegerType,
           "title" typed NestedType as(
-            "title" typed StringType,
+            "title" typed StringType fields("raw" typed StringType index "not_analyzed"),
             "language" typed StringType index "not_analyzed"),
           "description" typed NestedType as(
             "description" typed StringType,

@@ -4,9 +4,9 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.{LearningPath, LearningStep, _}
 import no.ndla.learningpathapi.integration.AmazonIntegration
-import no.ndla.learningpathapi.model.{AccessDeniedException, ValidationException, Error, HeaderMissingException}
+import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.service.LearningpathService
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
@@ -34,7 +34,11 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
       queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
       queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page."),
-      queryParam[Option[String]]("sort").description("The sorting used on results. Default is by -relevance (desc) and title (asc). The following are supported: lastUpdated, -lastUpdated, duration, -duration, title, -title")
+      queryParam[Option[String]]("sort").description(
+        """The sorting used on results.
+           Default is by -relevance (desc) when querying.
+           When browsing, the default is title (asc).
+           The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title""".stripMargin)
       )
       )
 
@@ -187,18 +191,21 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   get("/", operation(getLearningpaths)) {
     val query = params.get("query")
     val language = params.get("language")
+    val sort = params.get("sort")
     val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
     val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
     logger.info("GET / with params query='{}', language={}, page={}, page-size={}", query, language, page, pageSize)
+
 
     query match {
       case Some(q) => search.matchingQuery(
         query = q.toLowerCase().split(" ").map(_.trim),
         language = language,
+        sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
         page = page,
         pageSize = pageSize
       )
-      case None => search.all(page = page, pageSize = pageSize)
+      case None => search.all(sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc), language = language, page = page, pageSize = pageSize)
     }
   }
 
