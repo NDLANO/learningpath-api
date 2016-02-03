@@ -13,43 +13,56 @@ object TestdataUploader {
     // KES
     LearningPath(Some(1),
     List(
-      Title("Kenneths public bokmål", Some("nb")),
-      Title("Kenneths public nynorsk", Some("nn")),
-      Title("Kenneths public engelsk", Some("en"))),
+      Title("Abap er et artig programmeringsspråk", Some("nb")),
+      Title("Accent er et artig programmeringsspråk", Some("nn")),
+      Title("Agda er et artig programmeringsspråk", Some("en"))),
     List(
-      Description("Kurset dekker innføring og vil gi deg grunnleggende forståelse for vanlige begrep i kunst og kultur verden. Kurset fokuserer på kunst og kultur på et verdensperspektiv.", Some("nb")),
-      Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
-      Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
+      Description("Kurset dekker språket Alice.", Some("nb")),
+      Description("Kurset dekker språket Argus.", Some("nn")),
+      Description("The course covers the language Ada.", Some("en"))),
     Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
     1080,
     LearningpathApiProperties.Published,
     LearningpathApiProperties.CreatedByNDLA,
     new Date(),
-    List(LearningPathTag("kenneth", Some("nb"))),
+    List(LearningPathTag("ActionScript", Some("nb")), LearningPathTag("Adenine", Some("nn")), LearningPathTag("Autocoder", Some("en"))),
     "e646b7f6-60ce-4364-9e77-2a88754b95db", List(
-        LearningStep(Some(1), Some(1), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
-        LearningStep(Some(2), Some(1), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")))),
+        LearningStep(
+          Some(1), Some(1), 1,
+          List(Title("Læringssteg om Alef", Some("nb")), Title("Læringssteg om Able", Some("nn")), Title("Læringssteg om Absys", Some("en"))),
+          List(Description("Læringssteg om Agora", Some("nb")), Description("Læringssteg om Ambienttalk", Some("nn")), Description("Læringssteg om Arexx", Some("en"))),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
+        LearningStep(Some(2), Some(1), 2,
+          List(Title("Læringssteg om Amos", Some("nb")), Title("Læringssteg om Babbage", Some("nn")), Title("Læringssteg om Bash", Some("en"))),
+          List(Description("Læringssteg om Agilent", Some("nb")), Description("Læringssteg om Basic", Some("nn")), Description("Læringssteg om BeanShell", Some("en"))),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")))),
 
     // KES
     LearningPath(Some(2),
       List(
-        Title("Kenneths private bokmål", Some("nb")),
-        Title("Kenneths private nynorsk", Some("nn")),
-        Title("Kenneths private english", Some("en"))),
+        Title("Bertrand er et artig programmeringsspråk", Some("nb")),
+        Title("Beta er et artig programmeringsspråk", Some("nn")),
+        Title("Bigwig er et artig programmeringsspråk", Some("en"))),
       List(
-        Description("Kurset dekker innføring og vil gi deg grunnleggende forståelse for vanlige begrep i kunst og kultur verden. Kurset fokuserer på kunst og kultur på et verdensperspektiv.", Some("nb")),
-        Description("Kurset dekker innføring og vil gje deg grunnleggjande forståing for vanlege omgrep i kunst og kultur verda. Kurset fokuserer på kunst og kultur på eit verdsperspektiv.", Some("nn")),
-        Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
+        Description("Kurset dekker språket Bistro.", Some("nb")),
+        Description("Kurset dekker språket Bliss.", Some("nn")),
+        Description("The course covers the language Blue.", Some("en"))),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
-      LearningpathApiProperties.Private,
-      LearningpathApiProperties.VerifiedByNDLA,
+      LearningpathApiProperties.Published,
+      LearningpathApiProperties.CreatedByNDLA,
       new Date(),
-      List(LearningPathTag("kenneth", Some("nb"))),
-      "e646b7f6-60ce-4364-9e77-2a88754b95db",
-      List(
-        LearningStep(Some(3), Some(2), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
-        LearningStep(Some(4), Some(2), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None))),
+      List(LearningPathTag("Boomerang", Some("nb")), LearningPathTag("Brew", Some("nn")), LearningPathTag("Bpel", Some("en"))),
+      "e646b7f6-60ce-4364-9e77-2a88754b95db", List(
+        LearningStep(
+          Some(3), Some(2), 1,
+          List(Title("Læringssteg om Caml", Some("nb")), Title("Læringssteg om Chef", Some("nn")), Title("Læringssteg om Chill", Some("en"))),
+          List(Description("Læringssteg om Chuck", Some("nb")), Description("Læringssteg om Citrine", Some("nn")), Description("Læringssteg om Clean", Some("en"))),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
+        LearningStep(Some(4), Some(2), 2,
+          List(Title("Læringssteg om Clipper", Some("nb")), Title("Læringssteg om Clojure", Some("nn")), Title("Læringssteg om Cobol", Some("en"))),
+          List(Description("Læringssteg om Cobra", Some("nb")), Description("Læringssteg om CoffeScript", Some("nn")), Description("Læringssteg om Coldfusion", Some("en"))),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")))),
 
     // RST
     LearningPath(Some(3),
