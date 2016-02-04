@@ -57,17 +57,20 @@ class LearningpathService {
     withIdInternal(id, Some(owner)) match {
       case None => None
       case Some(existing) => {
-        val learningPath = model.LearningPath(
-          existing.id,
-          newLearningPath.title.map(asTitle),
-          newLearningPath.description.map(asDescription),
-          newLearningPath.coverPhotoUrl,
-          newLearningPath.duration,
-          existing.status,
-          existing.verificationStatus,
-          new Date(), newLearningPath.tags.map(asLearningPathTag), owner, existing.learningsteps)
+        val toUpdate = existing.copy(
+          title = newLearningPath.title.map(asTitle),
+          description = newLearningPath.description.map(asDescription),
+          coverPhotoUrl = newLearningPath.coverPhotoUrl,
+          duration = newLearningPath.duration,
+          tags = newLearningPath.tags.map(asLearningPathTag),
+          lastUpdated = new Date())
 
-        Some(asApiLearningpath(learningpathData.update(learningPath)))
+        val updatedLearningPath = learningpathData.update(toUpdate)
+        if(updatedLearningPath.isPublished) {
+          searchIndex.indexLearningPath(updatedLearningPath)
+        }
+
+        Some(asApiLearningpath(updatedLearningPath))
       }
     }
   }
@@ -98,6 +101,7 @@ class LearningpathService {
       case None => false
       case Some(existing) => {
         learningpathData.delete(learningPathId)
+        searchIndex.deleteLearningPath(existing)
         true
       }
     }
@@ -122,9 +126,16 @@ class LearningpathService {
           newLearningStep.`type`,
           newLearningStep.license)
 
-        val inserted = learningpathData.insertLearningStep(newStep)
-        val updated = learningpathData.update(learningPath.copy(lastUpdated = new Date()))
-        Some(asApiLearningStep(inserted, updated))
+        val insertedStep = learningpathData.insertLearningStep(newStep)
+        val updatedPath = learningpathData.update(learningPath.copy(
+          learningsteps = learningPath.learningsteps :+ insertedStep,
+          lastUpdated = new Date()))
+
+        if(updatedPath.isPublished){
+          searchIndex.indexLearningPath(updatedPath)
+        }
+
+        Some(asApiLearningStep(insertedStep, updatedPath))
       }
     }
   }
@@ -144,7 +155,14 @@ class LearningpathService {
               license = newLearningStep.license)
 
             val updatedStep = learningpathData.updateLearningStep(toUpdate)
-            val updatedPath = learningpathData.update(learningPath.copy(lastUpdated = new Date()))
+            val updatedPath = learningpathData.update(learningPath.copy(
+              learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
+              lastUpdated = new Date()))
+
+            if(updatedPath.isPublished) {
+              searchIndex.indexLearningPath(updatedPath)
+            }
+
             Some(asApiLearningStep(updatedStep, updatedPath))
           }
         }
@@ -157,7 +175,14 @@ class LearningpathService {
       case None => false
       case Some(existing) => {
         learningpathData.deleteLearningStep(learningStepId)
-        learningpathData.update(existing.copy(lastUpdated = new Date()))
+        val updatedPath = learningpathData.update(existing.copy(
+          learningsteps = existing.learningsteps.filterNot(_.id.get == learningStepId),
+          lastUpdated = new Date()))
+
+        if(updatedPath.isPublished) {
+          searchIndex.indexLearningPath(updatedPath)
+        }
+
         true
       }
     }

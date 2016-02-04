@@ -97,13 +97,9 @@ class ElasticLearningPathSearch(clusterName: String, clusterHost: String, cluste
       search.sort(getSortDefinition(sort, language))
 
       val actualSearch = search start startAt limit numResults
-      logger.info(actualSearch.show)
       val response = client.execute {
         actualSearch
       }.await
-
-      logger.info("\nRESPONSE:")
-      logger.info(response.toString)
 
       response.as[LearningPathSummary]
     } catch {
