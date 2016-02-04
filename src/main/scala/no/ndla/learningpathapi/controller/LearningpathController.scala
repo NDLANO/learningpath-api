@@ -216,10 +216,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   get ("/private/:path_id/?", operation(getLearningpath)){
-    val pathId = long("path_id")
-    service.withId(pathId, owner = Some(usernameFromHeader)) match {
+    service.withId(long("path_id"), owner = Some(usernameFromHeader)) match {
       case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
@@ -238,11 +237,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   get("/private/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-    val pathId = long("path_id")
-    val stepId = long("step_id")
-    service.learningstepFor(pathId, stepId, owner = Some(usernameFromHeader)) match {
+    service.learningstepFor(long("path_id"), long("step_id"), owner = Some(usernameFromHeader)) match {
       case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
     }
   }
 
@@ -275,17 +272,14 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   put("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
-    val pathId = long("path_id")
-    val stepId = long("step_id")
-
-    val createdLearningStep = service.updateLearningStep(pathId, stepId,
+    val createdLearningStep = service.updateLearningStep(long("path_id"), long("step_id"),
       read[NewLearningStep](request.body),
       usernameFromHeader)
 
     createdLearningStep match {
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
       case Some(learningStep) => {
-        logger.info(s"UPDATED LearningStep with ID = $stepId for LearningPath with ID = $pathId")
+        logger.info(s"UPDATED LearningStep with ID = ${params("step_id")} for LearningPath with ID = ${params("path_id")}")
         Ok(body = learningStep)
       }
     }
@@ -307,26 +301,22 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   delete("/:path_id/?", operation(deleteLearningPath)) {
-    val pathId = long("path_id")
-    val deleted = service.deleteLearningPath(pathId, usernameFromHeader)
+    val deleted = service.deleteLearningPath(long("path_id"), usernameFromHeader)
     deleted match {
-      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       case true => {
-        logger.info(s"DELETED LearningPath with ID: $pathId")
+        logger.info(s"DELETED LearningPath with ID: ${params("path_id")}")
         halt(status = 204)
       }
     }
   }
 
   delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-    val pathId = long("path_id")
-    val stepId = long("step_id")
-    val deleted = service.deleteLearningStep(pathId, stepId, usernameFromHeader)
-
+    val deleted = service.deleteLearningStep(long("path_id"), long("step_id"), usernameFromHeader)
     deleted match {
-      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+      case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
       case true => {
-        logger.info(s"DELETED LearningStep with id: $stepId for LearningPath with id: $pathId")
+        logger.info(s"DELETED LearningStep with id: ${params("step_id")} for LearningPath with id: ${params("path_id")}")
         halt(status = 204)
       }
     }

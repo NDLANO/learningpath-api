@@ -4,13 +4,13 @@ import javax.sql.DataSource
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.model.{JSONSerializers, LearningPath, LearningStep}
+import no.ndla.learningpathapi.model.{LearningPath, LearningStep}
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
 
 class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLogging {
-  implicit val formats = org.json4s.DefaultFormats + JSONSerializers.LearningPathSerializer + JSONSerializers.LearningStepSerializer
+  implicit val formats = org.json4s.DefaultFormats + LearningPath.JSonSerializer + LearningStep.JSonSerializer
 
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 

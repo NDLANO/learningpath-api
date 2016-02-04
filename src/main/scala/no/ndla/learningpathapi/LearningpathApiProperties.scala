@@ -20,9 +20,9 @@ object LearningpathApiProperties extends LazyLogging {
   val MetaResource = get("DB_RESOURCE")
   val MetaServer = get("DB_SERVER")
   val MetaPort = getInt("DB_PORT")
-  val MetaInitialConnections = getInt("DB_INITIAL_CONNECTIONS")
-  val MetaMaxConnections = getInt("DB_MAX_CONNECTIONS")
   val MetaSchema = get("DB_SCHEMA")
+  val MetaInitialConnections = 3
+  val MetaMaxConnections = 20
 
   val Published = "PUBLISHED"
   val Private = "PRIVATE"
