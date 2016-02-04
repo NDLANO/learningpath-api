@@ -10,6 +10,7 @@ import no.ndla.learningpathapi.service.ModelConverters._
 class LearningpathService {
 
   val learningpathData = AmazonIntegration.getLearningpathData()
+  val searchIndex = AmazonIntegration.getLearningPathIndex()
 
   def all(owner:Option[String] = None, status:String = LearningpathApiProperties.Published): List[LearningPathSummary] = {
     owner match {
@@ -76,17 +77,18 @@ class LearningpathService {
     withIdInternal(learningPathId, Some(owner)) match {
       case None => None
       case Some(existing) => {
-        val learningPath = model.LearningPath(
-          existing.id,
-          existing.title,
-          existing.description,
-          existing.coverPhotoUrl,
-          existing.duration,
-          status.status,
-          existing.verificationStatus,
-          new Date(), existing.tags, owner, existing.learningsteps)
+        val updatedLearningPath = learningpathData.update(
+          existing.copy(
+            status = status.status,
+            lastUpdated = new Date()))
 
-        Some(asApiLearningpath(learningpathData.update(learningPath)))
+        updatedLearningPath.isPublished match {
+          case true => searchIndex.indexLearningPath(updatedLearningPath)
+          case false => searchIndex.deleteLearningPath(updatedLearningPath)
+        }
+
+
+        Some(asApiLearningpath(updatedLearningPath))
       }
     }
   }

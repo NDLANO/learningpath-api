@@ -20,8 +20,7 @@ class ElasticLearningPathIndex(clusterName: String, clusterHost: String, cluster
   val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
   val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
 
-
-  override def indexDocuments(learningPaths: List[LearningPath], indexName: String): Int = {
+  override def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
     client.execute {
       bulk(learningPaths.map(learningPath => {
         index into indexName -> LearningpathApiProperties.SearchDocument source write(ModelConverters.asApiLearningpath(learningPath)) id learningPath.id.get
@@ -30,6 +29,49 @@ class ElasticLearningPathIndex(clusterName: String, clusterHost: String, cluster
 
     logger.info(s"Indexed ${learningPaths.size} documents")
     learningPaths.size
+  }
+
+  override def indexLearningPath(learningPath: LearningPath): Unit = {
+    aliasTarget.foreach(indexName => {
+      client.execute {
+        index into indexName -> LearningpathApiProperties.SearchDocument source write(ModelConverters.asApiLearningpath(learningPath)) id learningPath.id.get
+      }.await
+    })
+  }
+
+  override def deleteLearningPath(learningPath: LearningPath): Unit = {
+    aliasTarget.foreach(indexName => {
+      client.execute{
+        delete id learningPath.id.get from indexName / LearningpathApiProperties.SearchDocument
+      }.await
+    })
+  }
+
+  override def createNewIndex(): String = {
+    val indexName = LearningpathApiProperties.SearchIndex + "_" + getTimestamp
+
+    val existsDefinition = client.execute {
+      index exists indexName.toString
+    }.await
+
+    if (!existsDefinition.isExists) {
+      createElasticIndex(indexName)
+    }
+    indexName
+  }
+
+  override def removeIndex(indexName: String): Unit = {
+    val existsDefinition = client.execute {
+      index exists indexName
+    }.await
+
+    if (existsDefinition.isExists) {
+      client.execute {
+        deleteIndex(indexName)
+      }.await
+    } else {
+      throw new IllegalArgumentException(s"No such index: $indexName")
+    }
   }
 
   override def aliasTarget: Option[String] = {
@@ -61,36 +103,7 @@ class ElasticLearningPathIndex(clusterName: String, clusterHost: String, cluster
     }
   }
 
-  override def delete(indexName: String): Unit = {
-    val existsDefinition = client.execute {
-      index exists indexName
-    }.await
-
-    if (existsDefinition.isExists) {
-      client.execute {
-        deleteIndex(indexName)
-      }.await
-    } else {
-      throw new IllegalArgumentException(s"No such index: $indexName")
-    }
-  }
-
-
-  override def create(): String = {
-    val indexName = LearningpathApiProperties.SearchIndex + "_" + getTimestamp
-
-    val existsDefinition = client.execute {
-      index exists indexName.toString
-    }.await
-
-    if (!existsDefinition.isExists) {
-      createElasticIndex(indexName)
-    }
-
-    indexName
-  }
-
-  def createElasticIndex(indexName: String) = {
+  private def createElasticIndex(indexName: String) = {
     client.execute {
       createIndex(indexName) mappings(
         LearningpathApiProperties.SearchDocument as(
@@ -134,7 +147,7 @@ class ElasticLearningPathIndex(clusterName: String, clusterHost: String, cluster
     }.await
   }
 
-  def getTimestamp: String = {
+  private def getTimestamp: String = {
     new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
   }
 }

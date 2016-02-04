@@ -13,7 +13,7 @@ object SearchIndexer extends LazyLogging{
     synchronized {
       val start = System.currentTimeMillis
 
-      val newIndexName = learningPathIndex.create()
+      val newIndexName = learningPathIndex.createNewIndex()
       val oldIndexName = learningPathIndex.aliasTarget
 
       oldIndexName match {
@@ -22,13 +22,13 @@ object SearchIndexer extends LazyLogging{
       }
 
       var numIndexed = 0
-      learningPathData.applyToAllPublic(docs => {
-        numIndexed += learningPathIndex.indexDocuments(docs, newIndexName)
+      learningPathData.applyToAllPublic(learningPaths => {
+        numIndexed += learningPathIndex.indexLearningPaths(learningPaths, newIndexName)
       })
 
       oldIndexName.foreach(indexName => {
         learningPathIndex.updateAliasTarget(oldIndexName, newIndexName)
-        learningPathIndex.delete(indexName)
+        learningPathIndex.removeIndex(indexName)
       })
 
       val result = s"Completed indexing of $numIndexed documents in ${System.currentTimeMillis() - start} ms."
