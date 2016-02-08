@@ -3,11 +3,10 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.integration.AmazonIntegration
+import no.ndla.learningpathapi.business.LearningpathData
 import no.ndla.learningpathapi.service.ModelConverters._
 
-class UpdateService {
-  val learningpathData = AmazonIntegration.getLearningpathData()
+class UpdateService(learningpathData: LearningpathData) {
 
   def addLearningPath(newLearningPath: NewLearningPath, owner:String): LearningPath = {
     val learningPath = model.LearningPath(None,

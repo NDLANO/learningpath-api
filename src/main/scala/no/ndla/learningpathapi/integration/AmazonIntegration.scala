@@ -2,6 +2,7 @@ package no.ndla.learningpathapi.integration
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.business.LearningpathData
+import no.ndla.learningpathapi.service.{UpdateService, PrivateService, PublicService}
 import org.postgresql.ds.PGPoolingDataSource
 
 
@@ -17,7 +18,19 @@ object AmazonIntegration {
   datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
   datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
 
-  def getLearningpathData(): LearningpathData = {
+  def getPublicService(): PublicService = {
+    new PublicService(getLearningpathData())
+  }
+
+  def getPrivateService(): PrivateService = {
+    new PrivateService(getLearningpathData())
+  }
+
+  def getUpdateService(): UpdateService = {
+    new UpdateService(getLearningpathData())
+  }
+
+  private def getLearningpathData(): LearningpathData = {
     new PostgresData(datasource)
   }
 

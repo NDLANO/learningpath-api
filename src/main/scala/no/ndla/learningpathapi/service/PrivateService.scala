@@ -1,11 +1,10 @@
 package no.ndla.learningpathapi.service
 
-import no.ndla.learningpathapi.integration.AmazonIntegration
-import no.ndla.learningpathapi.service.ModelConverters._
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.business.LearningpathData
+import no.ndla.learningpathapi.service.ModelConverters._
 
-class PrivateService {
-  val learningpathData = AmazonIntegration.getLearningpathData()
+class PrivateService(learningpathData: LearningpathData) {
 
   def all(owner: String): List[LearningPathSummary] = {
     learningpathData.withStatusAndOwner(LearningpathApiProperties.Private, owner).map(asApiLearningpathSummary)

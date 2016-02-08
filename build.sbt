@@ -7,7 +7,7 @@ val Scalaversion = "2.11.6"
 val Scalatraversion = "2.3.1"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
-val ScalaTestVersion = "2.2.4"
+val ScalaTestVersion = "2.2.6"
 val MockitoVersion = "1.10.19"
 
 val appProperties = settingKey[Properties]("The application properties")

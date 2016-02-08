@@ -1,11 +1,10 @@
 package no.ndla.learningpathapi.service
 
-import no.ndla.learningpathapi.integration.AmazonIntegration
-import no.ndla.learningpathapi.service.ModelConverters._
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.business.LearningpathData
+import no.ndla.learningpathapi.service.ModelConverters._
 
-class PublicService {
-  val learningpathData = AmazonIntegration.getLearningpathData()
+class PublicService(learningpathData: LearningpathData) {
 
   def all(): List[LearningPathSummary] = {
     learningpathData.withStatus(LearningpathApiProperties.Published).map(asApiLearningpathSummary)
@@ -15,7 +14,7 @@ class PublicService {
     withIdAndAccessGranted(learningPathId).map(asApiLearningpath)
   }
 
-  def statusFor(learningPathId: Long, owner:Option[String] = None): Option[LearningPathStatus] = {
+  def statusFor(learningPathId: Long): Option[LearningPathStatus] = {
     withIdAndAccessGranted(learningPathId).map(lp => LearningPathStatus(lp.status))
   }
 

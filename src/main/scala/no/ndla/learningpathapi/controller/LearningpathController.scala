@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.integration.AmazonIntegration
 import no.ndla.learningpathapi.model.{AccessDeniedException, ValidationException, Error, HeaderMissingException}
 import no.ndla.learningpathapi.service.{PublicService, PrivateService, UpdateService}
 import no.ndla.logging.LoggerContext
@@ -177,10 +178,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
-  val publicService = new PublicService()
-  val privateService = new PrivateService()
-  val updateService = new UpdateService()
-
+  val publicService = AmazonIntegration.getPublicService()
+  val privateService = AmazonIntegration.getPrivateService()
+  val updateService = AmazonIntegration.getUpdateService()
 
   get("/", operation(getLearningpaths)) {
     publicService.all()
