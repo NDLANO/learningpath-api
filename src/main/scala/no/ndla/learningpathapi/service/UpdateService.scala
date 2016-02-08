@@ -121,10 +121,15 @@ class UpdateService(learningpathData: LearningpathData) {
   def deleteLearningStep(learningPathId: Long, learningStepId: Long, owner: String): Boolean = {
     withIdAndAccessGranted(learningPathId, owner) match {
       case None => false
-      case Some(existing) => {
-        learningpathData.deleteLearningStep(learningStepId)
-        learningpathData.update(existing.copy(lastUpdated = new Date()))
-        true
+      case Some(learningPath) => {
+        learningpathData.learningStepWithId(learningPathId, learningStepId) match {
+          case None => false
+          case Some(existing) => {
+            learningpathData.deleteLearningStep(learningStepId)
+            learningpathData.update(learningPath.copy(lastUpdated = new Date()))
+            true
+          }
+        }
       }
     }
   }
