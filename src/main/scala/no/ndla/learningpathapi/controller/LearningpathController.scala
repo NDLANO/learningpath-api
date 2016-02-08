@@ -10,13 +10,14 @@ import no.ndla.learningpathapi.service.{PublicService, PrivateService, UpdateSer
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
-  protected implicit override val jsonFormats: Formats = DefaultFormats
+  protected implicit override val jsonFormats: Formats = DefaultFormats + new EnumNameSerializer(Error)
 
 
   protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
