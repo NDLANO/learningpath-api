@@ -4,8 +4,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi.UnitSpec
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.model.{LearningStep, AccessDeniedException, LearningPath}
-import org.mockito.Matchers._
+import no.ndla.learningpathapi.model.{AccessDeniedException, LearningPath, LearningStep}
 import org.mockito.Mockito._
 
 class PublicServiceTest extends UnitSpec {
