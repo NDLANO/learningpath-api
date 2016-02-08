@@ -6,39 +6,8 @@ import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.integration.AmazonIntegration
 import no.ndla.learningpathapi.service.ModelConverters._
 
-
-class LearningpathService {
-
+class UpdateService {
   val learningpathData = AmazonIntegration.getLearningpathData()
-
-  def all(owner:Option[String] = None, status:String = LearningpathApiProperties.Published): List[LearningPathSummary] = {
-    owner match {
-      case None => learningpathData.withStatus(status).map(asApiLearningpathSummary)
-      case Some(o) => learningpathData.withStatusAndOwner(status, o).map(asApiLearningpathSummary)
-    }
-  }
-
-  def withId(learningPathId: Long, owner:Option[String] = None): Option[LearningPath] = {
-    withIdInternal(learningPathId, owner).map(asApiLearningpath)
-  }
-
-  def statusFor(learningPathId: Long, owner:Option[String] = None): Option[LearningPathStatus] = {
-    withId(learningPathId, owner).map(lp => LearningPathStatus(lp.status))
-  }
-
-  def learningstepsFor(learningPathId: Long, owner:Option[String] = None): Option[List[LearningStep]] = {
-    withIdInternal(learningPathId, owner) match {
-      case Some(lp) => Some(learningpathData.learningStepsFor(lp.id.get).map(ls => asApiLearningStep(ls, lp)))
-      case None => None
-    }
-  }
-
-  def learningstepFor(learningPathId: Long, learningstepId: Long, owner:Option[String] = None): Option[LearningStep] = {
-    withIdInternal(learningPathId, owner) match {
-      case Some(lp) => learningpathData.learningStepWithId(learningPathId, learningstepId).map(ls => asApiLearningStep(ls, lp))
-      case None => None
-    }
-  }
 
   def addLearningPath(newLearningPath: NewLearningPath, owner:String): LearningPath = {
     val learningPath = model.LearningPath(None,
@@ -53,7 +22,7 @@ class LearningpathService {
   }
 
   def updateLearningPath(id:Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
-    withIdInternal(id, Some(owner)) match {
+    withIdAndAccessGranted(id, owner) match {
       case None => None
       case Some(existing) => {
         val learningPath = model.LearningPath(
@@ -73,7 +42,7 @@ class LearningpathService {
 
   def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus, owner: String): Option[LearningPath] = {
     status.validate()
-    withIdInternal(learningPathId, Some(owner)) match {
+    withIdAndAccessGranted(learningPathId, owner) match {
       case None => None
       case Some(existing) => {
         val learningPath = model.LearningPath(
@@ -92,7 +61,7 @@ class LearningpathService {
   }
 
   def deleteLearningPath(learningPathId: Long, owner: String): Boolean = {
-    withIdInternal(learningPathId, Some(owner)) match {
+    withIdAndAccessGranted(learningPathId, owner) match {
       case None => false
       case Some(existing) => {
         learningpathData.delete(learningPathId)
@@ -102,7 +71,7 @@ class LearningpathService {
   }
 
   def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
-    withIdInternal(learningPathId, Some(owner)) match {
+    withIdAndAccessGranted(learningPathId, owner) match {
       case None => None
       case Some(learningPath) => {
         val newSeqNo = learningPath.learningsteps.isEmpty match {
@@ -128,7 +97,7 @@ class LearningpathService {
   }
 
   def updateLearningStep(learningPathId: Long, learningStepId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
-    withIdInternal(learningPathId, Some(owner)) match {
+    withIdAndAccessGranted(learningPathId, owner) match {
       case None => None
       case Some(learningPath) => {
         learningpathData.learningStepWithId(learningPathId, learningStepId) match {
@@ -151,7 +120,7 @@ class LearningpathService {
   }
 
   def deleteLearningStep(learningPathId: Long, learningStepId: Long, owner: String): Boolean = {
-    withIdInternal(learningPathId, Some(owner)) match {
+    withIdAndAccessGranted(learningPathId, owner) match {
       case None => false
       case Some(existing) => {
         learningpathData.deleteLearningStep(learningStepId)
@@ -161,9 +130,9 @@ class LearningpathService {
     }
   }
 
-  private def withIdInternal(learningPathId: Long, owner:Option[String] = None): Option[model.LearningPath] = {
+  private def withIdAndAccessGranted(learningPathId: Long, owner:String): Option[model.LearningPath] = {
     val learningPath = learningpathData.withId(learningPathId)
-    learningPath.foreach(_.verifyAccess(owner))
+    learningPath.foreach(_.verifyOwner(owner))
     learningPath
   }
 }

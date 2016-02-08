@@ -19,13 +19,14 @@ case class LearningPath(id: Option[Long], title: List[Title], description: List[
     status == LearningpathApiProperties.Published
   }
 
-  def verifyAccess(loggedInUser: Option[String]) = {
-    val accessGranted = loggedInUser match {
-      case None => isPublished
-      case Some(user) => isPublished || user == owner
+  def verifyOwner(loggedInUser: String) = {
+    if (loggedInUser != owner) {
+      throw new AccessDeniedException("You do not have access to the requested resource.")
     }
+  }
 
-    if (!accessGranted) {
+  def verifyPublic = {
+    if(isPrivate){
       throw new AccessDeniedException("You do not have access to the requested resource.")
     }
   }
