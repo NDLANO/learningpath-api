@@ -34,7 +34,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       queryParam[Option[String]]("query").description("Return only Learningpaths's with content matching the specified query."),
       queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
       queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
-      queryParam[Option[Int]]("page-size").description("The number of search hits to display for each page."),
+      queryParam[Option[Int]]("page-size").description(s"The number of search hits to display for each page. Default is ${LearningpathApiProperties.DefaultPageSize}. Max page-size is ${LearningpathApiProperties.MaxPageSize}"),
       queryParam[Option[String]]("sort").description(
         """The sorting used on results.
            Default is by -relevance (desc) when querying.
