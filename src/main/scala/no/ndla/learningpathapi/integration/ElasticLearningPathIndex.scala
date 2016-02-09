@@ -14,11 +14,8 @@ import no.ndla.learningpathapi.service.ModelConverters
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.json4s.native.Serialization._
 
-class ElasticLearningPathIndex(clusterName: String, clusterHost: String, clusterPort: String) extends LearningPathIndex with LazyLogging {
+class ElasticLearningPathIndex(client: ElasticClient) extends LearningPathIndex with LazyLogging {
   implicit val formats = org.json4s.DefaultFormats
-
-  val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
-  val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
 
   override def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
     client.execute {

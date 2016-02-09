@@ -5,12 +5,11 @@ import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.{LearningPathSearch, SearchIndexer}
-import no.ndla.learningpathapi.service.ModelConverters.asApiLearningPathSummary
 import no.ndla.learningpathapi.model.Sort
-import org.elasticsearch.common.settings.ImmutableSettings
+import no.ndla.learningpathapi.service.ModelConverters.asApiLearningPathSummary
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
-import org.elasticsearch.search.sort.{SortBuilder, SortOrder}
+import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.transport.RemoteTransportException
 import org.json4s.native.Serialization.read
 
@@ -18,10 +17,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ElasticLearningPathSearch(clusterName: String, clusterHost: String, clusterPort: String) extends LearningPathSearch with LazyLogging {
-
-  val settings = ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()
-  val client = ElasticClient.remote(settings, ElasticsearchClientUri(s"elasticsearch://$clusterHost:$clusterPort"))
+class ElasticLearningPathSearch(client: ElasticClient) extends LearningPathSearch with LazyLogging {
 
   implicit object ContentHitAs extends HitAs[LearningPathSummary] {
     override def as(hit: RichSearchHit): LearningPathSummary = {

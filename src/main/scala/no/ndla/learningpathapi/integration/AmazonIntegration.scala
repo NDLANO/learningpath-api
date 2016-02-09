@@ -1,8 +1,10 @@
 package no.ndla.learningpathapi.integration
 
+import com.sksamuel.elastic4s.{ElasticsearchClientUri, ElasticClient}
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.business.{LearningPathSearch, LearningPathIndex, LearningpathData}
 import no.ndla.learningpathapi.service.{UpdateService, PrivateService, PublicService}
+import org.elasticsearch.common.settings.ImmutableSettings
 import org.postgresql.ds.PGPoolingDataSource
 
 
@@ -36,16 +38,16 @@ object AmazonIntegration {
   }
 
   def getLearningPathIndex(): LearningPathIndex = {
-    new ElasticLearningPathIndex(
-      LearningpathApiProperties.SearchClusterName,
-      LearningpathApiProperties.SearchHost,
-      LearningpathApiProperties.SearchPort)
+    new ElasticLearningPathIndex(createElasticClient)
   }
 
   def getLearningPathSearch(): LearningPathSearch = {
-    new ElasticLearningPathSearch(
-      LearningpathApiProperties.SearchClusterName,
-      LearningpathApiProperties.SearchHost,
-      LearningpathApiProperties.SearchPort)
+    new ElasticLearningPathSearch(createElasticClient)
+  }
+
+  private def createElasticClient: ElasticClient = {
+    ElasticClient.remote(
+      ImmutableSettings.settingsBuilder().put("cluster.name", LearningpathApiProperties.SearchClusterName).build(),
+      ElasticsearchClientUri(s"elasticsearch://${LearningpathApiProperties.SearchHost}:${LearningpathApiProperties.SearchPort}"))
   }
 }
