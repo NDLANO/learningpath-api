@@ -25,9 +25,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
   val getLearningpaths =
-    (apiOperation[List[LearningPathSummary]]("getLearningpaths")
-      summary "Show all public learningpaths"
-      notes "Shows all the public learningpaths."
+    (apiOperation[SearchResult]("getLearningpaths")
+      summary "Show public learningpaths"
+      notes "Shows public learningpaths."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
@@ -40,6 +40,15 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
            Default is by -relevance (desc) when querying.
            When browsing, the default is title (asc).
            The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title""".stripMargin)
+      )
+      )
+  val getPrivateLearningpaths =
+    (apiOperation[List[LearningPathSummary]]("getPrivateLearningpaths")
+      summary "Show your private learningpaths"
+      notes "Shows your private learningpaths."
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      headerParam[Option[String]]("app-key").description("Your app-key.")
       )
       )
 
@@ -239,7 +248,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
-  get("/private/?", operation(getLearningpaths)) {
+  get("/private/?", operation(getPrivateLearningpaths)) {
     privateService.all(owner = usernameFromHeader)
   }
 

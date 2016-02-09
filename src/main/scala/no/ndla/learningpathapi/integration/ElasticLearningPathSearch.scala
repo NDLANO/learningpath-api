@@ -30,12 +30,12 @@ class ElasticLearningPathSearch(clusterName: String, clusterHost: String, cluste
     }
   }
 
-  override def all(sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
+  override def all(sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
     val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument
     executeSearch(theSearch, sort, language, page, pageSize)
   }
 
-  override def matchingQuery(query: Iterable[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
+  override def matchingQuery(query: Iterable[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
     val titleSearch = new ListBuffer[QueryDefinition]
     titleSearch += matchQuery("title.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
     language.foreach(lang => titleSearch += termQuery("title.language", lang))
@@ -90,7 +90,7 @@ class ElasticLearningPathSearch(clusterName: String, clusterHost: String, cluste
     }
   }
 
-  def executeSearch(search: SearchDefinition, sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): Iterable[LearningPathSummary] = {
+  def executeSearch(search: SearchDefinition, sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
     val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
     try {
 
@@ -101,7 +101,7 @@ class ElasticLearningPathSearch(clusterName: String, clusterHost: String, cluste
         actualSearch
       }.await
 
-      response.as[LearningPathSummary]
+      SearchResult(response.getHits.getTotalHits, page.getOrElse(1), numResults, response.as[LearningPathSummary])
     } catch {
       case e: RemoteTransportException => errorHandler(e.getCause)
     }
