@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.batch
 
 import java.util.Date
 
-import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.{PropertiesLoader, LearningpathApiProperties}
 import no.ndla.learningpathapi.integration.{PostgresData, AmazonIntegration}
 import no.ndla.learningpathapi.model._
 import org.postgresql.ds.PGPoolingDataSource
@@ -150,6 +150,8 @@ object TestdataUploader {
 
 
   def main(args: Array[String]) {
+    PropertiesLoader.load()
+
     val datasource = new PGPoolingDataSource()
     datasource.setUser(LearningpathApiProperties.MetaUserName)
     datasource.setPassword(LearningpathApiProperties.MetaPassword)
