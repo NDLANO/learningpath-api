@@ -55,7 +55,7 @@ object ModelConverters {
       lp.verificationStatus,
       lp.lastUpdated,
       lp.tags.map(asApiLearningPathTag),
-      Author("Forfatter", "TODO: Hent fra Auth"))
+      Author("Forfatter", "Not yet implemented∫")) // TODO: Hent navn fra auth, basert på owner
   }
 
 
@@ -68,7 +68,7 @@ object ModelConverters {
       learningpath.duration,
       learningpath.status,
       learningpath.lastUpdated,
-      Author("Forfatter", "TODO: Hent fra Auth"))
+      Author("Forfatter", "Not yet implemented")) // TODO: Hent navn fra auth, basert på owner
   }
 
   def asApiLearningPathSummary(learningPath: no.ndla.learningpathapi.LearningPath): no.ndla.learningpathapi.LearningPathSummary = {

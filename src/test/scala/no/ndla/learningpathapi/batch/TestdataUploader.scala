@@ -3,8 +3,9 @@ package no.ndla.learningpathapi.batch
 import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.integration.AmazonIntegration
+import no.ndla.learningpathapi.integration.{PostgresData, AmazonIntegration}
 import no.ndla.learningpathapi.model._
+import org.postgresql.ds.PGPoolingDataSource
 
 
 object TestdataUploader {
@@ -149,7 +150,17 @@ object TestdataUploader {
 
 
   def main(args: Array[String]) {
-    val learningpathData = AmazonIntegration.getLearningpathData()
+    val datasource = new PGPoolingDataSource()
+    datasource.setUser(LearningpathApiProperties.MetaUserName)
+    datasource.setPassword(LearningpathApiProperties.MetaPassword)
+    datasource.setDatabaseName(LearningpathApiProperties.MetaResource)
+    datasource.setServerName(LearningpathApiProperties.MetaServer)
+    datasource.setPortNumber(LearningpathApiProperties.MetaPort)
+    datasource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
+    datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
+    datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
+
+    val learningpathData = new PostgresData(datasource)
 
     learningPaths.foreach(learningpath => {
       learningpathData.exists(learningpath.id.get) match {

@@ -11,7 +11,7 @@ object JettyLauncher extends LazyLogging {
   def main(args: Array[String]) {
     logger.info(Source.fromInputStream(getClass.getResourceAsStream("/log-license.txt")).mkString)
 
-    LearningpathApiProperties.verify()
+    PropertiesLoader.load()
 
     val startMillis = System.currentTimeMillis
     val port = LearningpathApiProperties.ApplicationPort
