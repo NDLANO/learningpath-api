@@ -2,12 +2,12 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
-import no.ndla.learningpathapi.UnitSpec
+import no.ndla.learningpathapi.UnitSuite
 import no.ndla.learningpathapi.business.LearningpathData
 import no.ndla.learningpathapi.model.{LearningStep, LearningPath, AccessDeniedException}
 import org.mockito.Mockito._
 
-class PrivateServiceTest extends UnitSpec {
+class PrivateServiceTest extends UnitSuite {
 
   var learningPathDataMock: LearningpathData = _
   var privateService: PrivateService = _
@@ -29,14 +29,14 @@ class PrivateServiceTest extends UnitSpec {
     privateService = new PrivateService(learningPathDataMock)
   }
 
-  "PrivateService.withId" should "return None when id does not exist" in {
+  test("That withId returns None when id does not exist") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(None)
     assertResult(None) {
       privateService.withId(PRIVATE_ID, PRIVATE_OWNER)
     }
   }
 
-  it should "return a learningPath when the the given user is the owner. Regardless of status" in {
+  test("That withId returns a learningPath when the the given user is the owner. Regardless of status") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     assertResult(PRIVATE_ID) {
@@ -47,21 +47,21 @@ class PrivateServiceTest extends UnitSpec {
     }
   }
 
-  it should "throw an AccessDeniedException when the given user is NOT the owner" in {
+  test("That withId throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] { privateService.withId(PRIVATE_ID, PUBLISHED_OWNER) }.getMessage
     }
   }
 
-  "PrivateService.statusFor" should "return None when id does not exist" in {
+  test("That statusFor returns None when id does not exist") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(None)
     assertResult(None) {
       privateService.statusFor(PRIVATE_ID, PRIVATE_OWNER)
     }
   }
 
-  it should "return a LearningPathStatus when the given user is the owner. Regardless of status" in {
+  test("That statusFor returns a LearningPathStatus when the given user is the owner. Regardless of status") {
     when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("PUBLISHED") {
@@ -72,21 +72,21 @@ class PrivateServiceTest extends UnitSpec {
     }
   }
 
-  it should "throw an AccessDeniedException when the given user is NOT the owner" in {
+  test("That statusFor throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { privateService.withId(PRIVATE_ID, PUBLISHED_OWNER) }.getMessage
+      intercept[AccessDeniedException] { privateService.statusFor(PRIVATE_ID, PUBLISHED_OWNER) }.getMessage
     }
   }
 
-  "PrivateService.learningstepsFor" should "return None when the learningPath does not exist" in {
+  test("That learningstepsFor returns None when the learningPath does not exist") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(None)
     assertResult(None) {
       privateService.learningstepsFor(PRIVATE_ID, PRIVATE_OWNER)
     }
   }
 
-  it should "return an empty list if the learningPath does not have any learningsteps when the given user is the owner. Regardless of status" in {
+  test("That learningStepsFor returns an empty list if the learningPath does not have any learningsteps when the given user is the owner. Regardless of status") {
     when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathDataMock.learningStepsFor(PUBLISHED_ID)).thenReturn(List())
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
@@ -99,7 +99,7 @@ class PrivateServiceTest extends UnitSpec {
     }
   }
 
-  it should "return return all learningsteps for a learningpath when the given user is the owner. Regardless of status" in {
+  test("That learningStepsFor returns all learningsteps for a learningpath when the given user is the owner. Regardless of status") {
     when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathDataMock.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2))
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
@@ -112,21 +112,21 @@ class PrivateServiceTest extends UnitSpec {
     }
   }
 
-  it should "throw an AccessDeniedException when the given user is NOT the owner" in {
+  test("That learningStepsFor throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] { privateService.learningstepsFor(PRIVATE_ID, PUBLISHED_OWNER) }.getMessage
     }
   }
 
-  "PrivateService.learningstepFor" should "return None when the learningPath does not exist" in {
+  test("That learningstepFor returns None when the learningPath does not exist") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(None)
     assertResult(None) {
       privateService.learningstepFor(PRIVATE_ID, STEP1.id.get, PRIVATE_OWNER)
     }
   }
 
-  it should "return None when the learningStep does not exist" in {
+  test("That learningstepFor returns None when the learningStep does not exist") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathDataMock.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(None)
     assertResult(None) {
@@ -134,7 +134,7 @@ class PrivateServiceTest extends UnitSpec {
     }
   }
 
-  it should "return the LearningStep when it exists and the given user is the owner. Regardless of status" in {
+  test("That learningstepFor returns the LearningStep when it exists and the given user is the owner. Regardless of status") {
     when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathDataMock.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
@@ -147,7 +147,7 @@ class PrivateServiceTest extends UnitSpec {
     }
   }
 
-  it should "throw an AccessDeniedException when the given user is NOT the owner" in {
+  test("That learningstepFor throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] { privateService.learningstepFor(PRIVATE_ID, STEP1.id.get, PUBLISHED_OWNER) }.getMessage

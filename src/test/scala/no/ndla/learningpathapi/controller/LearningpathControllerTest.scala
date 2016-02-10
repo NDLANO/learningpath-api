@@ -4,10 +4,10 @@ package no.ndla.learningpathapi.controller
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.learningpathapi.model.{HeaderMissingException, AccessDeniedException}
-import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, UnitSpec}
+import no.ndla.learningpathapi.{UnitSuite, LearningpathApiProperties, LearningpathSwagger}
 import org.mockito.Mockito._
 
-class LearningpathControllerTest extends UnitSpec {
+class LearningpathControllerTest extends UnitSuite {
 
   implicit val swagger = new LearningpathSwagger
   var controller:LearningpathController = _
@@ -17,7 +17,7 @@ class LearningpathControllerTest extends UnitSpec {
     controller = new LearningpathController
   }
 
-  "requireHeader" should "return header value when header exists" in {
+  test("That requireHeader returns header value when header exists") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]
     when(request.getHeader("username")).thenReturn("verdi")
     assertResult(Some("verdi")) {
@@ -25,7 +25,7 @@ class LearningpathControllerTest extends UnitSpec {
     }
   }
 
-  it should "throw HeaderMissingException if heades does not exist" in {
+  test("That requireHeader throws HeaderMissingException if heades does not exist") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]
     when(request.getHeader("username")).thenReturn(null)
     when(request.getRequestURI).thenReturn(""
@@ -35,7 +35,7 @@ class LearningpathControllerTest extends UnitSpec {
     }
   }
 
-  "usernameFromHeader" should "replace ndla- in the header value" in {
+  test("That usernameFromHeader replaces ndla- in the header value") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]
     when(request.getHeader(LearningpathApiProperties.UsernameHeader)).thenReturn("ndla-123-123-123")
     assertResult("123-123-123") {
@@ -43,7 +43,7 @@ class LearningpathControllerTest extends UnitSpec {
     }
   }
 
-  it should "not replace anything else than ndla-" in {
+  test("That usernameFromHeader does not replace anything else than ndla-") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]
     when(request.getHeader(LearningpathApiProperties.UsernameHeader)).thenReturn("someotherword-123-123-123")
     assertResult("someotherword-123-123-123") {
