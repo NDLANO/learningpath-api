@@ -55,7 +55,7 @@ object ModelConverters {
       lp.verificationStatus,
       lp.lastUpdated,
       lp.tags.map(asApiLearningPathTag),
-      Author("Forfatter", "Not yet implemented∫")) // TODO: Hent navn fra auth, basert på owner
+      Author("Forfatter", "Not yet implemented")) // TODO: Hent navn fra auth, basert på owner
   }
 
 
