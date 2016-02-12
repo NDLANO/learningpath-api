@@ -7,7 +7,7 @@ import no.ndla.learningpathapi.service.ModelConverters._
 class PrivateService(learningpathData: LearningpathData) {
 
   def all(owner: String): List[LearningPathSummary] = {
-    learningpathData.withStatusAndOwner(LearningpathApiProperties.Private, owner).map(asApiLearningpathSummary)
+    learningpathData.withStatusAndOwner(model.LearningPathStatus.PRIVATE, owner).map(asApiLearningpathSummary)
   }
 
   def withId(learningPathId: Long, owner: String): Option[LearningPath] = {

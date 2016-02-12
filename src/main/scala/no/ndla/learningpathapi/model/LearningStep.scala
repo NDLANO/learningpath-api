@@ -1,17 +1,31 @@
 package no.ndla.learningpathapi.model
 
 import no.ndla.learningpathapi.LearningpathApiProperties
-import org.json4s.FieldSerializer
+import org.json4s.{Serializer, FieldSerializer}
 import org.json4s.FieldSerializer._
+import org.json4s.FieldSerializer.apply
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
 case class LearningStep(id: Option[Long], learningPathId: Option[Long], seqNo: Int,
                         title: List[Title], description: List[Description], embedUrl: List[EmbedUrl],
-                        `type`: String, license: Option[String])
+                        `type`: StepType.Value, license: Option[String])
+
+object StepType extends Enumeration {
+  val TEXT, QUIZ, TASK, MULTIMEDIA, SUMMARY, TEST = Value
+
+  def valueOf(s:String): Option[StepType.Value] = {
+    StepType.values.find(_.toString == s)
+  }
+
+  def valueOfOrDefault(s:String): StepType.Value = {
+    valueOf(s).getOrElse(StepType.TEXT)
+  }
+}
 
 object LearningStep extends SQLSyntaxSupport[LearningStep] {
-  implicit val formats = org.json4s.DefaultFormats
+  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(StepType)
   override val tableName = "learningsteps"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 

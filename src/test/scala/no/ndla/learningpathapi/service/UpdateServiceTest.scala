@@ -2,9 +2,10 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
+import no.ndla.learningpathapi.LearningPathStatus
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.{LearningPathIndex, LearningpathData}
-import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException, LearningStep, LearningPath}
+import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException, LearningStep, LearningPath, StepType}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
@@ -20,13 +21,13 @@ class UpdateServiceTest extends UnitSuite {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), List(), List(), None, 1, "PUBLISHED", "", new Date(), List(), PUBLISHED_OWNER)
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), List(), List(), None, 1, "PRIVATE", "", new Date(), List(), PRIVATE_OWNER)
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), List(), List(), None, 1, model.LearningPathStatus.PUBLISHED, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), List(), List(), None, 1, model.LearningPathStatus.PRIVATE, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, 1, List())
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, 1, List())
 
-  val STEP1 = LearningStep(Some(1), None, 1, List(), List(), List(), "", None)
-  val STEP2 = LearningStep(Some(2), None, 2, List(), List(), List(), "", None)
+  val STEP1 = LearningStep(Some(1), None, 1, List(), List(), List(), StepType.TEXT, None)
+  val STEP2 = LearningStep(Some(2), None, 2, List(), List(), List(), StepType.TEXT, None)
   val NEW_STEP: NewLearningStep = NewLearningStep(List(), List(), List(), "", None)
 
   override def beforeEach() = {
@@ -97,7 +98,7 @@ class UpdateServiceTest extends UnitSuite {
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathDataMock.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = "PRIVATE"))
+    when(learningPathDataMock.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = model.LearningPathStatus.PRIVATE))
     assertResult("PRIVATE"){
       updateService.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PUBLISHED_OWNER).get.status
     }
@@ -107,7 +108,7 @@ class UpdateServiceTest extends UnitSuite {
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PRIVATE") {
     when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathDataMock.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = "PUBLISHED"))
+    when(learningPathDataMock.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = model.LearningPathStatus.PUBLISHED))
     assertResult("PUBLISHED"){
       updateService.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER).get.status
     }

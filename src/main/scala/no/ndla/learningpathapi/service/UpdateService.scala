@@ -5,6 +5,7 @@ import java.util.Date
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.{LearningPathIndex, LearningpathData}
 import no.ndla.learningpathapi.integration.AmazonIntegration
+import no.ndla.learningpathapi.model.LearningPathVerificationStatus
 import no.ndla.learningpathapi.service.ModelConverters._
 
 class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPathIndex) {
@@ -14,8 +15,8 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
       newLearningPath.title.map(asTitle),
       newLearningPath.description.map(asDescription),
       newLearningPath.coverPhotoUrl,
-      newLearningPath.duration, LearningpathApiProperties.Private,
-      LearningpathApiProperties.External,
+      newLearningPath.duration, model.LearningPathStatus.PRIVATE,
+      LearningPathVerificationStatus.EXTERNAL,
       new Date(), newLearningPath.tags.map(asLearningPathTag), owner, List())
 
     asApiLearningpath(learningpathData.insert(learningPath))
@@ -50,7 +51,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
       case Some(existing) => {
         val updatedLearningPath = learningpathData.update(
           existing.copy(
-            status = status.status,
+            status = model.LearningPathStatus.valueOfOrDefault(status.status),
             lastUpdated = new Date()))
 
         updatedLearningPath.isPublished match {
@@ -91,7 +92,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
           newLearningStep.title.map(asTitle),
           newLearningStep.description.map(asDescription),
           newLearningStep.embedUrl.map(asEmbedUrl),
-          newLearningStep.`type`,
+          model.StepType.valueOfOrDefault(newLearningStep.`type`),
           newLearningStep.license)
 
         val insertedStep = learningpathData.insertLearningStep(newStep)
@@ -119,7 +120,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
               title = newLearningStep.title.map(asTitle),
               description = newLearningStep.description.map(asDescription),
               embedUrl = newLearningStep.embedUrl.map(asEmbedUrl),
-              `type` = newLearningStep.`type`,
+              `type` = model.StepType.valueOfOrDefault(newLearningStep.`type`),
               license = newLearningStep.license)
 
             val updatedStep = learningpathData.updateLearningStep(toUpdate)

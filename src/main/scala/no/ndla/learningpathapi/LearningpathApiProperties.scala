@@ -32,12 +32,6 @@ object LearningpathApiProperties extends LazyLogging {
   lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
   lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")
 
-  val Published = "PUBLISHED"
-  val Private = "PRIVATE"
-  val External = "EXTERNAL"
-  val CreatedByNDLA = "CREATED_BY_NDLA"
-  val VerifiedByNDLA = "VERIFIED_BY_NDLA"
-
   val DefaultLanguage = "nb"
 
   val UsernameHeader = "X-Consumer-Username"

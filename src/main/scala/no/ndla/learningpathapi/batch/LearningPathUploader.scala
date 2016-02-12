@@ -61,12 +61,12 @@ object LearningPathUploader {
     }
 
     val publishStatus = pakke.nodeId match {
-      case 149862 => LearningpathApiProperties.Private
-      case 156729 => LearningpathApiProperties.Private
-      case 156987 => LearningpathApiProperties.Private
-      case 149007 => LearningpathApiProperties.Private
-      case 143822 => LearningpathApiProperties.Private
-      case default => LearningpathApiProperties.Published
+      case 149862 => LearningPathStatus.PRIVATE
+      case 156729 => LearningPathStatus.PRIVATE
+      case 156987 => LearningPathStatus.PRIVATE
+      case 149007 => LearningPathStatus.PRIVATE
+      case 143822 => LearningPathStatus.PRIVATE
+      case default => LearningPathStatus.PUBLISHED
     }
 
     no.ndla.learningpathapi.model.LearningPath(
@@ -76,11 +76,24 @@ object LearningPathUploader {
       coverPhotoUrl,
       duration,
       publishStatus,
-      LearningpathApiProperties.CreatedByNDLA,
+      LearningPathVerificationStatus.CREATED_BY_NDLA,
       lastUpdated,
       tags,
       owner,
       learningSteps.filterNot(_.`type` == "1"))
+  }
+
+  def asLearningStepType(stepType: String): StepType.Value = {
+    stepType match {
+      case "2" => StepType.TEXT
+      case "3" => StepType.QUIZ
+      case "4" => StepType.TASK
+      case "5" => StepType.MULTIMEDIA
+      case "6" => StepType.SUMMARY
+      case "7" => StepType.TEST
+      case "8" => StepType.SUMMARY
+      case default => StepType.TEXT
+    }
   }
 
   def asLearningStep(step: Step): LearningStep = {
@@ -102,7 +115,7 @@ object LearningPathUploader {
       case Some(url) => List(EmbedUrl(url, Some(step.language)))
     }
 
-    LearningStep(None, None, seqNo, title, description, embedUrl, stepType, None)
+    LearningStep(None, None, seqNo, title, description, embedUrl, asLearningStepType(stepType), None)
   }
 
   def tidyUpDescription(description: String): String = {
@@ -110,14 +123,6 @@ object LearningPathUploader {
       case None => ""
       case Some(desc) => {
         desc.replaceAll("(\\r|\\n|\\t)", "")
-          .replaceAll("&aring;", "å")
-          .replaceAll("&aelig;", "æ")
-          .replaceAll("&oslash;", "ø")
-          .replaceAll("&AElig;", "Æ")
-          .replaceAll("&Oslash;", "Ø")
-          .replaceAll("&Aring;", "Å")
-          .replaceAll("&nbsp;", "")
-          .replaceAll("<(.*?)>", " ").trim
       }
     }
   }

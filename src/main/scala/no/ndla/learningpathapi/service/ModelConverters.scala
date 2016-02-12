@@ -26,18 +26,6 @@ object ModelConverters {
     model.LearningPathTag(tag.tag, tag.language)
   }
 
-  def asLearningPath(newLearningPath: NewLearningPath, publishingStatus:String): LearningPath = {
-    LearningPath(None,
-      newLearningPath.title.map(asTitle),
-      newLearningPath.description.map(asDescription),
-      newLearningPath.coverPhotoUrl,
-      newLearningPath.duration,
-      publishingStatus,
-      LearningpathApiProperties.External, // TODO: Regler for å sette disse
-      new Date(),
-      newLearningPath.tags.map(asLearningPathTag), "", List())
-  }
-
   def asApiLearningPathTag(tag: model.LearningPathTag): LearningPathTag = {
     LearningPathTag(tag.tag, tag.language)
   }
@@ -51,8 +39,8 @@ object ModelConverters {
       createUrlToLearningSteps(lp),
       lp.coverPhotoUrl,
       lp.duration,
-      lp.status,
-      lp.verificationStatus,
+      lp.status.toString,
+      lp.verificationStatus.toString,
       lp.lastUpdated,
       lp.tags.map(asApiLearningPathTag),
       Author("Forfatter", "Not yet implemented")) // TODO: Hent navn fra auth, basert på owner
@@ -66,7 +54,7 @@ object ModelConverters {
       createUrlToLearningPath(learningpath),
       learningpath.coverPhotoUrl,
       learningpath.duration,
-      learningpath.status,
+      learningpath.status.toString,
       learningpath.lastUpdated,
       Author("Forfatter", "Not yet implemented")) // TODO: Hent navn fra auth, basert på owner
   }
@@ -90,7 +78,7 @@ object ModelConverters {
       ls.title.map(asApiTitle),
       ls.description.map(asApiDescription),
       ls.embedUrl.map(asApiEmbedUrl),
-      ls.`type`,
+      ls.`type`.toString,
       ls.license, createUrlToLearningStep(ls, lp))
   }
 

@@ -5,13 +5,19 @@ import javax.sql.DataSource
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.model.{LearningPath, LearningStep}
+import no.ndla.learningpathapi.model._
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
 
 class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLogging {
-  implicit val formats = org.json4s.DefaultFormats + LearningPath.JSonSerializer + LearningStep.JSonSerializer
+  implicit val formats = org.json4s.DefaultFormats +
+    LearningPath.JSonSerializer +
+    LearningStep.JSonSerializer +
+    new EnumNameSerializer(LearningPathStatus) +
+    new EnumNameSerializer(LearningPathVerificationStatus) +
+    new EnumNameSerializer(StepType)
 
   ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -37,12 +43,12 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     learningPathWhere(sqls"lp.id = $id")
   }
 
-  override def withStatus(status: String): List[LearningPath] = {
-    learningPathsWhere(sqls"lp.document->>'status' = $status")
+  override def withStatus(status: LearningPathStatus.Value): List[LearningPath] = {
+    learningPathsWhere(sqls"lp.document->>'status' = ${status.toString}")
   }
 
-  override def withStatusAndOwner(status: String, owner: String): List[LearningPath] = {
-    learningPathsWhere(sqls"lp.document->>'status' = $status and lp.document->>'owner' = $owner")
+  override def withStatusAndOwner(status: LearningPathStatus.Value, owner: String): List[LearningPath] = {
+    learningPathsWhere(sqls"lp.document->>'status' = ${status.toString} and lp.document->>'owner' = $owner")
   }
 
   override def learningStepsFor(learningPathId: Long): List[LearningStep] = {
@@ -129,7 +135,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
   override def applyToAllPublic(func: (List[LearningPath]) => Unit): Unit = {
     val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
 
-    val status = LearningpathApiProperties.Published
+    val status = LearningPathStatus.PUBLISHED.toString
     val (minId, maxId) = minMaxId
     val groupRanges = Seq.range(minId, maxId+1).grouped(LearningpathApiProperties.IndexBulkSize).map(group => (group.head, group.last))
 

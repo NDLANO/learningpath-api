@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.business
 
-import no.ndla.learningpathapi.model.{LearningStep, LearningPath}
+import no.ndla.learningpathapi.model.{LearningPathStatus, LearningStep, LearningPath}
 
 
 trait LearningpathData {
@@ -18,8 +18,8 @@ trait LearningpathData {
   def deleteLearningStep(learningStepId: Long)
 
   def withId(id: Long): Option[LearningPath]
-  def withStatus(status:String): List[LearningPath]
-  def withStatusAndOwner(status:String, owner:String): List[LearningPath]
+  def withStatus(status:LearningPathStatus.Value): List[LearningPath]
+  def withStatusAndOwner(status:LearningPathStatus.Value, owner:String): List[LearningPath]
 
   def learningStepsFor(learningPathId: Long): List[LearningStep]
   def learningStepWithId(learningPathId: Long, learningStepId: Long): Option[LearningStep]

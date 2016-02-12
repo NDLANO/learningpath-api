@@ -6,16 +6,12 @@ import no.ndla.learningpathapi.service.ModelConverters._
 
 class PublicService(learningpathData: LearningpathData) {
 
-  def all(): List[LearningPathSummary] = {
-    learningpathData.withStatus(LearningpathApiProperties.Published).map(asApiLearningpathSummary)
-  }
-
   def withId(learningPathId: Long): Option[LearningPath] = {
     withIdAndAccessGranted(learningPathId).map(asApiLearningpath)
   }
 
   def statusFor(learningPathId: Long): Option[LearningPathStatus] = {
-    withIdAndAccessGranted(learningPathId).map(lp => LearningPathStatus(lp.status))
+    withIdAndAccessGranted(learningPathId).map(lp => LearningPathStatus(lp.status.toString))
   }
 
   def learningstepsFor(learningPathId: Long): Option[List[LearningStep]] = {
@@ -34,7 +30,7 @@ class PublicService(learningpathData: LearningpathData) {
 
   private def withIdAndAccessGranted(learningPathId: Long): Option[model.LearningPath] = {
     val learningPath = learningpathData.withId(learningPathId)
-    learningPath.foreach(_.verifyPublic)
+    learningPath.foreach(_.verifyNotPrivate)
     learningPath
   }
 }

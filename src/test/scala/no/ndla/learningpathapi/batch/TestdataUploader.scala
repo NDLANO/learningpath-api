@@ -23,8 +23,8 @@ object TestdataUploader {
       Description("The course covers the language Ada.", Some("en"))),
     Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
     120,
-    LearningpathApiProperties.Published,
-    LearningpathApiProperties.CreatedByNDLA,
+    LearningPathStatus.PUBLISHED,
+    LearningPathVerificationStatus.CREATED_BY_NDLA,
     new Date(),
     List(LearningPathTag("ActionScript", Some("nb")), LearningPathTag("Adenine", Some("nn")), LearningPathTag("Autocoder", Some("en"))),
     "e646b7f6-60ce-4364-9e77-2a88754b95db", List(
@@ -32,11 +32,11 @@ object TestdataUploader {
           Some(1), Some(1), 1,
           List(Title("Læringssteg om Alef", Some("nb")), Title("Læringssteg om Able", Some("nn")), Title("Læringssteg om Absys", Some("en"))),
           List(Description("Læringssteg om Agora", Some("nb")), Description("Læringssteg om Ambienttalk", Some("nn")), Description("Læringssteg om Arexx", Some("en"))),
-          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, Some("by-nc-sa")),
         LearningStep(Some(2), Some(1), 2,
           List(Title("Læringssteg om Amos", Some("nb")), Title("Læringssteg om Babbage", Some("nn")), Title("Læringssteg om Bash", Some("en"))),
           List(Description("Læringssteg om Agilent", Some("nb")), Description("Læringssteg om Basic", Some("nn")), Description("Læringssteg om BeanShell", Some("en"))),
-          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")))),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, Some("by-nc-sa")))),
 
     // KES
     LearningPath(Some(2),
@@ -50,8 +50,8 @@ object TestdataUploader {
         Description("The course covers the language Blue.", Some("en"))),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       240,
-      LearningpathApiProperties.Published,
-      LearningpathApiProperties.CreatedByNDLA,
+      LearningPathStatus.PUBLISHED,
+      LearningPathVerificationStatus.CREATED_BY_NDLA,
       new Date(),
       List(LearningPathTag("Boomerang", Some("nb")), LearningPathTag("Brew", Some("nn")), LearningPathTag("Bpel", Some("en"))),
       "e646b7f6-60ce-4364-9e77-2a88754b95db", List(
@@ -59,11 +59,11 @@ object TestdataUploader {
           Some(3), Some(2), 1,
           List(Title("Læringssteg om Caml", Some("nb")), Title("Læringssteg om Chef", Some("nn")), Title("Læringssteg om Chill", Some("en"))),
           List(Description("Læringssteg om Chuck", Some("nb")), Description("Læringssteg om Citrine", Some("nn")), Description("Læringssteg om Clean", Some("en"))),
-          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, Some("by-nc-sa")),
         LearningStep(Some(4), Some(2), 2,
           List(Title("Læringssteg om Clipper", Some("nb")), Title("Læringssteg om Clojure", Some("nn")), Title("Læringssteg om Cobol", Some("en"))),
           List(Description("Læringssteg om Cobra", Some("nb")), Description("Læringssteg om CoffeScript", Some("nn")), Description("Læringssteg om Coldfusion", Some("en"))),
-          List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")))),
+          List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, Some("by-nc-sa")))),
 
     // RST
     LearningPath(Some(3),
@@ -77,13 +77,13 @@ object TestdataUploader {
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
-      LearningpathApiProperties.Private,
-      LearningpathApiProperties.External,
+      LearningPathStatus.PRIVATE,
+      LearningPathVerificationStatus.EXTERNAL,
       new Date(),
       List(LearningPathTag("rune", Some("nb"))),
       "d6b2bbd0-2dd4-485a-9d9a-af2e7c9d57ad",       List(
-        LearningStep(Some(5), Some(3), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
-        LearningStep(Some(6), Some(3), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None))),
+        LearningStep(Some(5), Some(3), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None),
+        LearningStep(Some(6), Some(3), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None))),
 
     // KW
     LearningPath(Some(4),
@@ -97,14 +97,14 @@ object TestdataUploader {
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
-      LearningpathApiProperties.Private,
-      LearningpathApiProperties.VerifiedByNDLA,
+      LearningPathStatus.PRIVATE,
+      LearningPathVerificationStatus.VERIFIED_BY_NDLA,
       new Date(),
       List(LearningPathTag("kristofer", Some("nb"))),
       "ddd2ff24-616a-484d-8172-55ddba52cd7a",
       List(
-        LearningStep(Some(7), Some(4), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", Some("by-nc-sa")),
-        LearningStep(Some(8), Some(4), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None))),
+        LearningStep(Some(7), Some(4), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, Some("by-nc-sa")),
+        LearningStep(Some(8), Some(4), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None))),
 
     // Remi
     LearningPath(Some(5),
@@ -118,14 +118,14 @@ object TestdataUploader {
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
-      LearningpathApiProperties.Private,
-      LearningpathApiProperties.External,
+      LearningPathStatus.PRIVATE,
+      LearningPathVerificationStatus.EXTERNAL,
       new Date(),
       List(LearningPathTag("remi", Some("nb"))),
       "a62debc3-74a7-43f3-88c9-d35837a41698",
       List(
-        LearningStep(Some(9), Some(5), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
-        LearningStep(Some(10), Some(5), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None))),
+        LearningStep(Some(9), Some(5), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None),
+        LearningStep(Some(10), Some(5), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None))),
 
     // Christer
     LearningPath(Some(6),
@@ -139,14 +139,14 @@ object TestdataUploader {
         Description("The course covers the introduction and will give you a basic understanding of common concepts in the arts world. The course focuses on art and culture in a world perspective", Some("en"))),
       Some("http://api.ndla.no/images/full/sy2fe75b.jpg"),
       1080,
-      LearningpathApiProperties.Private,
-      LearningpathApiProperties.CreatedByNDLA,
+      LearningPathStatus.PRIVATE,
+      LearningPathVerificationStatus.CREATED_BY_NDLA,
       new Date(),
       List(LearningPathTag("christer", Some("nb"))),
       "6e74cde7-1e83-49c8-8dcd-9bbef458f477",
       List(
-        LearningStep(Some(11), Some(6), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None),
-        LearningStep(Some(12), Some(6), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), "TEXT", None))))
+        LearningStep(Some(11), Some(6), 1, List(Title("Tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None),
+        LearningStep(Some(12), Some(6), 2, List(Title("En annen tittel her", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), List(EmbedUrl("http://www.vg.no", Some("nb"))), StepType.TEXT, None))))
 
 
   def main(args: Array[String]) {

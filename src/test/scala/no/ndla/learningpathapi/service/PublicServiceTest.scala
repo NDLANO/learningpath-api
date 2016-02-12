@@ -4,7 +4,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi.UnitSuite
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.model.{AccessDeniedException, LearningPath, LearningStep}
+import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._
 
 class PublicServiceTest extends UnitSuite {
@@ -15,11 +15,11 @@ class PublicServiceTest extends UnitSuite {
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), List(), List(), None, 1, "PUBLISHED", "", new Date(), List(), "")
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), List(), List(), None, 1, "PRIVATE", "", new Date(), List(), "")
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), List(), List(), None, 1, LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), "")
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), List(), List(), None, 1, LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), "")
 
-  val STEP1 = LearningStep(Some(1), None, 1, List(), List(), List(), "", None)
-  val STEP2 = LearningStep(Some(2), None, 2, List(), List(), List(), "", None)
+  val STEP1 = LearningStep(Some(1), None, 1, List(), List(), List(), StepType.TEXT, None)
+  val STEP2 = LearningStep(Some(2), None, 2, List(), List(), List(), StepType.TEXT, None)
 
   override def beforeEach() = {
     learningPathDataMock = mock[LearningpathData]

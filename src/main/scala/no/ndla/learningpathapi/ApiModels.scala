@@ -18,14 +18,14 @@ case class LearningPath(
   @(ApiModelProperty @field)(description = "The full url to where the learningsteps can be found") learningstepUrl:String,
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
   @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
-  @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String,
-  @(ApiModelProperty @field)(description = "Verification status. Either 'CREATED_BY_NDLA', 'VERIFIED_BY_NDLA' or 'EXTERNAL' ") verificationStatus:String,
+  @(ApiModelProperty @field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String,
+  @(ApiModelProperty @field)(description = "Verification status", allowableValues = "CREATED_BY_NDLA,VERIFIED_BY_NDLA,EXTERNAL") verificationStatus:String,
   @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
   @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags:List[LearningPathTag],
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author
 ) {
   def isPrivate: Boolean = {
-    status == LearningpathApiProperties.Private
+    status == model.LearningPathStatus.PRIVATE.toString
   }
 }
 
@@ -40,10 +40,10 @@ case class NewLearningPath(
 
 @ApiModel(description = "Status information about a learningpath")
 case class LearningPathStatus(
-  @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String
+  @(ApiModelProperty @field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String
 ) {
   def validate() = {
-    if(LearningpathApiProperties.Private != status && LearningpathApiProperties.Published != status) {
+    if(model.LearningPathStatus.valueOf(status).isEmpty) {
       throw new ValidationException(s"'$status' is not a valid publishingstatus.")
     }
   }
@@ -65,7 +65,7 @@ case class LearningPathSummary(
   @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningpath can be found") metaUrl:String,
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
   @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
-  @(ApiModelProperty @field)(description = "The publishing status of the learningpath. Either 'PUBLISHED' or 'PRIVATE'") status:String,
+  @(ApiModelProperty @field)(description = "The publishing status of the learningpath.", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String,
   @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author
 )
@@ -77,7 +77,7 @@ case class LearningStep(
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
-  @(ApiModelProperty @field)(description = "The type of the step. One of YOUTUBE|TEXT|ETC..") `type`:String,
+  @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step.") license:Option[String],
   @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningstep can be found") metaUrl:String
 )
@@ -87,7 +87,7 @@ case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
-  @(ApiModelProperty @field)(description = "The type of the step. One of YOUTUBE|TEXT|ETC..") `type`:String,
+  @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step.") license:Option[String]
 )
 
@@ -119,4 +119,3 @@ case class LearningPathTag(
   @(ApiModelProperty @field)(description = "The searchable tag.") tag:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in tag") language:Option[String]
 )
-

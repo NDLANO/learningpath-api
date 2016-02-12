@@ -5,18 +5,23 @@ import java.util.Date
 import no.ndla.learningpathapi.LearningpathApiProperties
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
 case class LearningPath(id: Option[Long], title: List[Title], description: List[Description], coverPhotoUrl: Option[String],
-                            duration: Int, status: String, verificationStatus: String, lastUpdated: Date, tags: List[LearningPathTag],
+                            duration: Int, status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: List[LearningPathTag],
                             owner: String, learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
-    status == LearningpathApiProperties.Private
+    status == LearningPathStatus.PRIVATE
   }
 
   def isPublished: Boolean = {
-    status == LearningpathApiProperties.Published
+    status == LearningPathStatus.PUBLISHED
+  }
+
+  def isNotListed: Boolean = {
+    status == LearningPathStatus.NOT_LISTED
   }
 
   def verifyOwner(loggedInUser: String) = {
@@ -25,15 +30,39 @@ case class LearningPath(id: Option[Long], title: List[Title], description: List[
     }
   }
 
-  def verifyPublic = {
+  def verifyNotPrivate = {
     if(isPrivate){
       throw new AccessDeniedException("You do not have access to the requested resource.")
     }
   }
 }
 
+object LearningPathStatus extends Enumeration {
+  val PUBLISHED, PRIVATE, NOT_LISTED = Value
+
+  def valueOf(s:String): Option[LearningPathStatus.Value] = {
+    LearningPathStatus.values.find(_.toString == s.toUpperCase)
+  }
+
+  def valueOfOrDefault(s:String): LearningPathStatus.Value = {
+    valueOf(s).getOrElse(LearningPathStatus.PRIVATE)
+  }
+}
+
+object LearningPathVerificationStatus extends Enumeration {
+  val EXTERNAL, CREATED_BY_NDLA, VERIFIED_BY_NDLA = Value
+
+  def valueOf(s:String): Option[LearningPathVerificationStatus.Value] = {
+    LearningPathVerificationStatus.values.find(_.toString == s.toUpperCase)
+  }
+
+  def valueOfOrDefault(s:String): LearningPathVerificationStatus.Value = {
+    valueOf(s).getOrElse(LearningPathVerificationStatus.EXTERNAL)
+  }
+}
+
 object LearningPath extends SQLSyntaxSupport[LearningPath] {
-  implicit val formats = org.json4s.DefaultFormats
+  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(LearningPathStatus) + new EnumNameSerializer(LearningPathVerificationStatus)
   override val tableName = "learningpaths"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
