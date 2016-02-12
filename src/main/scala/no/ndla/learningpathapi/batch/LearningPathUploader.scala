@@ -49,8 +49,25 @@ object LearningPathUploader {
     val duration = (pakke.durationHours * 60) + pakke.durationMinutes
     val lastUpdated = pakke.lastUpdated
     val tags = Tags.forNodeId(pakke.nodeId)
-    val owner = "e646b7f6-60ce-4364-9e77-2a88754b95db" // TODO: Hvordan sette owner? Er nå satt til kes
     val descriptions = learningSteps.find(_.`type` == "1").map(_.description).getOrElse(List())
+
+    val owner = pakke.nodeId match {
+      case 149862 => "6e74cde7-1e83-49c8-8dcd-9bbef458f477" //Christer
+      case 156729 => "d6b2bbd0-2dd4-485a-9d9a-af2e7c9d57ad" //RST
+      case 156987 => "ddd2ff24-616a-484d-8172-55ddba52cd7a" //KW
+      case 149007 => "a62debc3-74a7-43f3-88c9-d35837a41698" //Remi
+      case 143822 => "e646b7f6-60ce-4364-9e77-2a88754b95db" // KES
+      case default => "e646b7f6-60ce-4364-9e77-2a88754b95db" //KES
+    }
+
+    val publishStatus = pakke.nodeId match {
+      case 149862 => LearningpathApiProperties.Private
+      case 156729 => LearningpathApiProperties.Private
+      case 156987 => LearningpathApiProperties.Private
+      case 149007 => LearningpathApiProperties.Private
+      case 143822 => LearningpathApiProperties.Private
+      case default => LearningpathApiProperties.Published
+    }
 
     no.ndla.learningpathapi.model.LearningPath(
       None,
@@ -58,7 +75,7 @@ object LearningPathUploader {
       descriptions,
       coverPhotoUrl,
       duration,
-      LearningpathApiProperties.Published,
+      publishStatus,
       LearningpathApiProperties.CreatedByNDLA,
       lastUpdated,
       tags,
