@@ -37,19 +37,23 @@ object LearningPathUploader {
 
   def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]]) = {
     optPakke.foreach(pakke => {
-        val learningSteps = packageData.stepsForPackage(pakke).map(asLearningStep)
-        val learningPath = asLearningPath(pakke, learningSteps)
-        learningpathData.insert(learningPath)
+      val steps = packageData.stepsForPackage(pakke)
+      val packageDescription = steps.find(_.stepType == 1).flatMap(_.description)
+
+      val learningSteps = steps.filterNot(_.stepType == 1).map(asLearningStep)
+      val learningPath = asLearningPath(pakke, packageDescription, learningSteps)
+      learningpathData.insert(learningPath)
     })
   }
 
-  def asLearningPath(pakke: Package, learningSteps: List[LearningStep]) = {
+  def asLearningPath(pakke: Package, packageDescription:Option[String], learningSteps: List[LearningStep]) = {
     val titles = List(Title(pakke.packageTitle, Some(pakke.language)))
     val coverPhotoUrl = None
     val duration = (pakke.durationHours * 60) + pakke.durationMinutes
     val lastUpdated = pakke.lastUpdated
     val tags = Tags.forNodeId(pakke.nodeId)
-    val descriptions = learningSteps.find(_.`type` == "1").map(_.description).getOrElse(List())
+
+    val descriptions = packageDescription.map(s => List(Description(s, Some(pakke.language)))).getOrElse(List())
 
     val owner = pakke.nodeId match {
       case 149862 => "6e74cde7-1e83-49c8-8dcd-9bbef458f477" //Christer
@@ -80,7 +84,7 @@ object LearningPathUploader {
       lastUpdated,
       tags,
       owner,
-      learningSteps.filterNot(_.`type` == "1"))
+      learningSteps)
   }
 
   def asLearningStepType(stepType: String): StepType.Value = {
