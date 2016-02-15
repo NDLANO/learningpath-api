@@ -5,6 +5,7 @@ import no.ndla.learningpathapi.batch.{Node, Package, Step}
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool, _}
 
 class PackageData(packageHost:Option[String], packagePort:Option[String], packageDatabase:Option[String], packageUser:Option[String], packagePassword:Option[String]) {
+
   val host = packageHost.getOrElse(throw new RuntimeException("Missing host"))
   val port = packagePort.getOrElse(throw new RuntimeException("Missing host"))
   val database = packageDatabase.getOrElse(throw new RuntimeException("Missing database"))
@@ -82,6 +83,44 @@ class PackageData(packageHost:Option[String], packagePort:Option[String], packag
           )
         ).list().apply()
     }
+  }
+
+  def stepWithPosForPackage(stepPos: Int, pakke: Package): Option[Step] = {
+    NamedDB('package)  readOnly{implicit session =>
+      sql"""
+         select p.id as packageId,
+         pvp.page_id as pageId,
+         pvp.pos as pagePosition,
+         page.title as pageTitle,
+         page.type as pageType,
+         page.creator_id as pageAuthor,
+         page.url as embedUrl,
+         page.content as description
+         from packages p
+         left join package_versions pv on p.package_version_id = pv.id
+         left join packageversions_pages pvp on pv.id = pvp.package_version_id
+         left join pages page on page.id = pvp.page_id
+         where p.id = ${pakke.packageId} and pvp.pos = $stepPos
+         order by pvp.pos
+         """.stripMargin
+        .map(rs =>
+          Step(
+            rs.int("packageId").toLong,
+            rs.int("pageId").toLong,
+            rs.int("pagePosition"),
+            rs.string("pageTitle"),
+            rs.int("pageType").toLong,
+            rs.int("pageAuthor").toLong,
+            Option(rs.string("embedUrl")),
+            Option(rs.string("description")),
+            pakke.language
+          )
+        ).single().apply()
+    }
+  }
+
+  def getTranslationSteps(packages: List[Option[Package]], stepPos: Int): List[Step] = {
+    packages.flatten.flatMap(pak => stepWithPosForPackage(stepPos, pak))
   }
 
 }

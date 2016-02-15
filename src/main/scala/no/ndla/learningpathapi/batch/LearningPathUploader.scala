@@ -28,32 +28,27 @@ object LearningPathUploader {
   def main(args: Array[String]) {
     val nodes: List[Node] = cmData.allLearningPaths()
     nodes.filterNot(_.isTranslation).foreach(node => {
-      importNode(packageData.packageFor(node), List())
-
-      // TODO: Legg til støtte for oversettelser
-      // importNode(PackageData.packageFor(node), getTranslations(node, nodes))
+       importNode(packageData.packageFor(node), getTranslations(node, nodes))
     })
   }
 
   def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]]) = {
     optPakke.foreach(pakke => {
       val steps = packageData.stepsForPackage(pakke)
-      val packageDescription = steps.find(_.stepType == 1).flatMap(_.description)
 
-      val learningSteps = steps.filterNot(_.stepType == 1).map(asLearningStep)
-      val learningPath = asLearningPath(pakke, packageDescription, learningSteps)
-      learningpathData.insert(learningPath)
+      val descriptions = descriptionAsList(steps.find(_.stepType == 1), packageData.getTranslationSteps(optTranslations, 1))
+      val titles = Title(pakke.packageTitle, Some(pakke.language)) :: optTranslations.flatten.map(pak => Title(pak.packageTitle, Some(pak.language)))
+      val tags = Tags.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => Tags.forNodeId(tra.nodeId))
+      val learningSteps = steps.filterNot(_.stepType == 1).map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
+
+      learningpathData.insert(asLearningPath(pakke, titles, descriptions, tags.distinct, learningSteps))
     })
   }
 
-  def asLearningPath(pakke: Package, packageDescription:Option[String], learningSteps: List[LearningStep]) = {
-    val titles = List(Title(pakke.packageTitle, Some(pakke.language)))
+  def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep]) = {
     val coverPhotoUrl = None
     val duration = (pakke.durationHours * 60) + pakke.durationMinutes
     val lastUpdated = pakke.lastUpdated
-    val tags = Tags.forNodeId(pakke.nodeId)
-
-    val descriptions = packageDescription.map(s => List(Description(s, Some(pakke.language)))).getOrElse(List())
 
     val owner = pakke.nodeId match {
       case 149862 => "6e74cde7-1e83-49c8-8dcd-9bbef458f477" //Christer
@@ -87,6 +82,18 @@ object LearningPathUploader {
       learningSteps)
   }
 
+  def asLearningStep(step: Step, translations: List[Step]): LearningStep = {
+    val seqNo = step.pos - 1
+    val stepType = s"${step.stepType}"
+
+    val title = Title(step.title, Some(step.language)) :: translations.map(translation => Title(translation.title, Some(translation.language)))
+    val descriptions = descriptionAsList(Some(step), translations)
+
+    val embedUrls = embedUrlsAsList(step, translations)
+
+    LearningStep(None, None, seqNo, title, descriptions, embedUrls, asLearningStepType(stepType), None)
+  }
+
   def asLearningStepType(stepType: String): StepType.Value = {
     stepType match {
       case "2" => StepType.TEXT
@@ -100,26 +107,27 @@ object LearningPathUploader {
     }
   }
 
-  def asLearningStep(step: Step): LearningStep = {
-    val seqNo = step.pos - 1
-    val stepType = s"${step.stepType}"
-    val title = List(Title(step.title, Some(step.language)))
-    val description = step.description match {
-      case None => List()
-      case Some(desc) => {
-        desc.isEmpty match {
-          case true => List()
-          case false => List(Description(tidyUpDescription(desc), Some(step.language)))
-        }
+  def embedUrlsAsList(step: Step, translations: List[Step]): List[EmbedUrl] = {
+    val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, Some(url.language)))
+    step.embedUrlToNdlaNo match {
+      case None => translationUrls
+      case Some(url) => {
+        EmbedUrl(url, Some(step.language)) :: translationUrls
       }
     }
+  }
 
-    val embedUrl = step.embedUrlToNdlaNo match {
-      case None => List()
-      case Some(url) => List(EmbedUrl(url, Some(step.language)))
+  def descriptionAsList(step: Option[Step], translations: List[Step]): List[Description] = {
+    val translationDescriptions = translations.filter(step => step.description.isDefined && !step.description.get.isEmpty).map(tr => Description(tidyUpDescription(tr.description.get), Some(tr.language)))
+    step match {
+      case Some(s) => {
+        s.description.isDefined && !s.description.get.isEmpty match {
+          case true => Description(tidyUpDescription(s.description.get), Some(s.language)) :: translationDescriptions
+          case false => translationDescriptions
+        }
+      }
+      case None => translationDescriptions
     }
-
-    LearningStep(None, None, seqNo, title, description, embedUrl, asLearningStepType(stepType), None)
   }
 
   def tidyUpDescription(description: String): String = {
