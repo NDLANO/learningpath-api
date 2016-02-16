@@ -24,6 +24,7 @@ trait LearningpathData {
   def learningStepsFor(learningPathId: Long): List[LearningStep]
   def learningStepWithId(learningPathId: Long, learningStepId: Long): Option[LearningStep]
 
-  def applyToAllPublic(func: List[LearningPath] => Unit)
+  def minMaxId: (Long,Long)
+  def learningPathsWithIdBetween(min: Long, max:Long): List[LearningPath]
 
 }

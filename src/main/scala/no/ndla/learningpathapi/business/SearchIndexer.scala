@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi.business
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.AmazonIntegration
 
 object SearchIndexer extends LazyLogging{
@@ -22,8 +23,8 @@ object SearchIndexer extends LazyLogging{
       }
 
       var numIndexed = 0
-      learningPathData.applyToAllPublic(learningPaths => {
-        numIndexed += learningPathIndex.indexLearningPaths(learningPaths, newIndexName)
+      getRanges().foreach(range => {
+        numIndexed += learningPathIndex.indexLearningPaths(learningPathData.learningPathsWithIdBetween(range._1, range._2), newIndexName)
       })
 
       oldIndexName.foreach(indexName => {
@@ -35,5 +36,10 @@ object SearchIndexer extends LazyLogging{
       logger.info(result)
       result
     }
+  }
+
+  def getRanges():Iterator[(Long,Long)] = {
+    val (minId, maxId) = learningPathData.minMaxId
+    Seq.range(minId, maxId+1).grouped(LearningpathApiProperties.IndexBulkSize).map(group => (group.head, group.last))
   }
 }
