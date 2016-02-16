@@ -28,25 +28,26 @@ object LearningPathUploader {
   def main(args: Array[String]) {
     val nodes: List[Node] = cmData.allLearningPaths()
     nodes.filterNot(_.isTranslation).foreach(node => {
-       importNode(packageData.packageFor(node), getTranslations(node, nodes))
+       importNode(packageData.packageFor(node), getTranslations(node, nodes), cmData.imagePathForNid(node.imageNid))
     })
   }
 
-  def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]]) = {
+  def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]], imageUrl: Option[String]) = {
     optPakke.foreach(pakke => {
       val steps = packageData.stepsForPackage(pakke)
 
       val descriptions = descriptionAsList(steps.find(_.stepType == 1), packageData.getTranslationSteps(optTranslations, 1))
       val titles = Title(pakke.packageTitle, Some(pakke.language)) :: optTranslations.flatten.map(pak => Title(pak.packageTitle, Some(pak.language)))
-      val tags = Tags.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => Tags.forNodeId(tra.nodeId))
+      val tags = (Tags.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => Tags.forNodeId(tra.nodeId))).distinct
       val learningSteps = steps.filterNot(_.stepType == 1).map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
 
-      learningpathData.insert(asLearningPath(pakke, titles, descriptions, tags.distinct, learningSteps))
+
+      learningpathData.insert(asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl))
     })
   }
 
-  def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep]) = {
-    val coverPhotoUrl = None
+  def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[String]) = {
+
     val duration = (pakke.durationHours * 60) + pakke.durationMinutes
     val lastUpdated = pakke.lastUpdated
 
@@ -72,7 +73,7 @@ object LearningPathUploader {
       None,
       titles,
       descriptions,
-      coverPhotoUrl,
+      imageUrl,
       duration,
       publishStatus,
       LearningPathVerificationStatus.CREATED_BY_NDLA,

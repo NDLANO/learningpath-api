@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.batch
 
 import java.util.Date
 
-case class Node(nid:Long, tnid:Long, language:String, title:String, packageId:Long) {
+case class Node(nid:Long, tnid:Long, language:String, title:String, packageId:Long, imageNid: Option[Int]) {
   def isTranslation:Boolean = {
     tnid != nid && tnid != 0
   }
