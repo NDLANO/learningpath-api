@@ -216,7 +216,11 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
         page = page,
         pageSize = pageSize
       )
-      case None => search.all(sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc), language = language, page = page, pageSize = pageSize)
+      case None => search.all(
+        sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
+        language = language,
+        page = page,
+        pageSize = pageSize)
     }
   }
 

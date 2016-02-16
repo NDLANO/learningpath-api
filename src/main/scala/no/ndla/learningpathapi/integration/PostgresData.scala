@@ -132,31 +132,24 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     }
   }
 
-  override def applyToAllPublic(func: (List[LearningPath]) => Unit): Unit = {
+  override def learningPathsWithIdBetween(min: Long, max: Long): List[LearningPath] = {
     val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
-
     val status = LearningPathStatus.PUBLISHED.toString
-    val (minId, maxId) = minMaxId
-    val groupRanges = Seq.range(minId, maxId+1).grouped(LearningpathApiProperties.IndexBulkSize).map(group => (group.head, group.last))
 
-    DB readOnly { implicit session =>
-      groupRanges.foreach(range => {
-        func(
-          sql"""select ${lp.result.*}, ${ls.result.*}
+    DB readOnly {implicit session =>
+      sql"""select ${lp.result.*}, ${ls.result.*}
                from ${LearningPath.as(lp)}
                left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId}
                where lp.document->>'status' = $status
-               and lp.id between ${range._1} and ${range._2}"""
-            .one(LearningPath(lp.resultName))
-            .toMany(LearningStep.opt(ls.resultName))
-            .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps)}
-            .toList.apply()
-        )
-      })
+               and lp.id between $min and $max"""
+        .one(LearningPath(lp.resultName))
+        .toMany(LearningStep.opt(ls.resultName))
+        .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps)}
+        .toList().apply()
     }
   }
 
-  private def minMaxId: (Long,Long) = {
+  override def minMaxId: (Long,Long) = {
     DB readOnly { implicit session =>
       sql"select min(id) as mi, max(id) as ma from learningpaths".map(rs => {
         (rs.long("mi"),rs.long("ma"))
@@ -166,6 +159,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
       }
     }
   }
+
 
   private def learningPathsWhere(whereClause: SQLSyntax): List[LearningPath] = {
     val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
