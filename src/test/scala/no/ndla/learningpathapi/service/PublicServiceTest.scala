@@ -15,11 +15,11 @@ class PublicServiceTest extends UnitSuite {
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), List(), List(), None, 1, LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), "")
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), List(), List(), None, 1, LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), "")
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, 1, LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), "")
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), None, List(), List(), None, 1, LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), "")
 
-  val STEP1 = LearningStep(Some(1), None, 1, List(), List(), List(), StepType.TEXT, None)
-  val STEP2 = LearningStep(Some(2), None, 2, List(), List(), List(), StepType.TEXT, None)
+  val STEP1 = LearningStep(Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None)
+  val STEP2 = LearningStep(Some(2), None, None, 2, List(), List(), List(), StepType.TEXT, None)
 
   override def beforeEach() = {
     learningPathDataMock = mock[LearningpathData]

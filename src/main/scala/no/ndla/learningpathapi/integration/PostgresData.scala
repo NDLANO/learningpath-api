@@ -43,6 +43,13 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     learningPathWhere(sqls"lp.id = $id")
   }
 
+  override def withExternalId(externalId: Option[String]): Option[LearningPath] = {
+    externalId match {
+      case None => None
+      case Some(extId) => learningPathWhere(sqls"lp.external_id = $extId")
+    }
+  }
+
   override def withStatus(status: LearningPathStatus.Value): List[LearningPath] = {
     learningPathsWhere(sqls"lp.document->>'status' = ${status.toString}")
   }
@@ -65,13 +72,25 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     }
   }
 
+  override def learningStepWithExternalId(externalId: Option[String]): Option[LearningStep] = {
+    externalId match {
+      case None => None
+      case Some(extId) => {
+        val ls = LearningStep.syntax("ls")
+        DB readOnly { implicit session =>
+          sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.externalId} = $extId".map(LearningStep(ls.resultName)).single().apply()
+        }
+      }
+    }
+  }
+
   override def insert(learningpath: LearningPath): LearningPath = {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(write(learningpath))
 
     DB localTx {implicit session =>
-      val learningPathId:Long = sql"insert into learningpaths(document) values($dataObject)".updateAndReturnGeneratedKey().apply
+      val learningPathId:Long = sql"insert into learningpaths(external_id, document) values(${learningpath.externalId}, $dataObject)".updateAndReturnGeneratedKey().apply
 
       val learningSteps = learningpath.learningsteps.map(learningStep => {
         insertLearningStepNoTx(learningStep.copy(learningPathId = Some(learningPathId)))
@@ -115,7 +134,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
 
     DB localTx { implicit session =>
       sql"update learningsteps set document = $dataObject where id = ${learningStep.id}".update().apply
-      logger.info(s"Updated learningpath with id ${learningStep.id}")
+      logger.info(s"Updated learningstep with id ${learningStep.id}")
       learningStep
     }
   }
@@ -188,7 +207,7 @@ class PostgresData(dataSource: DataSource) extends LearningpathData with LazyLog
     stepObject.setType("jsonb")
     stepObject.setValue(write(learningStep))
 
-    val learningStepId:Long = sql"insert into learningsteps(learning_path_id, document) values (${learningStep.learningPathId}, $stepObject)".updateAndReturnGeneratedKey().apply
+    val learningStepId:Long = sql"insert into learningsteps(learning_path_id, external_id, document) values (${learningStep.learningPathId}, ${learningStep.externalId}, $stepObject)".updateAndReturnGeneratedKey().apply
     logger.info(s"Inserted learningstep with id $learningStepId")
     learningStep.copy(id = Some(learningStepId))
   }

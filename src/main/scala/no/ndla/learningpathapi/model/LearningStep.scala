@@ -8,7 +8,7 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningStep(id: Option[Long], learningPathId: Option[Long], seqNo: Int,
+case class LearningStep(id: Option[Long], externalId:Option[String], learningPathId: Option[Long], seqNo: Int,
                         title: List[Title], description: List[Description], embedUrl: List[EmbedUrl],
                         `type`: StepType.Value, license: Option[String])
 
@@ -33,13 +33,14 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
 
   def apply(ls: ResultName[LearningStep])(rs: WrappedResultSet): LearningStep = {
     val meta = read[LearningStep](rs.string(ls.c("document")))
-    LearningStep(Some(rs.long(ls.c("id"))), Some(rs.long(ls.c("learning_path_id"))), meta.seqNo, meta.title, meta.description, meta.embedUrl, meta.`type`, meta.license)
+    LearningStep(Some(rs.long(ls.c("id"))), rs.stringOpt(ls.c("external_id")), Some(rs.long(ls.c("learning_path_id"))), meta.seqNo, meta.title, meta.description, meta.embedUrl, meta.`type`, meta.license)
   }
 
   def opt(ls: ResultName[LearningStep])(rs: WrappedResultSet): Option[LearningStep] = rs.longOpt(ls.c("id")).map(_ => LearningStep(ls)(rs))
 
   val JSonSerializer = FieldSerializer[LearningStep](
     ignore("id") orElse
-    ignore("learningPathId")
+    ignore("learningPathId") orElse
+    ignore("externalId")
   )
 }

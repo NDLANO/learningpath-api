@@ -11,7 +11,7 @@ import no.ndla.learningpathapi.service.ModelConverters._
 class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPathIndex) {
 
   def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
-    val learningPath = model.LearningPath(None,
+    val learningPath = model.LearningPath(None,None,
       newLearningPath.title.map(asTitle),
       newLearningPath.description.map(asDescription),
       newLearningPath.coverPhotoUrl,
@@ -86,6 +86,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
         }
 
         val newStep = model.LearningStep(
+          None,
           None,
           learningPath.id,
           newSeqNo,

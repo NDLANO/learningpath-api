@@ -41,8 +41,40 @@ object LearningPathUploader {
       val tags = (Tags.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => Tags.forNodeId(tra.nodeId))).distinct
       val learningSteps = steps.filterNot(_.stepType == 1).map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
 
+      val learningPath = asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl)
+      learningpathData.withExternalId(learningPath.externalId) match {
+        case None => {
+          learningpathData.insert(learningPath)
+        }
+        case Some(existingLearningPath) => {
+          learningpathData.update(existingLearningPath.copy(
+            title = learningPath.title,
+            description = learningPath.description,
+            coverPhotoUrl = learningPath.coverPhotoUrl,
+            duration = learningPath.duration,
+            lastUpdated = learningPath.lastUpdated,
+            tags = learningPath.tags
+          ))
 
-      learningpathData.insert(asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl))
+          learningPath.learningsteps.foreach(learningStep => {
+            learningpathData.learningStepWithExternalId(learningStep.externalId) match {
+              case None => {
+                learningpathData.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
+              }
+              case Some(existingLearningStep) => {
+                learningpathData.updateLearningStep(existingLearningStep.copy(
+                  seqNo = learningStep.seqNo,
+                  title = learningStep.title,
+                  description = learningStep.description,
+                  embedUrl = learningStep.embedUrl,
+                  `type`= learningStep.`type`,
+                  license = learningStep.license
+                ))
+              }
+            }
+          })
+        }
+      }
     })
   }
 
@@ -71,6 +103,7 @@ object LearningPathUploader {
 
     no.ndla.learningpathapi.model.LearningPath(
       None,
+      Some(s"${pakke.packageId}"),
       titles,
       descriptions,
       imageUrl,
@@ -92,7 +125,7 @@ object LearningPathUploader {
 
     val embedUrls = embedUrlsAsList(step, translations)
 
-    LearningStep(None, None, seqNo, title, descriptions, embedUrls, asLearningStepType(stepType), None)
+    LearningStep(None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, asLearningStepType(stepType), None)
   }
 
   def asLearningStepType(stepType: String): StepType.Value = {
