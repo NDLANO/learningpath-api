@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.{LearningPathSearch, SearchIndexer}
 import no.ndla.learningpathapi.model.Sort
-import no.ndla.learningpathapi.service.ModelConverters.asApiLearningPathSummary
+import no.ndla.learningpathapi.service.ModelConverters
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
 import org.elasticsearch.search.sort.SortOrder
@@ -17,12 +17,12 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ElasticLearningPathSearch(client: ElasticClient) extends LearningPathSearch with LazyLogging {
+class ElasticLearningPathSearch(client: ElasticClient, mc: ModelConverters) extends LearningPathSearch with LazyLogging {
 
   implicit object ContentHitAs extends HitAs[LearningPathSummary] {
     override def as(hit: RichSearchHit): LearningPathSummary = {
       implicit val formats = org.json4s.DefaultFormats
-      asApiLearningPathSummary(read[LearningPath](hit.sourceAsString))
+      mc.asApiLearningPathSummary(read[LearningPath](hit.sourceAsString))
     }
   }
 

@@ -4,22 +4,20 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.{LearningPathIndex, LearningpathData}
-import no.ndla.learningpathapi.integration.AmazonIntegration
 import no.ndla.learningpathapi.model.LearningPathVerificationStatus
-import no.ndla.learningpathapi.service.ModelConverters._
 
-class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPathIndex) {
+class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPathIndex, mc: ModelConverters) {
 
   def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
     val learningPath = model.LearningPath(None,None,
-      newLearningPath.title.map(asTitle),
-      newLearningPath.description.map(asDescription),
+      newLearningPath.title.map(mc.asTitle),
+      newLearningPath.description.map(mc.asDescription),
       newLearningPath.coverPhotoUrl,
       newLearningPath.duration, model.LearningPathStatus.PRIVATE,
       LearningPathVerificationStatus.EXTERNAL,
-      new Date(), newLearningPath.tags.map(asLearningPathTag), owner, List())
+      new Date(), newLearningPath.tags.map(mc.asLearningPathTag), owner, List())
 
-    asApiLearningpath(learningpathData.insert(learningPath))
+    mc.asApiLearningpath(learningpathData.insert(learningPath))
   }
 
   def updateLearningPath(id: Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
@@ -27,11 +25,11 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
       case None => None
       case Some(existing) => {
         val toUpdate = existing.copy(
-          title = newLearningPath.title.map(asTitle),
-          description = newLearningPath.description.map(asDescription),
+          title = newLearningPath.title.map(mc.asTitle),
+          description = newLearningPath.description.map(mc.asDescription),
           coverPhotoUrl = newLearningPath.coverPhotoUrl,
           duration = newLearningPath.duration,
-          tags = newLearningPath.tags.map(asLearningPathTag),
+          tags = newLearningPath.tags.map(mc.asLearningPathTag),
           lastUpdated = new Date())
 
         val updatedLearningPath = learningpathData.update(toUpdate)
@@ -39,7 +37,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
           searchIndex.indexLearningPath(updatedLearningPath)
         }
 
-        Some(asApiLearningpath(updatedLearningPath))
+        Some(mc.asApiLearningpath(updatedLearningPath))
       }
     }
   }
@@ -60,7 +58,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
         }
 
 
-        Some(asApiLearningpath(updatedLearningPath))
+        Some(mc.asApiLearningpath(updatedLearningPath))
       }
     }
   }
@@ -90,9 +88,9 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
           None,
           learningPath.id,
           newSeqNo,
-          newLearningStep.title.map(asTitle),
-          newLearningStep.description.map(asDescription),
-          newLearningStep.embedUrl.map(asEmbedUrl),
+          newLearningStep.title.map(mc.asTitle),
+          newLearningStep.description.map(mc.asDescription),
+          newLearningStep.embedUrl.map(mc.asEmbedUrl),
           model.StepType.valueOfOrDefault(newLearningStep.`type`),
           newLearningStep.license)
 
@@ -105,7 +103,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
           searchIndex.indexLearningPath(updatedPath)
         }
 
-        Some(asApiLearningStep(insertedStep, updatedPath))
+        Some(mc.asApiLearningStep(insertedStep, updatedPath))
       }
     }
   }
@@ -118,9 +116,9 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
           case None => None
           case Some(existing) => {
             val toUpdate = existing.copy(
-              title = newLearningStep.title.map(asTitle),
-              description = newLearningStep.description.map(asDescription),
-              embedUrl = newLearningStep.embedUrl.map(asEmbedUrl),
+              title = newLearningStep.title.map(mc.asTitle),
+              description = newLearningStep.description.map(mc.asDescription),
+              embedUrl = newLearningStep.embedUrl.map(mc.asEmbedUrl),
               `type` = model.StepType.valueOfOrDefault(newLearningStep.`type`),
               license = newLearningStep.license)
 
@@ -133,7 +131,7 @@ class UpdateService(learningpathData: LearningpathData, searchIndex: LearningPat
               searchIndex.indexLearningPath(updatedPath)
             }
 
-            Some(asApiLearningStep(updatedStep, updatedPath))
+            Some(mc.asApiLearningStep(updatedStep, updatedPath))
           }
         }
       }

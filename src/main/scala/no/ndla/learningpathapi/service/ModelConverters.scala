@@ -1,14 +1,14 @@
 package no.ndla.learningpathapi.service
 
-import java.util.Date
-
 import no.ndla.learningpathapi
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.{LearningStep, LearningPath}
+import no.ndla.learningpathapi.business.UserData
+import no.ndla.learningpathapi.model.{LearningPath, LearningStep, NdlaUserName}
 import no.ndla.network.ApplicationUrl
 
 
-object ModelConverters {
+class ModelConverters(userData: UserData) {
+
   def asEmbedUrl(url: EmbedUrl): model.EmbedUrl = {
     model.EmbedUrl(url.url, url.language)
   }
@@ -30,6 +30,11 @@ object ModelConverters {
     LearningPathTag(tag.tag, tag.language)
   }
 
+  def asAuthor(user: NdlaUserName): Author = {
+    val names = Array(user.first_name, user.middle_name, user.last_name).filter(_.isDefined).map(_.get)
+    Author("Forfatter", names.mkString(" "))
+  }
+
   def asApiLearningpath(lp: LearningPath): no.ndla.learningpathapi.LearningPath = {
     no.ndla.learningpathapi.LearningPath(lp.id.get,
       lp.title.map(asApiTitle),
@@ -43,7 +48,7 @@ object ModelConverters {
       lp.verificationStatus.toString,
       lp.lastUpdated,
       lp.tags.map(asApiLearningPathTag),
-      Author("Forfatter", "Not yet implemented")) // TODO: Hent navn fra auth, basert på owner
+      asAuthor(userData.getUserName(lp.owner)))
   }
 
 
@@ -56,7 +61,7 @@ object ModelConverters {
       learningpath.duration,
       learningpath.status.toString,
       learningpath.lastUpdated,
-      Author("Forfatter", "Not yet implemented")) // TODO: Hent navn fra auth, basert på owner
+      asAuthor(userData.getUserName(learningpath.owner)))
   }
 
   def asApiLearningPathSummary(learningPath: no.ndla.learningpathapi.LearningPath): no.ndla.learningpathapi.LearningPathSummary = {

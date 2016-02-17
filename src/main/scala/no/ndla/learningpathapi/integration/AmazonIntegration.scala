@@ -2,14 +2,13 @@ package no.ndla.learningpathapi.integration
 
 import com.sksamuel.elastic4s.{ElasticsearchClientUri, ElasticClient}
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.business.{LearningPathSearch, LearningPathIndex, LearningpathData}
-import no.ndla.learningpathapi.service.{UpdateService, PrivateService, PublicService}
+import no.ndla.learningpathapi.business.{UserData, LearningPathSearch, LearningPathIndex, LearningpathData}
+import no.ndla.learningpathapi.service.{ModelConverters, UpdateService, PrivateService, PublicService}
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.postgresql.ds.PGPoolingDataSource
 
 
 object AmazonIntegration {
-
 
   private val datasource = new PGPoolingDataSource()
   datasource.setUser(LearningpathApiProperties.MetaUserName)
@@ -22,15 +21,15 @@ object AmazonIntegration {
   datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
 
   def getPublicService(): PublicService = {
-    new PublicService(getLearningpathData())
+    new PublicService(getLearningpathData(), getModelConverter())
   }
 
   def getPrivateService(): PrivateService = {
-    new PrivateService(getLearningpathData())
+    new PrivateService(getLearningpathData(), getModelConverter())
   }
 
   def getUpdateService(): UpdateService = {
-    new UpdateService(getLearningpathData(), getLearningPathIndex())
+    new UpdateService(getLearningpathData(), getLearningPathIndex(), getModelConverter())
   }
 
   def getLearningpathData(): LearningpathData = {
@@ -38,11 +37,19 @@ object AmazonIntegration {
   }
 
   def getLearningPathIndex(): LearningPathIndex = {
-    new ElasticLearningPathIndex(createElasticClient)
+    new ElasticLearningPathIndex(createElasticClient, getModelConverter())
   }
 
   def getLearningPathSearch(): LearningPathSearch = {
-    new ElasticLearningPathSearch(createElasticClient)
+    new ElasticLearningPathSearch(createElasticClient, getModelConverter())
+  }
+
+  def getModelConverter(): ModelConverters = {
+    new ModelConverters(getUserData())
+  }
+
+  def getUserData(): UserData = {
+    new AuthUserDataClient()
   }
 
   private def createElasticClient: ElasticClient = {

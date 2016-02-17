@@ -1,10 +1,14 @@
 package no.ndla.learningpathapi.integration
 
 import com.sksamuel.elastic4s.ElasticClient
+import no.ndla.learningpathapi.business.UserData
+import no.ndla.learningpathapi.service.ModelConverters
 import no.ndla.learningpathapi.{LearningpathApiProperties, UnitSuite}
 
 class ElasticLearningPathSearchTest extends UnitSuite {
 
+  var userDataMock: UserData = _
+  var modelConverter: ModelConverters = _
   var search:ElasticLearningPathSearch = _
   var elasticClientMock:ElasticClient = _
 
@@ -17,7 +21,10 @@ class ElasticLearningPathSearchTest extends UnitSuite {
       "SEARCH_DEFAULT_PAGE_SIZE" -> Some(s"$DEFAULT_PAGE_SIZE")
       ))
     elasticClientMock = mock[ElasticClient]
-    search = new ElasticLearningPathSearch(elasticClientMock)
+    userDataMock = mock[UserData]
+
+    modelConverter = new ModelConverters(userDataMock)
+    search = new ElasticLearningPathSearch(elasticClientMock, modelConverter)
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {

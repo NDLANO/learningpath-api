@@ -14,13 +14,13 @@ import no.ndla.learningpathapi.service.ModelConverters
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.json4s.native.Serialization._
 
-class ElasticLearningPathIndex(client: ElasticClient) extends LearningPathIndex with LazyLogging {
+class ElasticLearningPathIndex(client: ElasticClient, mc: ModelConverters) extends LearningPathIndex with LazyLogging {
   implicit val formats = org.json4s.DefaultFormats
 
   override def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
     client.execute {
       bulk(learningPaths.map(learningPath => {
-        index into indexName -> LearningpathApiProperties.SearchDocument source write(ModelConverters.asApiLearningpath(learningPath)) id learningPath.id.get
+        index into indexName -> LearningpathApiProperties.SearchDocument source write(mc.asApiLearningpath(learningPath)) id learningPath.id.get
       }))
     }.await
 
@@ -31,7 +31,7 @@ class ElasticLearningPathIndex(client: ElasticClient) extends LearningPathIndex 
   override def indexLearningPath(learningPath: LearningPath): Unit = {
     aliasTarget.foreach(indexName => {
       client.execute {
-        index into indexName -> LearningpathApiProperties.SearchDocument source write(ModelConverters.asApiLearningpath(learningPath)) id learningPath.id.get
+        index into indexName -> LearningpathApiProperties.SearchDocument source write(mc.asApiLearningpath(learningPath)) id learningPath.id.get
       }.await
     })
   }

@@ -3,14 +3,18 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi.UnitSuite
-import no.ndla.learningpathapi.business.LearningpathData
+import no.ndla.learningpathapi.business.{UserData, LearningpathData}
 import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 
 class PublicServiceTest extends UnitSuite {
 
+  var userDataMock: UserData = _
+  var modelConverter: ModelConverters = _
   var learningPathDataMock: LearningpathData = _
   var publicService: PublicService = _
+
 
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2
@@ -23,7 +27,12 @@ class PublicServiceTest extends UnitSuite {
 
   override def beforeEach() = {
     learningPathDataMock = mock[LearningpathData]
-    publicService = new PublicService(learningPathDataMock)
+    userDataMock = mock[UserData]
+
+    modelConverter = new ModelConverters(userDataMock)
+    publicService = new PublicService(learningPathDataMock, modelConverter)
+
+    when(userDataMock.getUserName(any[String])).thenReturn(NdlaUserName(Some("fornavn"), Some("mellomnavn"), Some("Etternavn")))
   }
 
   test("That withId returns None when id does not exist") {

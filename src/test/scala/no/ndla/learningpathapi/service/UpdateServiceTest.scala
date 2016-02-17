@@ -4,13 +4,15 @@ import java.util.Date
 
 import no.ndla.learningpathapi.LearningPathStatus
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.business.{LearningPathIndex, LearningpathData}
-import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException, LearningStep, LearningPath, StepType}
+import no.ndla.learningpathapi.business.{UserData, LearningPathIndex, LearningpathData}
+import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException, LearningStep, LearningPath, StepType, NdlaUserName}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
 class UpdateServiceTest extends UnitSuite {
 
+  var userDataMock: UserData = _
+  var modelConverter: ModelConverters = _
   var learningPathDataMock: LearningpathData = _
   var searchIndexMock: LearningPathIndex = _
   var updateService: UpdateService = _
@@ -33,7 +35,11 @@ class UpdateServiceTest extends UnitSuite {
   override def beforeEach() = {
     learningPathDataMock = mock[LearningpathData]
     searchIndexMock = mock[LearningPathIndex]
-    updateService = new UpdateService(learningPathDataMock, searchIndexMock)
+    userDataMock = mock[UserData]
+
+    modelConverter = new ModelConverters(userDataMock)
+    updateService = new UpdateService(learningPathDataMock, searchIndexMock, modelConverter)
+    when(userDataMock.getUserName(any[String])).thenReturn(NdlaUserName(Some("fornavn"), Some("mellomnavn"), Some("Etternavn")))
   }
 
   test("That addLearningPath inserts the given LearningPath") {

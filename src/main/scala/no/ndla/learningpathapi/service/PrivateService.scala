@@ -2,16 +2,16 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.business.LearningpathData
-import no.ndla.learningpathapi.service.ModelConverters._
 
-class PrivateService(learningpathData: LearningpathData) {
+
+class PrivateService(learningpathData: LearningpathData, mc: ModelConverters) {
 
   def all(owner: String): List[LearningPathSummary] = {
-    learningpathData.withStatusAndOwner(model.LearningPathStatus.PRIVATE, owner).map(asApiLearningpathSummary)
+    learningpathData.withStatusAndOwner(model.LearningPathStatus.PRIVATE, owner).map(mc.asApiLearningpathSummary)
   }
 
   def withId(learningPathId: Long, owner: String): Option[LearningPath] = {
-    withIdAndAccessGranted(learningPathId, owner).map(asApiLearningpath)
+    withIdAndAccessGranted(learningPathId, owner).map(mc.asApiLearningpath)
   }
 
   def statusFor(learningPathId: Long, owner: String): Option[LearningPathStatus] = {
@@ -20,14 +20,14 @@ class PrivateService(learningpathData: LearningpathData) {
 
   def learningstepsFor(learningPathId: Long, owner: String): Option[List[LearningStep]] = {
     withIdAndAccessGranted(learningPathId, owner) match {
-      case Some(lp) => Some(learningpathData.learningStepsFor(lp.id.get).map(ls => asApiLearningStep(ls, lp)))
+      case Some(lp) => Some(learningpathData.learningStepsFor(lp.id.get).map(ls => mc.asApiLearningStep(ls, lp)))
       case None => None
     }
   }
 
   def learningstepFor(learningPathId: Long, learningStepId: Long, owner: String): Option[LearningStep] = {
     withIdAndAccessGranted(learningPathId, owner) match {
-      case Some(lp) => learningpathData.learningStepWithId(learningPathId, learningStepId).map(ls => asApiLearningStep(ls, lp))
+      case Some(lp) => learningpathData.learningStepWithId(learningPathId, learningStepId).map(ls => mc.asApiLearningStep(ls, lp))
       case None => None
     }
   }
