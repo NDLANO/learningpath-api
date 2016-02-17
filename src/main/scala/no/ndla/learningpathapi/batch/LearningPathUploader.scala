@@ -53,7 +53,8 @@ object LearningPathUploader {
             coverPhotoUrl = learningPath.coverPhotoUrl,
             duration = learningPath.duration,
             lastUpdated = learningPath.lastUpdated,
-            tags = learningPath.tags
+            tags = learningPath.tags,
+            owner = learningPath.owner
           ))
 
           learningPath.learningsteps.foreach(learningStep => {
@@ -89,7 +90,7 @@ object LearningPathUploader {
       case 156987 => "ddd2ff24-616a-484d-8172-55ddba52cd7a" //KW
       case 149007 => "a62debc3-74a7-43f3-88c9-d35837a41698" //Remi
       case 143822 => "e646b7f6-60ce-4364-9e77-2a88754b95db" // KES
-      case default => "e646b7f6-60ce-4364-9e77-2a88754b95db" //KES
+      case default => "6e74cde7-1e83-49c8-8dcd-9bbef458f477" //Christer
     }
 
     val publishStatus = pakke.nodeId match {
