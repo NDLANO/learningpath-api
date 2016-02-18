@@ -3,14 +3,12 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi.UnitSuite
-import no.ndla.learningpathapi.business.LearningpathData
 import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._
 
 class PublicServiceTest extends UnitSuite {
 
-  var learningPathDataMock: LearningpathData = _
-  var publicService: PublicService = _
+  var service: PublicService = _
 
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2
@@ -22,111 +20,111 @@ class PublicServiceTest extends UnitSuite {
   val STEP2 = LearningStep(Some(2), None, None, 2, List(), List(), List(), StepType.TEXT, None)
 
   override def beforeEach() = {
-    learningPathDataMock = mock[LearningpathData]
-    publicService = new PublicService(learningPathDataMock)
+    service = new PublicService
+    resetMocks()
   }
 
   test("That withId returns None when id does not exist") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(None)
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      publicService.withId(PUBLISHED_ID)
+      service.withId(PUBLISHED_ID)
     }
   }
 
   test("That withId returns a learningPath when the status is PUBLISHED") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
 
-    val learningPath = publicService.withId(PUBLISHED_ID)
+    val learningPath = service.withId(PUBLISHED_ID)
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
   }
 
   test("That withId throws an AccessDeniedException when the status is PRIVATE") {
-    when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { publicService.withId(PRIVATE_ID) }.getMessage
+      intercept[AccessDeniedException] { service.withId(PRIVATE_ID) }.getMessage
     }
   }
 
   test("That statusFor returns None when id does not exist") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(None)
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      publicService.statusFor(PUBLISHED_ID)
+      service.statusFor(PUBLISHED_ID)
     }
   }
 
   test("That statusFor returns a LearningPathStatus when the status is PUBLISHED") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     assertResult("PUBLISHED") {
-      publicService.statusFor(PUBLISHED_ID).map(_.status).get
+      service.statusFor(PUBLISHED_ID).map(_.status).get
     }
   }
 
   test("That statusFor throws an AccessDeniedException when the status is PRIVATE") {
-    when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException]{ publicService.statusFor(2) }.getMessage
+      intercept[AccessDeniedException]{ service.statusFor(2) }.getMessage
     }
   }
 
   test("That learningstepsFor returns None when the learningPath does not exist") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(None)
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      publicService.learningstepsFor(PUBLISHED_ID)
+      service.learningstepsFor(PUBLISHED_ID)
     }
   }
 
   test("That learningstepsFor returns an empty list if the learningPath does not have any learningsteps") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathDataMock.learningStepsFor(PUBLISHED_ID)).thenReturn(List())
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List())
     assertResult(0) {
-      publicService.learningstepsFor(PUBLISHED_ID).get.length
+      service.learningstepsFor(PUBLISHED_ID).get.length
     }
   }
 
   test("That learningstepsFor returns all learningsteps for a learningpath") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathDataMock.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2))
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2))
     assertResult(2) {
-      publicService.learningstepsFor(PUBLISHED_ID).get.length
+      service.learningstepsFor(PUBLISHED_ID).get.length
     }
   }
 
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE") {
-    when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { publicService.learningstepsFor(PRIVATE_ID) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepsFor(PRIVATE_ID) }.getMessage
     }
   }
 
   test("That learningstepFor returns None when the learningPath does not exist") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(None)
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      publicService.learningstepFor(PUBLISHED_ID, STEP1.id.get)
+      service.learningstepFor(PUBLISHED_ID, STEP1.id.get)
     }
   }
 
   test("That learningstepFor returns None when the learningStep does not exist") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathDataMock.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(None)
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(None)
     assertResult(None) {
-      publicService.learningstepFor(PUBLISHED_ID, STEP1.id.get)
+      service.learningstepFor(PUBLISHED_ID, STEP1.id.get)
     }
   }
 
   test("That learningstepFor returns the LearningStep when it exists") {
-    when(learningPathDataMock.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathDataMock.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
     assertResult(STEP1.id.get) {
-      publicService.learningstepFor(PUBLISHED_ID, STEP1.id.get).get.id
+      service.learningstepFor(PUBLISHED_ID, STEP1.id.get).get.id
     }
   }
 
   test("That learningstepFor throws an AccessDeniedException when the status is PRIVATE") {
-    when(learningPathDataMock.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { publicService.learningstepFor(PRIVATE_ID, STEP1.id.get) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepFor(PRIVATE_ID, STEP1.id.get) }.getMessage
     }
   }
 

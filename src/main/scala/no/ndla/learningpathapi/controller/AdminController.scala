@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.business.SearchIndexer
+import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.Error
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
@@ -12,7 +12,7 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   protected implicit override val jsonFormats: Formats = DefaultFormats
 
   post("/index"){
-    Ok(SearchIndexer.indexDocuments())
+    Ok(ComponentRegistry.searchIndexBuilderService.indexDocuments())
   }
 
   error{

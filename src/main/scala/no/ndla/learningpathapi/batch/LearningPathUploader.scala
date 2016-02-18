@@ -1,9 +1,8 @@
 package no.ndla.learningpathapi.batch
 
-import no.ndla.learningpathapi.{LearningpathApiProperties, PropertiesLoader}
-import no.ndla.learningpathapi.batch.integration.{Tags, CMData, PackageData}
-import no.ndla.learningpathapi.integration.AmazonIntegration
+import no.ndla.learningpathapi.batch.integration.{CMData, PackageData, Tags}
 import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.{ComponentRegistry, PropertiesLoader}
 
 object LearningPathUploader {
 
@@ -23,7 +22,7 @@ object LearningPathUploader {
 
   val cmData = new CMData(CMHost, CMPort, CMDatabase, CMUser, CMPassword)
   val packageData = new PackageData(PackageHost, PackagePort, PackageDatabase, PackageUser, PackagePassword)
-  val learningpathData = AmazonIntegration.getLearningpathData()
+  val learningPathRepository = ComponentRegistry.learningPathRepository
 
   def main(args: Array[String]) {
     val nodes: List[Node] = cmData.allLearningPaths()
@@ -42,12 +41,12 @@ object LearningPathUploader {
       val learningSteps = steps.filterNot(_.stepType == 1).map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
 
       val learningPath = asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl)
-      learningpathData.withExternalId(learningPath.externalId) match {
+      learningPathRepository.withExternalId(learningPath.externalId) match {
         case None => {
-          learningpathData.insert(learningPath)
+          learningPathRepository.insert(learningPath)
         }
         case Some(existingLearningPath) => {
-          learningpathData.update(existingLearningPath.copy(
+          learningPathRepository.update(existingLearningPath.copy(
             title = learningPath.title,
             description = learningPath.description,
             coverPhotoUrl = learningPath.coverPhotoUrl,
@@ -58,12 +57,12 @@ object LearningPathUploader {
           ))
 
           learningPath.learningsteps.foreach(learningStep => {
-            learningpathData.learningStepWithExternalId(learningStep.externalId) match {
+            learningPathRepository.learningStepWithExternalId(learningStep.externalId) match {
               case None => {
-                learningpathData.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
+                learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
               }
               case Some(existingLearningStep) => {
-                learningpathData.updateLearningStep(existingLearningStep.copy(
+                learningPathRepository.updateLearningStep(existingLearningStep.copy(
                   seqNo = learningStep.seqNo,
                   title = learningStep.title,
                   description = learningStep.description,

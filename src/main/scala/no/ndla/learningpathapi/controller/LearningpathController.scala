@@ -5,9 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi.{LearningPath, LearningStep, _}
-import no.ndla.learningpathapi.integration.AmazonIntegration
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.service.{PublicService, PrivateService, UpdateService}
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
@@ -194,10 +192,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
-  val publicService = AmazonIntegration.getPublicService()
-  val privateService = AmazonIntegration.getPrivateService()
-  val search = AmazonIntegration.getLearningPathSearch()
-  val updateService = AmazonIntegration.getUpdateService()
+  val publicService = ComponentRegistry.publicService
+  val privateService = ComponentRegistry.privateService
+  val updateService = ComponentRegistry.updateService
+  val search = ComponentRegistry.searchService
 
   get("/", operation(getLearningpaths)) {
     val query = params.get("query")
