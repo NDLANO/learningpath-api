@@ -4,7 +4,7 @@ import org.scalatest._
 import org.scalatest.mock.MockitoSugar
 
 
-abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfter with TestEnvironment {
+abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfter {
   LearningpathApiProperties.setProperties(Map(
     "CONTACT_EMAIL" -> Some("ndla@knowit.no"),
     "HOST_ADDR" -> Some("localhost"),

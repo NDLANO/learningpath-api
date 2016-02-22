@@ -1,8 +1,8 @@
 package no.ndla.learningpathapi.integration
 
-import no.ndla.learningpathapi.{LearningpathApiProperties, UnitSuite}
+import no.ndla.learningpathapi.{TestEnvironment, LearningpathApiProperties, UnitSuite}
 
-class ElasticLearningPathSearchTest extends UnitSuite {
+class ElasticLearningPathSearchTest extends UnitSuite with TestEnvironment {
 
   var service: SearchService = _
 

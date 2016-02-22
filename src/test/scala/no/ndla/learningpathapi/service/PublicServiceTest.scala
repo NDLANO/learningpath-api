@@ -2,11 +2,11 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
-import no.ndla.learningpathapi.UnitSuite
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._
 
-class PublicServiceTest extends UnitSuite {
+class PublicServiceTest extends UnitSuite with TestEnvironment{
 
   var service: PublicService = _
 

@@ -8,7 +8,7 @@ import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
-class UpdateServiceTest extends UnitSuite {
+class UpdateServiceTest extends UnitSuite with TestEnvironment {
   
   var service: UpdateService = _
 
