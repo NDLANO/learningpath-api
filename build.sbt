@@ -33,6 +33,7 @@ lazy val learningpath_api = (project in file(".")).
     libraryDependencies ++= Seq(
       "ndla" %% "logging" % "0.1-SNAPSHOT",
       "ndla" %% "network" % "0.1-SNAPSHOT",
+      "ndla" %% "mapping" % "0.1-SNAPSHOT",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
