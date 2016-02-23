@@ -2,6 +2,7 @@ package no.ndla.learningpathapi.batch.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.LearningPathTag
+import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
 import org.json4s.native.Serialization._
 
 import scala.util.matching.Regex
@@ -13,19 +14,6 @@ trait KeywordsServiceComponent extends LazyLogging {
   class KeywordsService {
     val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
-
-    val iso639Map = Map(
-      "nob" -> "nb",
-      "eng" -> "en",
-      "fra" -> "fr",
-      "nno" -> "nn",
-      "sme" -> "se",
-      "sma" -> "se",
-      "smj" -> "se",
-      "deu" -> "de",
-      "spa" -> "es",
-      "zho" -> "zh"
-    )
 
     def forNodeId(nid: Long): List[LearningPathTag] = {
       forRequest(Http(s"$TopicAPIUrl$nid"))
@@ -61,7 +49,7 @@ trait KeywordsServiceComponent extends LazyLogging {
 
     def getISO639(languageUrl: String): Option[String] = {
       Option(languageUrl) collect { case pattern(group) => group } match {
-        case Some(x) => if (x == "language-neutral") None else iso639Map.get(x)
+        case Some(x) => if (x == "language-neutral") None else get6391CodeFor6392Code(x)
         case None => None
       }
     }
