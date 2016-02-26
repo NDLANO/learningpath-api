@@ -10,8 +10,6 @@ import org.mockito.Matchers._
 class PublicServiceTest extends UnitSuite with TestEnvironment{
 
   var service: PublicService = _
-  var modelConverter: ModelConverters = _
-
 
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2

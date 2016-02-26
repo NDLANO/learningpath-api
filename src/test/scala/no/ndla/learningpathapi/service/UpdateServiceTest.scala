@@ -11,7 +11,6 @@ import org.mockito.Mockito._
 class UpdateServiceTest extends UnitSuite with TestEnvironment {
   
   var service: UpdateService = _
-  var modelConverter: ModelConverters = _
 
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2
