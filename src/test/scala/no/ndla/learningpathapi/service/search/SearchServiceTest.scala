@@ -1,12 +1,11 @@
-package no.ndla.learningpathapi.integration
+package no.ndla.learningpathapi.service.search
 
-import no.ndla.learningpathapi.service.ModelConverters
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
 
-class ElasticLearningPathSearchTest extends UnitSuite with TestEnvironment {
+class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   var service: SearchService = _
-  var modelConverter: ModelConverters = _
+  var modelConverter: ConverterService = _
 
   val DEFAULT_PAGE_SIZE = 12
   val MAX_PAGE_SIZE = 548
