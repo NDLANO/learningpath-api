@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.{LearningPathStatus, ValidationMessage}
+import no.ndla.learningpathapi.ValidationMessage
+import no.ndla.learningpathapi.model.LearningPathStatus
 
 object StatusValidator {
   def validate(status: String): Option[ValidationMessage] = {

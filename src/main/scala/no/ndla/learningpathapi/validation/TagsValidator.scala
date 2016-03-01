@@ -1,7 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.LearningPathTag
-import no.ndla.learningpathapi.model.ValidationMessage
+import no.ndla.learningpathapi.{LearningPathTag, ValidationMessage}
 
 object TagsValidator {
   val TAG_EMPTY = "Required value tag is empty."

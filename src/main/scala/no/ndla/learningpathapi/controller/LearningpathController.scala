@@ -9,7 +9,6 @@ import no.ndla.learningpathapi.model._
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
-import org.json4s.ext.EnumNameSerializer
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
@@ -18,10 +17,19 @@ import org.scalatra.{Ok, ScalatraServlet}
 import scala.util.Try
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
-  protected implicit override val jsonFormats: Formats = DefaultFormats + new EnumNameSerializer(Error)
-
+  protected implicit override val jsonFormats: Formats = DefaultFormats
 
   protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
+
+  // Additional models used in error responses
+  registerModel[ValidationError]()
+  registerModel[Error]()
+
+  val response400 = ResponseMessageWithModel(400, "Validation Error", "ValidationError")
+  val response403 = ResponseMessageWithModel(403, "Access not granted", "Error")
+  val response404 = ResponseMessageWithModel(404, "Not found", "Error")
+  val response500 = ResponseMessageWithModel(500, "Unknown error", "Error")
+
   val getLearningpaths =
     (apiOperation[SearchResult]("getLearningpaths")
       summary "Show public learningpaths"
@@ -39,7 +47,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
            When browsing, the default is title (asc).
            The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title""".stripMargin)
       )
+      responseMessages response500
       )
+
   val getPrivateLearningpaths =
     (apiOperation[List[LearningPathSummary]]("getPrivateLearningpaths")
       summary "Show your private learningpaths"
@@ -48,6 +58,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key.")
       )
+      responseMessages(response403, response500)
       )
 
   val getLearningpath =
@@ -57,8 +68,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("path_id").description("The id of the learningpath.")
+      pathParam[String]("path_id").description("The id of the learningpath.")
       )
+      responseMessages(response403, response404, response500)
       )
 
   val getLearningpathStatus =
@@ -68,8 +80,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("path_id").description("The id of the learningpath.")
+      pathParam[String]("path_id").description("The id of the learningpath.")
       )
+      responseMessages(response403, response404, response500)
       )
 
   val getLearningsteps =
@@ -79,8 +92,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("path_id").description("The id of the learningpath.")
+      pathParam[String]("path_id").description("The id of the learningpath.")
       )
+      responseMessages(response403, response404, response500)
       )
 
   val getLearningstep =
@@ -90,22 +104,26 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("path_id").description("The id of the learningpath."),
-      queryParam[Option[String]]("step_id").description("The id of the learningpath.")
+      pathParam[String]("path_id").description("The id of the learningpath."),
+      pathParam[String]("step_id").description("The id of the learningpath.")
       )
+      responseMessages(response403, response404, response500)
       )
 
   val addNewLearningpath =
-    (apiOperation[LearningPath]("addLearningpath")
+    (
+      apiOperation[LearningPath]("addLearningpath")
       summary "Adds the given learningpath"
       notes "Adds the given learningpath"
       parameters(
-      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-      headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("copy-from").description("Id of learningPath to use as basis for the new one."),
-      bodyParam[NewLearningPath]
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        queryParam[Option[String]]("copy-from").description("Id of learningPath to use as basis for the new one."),
+        bodyParam[NewLearningPath]
       )
-      )
+      responseMessages(response400, response403, response404, response500)
+    )
+
 
   val addNewLearningStep =
     (apiOperation[LearningStep]("addLearningStep")
@@ -114,8 +132,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
+      pathParam[String]("path_id").description("The id of the learningpath."),
       bodyParam[NewLearningStep]
       )
+      responseMessages(response400, response403, response404, response500)
       )
 
   val updateLearningPath =
@@ -125,8 +145,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
+      pathParam[String]("path_id").description("The id of the learningpath."),
       bodyParam[NewLearningPath]
       )
+      responseMessages(response400, response403, response404, response500)
       )
 
   val updateLearningStep =
@@ -136,8 +158,11 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
+      pathParam[String]("path_id").description("The id of the learningpath."),
+      pathParam[String]("step_id").description("The id of the learningpath."),
       bodyParam[NewLearningStep]
       )
+      responseMessages(response400, response403, response404, response500)
       )
 
   val updateLearningPathStatus = (apiOperation[LearningPathStatus]("updateLearningPathStatus")
@@ -146,8 +171,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     parameters(
     headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
     headerParam[Option[String]]("app-key").description("Your app-key."),
+    pathParam[String]("path_id").description("The id of the learningpath."),
     bodyParam[LearningPathStatus]
     )
+    responseMessages(response400, response403, response404, response500)
     )
 
   val deleteLearningPath =
@@ -156,8 +183,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     notes "Deletes the given learningPath"
     parameters(
     headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-    headerParam[Option[String]]("app-key").description("Your app-key.")
+    headerParam[Option[String]]("app-key").description("Your app-key."),
+    pathParam[String]("path_id").description("The id of the learningpath.")
     )
+    responseMessages(response403, response404, response500)
     )
 
   val deleteLearningStep =
@@ -166,8 +195,11 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     notes "Deletes the given learningStep"
     parameters(
     headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-    headerParam[Option[String]]("app-key").description("Your app-key.")
+    headerParam[Option[String]]("app-key").description("Your app-key."),
+    pathParam[String]("path_id").description("The id of the learningpath."),
+    pathParam[String]("step_id").description("The id of the learningpath.")
     )
+    responseMessages(response403, response404, response500)
     )
 
   before() {
@@ -177,7 +209,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   after() {
-    LoggerContext.clearCorrelationID
+    LoggerContext.clearCorrelationID()
     ApplicationUrl.clear()
   }
 
@@ -188,7 +220,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     case t:Throwable => {
       t.printStackTrace()
       logger.error(t.getMessage)
-      halt(status = 500, body = Error.GenericError)
+      halt(status = 500, body = Error())
     }
   }
 

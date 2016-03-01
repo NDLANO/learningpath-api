@@ -1,8 +1,7 @@
 package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.ComponentRegistry
-import no.ndla.learningpathapi.model.Error
+import no.ndla.learningpathapi.{ComponentRegistry, Error}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
@@ -18,7 +17,7 @@ class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLo
   error{
     case t:Throwable => {
       logger.error(t.getMessage, t)
-      halt(status = 500, body = Error(Error.GENERIC, t.getMessage))
+      halt(status = 500, body = Error(description = t.getMessage))
     }
   }
 

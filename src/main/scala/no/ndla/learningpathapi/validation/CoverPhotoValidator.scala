@@ -1,8 +1,9 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.{ValidationMessage, LearningpathApiProperties}
 import com.netaporter.uri.Uri.parse
-import no.ndla.learningpathapi.model.ValidationMessage
+
+
 
 object CoverPhotoValidator {
   val INVALID_TARGET = "The url to the coverPhoto must point to an image in NDLA Image API."

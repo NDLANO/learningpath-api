@@ -1,7 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.EmbedUrl
-import no.ndla.learningpathapi.model.ValidationMessage
+import no.ndla.learningpathapi.{ValidationMessage, EmbedUrl}
 
 object EmbedUrlValidator {
   val URL_EMTPY = "Required value url is empty."

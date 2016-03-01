@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.ValidationMessage
+import no.ndla.learningpathapi.ValidationMessage
 
 
 object DurationValidator {

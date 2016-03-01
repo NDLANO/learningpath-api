@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.ValidationMessage
+import no.ndla.learningpathapi.ValidationMessage
 
 object LicenseValidator {
   val LICENSE_EMPTY = "Required value license is empty."

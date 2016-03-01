@@ -1,9 +1,11 @@
 package no.ndla.learningpathapi
 
+import java.text.SimpleDateFormat
 import java.util.Date
 
-import no.ndla.learningpathapi.model.{ValidationMessage, ValidationException}
+import no.ndla.learningpathapi.model.ValidationException
 import no.ndla.learningpathapi.validation._
+import org.scalatra.swagger.ResponseMessage
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -147,3 +149,36 @@ case class LearningPathTag(
   @(ApiModelProperty @field)(description = "The searchable tag.") tag:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in tag") language:Option[String]
 )
+
+@ApiModel(description = "A message describing a validation error on a specific field")
+case class ValidationMessage(
+  @(ApiModelProperty @field)(description = "The field the error occured in") field: String,
+  @(ApiModelProperty @field)(description = "The validation message") message: String)
+
+@ApiModel(description = "Information about validation errors")
+case class ValidationError(
+  @(ApiModelProperty @field)(description = "Code stating the type of error") code:String = Error.VALIDATION,
+  @(ApiModelProperty @field)(description = "Description of the error") description:String = Error.VALIDATION_DESCRIPTION,
+  @(ApiModelProperty @field)(description = "List of validation messages") messages: List[ValidationMessage],
+  @(ApiModelProperty @field)(description = "When the error occured") occuredAt:Date = new Date())
+
+@ApiModel(description = "Information about an error")
+case class Error(
+  @(ApiModelProperty @field)(description = "Code stating the type of error") code:String = Error.GENERIC,
+  @(ApiModelProperty @field)(description = "Description of the error") description:String = Error.GENERIC_DESCRIPTION,
+  @(ApiModelProperty @field)(description = "When the error occured") occuredAt:Date = new Date())
+
+object Error {
+  val GENERIC = "GENERIC"
+  val NOT_FOUND = "NOT_FOUND"
+  val INDEX_MISSING = "INDEX_MISSING"
+  val HEADER_MISSING = "HEADER_MISSING"
+  val VALIDATION = "VALIDATION"
+  val ACCESS_DENIED = "ACCESS_DENIED"
+
+  val GENERIC_DESCRIPTION = s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
+  val VALIDATION_DESCRIPTION = "Validation Error"
+}
+
+
+case class ResponseMessageWithModel(code: Int, message: String, responseModel: String) extends ResponseMessage[String]

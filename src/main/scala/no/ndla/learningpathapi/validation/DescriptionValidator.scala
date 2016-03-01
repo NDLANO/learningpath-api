@@ -1,7 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.Description
-import no.ndla.learningpathapi.model.ValidationMessage
+import no.ndla.learningpathapi.{ValidationMessage, Description}
 
 object DescriptionValidator {
   val DESCRIPTION_EMPTY = "Required value description is empty."

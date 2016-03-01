@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.{StepType, ValidationMessage}
+import no.ndla.learningpathapi.ValidationMessage
+import no.ndla.learningpathapi.model.StepType
 
 
 object StepTypeValidator {

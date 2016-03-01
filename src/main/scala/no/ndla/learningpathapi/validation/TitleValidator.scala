@@ -1,7 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.Title
-import no.ndla.learningpathapi.model.ValidationMessage
+import no.ndla.learningpathapi.{ValidationMessage, Title}
 
 object TitleValidator {
   val TITLE_EMPTY = "Required value title is empty."
