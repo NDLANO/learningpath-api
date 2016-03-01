@@ -12,12 +12,13 @@ class ApiModelsTest extends UnitSuite {
   test("That LearningPathStatus.validate throws exception for unknown status") {
     val status = "Ikke gyldig"
     assertResult(s"'$status' is not a valid publishingstatus.") {
-      intercept[ValidationException] {LearningPathStatus(status).validate()}.getMessage
+      intercept[ValidationException] {LearningPathStatus(status).validate()}.errors.head.message
     }
   }
 
   test("That LearningPathStatus.validate exits normally for known status") {
-    LearningPathStatus("PUBLISHED").validate()
+    val learningPathStatus = LearningPathStatus("PUBLISHED")
+    learningPathStatus.validate() should equal(learningPathStatus)
   }
 
   test("That LearningPath.isPrivate returns true for a private learningpath") {

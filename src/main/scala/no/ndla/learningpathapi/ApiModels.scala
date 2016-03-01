@@ -2,7 +2,8 @@ package no.ndla.learningpathapi
 
 import java.util.Date
 
-import no.ndla.learningpathapi.model.ValidationException
+import no.ndla.learningpathapi.model.{ValidationMessage, ValidationException}
+import no.ndla.learningpathapi.validation._
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -36,15 +37,29 @@ case class NewLearningPath(
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
   @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
   @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags:List[LearningPathTag]
-)
+) {
+  def validate(): NewLearningPath = {
+    val validationResult = TitleValidator.validate(title) :::
+        DescriptionValidator.validate(description) :::
+        DurationValidator.validate(duration).toList :::
+        CoverPhotoValidator.validate(coverPhotoUrl).toList :::
+        TagsValidator.validate(tags)
+
+    validationResult.isEmpty match {
+      case true => this
+      case false => throw new ValidationException(errors = validationResult)
+    }
+  }
+}
 
 @ApiModel(description = "Status information about a learningpath")
 case class LearningPathStatus(
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String
 ) {
   def validate() = {
-    if(model.LearningPathStatus.valueOf(status).isEmpty) {
-      throw new ValidationException(s"'$status' is not a valid publishingstatus.")
+      StatusValidator.validate(status) match {
+      case None => this
+      case Some(result) => throw new ValidationException(errors = List(result))
     }
   }
 }
@@ -89,7 +104,20 @@ case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
   @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step.") license:Option[String]
-)
+) {
+  def validate() = {
+    val validationResult = TitleValidator.validate(title) :::
+    DescriptionValidator.validate(description) :::
+    EmbedUrlValidator.validate(embedUrl) :::
+    StepTypeValidator.validate(`type`).toList :::
+    LicenseValidator.validate(license).toList
+
+    validationResult.isEmpty match {
+      case true => this
+      case false => throw new ValidationException(errors = validationResult)
+    }
+  }
+}
 
 @ApiModel(description = "Representation of a title")
 case class Title(

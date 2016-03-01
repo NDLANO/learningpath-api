@@ -87,13 +87,6 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     }
   }
 
-  test("That updateLearningPathStatus throws a ValidationException if the status is not valid") {
-    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(None)
-    assertResult("'Invalid' is not a valid publishingstatus.") {
-      intercept[ValidationException] { service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("Invalid"), PRIVATE_OWNER) }.getMessage
-    }
-  }
-
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = model.LearningPathStatus.PRIVATE))

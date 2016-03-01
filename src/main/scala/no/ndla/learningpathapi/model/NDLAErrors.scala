@@ -13,6 +13,13 @@ object Error extends Enumeration{
 
 case class Error(code:Error.Value, description:String, occuredAt:String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
 
+case class ValidationMessage(field: String, message: String)
+
+case class ValidationError(code:Error.Value = Error.VALIDATION,
+                           description:String = "Validation Error",
+                           messages: List[ValidationMessage],
+                           occuredAt:String = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()))
+
 class HeaderMissingException(message: String) extends RuntimeException(message)
-class ValidationException(message: String) extends RuntimeException(message)
+class ValidationException(message: String = "Validation Error", val errors: List[ValidationMessage]) extends RuntimeException(message)
 class AccessDeniedException(message: String) extends RuntimeException(message)

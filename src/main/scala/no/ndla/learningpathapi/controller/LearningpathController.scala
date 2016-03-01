@@ -183,7 +183,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   error{
     case h:HeaderMissingException => halt(status = 403, body = Error(Error.HEADER_MISSING, h.getMessage))
-    case v:ValidationException => halt(status = 400, body = Error(Error.VALIDATION, v.getMessage))
+    case v:ValidationException => halt(status = 400, body = ValidationError(messages = v.errors))
     case a:AccessDeniedException => halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
     case t:Throwable => {
       t.printStackTrace()
@@ -283,13 +283,15 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   post("/", operation(addNewLearningpath)) {
-    val createdLearningPath = updateService.addLearningPath(read[NewLearningPath](request.body), usernameFromHeader)
+    val newLearningPath = extract[NewLearningPath](request.body).validate()
+    val createdLearningPath = updateService.addLearningPath(newLearningPath, usernameFromHeader)
     logger.info(s"CREATED LearningPath with ID =  ${createdLearningPath.id}")
     halt(status = 201, headers = Map("Location" -> createdLearningPath.metaUrl), body = createdLearningPath)
   }
 
   put("/:path_id/?", operation(updateLearningPath)) {
-    val updatedLearningPath = updateService.updateLearningPath(long("path_id"), read[NewLearningPath](request.body), usernameFromHeader)
+    val newLearningPath = extract[NewLearningPath](request.body).validate()
+    val updatedLearningPath = updateService.updateLearningPath(long("path_id"), newLearningPath, usernameFromHeader)
     updatedLearningPath match {
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       case Some(learningPath) => {
@@ -300,7 +302,8 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
-    val createdLearningStep = updateService.addLearningStep(long("path_id"), read[NewLearningStep](request.body), usernameFromHeader)
+    val newLearningStep = extract[NewLearningStep](request.body).validate()
+    val createdLearningStep = updateService.addLearningStep(long("path_id"), newLearningStep, usernameFromHeader)
     createdLearningStep match {
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       case Some(learningStep) => {
@@ -311,8 +314,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   put("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
+    val newLearningStep = extract[NewLearningStep](request.body).validate()
     val createdLearningStep = updateService.updateLearningStep(long("path_id"), long("step_id"),
-      read[NewLearningStep](request.body),
+      newLearningStep,
       usernameFromHeader)
 
     createdLearningStep match {
@@ -325,9 +329,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   put("/:path_id/status/?", operation(updateLearningPathStatus)) {
+    val learningPathStatus = extract[LearningPathStatus](request.body).validate()
     val updatedLearningPath:Option[LearningPath] = updateService.updateLearningPathStatus(
       long("path_id"),
-      read[LearningPathStatus](request.body),
+      learningPathStatus,
       usernameFromHeader)
 
     updatedLearningPath match {
@@ -361,6 +366,17 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
+  def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
+    try{
+      read[T](json)
+    } catch {
+      case e: Exception => {
+        logger.error(e.getMessage, e)
+        throw new ValidationException(errors = List(ValidationMessage("body", e.getMessage)))
+      }
+    }
+  }
+
   def usernameFromHeader(implicit request: HttpServletRequest): String = {
     requireHeader(UsernameHeader).get.replace("ndla-", "")
   }
@@ -379,7 +395,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     val paramValue = params(paramName)
     paramValue.forall(_.isDigit) match {
       case true => paramValue.toLong
-      case false => throw new ValidationException(s"Invalid value for $paramName. Only digits are allowed.")
+      case false => throw new ValidationException(errors = List(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
     }
   }
 

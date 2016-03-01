@@ -48,7 +48,6 @@ trait UpdateServiceComponent {
     }
 
     def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus, owner: String): Option[LearningPath] = {
-      status.validate()
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
         case Some(existing) => {
