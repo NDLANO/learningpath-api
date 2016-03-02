@@ -57,4 +57,10 @@ class TagsValidatorTest extends UnitSuite {
     errors.last.field should equal("tags.tag")
     errors.last.message should equal("Required value tag is empty.")
   }
+
+  test("That tag with html-content gives error") {
+    val errors = validate(List(VALID_TAG_WITH_VALID_LANGUAGE.copy(tag = "<strong>Invalid</strong")))
+    errors.size should be (1)
+    errors.head.field should equal("tags.tag")
+  }
 }

@@ -77,4 +77,13 @@ class TitleValidatorTest extends UnitSuite {
 
     TitleValidator.validate(titles) should equal(List())
   }
+
+  test("That html-content in title returns a validation message") {
+    val title = Title("<h1>This is an invalid title</h1>", Some("nb"))
+    val validationMessages = TitleValidator.validate(List(title))
+    validationMessages.size should be (1)
+    validationMessages.head.field should equal ("title.title")
+    validationMessages.head.message should equal ("The content contains illegal html-characters. No HTML is allowed.")
+
+  }
 }

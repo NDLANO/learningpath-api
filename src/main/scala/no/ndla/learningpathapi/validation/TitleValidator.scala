@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{ValidationMessage, Title}
+import no.ndla.learningpathapi.{Title, ValidationMessage}
 
 object TitleValidator {
   val TITLE_EMPTY = "Required value title is empty."
@@ -14,7 +14,18 @@ object TitleValidator {
   }
 
   def validate(title: Title): List[ValidationMessage] = {
-    val titleResult = if (title.title.isEmpty) Some(ValidationMessage("title.title", TITLE_EMPTY)) else None
-    List(titleResult, title.language.flatMap(title => LanguageValidator.validate("title.language", title))).flatMap(nonEmpty => nonEmpty)
+    validateTitleText(title.title).toList :::
+    validateTitleLanguage(title.language).toList
+  }
+
+  def validateTitleText(text: String): Option[ValidationMessage] = {
+    text.isEmpty match {
+      case true => Some(ValidationMessage("title.title", TITLE_EMPTY))
+      case false => TextValidator.validateNoHtmlTags("title.title", text)
+    }
+  }
+
+  def validateTitleLanguage(language: Option[String]): Option[ValidationMessage] = {
+    language.flatMap(language => LanguageValidator.validate("title.language", language))
   }
 }

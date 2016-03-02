@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{ValidationMessage, Description}
+import no.ndla.learningpathapi.{Description, ValidationMessage}
 
 object DescriptionValidator {
   val DESCRIPTION_EMPTY = "Required value description is empty."
@@ -14,7 +14,18 @@ object DescriptionValidator {
   }
 
   def validate(description: Description): List[ValidationMessage] = {
-    val descriptionResult = if (description.description.isEmpty) Some(ValidationMessage("description.description", DESCRIPTION_EMPTY)) else None
-    List(descriptionResult, description.language.flatMap(language => LanguageValidator.validate("description.language", language))).flatMap(nonEmpty => nonEmpty)
+    validateDescriptionText(description.description).toList :::
+    validateDescriptionLanguage(description.language).toList
+  }
+
+  def validateDescriptionText(text: String): Option[ValidationMessage] = {
+    text.isEmpty match {
+      case true => Some(ValidationMessage("description.description", DESCRIPTION_EMPTY))
+      case false => TextValidator.validateOnlyBasicHtmlTags("description.description", text)
+    }
+  }
+
+  def validateDescriptionLanguage(language: Option[String]): Option[ValidationMessage] = {
+    language.flatMap(language => LanguageValidator.validate("description.language", language))
   }
 }

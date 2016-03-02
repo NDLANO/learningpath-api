@@ -11,10 +11,9 @@ object LicenseValidator {
       case Some(license) => {
         license.isEmpty match {
           case true => Some(ValidationMessage("license", LICENSE_EMPTY))
-          case false => None
+          case false => TextValidator.validateNoHtmlTags("license", license)
         }
       }
     }
   }
-
 }

@@ -11,6 +11,12 @@ class LicenseValidatorTest extends UnitSuite {
     validationMessage.get.message should equal("Required value license is empty.")
   }
 
+  test("That a license with html-characters gives an error") {
+    val validationMessage = LicenseValidator.validate(Some("<strong>Invalid license</strong>"))
+    validationMessage.isDefined should be (right = true)
+    validationMessage.get.field should equal("license")
+  }
+
   test("That None doesn't give an error"){
     LicenseValidator.validate(None) should be (None)
   }

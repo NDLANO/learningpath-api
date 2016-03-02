@@ -48,6 +48,7 @@ lazy val learningpath_api = (project in file(".")).
       "org.scalaj" %% "scalaj-http" % "1.1.5",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % "1.7.4",
       "com.netaporter" %% "scala-uri" % "0.4.12",
+      "org.jsoup" % "jsoup" % "1.7.3",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
