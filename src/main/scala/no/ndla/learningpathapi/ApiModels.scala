@@ -36,8 +36,8 @@ case class LearningPath(
 case class NewLearningPath(
   @(ApiModelProperty @field)(description = "The titles of the learningpath") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningpath") description:List[Description],
-  @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
-  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
+  @(ApiModelProperty @field)(description = "Url to cover-photo in NDLA image-api.") coverPhotoUrl:Option[String],
+  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes. Must be greater than 0") duration:Int,
   @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags:List[LearningPathTag]
 ) {
   def validate(): NewLearningPath = {
@@ -105,7 +105,7 @@ case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
   @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
-  @(ApiModelProperty @field)(description = "The license for this step.") license:Option[String]
+  @(ApiModelProperty @field)(description = "The license for this step. Must be plain text") license:Option[String]
 ) {
   def validate() = {
     val validationResult = TitleValidator.validate(title) :::
@@ -123,7 +123,7 @@ case class NewLearningStep(
 
 @ApiModel(description = "Representation of a title")
 case class Title(
-  @(ApiModelProperty @field)(description = "The title of the content") title:String,
+  @(ApiModelProperty @field)(description = "The title of the content. Must be plain text") title:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in title") language:Option[String]
 )
 
@@ -135,7 +135,7 @@ case class EmbedUrl(
 
 @ApiModel(description = "The description of the learningpath")
 case class Description(
-  @(ApiModelProperty @field)(description = "The learningpath description") description:String,
+  @(ApiModelProperty @field)(description = "The learningpath description. Basic HTML allowed") description:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in description") language:Option[String]
 )
 
@@ -146,7 +146,7 @@ case class Author(
 )
 
 case class LearningPathTag(
-  @(ApiModelProperty @field)(description = "The searchable tag.") tag:String,
+  @(ApiModelProperty @field)(description = "The searchable tag. Must be plain text") tag:String,
   @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in tag") language:Option[String]
 )
 
