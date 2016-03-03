@@ -14,6 +14,7 @@ trait ImportServiceComponent {
   val importService: ImportService
 
   class ImportService {
+    val placeholderShortText = "Kort beskrivelse på ikke mer enn 150 tegn. Sier noe fornuftig om læringsstien. Denne beskrivelsen her er på nøyaktig hundrede og femti tegn........nå."
 
     def doImport() = {
       val nodes: List[Node] = cmData.allLearningPaths()
@@ -26,12 +27,10 @@ trait ImportServiceComponent {
       optPakke.foreach(pakke => {
         val steps = packageData.stepsForPackage(pakke)
 
-
-
-        val descriptions = descriptionAsList(steps.find(_.stepType == 1), packageData.getTranslationSteps(optTranslations, 1))
+        val descriptions = List(Description(placeholderShortText, Some("nb")))
         val titles = Title(pakke.packageTitle, Some(pakke.language)) :: optTranslations.flatten.map(pak => Title(pak.packageTitle, Some(pak.language)))
         val tags = (keywordsService.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => keywordsService.forNodeId(tra.nodeId))).distinct
-        val learningSteps = steps.filterNot(_.stepType == 1).map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
+        val learningSteps = steps.map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
 
         val learningPath = asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl)
         learningPathRepository.withExternalId(learningPath.externalId) match {
@@ -109,7 +108,7 @@ trait ImportServiceComponent {
     }
 
     def asLearningStep(step: Step, translations: List[Step]): LearningStep = {
-      val seqNo = step.pos - 1
+      val seqNo = step.pos
       val stepType = s"${step.stepType}"
 
       val title = Title(step.title, Some(step.language)) :: translations.map(translation => Title(translation.title, Some(translation.language)))
@@ -122,6 +121,7 @@ trait ImportServiceComponent {
 
     def asLearningStepType(stepType: String): StepType.Value = {
       stepType match {
+        case "1" => StepType.INTRODUCTION
         case "2" => StepType.TEXT
         case "3" => StepType.QUIZ
         case "4" => StepType.TASK

@@ -13,7 +13,7 @@ case class LearningStep(id: Option[Long], externalId:Option[String], learningPat
                         `type`: StepType.Value, license: Option[String])
 
 object StepType extends Enumeration {
-  val TEXT, QUIZ, TASK, MULTIMEDIA, SUMMARY, TEST = Value
+  val INTRODUCTION, TEXT, QUIZ, TASK, MULTIMEDIA, SUMMARY, TEST = Value
 
   def valueOf(s:String): Option[StepType.Value] = {
     StepType.values.find(_.toString == s)

@@ -127,6 +127,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     when(packageData.getTranslationSteps(any[List[Option[Package]]], any[Int])).thenReturn(List())
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])).thenReturn(None)
 
     service.importNode(Some(pakke), List(), None)
 

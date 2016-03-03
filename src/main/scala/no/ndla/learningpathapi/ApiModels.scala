@@ -94,7 +94,7 @@ case class LearningStep(
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
-  @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
+  @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step.") license:Option[String],
   @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningstep can be found") metaUrl:String
 )
@@ -104,7 +104,7 @@ case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
   @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
-  @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
+  @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step. Must be plain text") license:Option[String]
 ) {
   def validate() = {
