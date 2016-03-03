@@ -2,20 +2,14 @@ package no.ndla.learningpathapi.batch.service
 
 import no.ndla.learningpathapi.LearningpathApiProperties.BasicHtmlTags
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document.OutputSettings
 import org.jsoup.safety.Whitelist
 
 object HtmlCleaner {
 
   def cleanHtml(text: String): String = {
     val withoutHeaders = changeHeadersToStrongWrappedInP(text)
-    val formatted = formatHtml(withoutHeaders)
-    Jsoup.clean(formatted, new Whitelist().addTags(BasicHtmlTags:_*))
-  }
-
-  def formatHtml(text: String): String = {
-    val document = Jsoup.parseBodyFragment(text)
-    document.outputSettings().indentAmount(2).prettyPrint(true)
-    document.body().html()
+    Jsoup.clean(withoutHeaders, "", new Whitelist().addTags(BasicHtmlTags:_*), new OutputSettings().prettyPrint(false))
   }
 
   def changeHeadersToStrongWrappedInP(text: String): String = {
@@ -26,7 +20,7 @@ object HtmlCleaner {
     document.select("h4").tagName("strong").wrap("<p>")
     document.select("h5").tagName("strong").wrap("<p>")
     document.select("h6").tagName("strong").wrap("<p>")
-
+    document.outputSettings().prettyPrint(false)
     document.body().html()
   }
 
