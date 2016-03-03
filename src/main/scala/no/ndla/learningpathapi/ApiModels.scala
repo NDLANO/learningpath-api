@@ -42,7 +42,7 @@ case class NewLearningPath(
 ) {
   def validate(): NewLearningPath = {
     val validationResult = TitleValidator.validate(title) :::
-        DescriptionValidator.validate(description) :::
+        DescriptionValidator.validateNoHtml(description) :::
         DurationValidator.validate(duration).toList :::
         CoverPhotoValidator.validate(coverPhotoUrl).toList :::
         TagsValidator.validate(tags)
@@ -107,9 +107,9 @@ case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step. Must be plain text") license:Option[String]
 ) {
-  def validate() = {
+  def validate(): NewLearningStep = {
     val validationResult = TitleValidator.validate(title) :::
-    DescriptionValidator.validate(description) :::
+    DescriptionValidator.validateBasicHtml(description) :::
     EmbedUrlValidator.validate(embedUrl) :::
     StepTypeValidator.validate(`type`).toList :::
     LicenseValidator.validate(license).toList

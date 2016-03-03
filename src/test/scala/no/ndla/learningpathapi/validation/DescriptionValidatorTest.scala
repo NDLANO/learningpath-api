@@ -5,25 +5,25 @@ import no.ndla.learningpathapi.{Description, UnitSuite}
 class DescriptionValidatorTest extends UnitSuite {
 
   test("That DescriptionValidator returns an error message for a description that is empty") {
-    val validationErrors = DescriptionValidator.validate(Description("", None))
+    val validationErrors = DescriptionValidator.validateNoHtml(List(Description("", None)))
 
     validationErrors.head.field should equal("description.description")
     validationErrors.head.message should equal("Required value description is empty.")
   }
 
   test("That DescriptionValidator returns no error when description is not empty") {
-    DescriptionValidator.validate(Description("Valid description", None)) should equal(List())
+    DescriptionValidator.validateNoHtml(List(Description("Valid description", None))) should equal(List())
   }
 
   test("That DescriptionValidator returns error message for language") {
-    val validationErrors = DescriptionValidator.validate(Description("Valid description", Some("unsupported")))
+    val validationErrors = DescriptionValidator.validateNoHtml(List(Description("Valid description", Some("unsupported"))))
 
     validationErrors.head.field should equal("description.language")
     validationErrors.head.message should equal("Language 'unsupported' is not a supported value.")
   }
 
   test("That DescriptionValidator returns error message for both description and language") {
-    val errorMessages = DescriptionValidator.validate(Description("", Some("unsupported")))
+    val errorMessages = DescriptionValidator.validateNoHtml(List(Description("", Some("unsupported"))))
     errorMessages.size should be(2)
 
     errorMessages.head.field should equal("description.description")
@@ -33,11 +33,11 @@ class DescriptionValidatorTest extends UnitSuite {
   }
 
   test("That DescriptionValidator returns no errors for a valid description") {
-    DescriptionValidator.validate(Description("Valid description", Some("nb"))) should equal(List())
+    DescriptionValidator.validateNoHtml(List(Description("Valid description", Some("nb")))) should equal(List())
   }
 
   test("That DescriptionValidator.validate returns error message when no descriptions are defined") {
-    val errorMessages = DescriptionValidator.validate(List())
+    val errorMessages = DescriptionValidator.validateNoHtml(List())
     errorMessages.size should be(1)
     errorMessages.head.field should equal("description")
     errorMessages.head.message should equal("At least one description is required.")
@@ -48,7 +48,7 @@ class DescriptionValidatorTest extends UnitSuite {
       Description("Valid description", None),
       Description("", None))
 
-    val errorMessages = DescriptionValidator.validate(descriptions)
+    val errorMessages = DescriptionValidator.validateNoHtml(descriptions)
     errorMessages.size should be(1)
     errorMessages.head.field should equal("description.description")
     errorMessages.head.message should equal("Required value description is empty.")
@@ -60,7 +60,7 @@ class DescriptionValidatorTest extends UnitSuite {
       Description("", None),
       Description("", None))
 
-    val errorMessages = DescriptionValidator.validate(descriptions)
+    val errorMessages = DescriptionValidator.validateNoHtml(descriptions)
     errorMessages.size should be(3)
     errorMessages.foreach(message => {
       message.field should equal("description.description")
@@ -75,6 +75,6 @@ class DescriptionValidatorTest extends UnitSuite {
       Description("Valid description in english", Some("en"))
     )
 
-    DescriptionValidator.validate(descriptions) should equal(List())
+    DescriptionValidator.validateNoHtml(descriptions) should equal(List())
   }
 }
