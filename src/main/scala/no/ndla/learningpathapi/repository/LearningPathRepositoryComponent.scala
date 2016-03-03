@@ -74,13 +74,13 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       }
     }
 
-    def learningStepWithExternalId(externalId: Option[String]): Option[LearningStep] = {
-      externalId match {
-        case None => None
-        case Some(extId) => {
+    def learningStepWithExternalIdAndForLearningPath(externalId: Option[String], learningPathId: Option[Long]): Option[LearningStep] = {
+      externalId.isEmpty || learningPathId.isEmpty match {
+        case true => None
+        case false => {
           val ls = LearningStep.syntax("ls")
           DB readOnly { implicit session =>
-            sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.externalId} = $extId".map(LearningStep(ls.resultName)).single().apply()
+            sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.externalId} = ${externalId.get} and ${ls.learningPathId} = ${learningPathId.get}".map(LearningStep(ls.resultName)).single().apply()
           }
         }
       }

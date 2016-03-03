@@ -50,7 +50,7 @@ trait ImportServiceComponent {
             ))
 
             learningPath.learningsteps.foreach(learningStep => {
-              learningPathRepository.learningStepWithExternalId(learningStep.externalId) match {
+              learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
                 case None => {
                   learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
                 }
