@@ -1,11 +1,12 @@
 package no.ndla.learningpathapi.validation
 
+import no.ndla.learningpathapi.LearningpathApiProperties.BasicHtmlTags
 import no.ndla.learningpathapi.UnitSuite
 
 class TextValidatorTest extends UnitSuite {
 
   test("That TextValidator allows all tags in BasicHtmlTags tags") {
-    TextValidator.BasicHtmlTags.foreach(tag => {
+    BasicHtmlTags.foreach(tag => {
       val text = s"<$tag>This is text with $tag</$tag>"
       TextValidator.validateOnlyBasicHtmlTags("path1.path2", text) should equal (None)
     })
@@ -13,7 +14,7 @@ class TextValidatorTest extends UnitSuite {
 
   test("That TextValidator does not allow tags outside BaiscHtmlTags") {
     val illegalTag = "a"
-    TextValidator.BasicHtmlTags.contains(illegalTag) should be (right = false)
+    BasicHtmlTags.contains(illegalTag) should be (right = false)
 
     val text = s"<$illegalTag>This is text with $illegalTag</$illegalTag>"
 

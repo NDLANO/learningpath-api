@@ -33,11 +33,12 @@ object LearningpathApiProperties extends LazyLogging {
   def IndexBulkSize = getInt("INDEX_BULK_SIZE")
 
   val AuthHost = "auth"
-
-
   val DefaultLanguage = "nb"
-
   val UsernameHeader = "X-Consumer-Username"
+
+  val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
+    "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",
+    "sub", "sup", "u", "ul")
 
   def setProperties(properties: Map[String, Option[String]]) = {
     properties.foreach(prop => LearningpathApiProps.put(prop._1, prop._2))

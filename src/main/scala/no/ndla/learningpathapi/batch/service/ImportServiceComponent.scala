@@ -4,6 +4,9 @@ import no.ndla.learningpathapi.batch._
 import no.ndla.learningpathapi.batch.integration.{KeywordsServiceComponent, CMDataComponent, PackageDataComponent}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.validation.TextValidator
+import org.jsoup.Jsoup
+import org.jsoup.safety.Whitelist
 
 
 trait ImportServiceComponent {
@@ -11,6 +14,7 @@ trait ImportServiceComponent {
   val importService: ImportService
 
   class ImportService {
+
     def doImport() = {
       val nodes: List[Node] = cmData.allLearningPaths()
       nodes.filterNot(_.isTranslation).foreach(node => {
@@ -156,7 +160,7 @@ trait ImportServiceComponent {
       Option(description) match {
         case None => ""
         case Some(desc) => {
-          desc.replaceAll("(\\r|\\n|\\t)", "")
+          HtmlCleaner.cleanHtml(desc.replaceAll("(\\r|\\n|\\t)", ""))
         }
       }
     }

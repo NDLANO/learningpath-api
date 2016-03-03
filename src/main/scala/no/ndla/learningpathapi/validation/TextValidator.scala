@@ -1,15 +1,12 @@
 package no.ndla.learningpathapi.validation
 
+import no.ndla.learningpathapi.LearningpathApiProperties.BasicHtmlTags
 import no.ndla.learningpathapi.ValidationMessage
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 
 
 object TextValidator {
-
-  val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
-    "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",
-    "sub", "sup", "u", "ul")
 
   val IllegalContentInBasicText = s"The content contains illegal html-characters. Allowed characters are ${BasicHtmlTags.mkString(", ")}"
   val IllegalContentInPlainText = "The content contains illegal html-characters. No HTML is allowed."
