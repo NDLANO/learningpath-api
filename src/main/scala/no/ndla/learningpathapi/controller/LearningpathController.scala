@@ -33,7 +33,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   val getLearningpaths =
     (apiOperation[SearchResult]("getLearningpaths")
       summary "Show public learningpaths"
-      notes "Shows public learningpaths."
+      notes "Show public learningpaths."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
@@ -236,7 +236,6 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
     val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
     logger.info("GET / with params query='{}', language={}, page={}, page-size={}", query, language, page, pageSize)
-
 
     query match {
       case Some(q) => search.matchingQuery(

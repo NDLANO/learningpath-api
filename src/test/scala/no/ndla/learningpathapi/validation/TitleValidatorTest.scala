@@ -1,89 +1,76 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{Title, UnitSuite}
+import no.ndla.learningpathapi.{ValidationMessage, TestEnvironment, Title, UnitSuite}
 
-class TitleValidatorTest extends UnitSuite {
+import org.mockito.Mockito._
+import org.mockito.Matchers._
 
-  test("That TitleValidator returns an error message for a title that is empty") {
-    val validationErrors = TitleValidator.validate(Title("", None))
+class TitleValidatorTest extends UnitSuite with TestEnvironment{
 
-    validationErrors.head.field should equal("title.title")
-    validationErrors.head.message should equal("Required value title is empty.")
+  var validator: TitleValidator = _
+
+  override def beforeEach() = {
+    validator = new TitleValidator
   }
 
-  test("That TitleValidator returns no error when title is not empty") {
-    TitleValidator.validate(Title("Valid title", None)) should equal(List())
-  }
-
-  test("That TitleValidator returns error message for language") {
-    val validationErrors = TitleValidator.validate(Title("Valid title", Some("unsupported")))
-
-    validationErrors.head.field should equal("title.language")
-    validationErrors.head.message should equal("Language 'unsupported' is not a supported value.")
-  }
-
-  test("That TitleValidator returns error message for both title and language") {
-    val errorMessages = TitleValidator.validate(Title("", Some("unsupported")))
-    errorMessages.size should be(2)
-
-    errorMessages.head.field should equal("title.title")
-    errorMessages.head.message should equal("Required value title is empty.")
-    errorMessages.last.field should equal("title.language")
-    errorMessages.last.message should equal("Language 'unsupported' is not a supported value.")
-  }
-
-  test("That TitleValidator returns no errors for a valid title") {
-    TitleValidator.validate(Title("Valid title", Some("nb"))) should equal(List())
-  }
+  val DefaultTitle = Title("Some title", Some("nb"))
 
   test("That TitleValidator.validate returns error message when no titles are defined") {
-    val errorMessages = TitleValidator.validate(List())
-    errorMessages.size should be(1)
+    val errorMessages = validator.validate(List())
+    errorMessages.size should be (1)
     errorMessages.head.field should equal("title")
     errorMessages.head.message should equal("At least one title is required.")
   }
 
-  test("That TitleValidator.validate returns error message for a list of titles, where one is invalid") {
-    val titles = List(
-      Title("Valid title", None),
-      Title("", None))
+  test("That TitleValidator validates title text") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
-    val errorMessages = TitleValidator.validate(titles)
-    errorMessages.size should be(1)
-    errorMessages.head.field should equal("title.title")
-    errorMessages.head.message should equal("Required value title is empty.")
+    val validationErrors = validator.validate(List(DefaultTitle))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("path1.path2")
+    validationErrors.head.message should equal("Invalid text")
   }
 
-  test("That TitleValidator.validate returns one error message per title that is invalid") {
-    val titles = List(
-      Title("", None),
-      Title("", None),
-      Title("", None))
+  test("That TitleValidator validates language") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid language")))
 
-    val errorMessages = TitleValidator.validate(titles)
-    errorMessages.size should be(3)
-    errorMessages.foreach(message => {
-      message.field should equal("title.title")
-      message.message should equal("Required value title is empty.")
-    })
+    val validationErrors = validator.validate(List(DefaultTitle))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("path1.path2")
+    validationErrors.head.message should equal("Invalid language")
   }
 
-  test("That TitleValidator.validate returns no errors when all titles are valid") {
-    val titles = List(
-      Title("Valid title in bokmål", Some("nb")),
-      Title("Valid title in nynorsk", Some("nn")),
-      Title("Valid title in english", Some("en"))
-    )
+  test("That TitleValidator validates both title text and language") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.title", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.language", "Invalid language")))
 
-    TitleValidator.validate(titles) should equal(List())
-  }
-
-  test("That html-content in title returns a validation message") {
-    val title = Title("<h1>This is an invalid title</h1>", Some("nb"))
-    val validationMessages = TitleValidator.validate(List(title))
-    validationMessages.size should be (1)
-    validationMessages.head.field should equal ("title.title")
-    validationMessages.head.message should equal ("The content contains illegal html-characters. No HTML is allowed.")
+    val validationErrors = validator.validate(List(DefaultTitle))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.title")
+    validationErrors.head.message should equal("Invalid text")
+    validationErrors.last.field should equal("path1.language")
+    validationErrors.last.message should equal("Invalid language")
 
   }
+
+  test("That TitleValidator returns no errors for a valid title") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    validator.validate(List(DefaultTitle)) should equal(List())
+  }
+
+  test("That TitleValidator validates all titles") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.title", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationErrors = validator.validate(List(DefaultTitle, DefaultTitle))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.title")
+    validationErrors.head.message should equal("Invalid text")
+    validationErrors.last.field should equal("path1.title")
+    validationErrors.last.message should equal("Invalid text")
+  }
+
 }
