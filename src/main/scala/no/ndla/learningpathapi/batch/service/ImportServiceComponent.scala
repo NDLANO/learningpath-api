@@ -1,12 +1,9 @@
 package no.ndla.learningpathapi.batch.service
 
 import no.ndla.learningpathapi.batch._
-import no.ndla.learningpathapi.batch.integration.{KeywordsServiceComponent, CMDataComponent, PackageDataComponent}
+import no.ndla.learningpathapi.batch.integration.{CMDataComponent, KeywordsServiceComponent, PackageDataComponent}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.validation.TextValidator
-import org.jsoup.Jsoup
-import org.jsoup.safety.Whitelist
 
 
 trait ImportServiceComponent {

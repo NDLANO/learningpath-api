@@ -1,28 +1,32 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.UnitSuite
+import no.ndla.learningpathapi.{ValidationMessage, TestEnvironment, UnitSuite}
+import org.mockito.Mockito._
+import org.mockito.Matchers._
 
-class LicenseValidatorTest extends UnitSuite {
+class LicenseValidatorTest extends UnitSuite with TestEnvironment {
 
-  test("That an emtpy license gives an error"){
-    val validationMessage = LicenseValidator.validate(Some(""))
+  var validator: LicenseValidator = _
+  override def beforeEach() = {
+    validator = new LicenseValidator
+  }
+
+  test("Licensevalidator validates the license text"){
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid")))
+
+    val validationMessage = validator.validate(Some(""))
     validationMessage.isDefined should be(right = true)
-    validationMessage.get.field should equal("license")
-    validationMessage.get.message should equal("Required value license is empty.")
-  }
-
-  test("That a license with html-characters gives an error") {
-    val validationMessage = LicenseValidator.validate(Some("<strong>Invalid license</strong>"))
-    validationMessage.isDefined should be (right = true)
-    validationMessage.get.field should equal("license")
-  }
-
-  test("That None doesn't give an error"){
-    LicenseValidator.validate(None) should be (None)
+    validationMessage.get.field should equal("path1.path2")
+    validationMessage.get.message should equal("Invalid")
   }
 
   test("That valid license doesn't give an error"){
-    LicenseValidator.validate(Some("A random license")) should be (None)
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    validator.validate(Some("A random license")) should be (None)
+  }
+
+  test("That None doesn't give an error"){
+    validator.validate(None) should be (None)
   }
 
 }

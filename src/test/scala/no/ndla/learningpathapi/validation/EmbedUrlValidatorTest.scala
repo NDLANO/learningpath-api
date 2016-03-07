@@ -1,47 +1,65 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{EmbedUrl, UnitSuite}
+import no.ndla.learningpathapi.{ValidationMessage, TestEnvironment, EmbedUrl, UnitSuite}
+import org.mockito.Mockito._
+import org.mockito.Matchers._
 
-class EmbedUrlValidatorTest extends UnitSuite {
+class EmbedUrlValidatorTest extends UnitSuite with TestEnvironment{
+
+  var validator: EmbedUrlValidator = _
+  override def beforeEach() = {
+    validator = new EmbedUrlValidator
+  }
 
   val DefaultEmbedUrl = EmbedUrl("http://www.ndla.no/123/oembed", Some("nb"))
 
-  test("That an empty string as embed url gives an error") {
-    val validationMessages = EmbedUrlValidator.validate(List(DefaultEmbedUrl.copy(url = "")))
+  test("That url is validated") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("embedUrl.url", "Invalid")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationMessages = validator.validate(List(DefaultEmbedUrl))
     validationMessages.size should be (1)
     validationMessages.head.field should equal ("embedUrl.url")
-    validationMessages.head.message should equal ("Required value url is empty.")
+    validationMessages.head.message should equal ("Invalid")
   }
 
-  test("That invalid language gives an error") {
-    val validationMessages = EmbedUrlValidator.validate(List(DefaultEmbedUrl.copy(language = Some("Unsupported"))))
+  test("That language is validated") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("embedUrl.language", "Invalid")))
+
+    val validationMessages = validator.validate(List(DefaultEmbedUrl))
     validationMessages.size should be (1)
     validationMessages.head.field should equal ("embedUrl.language")
-    validationMessages.head.message should equal ("Language 'Unsupported' is not a supported value.")
+    validationMessages.head.message should equal ("Invalid")
   }
 
-  test("That both invalid url and invalid language gives two errors") {
-    val validationMessages = EmbedUrlValidator.validate(List(DefaultEmbedUrl.copy(url = "", language = Some("Unsupported"))))
+  test("That both url and language are validated") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("embedUrl.url", "Invalid url")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("embedUrl.language", "Invalid language")))
+
+    val validationMessages = validator.validate(List(DefaultEmbedUrl))
     validationMessages.size should be (2)
     validationMessages.head.field should equal ("embedUrl.url")
-    validationMessages.head.message should equal ("Required value url is empty.")
+    validationMessages.head.message should equal ("Invalid url")
     validationMessages.last.field should equal ("embedUrl.language")
-    validationMessages.last.message should equal ("Language 'Unsupported' is not a supported value.")
+    validationMessages.last.message should equal ("Invalid language")
   }
 
-  test("That two embedUrls with invalid urls gives two errors") {
-    val validationMessages = EmbedUrlValidator.validate(List(
-        DefaultEmbedUrl.copy(url = ""),
-        DefaultEmbedUrl.copy(url = "")))
+  test("That valid embedUrl does not give error") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    validator.validate(List(DefaultEmbedUrl)) should equal (List())
+  }
 
+  test("That all embedUrls are validated") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("embedUrl.url", "Invalid url")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationMessages = validator.validate(List(DefaultEmbedUrl, DefaultEmbedUrl))
     validationMessages.size should be (2)
     validationMessages.head.field should equal ("embedUrl.url")
-    validationMessages.head.message should equal ("Required value url is empty.")
+    validationMessages.head.message should equal ("Invalid url")
     validationMessages.last.field should equal ("embedUrl.url")
-    validationMessages.last.message should equal ("Required value url is empty.")
-  }
-
-  test("That a valid embedUrl gives no error") {
-    EmbedUrlValidator.validate(List(DefaultEmbedUrl)) should equal(List())
+    validationMessages.last.message should equal ("Invalid url")
   }
 }

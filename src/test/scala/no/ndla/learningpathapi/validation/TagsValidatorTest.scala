@@ -1,66 +1,66 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.validation.TagsValidator.validate
-import no.ndla.learningpathapi.{LearningPathTag, UnitSuite}
+import no.ndla.learningpathapi.{ValidationMessage, TestEnvironment, LearningPathTag, UnitSuite}
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 
-class TagsValidatorTest extends UnitSuite {
+class TagsValidatorTest extends UnitSuite with TestEnvironment {
 
-  val VALID_TAG_WITHOUT_LANGUAGE = LearningPathTag("TAG", None)
-  val VALID_TAG_WITH_VALID_LANGUAGE = LearningPathTag("TAG", Some("nb"))
-  val VALID_TAG_WITH_INVALID_LANGUAGE = LearningPathTag("TAG", Some("unsupported"))
-  
-  val INVALID_TAG_WITHOUT_LANGUAGE = LearningPathTag("", None)
-  val INVALID_TAG_WITH_VALID_LANGUAGE = LearningPathTag("", Some("nb"))
-  val INVALID_TAG_WITH_INVALID_LANGUAGE = LearningPathTag("", Some("unsupported"))
+  val DefaultTag = LearningPathTag("Some tag", Some("nb"))
 
-  test("That no tags gives no error") {
-    validate(List()) should equal(List())
-  }
-  
-  test("That one valid tag without language gives no error") {
-    validate(List(VALID_TAG_WITHOUT_LANGUAGE)) should equal(List())
-  }
-  
-  test("That one valid tag with valid language gives no error") {
-    validate(List(VALID_TAG_WITH_VALID_LANGUAGE)) should equal(List())
+  var validator: TagsValidator = _
+  override def beforeEach() = {
+    validator = new TagsValidator
   }
 
-  test("That one invalid tag without language gives correct error") {
-    val validationErrors = validate(List(INVALID_TAG_WITHOUT_LANGUAGE))
+  test("That TagsValidator validates tag text") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid tag")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationErrors = validator.validate(List(DefaultTag))
     validationErrors.size should be (1)
-    validationErrors.head.field should equal("tags.tag")
-    validationErrors.head.message should equal("Required value tag is empty.")
+    validationErrors.head.field should equal("path1.path2")
+    validationErrors.head.message should equal("Invalid tag")
   }
 
-  test("That one invalid tag with valid language gives correct error") {
-    val validationErrors = validate(List(INVALID_TAG_WITH_VALID_LANGUAGE))
+  test("That TagsValidator validates language") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid language")))
+
+    val validationErrors = validator.validate(List(DefaultTag))
     validationErrors.size should be (1)
-    validationErrors.head.field should equal("tags.tag")
-    validationErrors.head.message should equal("Required value tag is empty.")
+    validationErrors.head.field should equal("path1.path2")
+    validationErrors.head.message should equal("Invalid language")
   }
 
-  test("That one invalid tag with invalid language reports both errors") {
-    val errors = validate(List(INVALID_TAG_WITH_INVALID_LANGUAGE))
-    errors.size should be(2)
-    errors.head.field should equal("tags.tag")
-    errors.head.message should equal("Required value tag is empty.")
-    errors.last.field should equal("tags.language")
-    errors.last.message should equal("Language 'unsupported' is not a supported value.")
+  test("That TagsValidator validates both tag text and language") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.tag", "Invalid tag")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.language", "Invalid language")))
+
+    val validationErrors = validator.validate(List(DefaultTag))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.tag")
+    validationErrors.head.message should equal("Invalid tag")
+    validationErrors.last.field should equal("path1.language")
+    validationErrors.last.message should equal("Invalid language")
+
   }
 
-  test("That two invalid tags gives correct error message") {
-    val errors = validate(List(VALID_TAG_WITH_INVALID_LANGUAGE, INVALID_TAG_WITH_VALID_LANGUAGE))
-    errors.size should be(2)
-
-    errors.head.field should equal("tags.language")
-    errors.head.message should equal("Language 'unsupported' is not a supported value.")
-    errors.last.field should equal("tags.tag")
-    errors.last.message should equal("Required value tag is empty.")
+  test("That TagsValidator returns no errors for a valid tag") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    validator.validate(List(DefaultTag)) should equal(List())
   }
 
-  test("That tag with html-content gives error") {
-    val errors = validate(List(VALID_TAG_WITH_VALID_LANGUAGE.copy(tag = "<strong>Invalid</strong")))
-    errors.size should be (1)
-    errors.head.field should equal("tags.tag")
+  test("That TagsValidator validates all tags") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.tag", "Invalid tag")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationErrors = validator.validate(List(DefaultTag, DefaultTag))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.tag")
+    validationErrors.head.message should equal("Invalid tag")
+    validationErrors.last.field should equal("path1.tag")
+    validationErrors.last.message should equal("Invalid tag")
   }
 }

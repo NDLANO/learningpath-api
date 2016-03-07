@@ -1,80 +1,88 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{Description, UnitSuite}
+import no.ndla.learningpathapi.{ValidationMessage, Description, TestEnvironment, UnitSuite}
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 
-class DescriptionValidatorTest extends UnitSuite {
+class DescriptionValidatorTest extends UnitSuite with TestEnvironment {
 
-  test("That DescriptionValidator returns an error message for a description that is empty") {
-    val validationErrors = DescriptionValidator.validate(Description("", None))
+  var noHtmlValidator: DescriptionValidator = _
+  var basicHtmlValidator: DescriptionValidator = _
 
-    validationErrors.head.field should equal("description.description")
-    validationErrors.head.message should equal("Required value description is empty.")
+  override def beforeEach() = {
+    noHtmlValidator = new DescriptionValidator(allowHtml = false)
+    basicHtmlValidator = new DescriptionValidator(allowHtml = true)
   }
 
-  test("That DescriptionValidator returns no error when description is not empty") {
-    DescriptionValidator.validate(Description("Valid description", None)) should equal(List())
-  }
-
-  test("That DescriptionValidator returns error message for language") {
-    val validationErrors = DescriptionValidator.validate(Description("Valid description", Some("unsupported")))
-
-    validationErrors.head.field should equal("description.language")
-    validationErrors.head.message should equal("Language 'unsupported' is not a supported value.")
-  }
-
-  test("That DescriptionValidator returns error message for both description and language") {
-    val errorMessages = DescriptionValidator.validate(Description("", Some("unsupported")))
-    errorMessages.size should be(2)
-
-    errorMessages.head.field should equal("description.description")
-    errorMessages.head.message should equal("Required value description is empty.")
-    errorMessages.last.field should equal("description.language")
-    errorMessages.last.message should equal("Language 'unsupported' is not a supported value.")
-  }
-
-  test("That DescriptionValidator returns no errors for a valid description") {
-    DescriptionValidator.validate(Description("Valid description", Some("nb"))) should equal(List())
-  }
-
+  val DefaultDescription = Description("Some description", Some("nb"))
+  
   test("That DescriptionValidator.validate returns error message when no descriptions are defined") {
-    val errorMessages = DescriptionValidator.validate(List())
-    errorMessages.size should be(1)
+    val errorMessages = noHtmlValidator.validate(List())
+    errorMessages.size should be (1)
     errorMessages.head.field should equal("description")
     errorMessages.head.message should equal("At least one description is required.")
   }
 
-  test("That DescriptionValidator.validate returns error message for a list of descriptions, where one is invalid") {
-    val descriptions = List(
-      Description("Valid description", None),
-      Description("", None))
+  test("That DescriptionValidator validates description text") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
-    val errorMessages = DescriptionValidator.validate(descriptions)
-    errorMessages.size should be(1)
-    errorMessages.head.field should equal("description.description")
-    errorMessages.head.message should equal("Required value description is empty.")
+    val validationErrors = noHtmlValidator.validate(List(DefaultDescription))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("path1.path2")
+    validationErrors.head.message should equal("Invalid text")
   }
 
-  test("That DescriptionValidator.validate returns one error message per description that is invalid") {
-    val descriptions = List(
-      Description("", None),
-      Description("", None),
-      Description("", None))
+  test("That DescriptionValidator validates language") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid language")))
 
-    val errorMessages = DescriptionValidator.validate(descriptions)
-    errorMessages.size should be(3)
-    errorMessages.foreach(message => {
-      message.field should equal("description.description")
-      message.message should equal("Required value description is empty.")
-    })
+    val validationErrors = noHtmlValidator.validate(List(DefaultDescription))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("path1.path2")
+    validationErrors.head.message should equal("Invalid language")
   }
 
-  test("That DescriptionValidator.validate returns no errors when all descriptions are valid") {
-    val descriptions = List(
-      Description("Valid description in bokmål", Some("nb")),
-      Description("Valid description in nynorsk", Some("nn")),
-      Description("Valid description in english", Some("en"))
-    )
+  test("That DescriptionValidator validates both description text and language") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.description", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.language", "Invalid language")))
 
-    DescriptionValidator.validate(descriptions) should equal(List())
+    val validationErrors = noHtmlValidator.validate(List(DefaultDescription))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.description")
+    validationErrors.head.message should equal("Invalid text")
+    validationErrors.last.field should equal("path1.language")
+    validationErrors.last.message should equal("Invalid language")
+
+  }
+
+  test("That DescriptionValidator returns no errors for a valid description") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    noHtmlValidator.validate(List(DefaultDescription)) should equal(List())
+  }
+
+  test("That DescriptionValidator validates all descriptions") {
+    when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.description", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationErrors = noHtmlValidator.validate(List(DefaultDescription, DefaultDescription))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.description")
+    validationErrors.head.message should equal("Invalid text")
+    validationErrors.last.field should equal("path1.description")
+    validationErrors.last.message should equal("Invalid text")
+  }
+
+  test("That basicHtmlValidator validates uses basicHtmlTextValidator") {
+    when(basicHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.description", "Invalid text")))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
+    val validationErrors = basicHtmlValidator.validate(List(DefaultDescription, DefaultDescription))
+    validationErrors.size should be (2)
+    validationErrors.head.field should equal("path1.description")
+    validationErrors.head.message should equal("Invalid text")
+    validationErrors.last.field should equal("path1.description")
+    validationErrors.last.message should equal("Invalid text")
   }
 }
