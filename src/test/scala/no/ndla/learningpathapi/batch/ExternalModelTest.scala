@@ -35,24 +35,12 @@ class ExternalModelTest extends UnitSuite {
 
   test("That Step.embedUrlToNdlaNo converts red.ndla.no to ndla.no") {
     val redUrl = Some("http://red.ndla.no/node/145805")
-    val expectedUrl = Some("http://ndla.no/node/145805/oembed")
+    val expectedUrl = Some("http://ndla.no/node/145805")
 
     testStep.copy(embedUrl = redUrl).embedUrlToNdlaNo should equal(expectedUrl)
   }
 
-  test("That Step.embedUrlToNdlaNo converts www.youtube.com with v-param to youtube-embed url") {
-    val youtubeUrl = Some("http://www.youtube.com/?v=AnAwesomeVideo")
-    val expectedUrl = Some("https://www.youtube.com/embed/AnAwesomeVideo")
-
-    testStep.copy(embedUrl = youtubeUrl).embedUrlToNdlaNo should equal(expectedUrl)
-  }
-
-  test("That Step.embedUrlToNdlaNo returns same youtube-url if no v-param") {
-    val youtubeUrl, expectedUrl = Some("http://www.youtube.com/AnAwesomeVideo")
-    testStep.copy(embedUrl = youtubeUrl).embedUrlToNdlaNo should equal(expectedUrl)
-  }
-
-  test("That Step.embedUrlToNdlaNo returns other than red.ndla.no and youtube-urls as is") {
+  test("That Step.embedUrlToNdlaNo returns other than red.ndla.no as is") {
     val urlToCnn, expectedUrl = Some("http://www.cnn.com/")
     testStep.copy(embedUrl = urlToCnn).embedUrlToNdlaNo should equal(expectedUrl)
   }

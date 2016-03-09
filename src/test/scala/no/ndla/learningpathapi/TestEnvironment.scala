@@ -3,7 +3,7 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
-import no.ndla.learningpathapi.integration.{AuthClientComponent, ElasticClientComponent, DatasourceComponent}
+import no.ndla.learningpathapi.integration.{OEmbedClientComponent, AuthClientComponent, ElasticClientComponent, DatasourceComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchServiceComponent, SearchIndexServiceComponent, SearchIndexBuilderServiceComponent}
@@ -20,13 +20,14 @@ trait TestEnvironment
   with SearchIndexServiceComponent
   with SearchIndexBuilderServiceComponent
   with AuthClientComponent
+  with OEmbedClientComponent
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
   with CoverPhotoValidatorComponent
   with DescriptionValidatorComponent
   with DurationValidatorComponent
-  with EmbedUrlValidatorComponent
+  with EmbedContentValidatorComponent
   with LanguageValidatorComponent
   with LicenseValidatorComponent
   with StatusValidatorComponent
@@ -49,11 +50,12 @@ trait TestEnvironment
   val searchService = mock[SearchService]
   val searchIndexService = mock[SearchIndexService]
   val authClient = mock[AuthClient]
+  val oEmbedClient = mock[OEmbedClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
 
   val coverPhotoValidator = mock[CoverPhotoValidator]
   val durationValidator = mock[DurationValidator]
-  val embedUrlValidator = mock[EmbedUrlValidator]
+  val embedContentValidator = mock[EmbedContentValidator]
   val languageValidator = mock[LanguageValidator]
   val licenseValidator = mock[LicenseValidator]
   val statusValidator = mock[StatusValidator]
@@ -71,8 +73,8 @@ trait TestEnvironment
 
   def resetMocks() = {
     Mockito.reset(
-      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, publicService, privateService, updateService, searchService, searchIndexService, authClient, converterService,
-      coverPhotoValidator, durationValidator, embedUrlValidator, languageValidator, licenseValidator, statusValidator, stepTypeValidator, tagsValidator, noHtmlTextValidator,
-      basicHtmlTextValidator, basicHtmlDescriptionValidator, noHtmlDescriptionValidator, titleValidator, newLearningPathValidator, newLearningStepValidator)
+      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, publicService, privateService, updateService, searchService, searchIndexService, authClient, oEmbedClient,
+      converterService, coverPhotoValidator, durationValidator, embedContentValidator, languageValidator, licenseValidator, statusValidator, stepTypeValidator, tagsValidator,
+      noHtmlTextValidator, basicHtmlTextValidator, basicHtmlDescriptionValidator, noHtmlDescriptionValidator, titleValidator, newLearningPathValidator, newLearningStepValidator)
   }
 }

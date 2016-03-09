@@ -124,8 +124,9 @@ trait SearchIndexServiceComponent {
               "description" typed NestedType as(
                 "description" typed StringType ,
                 "language" typed StringType index "not_analyzed"),
-              "embedUrl" typed NestedType as(
+              "embedContent" typed NestedType as(
                 "url" typed StringType ,
+                "html" typed StringType index "not_analyzed",
                 "language" typed StringType index "not_analyzed"),
               "type" typed StringType,
               "license" typed StringType,

@@ -33,6 +33,7 @@ object LearningpathApiProperties extends LazyLogging {
   def IndexBulkSize = getInt("INDEX_BULK_SIZE")
 
   val AuthHost = "auth"
+  val OEmbedHost = "oembed-proxy"
   val DefaultLanguage = "nb"
   val UsernameHeader = "X-Consumer-Username"
 

@@ -94,7 +94,7 @@ trait UpdateServiceComponent {
             newSeqNo,
             newLearningStep.title.map(converterService.asTitle),
             newLearningStep.description.map(converterService.asDescription),
-            newLearningStep.embedUrl.map(converterService.asEmbedUrl),
+            newLearningStep.embedContent.map(converterService.asEmbedUrl),
             model.StepType.valueOfOrDefault(newLearningStep.`type`),
             newLearningStep.license)
 
@@ -122,7 +122,7 @@ trait UpdateServiceComponent {
               val toUpdate = existing.copy(
                 title = newLearningStep.title.map(converterService.asTitle),
                 description = newLearningStep.description.map(converterService.asDescription),
-                embedUrl = newLearningStep.embedUrl.map(converterService.asEmbedUrl),
+                embedUrl = newLearningStep.embedContent.map(converterService.asEmbedUrl),
                 `type` = model.StepType.valueOfOrDefault(newLearningStep.`type`),
                 license = newLearningStep.license)
 

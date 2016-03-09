@@ -18,13 +18,7 @@ case class Step(packageId:Long, pageId:Long, pos:Int, title:String, stepType:Lon
           case None => None
           case Some(host) => {
             host match {
-              case h if h == "red.ndla.no" => Some(s"http://ndla.no${parsedUri.path}/oembed")
-              case h if h == "www.youtube.com" => {
-                parsedUri.query.param("v") match {
-                  case Some(videoId) => Some(s"https://www.youtube.com/embed/$videoId")
-                  case None => Some(url)
-                }
-              }
+              case h if h == "red.ndla.no" => Some(s"http://ndla.no${parsedUri.path}")
               case default => Some(url)
             }
           }

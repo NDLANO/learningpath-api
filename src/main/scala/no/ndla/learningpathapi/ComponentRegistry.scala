@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi
 
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
-import no.ndla.learningpathapi.integration.{AuthClientComponent, ElasticClientComponent, DatasourceComponent}
+import no.ndla.learningpathapi.integration.{OEmbedClientComponent, AuthClientComponent, ElasticClientComponent, DatasourceComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchServiceComponent, SearchIndexServiceComponent, SearchIndexBuilderServiceComponent}
@@ -19,13 +19,14 @@ object ComponentRegistry
   with SearchIndexServiceComponent
   with SearchIndexBuilderServiceComponent
   with AuthClientComponent
+  with OEmbedClientComponent
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
   with CoverPhotoValidatorComponent
   with DescriptionValidatorComponent
   with DurationValidatorComponent
-  with EmbedUrlValidatorComponent
+  with EmbedContentValidatorComponent
   with LanguageValidatorComponent
   with LicenseValidatorComponent
   with StatusValidatorComponent
@@ -59,11 +60,12 @@ object ComponentRegistry
   lazy val searchService = new SearchService
   lazy val searchIndexService = new SearchIndexService
   lazy val authClient = new AuthClient
+  lazy val oEmbedClient = new OEmbedClient
   lazy val converterService = new ConverterService
 
   lazy val coverPhotoValidator = new CoverPhotoValidator
   lazy val durationValidator = new DurationValidator
-  lazy val embedUrlValidator = new EmbedUrlValidator
+  lazy val embedContentValidator = new EmbedContentValidator
   lazy val languageValidator = new LanguageValidator
   lazy val licenseValidator = new LicenseValidator
   lazy val statusValidator = new StatusValidator

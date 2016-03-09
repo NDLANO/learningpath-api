@@ -2,17 +2,17 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.integration.AuthClientComponent
+import no.ndla.learningpathapi.integration.{OEmbedClientComponent, AuthClientComponent}
 import no.ndla.learningpathapi.model.{LearningStep, LearningPath, NdlaUserName}
 import no.ndla.network.ApplicationUrl
 
 trait ConverterServiceComponent {
-  this: AuthClientComponent =>
+  this: AuthClientComponent with OEmbedClientComponent =>
   val converterService: ConverterService
 
   class ConverterService {
-    def asEmbedUrl(url: EmbedUrl): model.EmbedUrl = {
-      model.EmbedUrl(url.url, url.language)
+    def asEmbedUrl(embedContent: EmbedContent): model.EmbedUrl = {
+      model.EmbedUrl(embedContent.url, embedContent.language)
     }
 
     def asDescription(description: Description): model.Description = {
@@ -84,7 +84,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
-        ls.embedUrl.map(asApiEmbedUrl),
+        ls.embedUrl.map(asApiEmbedContent),
         ls.`type`.toString,
         ls.license, createUrlToLearningStep(ls, lp))
     }
@@ -97,8 +97,8 @@ trait ConverterServiceComponent {
       no.ndla.learningpathapi.Description(description.description, description.language)
     }
 
-    def asApiEmbedUrl(embedUrl: no.ndla.learningpathapi.model.EmbedUrl): no.ndla.learningpathapi.EmbedUrl = {
-      no.ndla.learningpathapi.EmbedUrl(embedUrl.url, embedUrl.language)
+    def asApiEmbedContent(embedUrl: no.ndla.learningpathapi.model.EmbedUrl): no.ndla.learningpathapi.EmbedContent = {
+      no.ndla.learningpathapi.EmbedContent(embedUrl.url, oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url), embedUrl.language)
     }
 
     def createUrlToLearningStep(ls: LearningStep, lp: LearningPath): String = {

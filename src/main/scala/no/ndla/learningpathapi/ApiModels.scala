@@ -88,7 +88,7 @@ case class LearningStep(
   @(ApiModelProperty @field)(description = "The sequence number for the step. The first step has seqNo 0.") seqNo:Int,
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
-  @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
+  @(ApiModelProperty @field)(description = "The embed content for the learningstep") embedContent:List[EmbedContent],
   @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step.") license:Option[String],
   @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningstep can be found") metaUrl:String
@@ -98,7 +98,7 @@ case class LearningStep(
 case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The titles of the learningstep") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningstep") description:List[Description],
-  @(ApiModelProperty @field)(description = "The embed urls for the learningstep") embedUrl:List[EmbedUrl],
+  @(ApiModelProperty @field)(description = "The embed content for the learningstep") embedContent:List[EmbedContent],
   @(ApiModelProperty @field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`:String,
   @(ApiModelProperty @field)(description = "The license for this step. Must be plain text") license:Option[String]
 ) {
@@ -118,9 +118,10 @@ case class Title(
 )
 
 @ApiModel(description = "Representation of an embeddable url")
-case class EmbedUrl(
+case class EmbedContent(
   @(ApiModelProperty @field)(description = "The url") url:String,
-  @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in title") language:Option[String]
+  @(ApiModelProperty @field)(description = "The html-code used to embed the content") html:String,
+  @(ApiModelProperty @field)(description = "ISO 639-1 code that represents the language used in the embeddable content") language:Option[String]
 )
 
 @ApiModel(description = "The description of the learningpath")
