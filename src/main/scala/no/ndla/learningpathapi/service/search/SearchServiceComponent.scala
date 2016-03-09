@@ -6,6 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.Sort
 import no.ndla.learningpathapi.service.ConverterServiceComponent
+import no.ndla.learningpathapi.service.search.model.{SearchConverter, SearchableLearningPath}
 import no.ndla.learningpathapi.{LearningPath, LearningPathSummary, LearningpathApiProperties, SearchResult}
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
@@ -25,7 +26,7 @@ trait SearchServiceComponent extends LazyLogging {
     implicit object ContentHitAs extends HitAs[LearningPathSummary] {
       override def as(hit: RichSearchHit): LearningPathSummary = {
         implicit val formats = org.json4s.DefaultFormats
-        converterService.asApiLearningPathSummary(read[LearningPath](hit.sourceAsString))
+        SearchConverter.asApiLearningPathSummary(read[SearchableLearningPath](hit.sourceAsString))
       }
     }
 
