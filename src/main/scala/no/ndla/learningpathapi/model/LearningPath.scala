@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.model
 
 import java.util.Date
 
-import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
@@ -10,7 +10,7 @@ import org.json4s.native.Serialization._
 import scalikejdbc._
 
 case class LearningPath(id: Option[Long], externalId: Option[String], title: List[Title], description: List[Description], coverPhotoUrl: Option[String],
-                            duration: Int, status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: List[LearningPathTag],
+                            duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: List[LearningPathTag],
                             owner: String, learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE
@@ -33,6 +33,14 @@ case class LearningPath(id: Option[Long], externalId: Option[String], title: Lis
   def verifyNotPrivate = {
     if(isPrivate){
       throw new AccessDeniedException("You do not have access to the requested resource.")
+    }
+  }
+
+  def validateForPublishing() = {
+    val validationResult = ComponentRegistry.durationValidator.validateRequired(duration).toList
+    validationResult.isEmpty match {
+      case true => this
+      case false => throw new ValidationException(errors = validationResult)
     }
   }
 }

@@ -68,7 +68,7 @@ trait ImportServiceComponent {
     }
 
     def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[String]) = {
-      val duration = (pakke.durationHours * 60) + pakke.durationMinutes
+      val duration = Some((pakke.durationHours * 60) + pakke.durationMinutes)
       val lastUpdated = pakke.lastUpdated
 
       val owner = pakke.nodeId match {

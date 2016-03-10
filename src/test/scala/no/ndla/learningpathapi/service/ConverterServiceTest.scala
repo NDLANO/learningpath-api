@@ -10,7 +10,7 @@ import org.mockito.Mockito._
 
 class ConverterServiceTest extends UnitSuite with TestEnvironment {
 
-  val apiLearningPath = LearningPath(1, List(), List(), "", List(), "", None, 1, "PRIVATE", "", new Date(), List(), Author("", ""))
+  val apiLearningPath = LearningPath(1, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""))
 
   var service: ConverterService = _
 
