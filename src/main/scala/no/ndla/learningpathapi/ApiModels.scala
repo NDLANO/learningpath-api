@@ -20,7 +20,7 @@ case class LearningPath(
   @(ApiModelProperty @field)(description = "The learningsteps for this learningpath") learningsteps:List[LearningStep],
   @(ApiModelProperty @field)(description = "The full url to where the learningsteps can be found") learningstepUrl:String,
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
-  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
+  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Option[Int],
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String,
   @(ApiModelProperty @field)(description = "Verification status", allowableValues = "CREATED_BY_NDLA,VERIFIED_BY_NDLA,EXTERNAL") verificationStatus:String,
   @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
@@ -37,7 +37,7 @@ case class NewLearningPath(
   @(ApiModelProperty @field)(description = "The titles of the learningpath") title:List[Title],
   @(ApiModelProperty @field)(description = "The descriptions of the learningpath") description:List[Description],
   @(ApiModelProperty @field)(description = "Url to cover-photo in NDLA image-api.") coverPhotoUrl:Option[String],
-  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes. Must be greater than 0") duration:Int,
+  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes. Must be greater than 0") duration:Option[Int],
   @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags:List[LearningPathTag]
 ) {
   def validate(): NewLearningPath = {
@@ -76,7 +76,7 @@ case class LearningPathSummary(
   @(ApiModelProperty @field)(description = "The descriptions of the learningpath") description:List[Description],
   @(ApiModelProperty @field)(description = "The full url to where the complete metainformation about the learningpath can be found") metaUrl:String,
   @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl:Option[String],
-  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Int,
+  @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration:Option[Int],
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath.", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String,
   @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated:Date,
   @(ApiModelProperty @field)(description = "The author of this learningpath") author:Author

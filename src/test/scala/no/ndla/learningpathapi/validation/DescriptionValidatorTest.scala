@@ -17,17 +17,21 @@ class DescriptionValidatorTest extends UnitSuite with TestEnvironment {
   val DefaultDescription = Description("Some description", Some("nb"))
   
   test("That DescriptionValidator.validate returns error message when no descriptions are defined") {
-    val errorMessages = noHtmlValidator.validate(List())
+    val errorMessages = noHtmlValidator.validateRequired(List())
     errorMessages.size should be (1)
     errorMessages.head.field should equal("description")
     errorMessages.head.message should equal("At least one description is required.")
+  }
+
+  test("That validateOptional allows no descriptions") {
+    noHtmlValidator.validateOptional(List()) should equal (List())
   }
 
   test("That DescriptionValidator validates description text") {
     when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid text")))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
-    val validationErrors = noHtmlValidator.validate(List(DefaultDescription))
+    val validationErrors = noHtmlValidator.validateRequired(List(DefaultDescription))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("path1.path2")
     validationErrors.head.message should equal("Invalid text")
@@ -37,7 +41,7 @@ class DescriptionValidatorTest extends UnitSuite with TestEnvironment {
     when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.path2", "Invalid language")))
 
-    val validationErrors = noHtmlValidator.validate(List(DefaultDescription))
+    val validationErrors = noHtmlValidator.validateRequired(List(DefaultDescription))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("path1.path2")
     validationErrors.head.message should equal("Invalid language")
@@ -47,7 +51,7 @@ class DescriptionValidatorTest extends UnitSuite with TestEnvironment {
     when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.description", "Invalid text")))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(Some(ValidationMessage("path1.language", "Invalid language")))
 
-    val validationErrors = noHtmlValidator.validate(List(DefaultDescription))
+    val validationErrors = noHtmlValidator.validateRequired(List(DefaultDescription))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("path1.description")
     validationErrors.head.message should equal("Invalid text")
@@ -59,14 +63,14 @@ class DescriptionValidatorTest extends UnitSuite with TestEnvironment {
   test("That DescriptionValidator returns no errors for a valid description") {
     when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(None)
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
-    noHtmlValidator.validate(List(DefaultDescription)) should equal(List())
+    noHtmlValidator.validateRequired(List(DefaultDescription)) should equal(List())
   }
 
   test("That DescriptionValidator validates all descriptions") {
     when(noHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.description", "Invalid text")))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
-    val validationErrors = noHtmlValidator.validate(List(DefaultDescription, DefaultDescription))
+    val validationErrors = noHtmlValidator.validateRequired(List(DefaultDescription, DefaultDescription))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("path1.description")
     validationErrors.head.message should equal("Invalid text")
@@ -78,7 +82,7 @@ class DescriptionValidatorTest extends UnitSuite with TestEnvironment {
     when(basicHtmlTextValidator.validate(any[String], any[String])).thenReturn(Some(ValidationMessage("path1.description", "Invalid text")))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
-    val validationErrors = basicHtmlValidator.validate(List(DefaultDescription, DefaultDescription))
+    val validationErrors = basicHtmlValidator.validateRequired(List(DefaultDescription, DefaultDescription))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("path1.description")
     validationErrors.head.message should equal("Invalid text")

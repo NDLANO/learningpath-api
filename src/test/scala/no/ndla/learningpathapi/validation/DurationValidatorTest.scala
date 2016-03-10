@@ -10,13 +10,24 @@ class DurationValidatorTest extends UnitSuite with TestEnvironment{
   }
 
   test("That validate returns error when duration less than 1") {
-    val validationError = validator.validate(0)
+    val validationError = validator.validate(Some(0))
     validationError.isDefined should be(right = true)
     validationError.get.field should equal("duration")
     validationError.get.message should equal("Required value duration must be greater than 0.")
   }
 
   test("That validate doesn't return an error when valid value") {
-    validator.validate(1) should equal(None)
+    validator.validate(Some(1)) should equal(None)
+  }
+
+  test("That validate accepts None") {
+    validator.validate(None) should equal (None)
+  }
+
+  test("That validateRequired doesn't accept None") {
+    val validationError = validator.validateRequired(None)
+    validationError.isDefined should be (right = true)
+    validationError.get.field should equal ("duration")
+    validationError.get.message should equal ("Required value is empty.")
   }
 }

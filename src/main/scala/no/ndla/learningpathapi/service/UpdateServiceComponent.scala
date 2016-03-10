@@ -51,9 +51,14 @@ trait UpdateServiceComponent {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
         case Some(existing) => {
+          val newStatus = model.LearningPathStatus.valueOfOrDefault(status.status)
+          if(newStatus == model.LearningPathStatus.PUBLISHED){
+            existing.validateForPublishing()
+          }
+
           val updatedLearningPath = learningPathRepository.update(
             existing.copy(
-              status = model.LearningPathStatus.valueOfOrDefault(status.status),
+              status = newStatus,
               lastUpdated = new Date()))
 
           updatedLearningPath.isPublished match {

@@ -18,10 +18,10 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, 1, model.LearningPathStatus.PUBLISHED, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), None, List(), List(), None, 1, model.LearningPathStatus.PRIVATE, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
-  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, 1, List())
-  val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, 1, List())
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PUBLISHED, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PRIVATE, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
+  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
+  val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
 
   val STEP1 = LearningStep(Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None)
   val STEP2 = LearningStep(Some(2), None, None, 2, List(), List(), List(), StepType.TEXT, None)
