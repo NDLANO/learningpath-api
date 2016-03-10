@@ -15,7 +15,14 @@ trait DescriptionValidatorComponent {
       case false => noHtmlTextValidator
     }
 
-    def validate(descriptions: List[Description]): List[ValidationMessage] = {
+    def validateOptional(descriptions: List[Description]): List[ValidationMessage] = {
+      descriptions.isEmpty match {
+        case true => List()
+        case false => descriptions.flatMap(description => validate(description))
+      }
+    }
+
+    def validateRequired(descriptions: List[Description]): List[ValidationMessage] = {
       descriptions.isEmpty match {
         case true => List(ValidationMessage("description", MISSING_DESCRIPTION))
         case false => descriptions.flatMap(description => validate(description))

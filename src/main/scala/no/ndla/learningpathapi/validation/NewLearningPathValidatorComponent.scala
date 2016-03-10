@@ -10,7 +10,7 @@ trait NewLearningPathValidatorComponent {
   class NewLearningPathValidator {
     def validate(newLearningPath: NewLearningPath): List[ValidationMessage] = {
       titleValidator.validate(newLearningPath.title) :::
-      noHtmlDescriptionValidator.validate(newLearningPath.description) :::
+      noHtmlDescriptionValidator.validateRequired(newLearningPath.description) :::
       durationValidator.validate(newLearningPath.duration).toList :::
       coverPhotoValidator.validate(newLearningPath.coverPhotoUrl).toList :::
       tagsValidator.validate(newLearningPath.tags)

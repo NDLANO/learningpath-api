@@ -7,12 +7,23 @@ trait NewLearningStepValidatorComponent {
   val newLearningStepValidator: NewLearningStepValidator
 
   class NewLearningStepValidator {
+
+    val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedUrl or both."
+
     def validate(newLearningStep: NewLearningStep): List[ValidationMessage] = {
       titleValidator.validate(newLearningStep.title) :::
-        basicHtmlDescriptionValidator.validate(newLearningStep.description) :::
+        basicHtmlDescriptionValidator.validateOptional(newLearningStep.description) :::
         embedUrlValidator.validate(newLearningStep.embedUrl) :::
         stepTypeValidator.validate(newLearningStep.`type`).toList :::
-        licenseValidator.validate(newLearningStep.license).toList
+        licenseValidator.validate(newLearningStep.license).toList :::
+        checkThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep).toList
+    }
+
+    def checkThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep: NewLearningStep): Option[ValidationMessage] = {
+      newLearningStep.description.isEmpty && newLearningStep.embedUrl.isEmpty match {
+        case true => Some(ValidationMessage("description|embedUrl", MISSING_DESCRIPTION_OR_EMBED_URL))
+        case false => None
+      }
     }
   }
 }
