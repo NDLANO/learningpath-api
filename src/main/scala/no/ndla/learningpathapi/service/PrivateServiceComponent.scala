@@ -13,7 +13,7 @@ trait PrivateServiceComponent {
     }
 
     def withId(learningPathId: Long, owner: String): Option[LearningPath] = {
-      withIdAndAccessGranted(learningPathId, owner).map(converterService.asApiLearningpath)
+      withIdAndAccessGranted(learningPathId, owner).map(lp => converterService.asApiLearningpath(lp))
     }
 
     def statusFor(learningPathId: Long, owner: String): Option[LearningPathStatus] = {

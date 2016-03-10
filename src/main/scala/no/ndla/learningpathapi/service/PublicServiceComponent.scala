@@ -10,7 +10,7 @@ trait PublicServiceComponent {
 
   class PublicService {
     def withId(learningPathId: Long): Option[LearningPath] = {
-      withIdAndAccessGranted(learningPathId).map(converterService.asApiLearningpath)
+      withIdAndAccessGranted(learningPathId).map(lp => converterService.asApiLearningpath(lp))
     }
 
     def statusFor(learningPathId: Long): Option[LearningPathStatus] = {

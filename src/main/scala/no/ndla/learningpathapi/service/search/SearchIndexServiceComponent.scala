@@ -10,7 +10,6 @@ import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.LearningPath
 import no.ndla.learningpathapi.service.ConverterServiceComponent
-import no.ndla.learningpathapi.service.search.model.SearchConverter
 import org.json4s.native.Serialization._
 
 
@@ -24,7 +23,7 @@ trait SearchIndexServiceComponent {
     def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
       elasticClient.execute {
         bulk(learningPaths.map(learningPath => {
-          index into indexName -> LearningpathApiProperties.SearchDocument source write(SearchConverter.asSearchableLearningPath(learningPath)) id learningPath.id.get
+          index into indexName -> LearningpathApiProperties.SearchDocument source write(converterService.asApiLearningpath(learningPath, callOEmbedProxy = false)) id learningPath.id.get
         }))
       }.await
 

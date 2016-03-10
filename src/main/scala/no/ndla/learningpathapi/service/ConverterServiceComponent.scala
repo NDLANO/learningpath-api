@@ -37,12 +37,12 @@ trait ConverterServiceComponent {
       Author("Forfatter", names.mkString(" "))
     }
 
-    def asApiLearningpath(lp: LearningPath): no.ndla.learningpathapi.LearningPath = {
+    def asApiLearningpath(lp: LearningPath, callOEmbedProxy: Boolean = true): no.ndla.learningpathapi.LearningPath = {
       no.ndla.learningpathapi.LearningPath(lp.id.get,
         lp.title.map(asApiTitle),
         lp.description.map(asApiDescription),
         createUrlToLearningPath(lp),
-        lp.learningsteps.map(ls => asApiLearningStep(ls, lp)).toList,
+        lp.learningsteps.map(ls => asApiLearningStep(ls, lp, callOEmbedProxy)).toList,
         createUrlToLearningSteps(lp),
         lp.coverPhotoUrl,
         lp.duration,
@@ -78,13 +78,13 @@ trait ConverterServiceComponent {
         learningPath.author)
     }
 
-    def asApiLearningStep(ls: LearningStep, lp: LearningPath): learningpathapi.LearningStep = {
+    def asApiLearningStep(ls: LearningStep, lp: LearningPath, callOembedProxy: Boolean = true): learningpathapi.LearningStep = {
       no.ndla.learningpathapi.LearningStep(
         ls.id.get,
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
-        ls.embedUrl.map(asApiEmbedContent),
+        ls.embedUrl.map(e => asApiEmbedContent(e, callOembedProxy)),
         ls.`type`.toString,
         ls.license, createUrlToLearningStep(ls, lp))
     }
@@ -97,8 +97,14 @@ trait ConverterServiceComponent {
       no.ndla.learningpathapi.Description(description.description, description.language)
     }
 
-    def asApiEmbedContent(embedUrl: no.ndla.learningpathapi.model.EmbedUrl): no.ndla.learningpathapi.EmbedContent = {
-      no.ndla.learningpathapi.EmbedContent(embedUrl.url, oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url), embedUrl.language)
+    def asApiEmbedContent(embedUrl: no.ndla.learningpathapi.model.EmbedUrl, callOembedProxy: Boolean): no.ndla.learningpathapi.EmbedContent = {
+      no.ndla.learningpathapi.EmbedContent(
+        embedUrl.url,
+        callOembedProxy match {
+          case true => oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url)
+          case false => ""
+        },
+        embedUrl.language)
     }
 
     def createUrlToLearningStep(ls: LearningStep, lp: LearningPath): String = {
