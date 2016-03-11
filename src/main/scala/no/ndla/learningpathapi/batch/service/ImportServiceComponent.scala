@@ -3,6 +3,7 @@ package no.ndla.learningpathapi.batch.service
 import no.ndla.learningpathapi.batch._
 import no.ndla.learningpathapi.batch.integration.{CMDataComponent, KeywordsServiceComponent, PackageDataComponent}
 import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 
@@ -89,7 +90,7 @@ trait ImportServiceComponent {
         case default => LearningPathStatus.PUBLISHED
       }
 
-      no.ndla.learningpathapi.model.LearningPath(
+      LearningPath(
         None,
         Some(s"${pakke.packageId}"),
         titles,

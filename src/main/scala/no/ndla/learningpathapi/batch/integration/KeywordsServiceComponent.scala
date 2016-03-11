@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.batch.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.model.LearningPathTag
+import no.ndla.learningpathapi.model.domain.LearningPathTag
 import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
 import org.json4s.native.Serialization._
 

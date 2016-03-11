@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{NewLearningPath, ValidationMessage}
+import no.ndla.learningpathapi.model.api.{NewLearningPath, ValidationMessage}
 
 
 trait NewLearningPathValidatorComponent {

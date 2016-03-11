@@ -1,4 +1,4 @@
-package no.ndla.learningpathapi.model
+package no.ndla.learningpathapi.model.domain
 
 import java.util.Date
 

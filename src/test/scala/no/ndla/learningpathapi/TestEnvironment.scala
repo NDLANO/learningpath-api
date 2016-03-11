@@ -6,7 +6,7 @@ import com.sksamuel.elastic4s.ElasticClient
 import no.ndla.learningpathapi.integration.{OEmbedClientComponent, AuthClientComponent, ElasticClientComponent, DatasourceComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchServiceComponent, SearchIndexServiceComponent, SearchIndexBuilderServiceComponent}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchServiceComponent, SearchIndexServiceComponent, SearchIndexBuilderServiceComponent}
 import no.ndla.learningpathapi.validation._
 import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
@@ -16,6 +16,7 @@ trait TestEnvironment
   with PublicServiceComponent
   with PrivateServiceComponent
   with UpdateServiceComponent
+  with SearchConverterServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
   with SearchIndexBuilderServiceComponent
@@ -47,6 +48,7 @@ trait TestEnvironment
   val publicService = mock[PublicService]
   val privateService = mock[PrivateService]
   val updateService = mock[UpdateService]
+  val searchConverterService = mock[SearchConverterService]
   val searchService = mock[SearchService]
   val searchIndexService = mock[SearchIndexService]
   val authClient = mock[AuthClient]

@@ -4,9 +4,11 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.Sort
+import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult, LearningPath}
+import no.ndla.learningpathapi.model.domain.Sort
+import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.learningpathapi.service.ConverterServiceComponent
-import no.ndla.learningpathapi.{LearningPath, LearningPathSummary, LearningpathApiProperties, SearchResult}
+import no.ndla.learningpathapi.LearningpathApiProperties
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
 import org.elasticsearch.search.sort.SortOrder
@@ -18,14 +20,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait SearchServiceComponent extends LazyLogging {
-  this: SearchIndexBuilderServiceComponent with ElasticClientComponent with ConverterServiceComponent =>
+  this: SearchIndexBuilderServiceComponent with ElasticClientComponent with SearchConverterServiceComponent =>
   val searchService: SearchService
 
   class SearchService {
     implicit object ContentHitAs extends HitAs[LearningPathSummary] {
       override def as(hit: RichSearchHit): LearningPathSummary = {
         implicit val formats = org.json4s.DefaultFormats
-        converterService.asApiLearningPathSummary(read[LearningPath](hit.sourceAsString))
+        searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](hit.sourceAsString))
       }
     }
 
@@ -55,8 +57,7 @@ trait SearchServiceComponent extends LazyLogging {
       tagSearch += matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       language.foreach(lang => tagSearch += termQuery("tags.language", lang))
 
-      val authorSearch = new ListBuffer[QueryDefinition]
-      authorSearch += matchQuery("author.name", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val authorSearch = matchQuery("author", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
 
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
         bool {
@@ -66,7 +67,7 @@ trait SearchServiceComponent extends LazyLogging {
             nestedQuery("learningsteps.title").query {bool {must (stepTitleSearch.toList)}},
             nestedQuery("learningsteps.description").query {bool {must (stepDescSearch.toList)}},
             nestedQuery("tags").query {bool {must (tagSearch.toList)}},
-            nestedQuery("author").query {bool {must (authorSearch.toList)}}
+            authorSearch
           )
         }
       }

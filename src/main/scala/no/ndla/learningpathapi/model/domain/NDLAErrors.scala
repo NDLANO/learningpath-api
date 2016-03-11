@@ -1,6 +1,6 @@
-package no.ndla.learningpathapi.model
+package no.ndla.learningpathapi.model.domain
 
-import no.ndla.learningpathapi.ValidationMessage
+import no.ndla.learningpathapi.model.api.ValidationMessage
 
 class HeaderMissingException(message: String) extends RuntimeException(message)
 class ValidationException(message: String = "Validation Error", val errors: List[ValidationMessage]) extends RuntimeException(message)

@@ -4,7 +4,7 @@ import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
 import no.ndla.learningpathapi.validation._
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.postgresql.ds.PGPoolingDataSource
@@ -15,6 +15,7 @@ object ComponentRegistry
   with PublicServiceComponent
   with PrivateServiceComponent
   with UpdateServiceComponent
+  with SearchConverterServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
   with SearchIndexBuilderServiceComponent
@@ -57,6 +58,7 @@ object ComponentRegistry
   lazy val publicService = new PublicService
   lazy val privateService = new PrivateService
   lazy val updateService = new UpdateService
+  lazy val searchConverterService = new SearchConverterService
   lazy val searchService = new SearchService
   lazy val searchIndexService = new SearchIndexService
   lazy val authClient = new AuthClient

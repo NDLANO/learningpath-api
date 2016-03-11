@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{NewLearningStep, ValidationMessage}
+import no.ndla.learningpathapi.model.api.{NewLearningStep, ValidationMessage}
 
 trait NewLearningStepValidatorComponent {
   this: TitleValidatorComponent with DescriptionValidatorComponent with EmbedContentValidatorComponent with StepTypeValidatorComponent with LicenseValidatorComponent =>

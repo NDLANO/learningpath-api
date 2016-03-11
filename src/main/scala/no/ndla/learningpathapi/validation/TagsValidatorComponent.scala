@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{ValidationMessage, LearningPathTag}
+import no.ndla.learningpathapi.model.api.{LearningPathTag, ValidationMessage}
 
 trait TagsValidatorComponent {
   this: TextValidatorComponent with LanguageValidatorComponent =>

@@ -1,7 +1,9 @@
 package no.ndla.learningpathapi.service
 
+import no.ndla.learningpathapi.model.api.{LearningStepSummary, LearningStep, LearningPathStatus, LearningPath}
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.{LearningPath, LearningPathStatus, LearningStep, model}
+import no.ndla.learningpathapi._
 
 
 trait PublicServiceComponent {
@@ -17,9 +19,9 @@ trait PublicServiceComponent {
       withIdAndAccessGranted(learningPathId).map(lp => LearningPathStatus(lp.status.toString))
     }
 
-    def learningstepsFor(learningPathId: Long): Option[List[LearningStep]] = {
+    def learningstepsFor(learningPathId: Long): Option[List[LearningStepSummary]] = {
       withIdAndAccessGranted(learningPathId) match {
-        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStep(ls, lp)))
+        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStepSummary(ls, lp)))
         case None => None
       }
     }
@@ -31,7 +33,7 @@ trait PublicServiceComponent {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long): Option[model.LearningPath] = {
+    private def withIdAndAccessGranted(learningPathId: Long): Option[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.foreach(_.verifyNotPrivate)
       learningPath

@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.ValidationMessage
+import no.ndla.learningpathapi.model.api.ValidationMessage
 
 trait DurationValidatorComponent {
   val durationValidator: DurationValidator

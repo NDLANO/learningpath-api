@@ -3,10 +3,10 @@ package no.ndla.learningpathapi.batch.service
 import java.util.Date
 
 import no.ndla.learningpathapi.UnitSuite
-import no.ndla.learningpathapi.batch.{Step, Package, Node, BatchTestEnvironment}
-import no.ndla.learningpathapi.model.{LearningPathVerificationStatus, LearningPathStatus, LearningPath}
-import org.mockito.Mockito._
+import no.ndla.learningpathapi.batch.{BatchTestEnvironment, Node, Package, Step}
+import no.ndla.learningpathapi.model.domain.{LearningPath, LearningPathStatus, LearningPathVerificationStatus}
 import org.mockito.Matchers._
+import org.mockito.Mockito._
 
 class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
 

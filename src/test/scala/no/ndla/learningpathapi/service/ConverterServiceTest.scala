@@ -3,7 +3,8 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.{Author, LearningPath, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.model.api.{Author, LearningPath}
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import no.ndla.network.ApplicationUrl
 
 import org.mockito.Mockito._

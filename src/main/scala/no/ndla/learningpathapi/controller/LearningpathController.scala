@@ -4,8 +4,9 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi.{LearningPath, LearningStep, _}
-import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain.{Sort, AccessDeniedException, ValidationException, HeaderMissingException}
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
@@ -14,6 +15,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
+import scala.Error
 import scala.util.Try
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
@@ -86,7 +88,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       )
 
   val getLearningsteps =
-    (apiOperation[List[LearningStep]]("getLearningsteps")
+    (apiOperation[List[LearningStepSummary]]("getLearningsteps")
       summary "Show all learningsteps for given learningpath id"
       notes "Show all learningsteps for given learningpath id"
       parameters(

@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.ValidationMessage
-import no.ndla.learningpathapi.model.StepType
+import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.domain.StepType
 
 trait StepTypeValidatorComponent {
   val stepTypeValidator: StepTypeValidator

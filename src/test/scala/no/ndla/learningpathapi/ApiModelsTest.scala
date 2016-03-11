@@ -2,7 +2,8 @@ package no.ndla.learningpathapi
 
 import java.util.Date
 
-import no.ndla.learningpathapi.model.ValidationException
+import no.ndla.learningpathapi.model.api.{Author, LearningPathStatus, LearningPath}
+import no.ndla.learningpathapi.model.domain.ValidationException
 
 
 class ApiModelsTest extends UnitSuite {

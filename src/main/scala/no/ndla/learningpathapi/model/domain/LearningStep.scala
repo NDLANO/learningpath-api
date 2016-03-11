@@ -1,9 +1,8 @@
-package no.ndla.learningpathapi.model
+package no.ndla.learningpathapi.model.domain
 
 import no.ndla.learningpathapi.LearningpathApiProperties
-import org.json4s.{Serializer, FieldSerializer}
+import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
-import org.json4s.FieldSerializer.apply
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._

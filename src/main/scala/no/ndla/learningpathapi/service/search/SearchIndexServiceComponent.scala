@@ -8,13 +8,13 @@ import com.sksamuel.elastic4s.mappings.FieldType.{DateType, IntegerType, NestedT
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.LearningPath
+import no.ndla.learningpathapi.model.domain.LearningPath
 import no.ndla.learningpathapi.service.ConverterServiceComponent
 import org.json4s.native.Serialization._
 
 
 trait SearchIndexServiceComponent {
-  this: ElasticClientComponent with ConverterServiceComponent =>
+  this: ElasticClientComponent with SearchConverterServiceComponent =>
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
@@ -23,7 +23,7 @@ trait SearchIndexServiceComponent {
     def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
       elasticClient.execute {
         bulk(learningPaths.map(learningPath => {
-          index into indexName -> LearningpathApiProperties.SearchDocument source write(converterService.asApiLearningpath(learningPath, callOEmbedProxy = false)) id learningPath.id.get
+          index into indexName -> LearningpathApiProperties.SearchDocument source write(searchConverterService.asSearchableLearningpath(learningPath)) id learningPath.id.get
         }))
       }.await
 
@@ -34,14 +34,14 @@ trait SearchIndexServiceComponent {
     def indexLearningPath(learningPath: LearningPath): Unit = {
       aliasTarget.foreach(indexName => {
         elasticClient.execute {
-          index into indexName -> LearningpathApiProperties.SearchDocument source write(converterService.asApiLearningpath(learningPath)) id learningPath.id.get
+          index into indexName -> LearningpathApiProperties.SearchDocument source write(searchConverterService.asSearchableLearningpath(learningPath)) id learningPath.id.get
         }.await
       })
     }
 
     def deleteLearningPath(learningPath: LearningPath): Unit = {
       aliasTarget.foreach(indexName => {
-        elasticClient.execute{
+        elasticClient.execute {
           delete id learningPath.id.get from indexName / LearningpathApiProperties.SearchDocument
         }.await
       })
@@ -105,33 +105,15 @@ trait SearchIndexServiceComponent {
 
     private def createElasticIndex(indexName: String) = {
       elasticClient.execute {
-        createIndex(indexName) mappings(
+        createIndex(indexName) mappings (
           LearningpathApiProperties.SearchDocument as(
             "id" typed IntegerType,
             "title" typed NestedType as(
-              "title" typed StringType fields("raw" typed StringType index "not_analyzed"),
+              "title" typed StringType fields ("raw" typed StringType index "not_analyzed"),
               "language" typed StringType index "not_analyzed"),
             "description" typed NestedType as(
               "description" typed StringType,
               "language" typed StringType index "not_analyzed"),
-            "metaUrl" typed StringType index "not_analyzed",
-            "learningsteps" typed NestedType as(
-              "id" typed IntegerType,
-              "seqNo" typed IntegerType,
-              "title" typed NestedType as(
-                "title" typed StringType,
-                "language" typed StringType index "not_analyzed"),
-              "description" typed NestedType as(
-                "description" typed StringType ,
-                "language" typed StringType index "not_analyzed"),
-              "embedContent" typed NestedType as(
-                "url" typed StringType ,
-                "html" typed StringType index "not_analyzed",
-                "language" typed StringType index "not_analyzed"),
-              "type" typed StringType,
-              "license" typed StringType,
-              "metaUrl" typed StringType),
-            "learningstepUrl" typed StringType index "not_analyzed",
             "coverPhotoUrl" typed StringType index "not_analyzed",
             "duration" typed IntegerType,
             "status" typed StringType index "not_analyzed",
@@ -140,9 +122,15 @@ trait SearchIndexServiceComponent {
             "tags" typed NestedType as(
               "tag" typed StringType,
               "language" typed StringType index "not_analyzed"),
-            "author" typed NestedType as(
-              "type" typed StringType index "not_analyzed",
-              "name" typed StringType)
+            "author" typed StringType,
+            "learningsteps" typed NestedType as(
+              "title" typed NestedType as(
+                "title" typed StringType,
+                "language" typed StringType index "not_analyzed"),
+              "description" typed NestedType as(
+                "description" typed StringType,
+                "language" typed StringType index "not_analyzed")
+              )
             )
           )
       }.await
@@ -152,4 +140,5 @@ trait SearchIndexServiceComponent {
       new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
     }
   }
+
 }

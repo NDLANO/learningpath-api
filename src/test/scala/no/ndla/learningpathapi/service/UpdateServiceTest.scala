@@ -1,10 +1,10 @@
 package no.ndla.learningpathapi.service
 
 import java.util.Date
-
-import no.ndla.learningpathapi.LearningPathStatus
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException, LearningStep, LearningPath, StepType, NdlaUserName}
+import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.model.api.{NewLearningStep, NewLearningPath, LearningPathStatus}
+import no.ndla.learningpathapi.model.domain.{NdlaUserName, AccessDeniedException, StepType, LearningPathVerificationStatus}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
@@ -18,13 +18,13 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PUBLISHED, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PRIVATE, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
+  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
+  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), None, List(), List(), None, Some(1), domain.LearningPathStatus.PRIVATE, domain.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
 
-  val STEP1 = LearningStep(Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None)
-  val STEP2 = LearningStep(Some(2), None, None, 2, List(), List(), List(), StepType.TEXT, None)
+  val STEP1 = domain.LearningStep(Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None)
+  val STEP2 = domain.LearningStep(Some(2), None, None, 2, List(), List(), List(), StepType.TEXT, None)
   val NEW_STEP: NewLearningStep = NewLearningStep(List(), List(), List(), "", None)
 
   override def beforeEach() = {
@@ -35,12 +35,12 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That addLearningPath inserts the given LearningPath") {
-    when(learningPathRepository.insert(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.insert(any[domain.LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
     val saved = service.addLearningPath(NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
     assert(saved.id == PRIVATE_LEARNINGPATH.id.get)
 
-    verify(learningPathRepository, times(1)).insert(any[LearningPath])
-    verify(searchIndexService, never).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).insert(any[domain.LearningPath])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningPath returns None when the given ID does not exist") {
@@ -52,25 +52,25 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningPath updates the learningpath when the given user is the owner if the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(PRIVATE_LEARNINGPATH.id.get){
       service.updateLearningPath(PRIVATE_ID, NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER).get.id
     }
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, never).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
 
   }
 
   test("That updateLearningPath updates the learningpath when the given user is the owner if the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
 
     assertResult(PUBLISHED_LEARNINGPATH.id.get){
       service.updateLearningPath(PUBLISHED_ID, NEW_PUBLISHED_LEARNINGPATH, PUBLISHED_OWNER).get.id
     }
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, times(1)).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningPath throws an AccessDeniedException when the given user is NOT the owner") {
@@ -89,22 +89,22 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = model.LearningPathStatus.PRIVATE))
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PRIVATE))
     assertResult("PRIVATE"){
       service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PUBLISHED_OWNER).get.status
     }
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, times(1)).deleteLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).deleteLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = model.LearningPathStatus.PUBLISHED))
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = domain.LearningPathStatus.PUBLISHED))
     assertResult("PUBLISHED"){
       service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER).get.status
     }
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, times(1)).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
@@ -148,34 +148,34 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     assertResult(None) {
       service.addLearningStep(PRIVATE_ID, NEW_STEP, PRIVATE_OWNER)
     }
-    verify(learningPathRepository, never()).insertLearningStep(any[LearningStep])
-    verify(learningPathRepository, never()).update(any[LearningPath])
+    verify(learningPathRepository, never()).insertLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, never()).update(any[domain.LearningPath])
   }
 
   test("That addLearningStep inserts the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.insertLearningStep(any[LearningStep])).thenReturn(STEP1)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.insertLearningStep(any[domain.LearningStep])).thenReturn(STEP1)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(STEP1.id.get){
       service.addLearningStep(PRIVATE_ID, NEW_STEP, PRIVATE_OWNER).get.id
     }
-    verify(learningPathRepository, times(1)).insertLearningStep(any[LearningStep])
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, never).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).insertLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That addLearningStep inserts the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.insertLearningStep(any[LearningStep])).thenReturn(STEP2)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.insertLearningStep(any[domain.LearningStep])).thenReturn(STEP2)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
 
     assertResult(STEP2.id.get){
       service.addLearningStep(PUBLISHED_ID, NEW_STEP, PUBLISHED_OWNER).get.id
     }
-    verify(learningPathRepository, times(1)).insertLearningStep(any[LearningStep])
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, times(1)).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).insertLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That addLearningStep throws an AccessDeniedException when the given user is NOT the owner") {
@@ -190,8 +190,8 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     assertResult(None){
       service.updateLearningStep(PUBLISHED_ID, STEP1.id.get, NEW_STEP, PUBLISHED_OWNER)
     }
-    verify(learningPathRepository, never).updateLearningStep(any[LearningStep])
-    verify(learningPathRepository, never).update(any[LearningPath])
+    verify(learningPathRepository, never).updateLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, never).update(any[domain.LearningPath])
   }
 
   test("That updateLearningStep returns None when the learningstep does not exist") {
@@ -200,36 +200,36 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     assertResult(None){
       service.updateLearningStep(PUBLISHED_ID, STEP1.id.get, NEW_STEP, PUBLISHED_OWNER)
     }
-    verify(learningPathRepository, never).updateLearningStep(any[LearningStep])
-    verify(learningPathRepository, never).update(any[LearningPath])
+    verify(learningPathRepository, never).updateLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, never).update(any[domain.LearningPath])
   }
 
   test("That updateLearningStep updates the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
-    when(learningPathRepository.updateLearningStep(any[LearningStep])).thenReturn(STEP1)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.updateLearningStep(any[domain.LearningStep])).thenReturn(STEP1)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
 
     assertResult(STEP1.id.get){
       service.updateLearningStep(PUBLISHED_ID, STEP1.id.get, NEW_STEP, PUBLISHED_OWNER).get.id
     }
-    verify(learningPathRepository, times(1)).updateLearningStep(any[LearningStep])
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, times(1)).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).updateLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningStep updates the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(Some(STEP1))
-    when(learningPathRepository.updateLearningStep(any[LearningStep])).thenReturn(STEP1)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.updateLearningStep(any[domain.LearningStep])).thenReturn(STEP1)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(STEP1.id.get){
       service.updateLearningStep(PRIVATE_ID, STEP1.id.get, NEW_STEP, PRIVATE_OWNER).get.id
     }
-    verify(learningPathRepository, times(1)).updateLearningStep(any[LearningStep])
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, never).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).updateLearningStep(any[domain.LearningStep])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningStep throws an AccessDeniedException when the given user is NOT the owner") {
@@ -260,26 +260,26 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   test("That deleteLearningStep deletes the learningstep when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(Some(STEP1))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(true) {
       service.deleteLearningStep(PRIVATE_ID, STEP1.id.get, PRIVATE_OWNER)
     }
     verify(learningPathRepository, times(1)).deleteLearningStep(STEP1.id.get)
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, never).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That deleteLearningStep deletes the learningstep when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.update(any[domain.LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
     assertResult(true) {
       service.deleteLearningStep(PUBLISHED_ID, STEP1.id.get, PUBLISHED_OWNER)
     }
     verify(learningPathRepository, times(1)).deleteLearningStep(STEP1.id.get)
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(searchIndexService, times(1)).indexLearningPath(any[LearningPath])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That deleteLearningStep throws an AccessDeniedException when the given user is NOT the owner") {

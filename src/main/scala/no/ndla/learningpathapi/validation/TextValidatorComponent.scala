@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi.LearningpathApiProperties._
-import no.ndla.learningpathapi.ValidationMessage
+import no.ndla.learningpathapi.model.api.ValidationMessage
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 

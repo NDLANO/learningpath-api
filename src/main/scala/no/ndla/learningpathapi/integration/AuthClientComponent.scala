@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.model.NdlaUserName
+import no.ndla.learningpathapi.model.domain.NdlaUserName
 import org.json4s.native.Serialization._
 
 import scala.util.{Failure, Success, Try}

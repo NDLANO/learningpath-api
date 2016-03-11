@@ -1,7 +1,8 @@
 package no.ndla.learningpathapi.validation
 
 import com.netaporter.uri.Uri._
-import no.ndla.learningpathapi.{LearningpathApiProperties, ValidationMessage}
+import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.model.api.ValidationMessage
 
 trait CoverPhotoValidatorComponent {
   val coverPhotoValidator: CoverPhotoValidator

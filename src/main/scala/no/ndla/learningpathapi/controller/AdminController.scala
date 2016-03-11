@@ -1,7 +1,8 @@
 package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.{ComponentRegistry, Error}
+import no.ndla.learningpathapi.ComponentRegistry
+import no.ndla.learningpathapi.model.api.Error
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}

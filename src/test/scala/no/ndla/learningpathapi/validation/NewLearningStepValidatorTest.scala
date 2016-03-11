@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.model.api.{Description, EmbedContent, Title, NewLearningStep}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 

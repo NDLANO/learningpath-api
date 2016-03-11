@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{ValidationMessage, EmbedContent}
+import no.ndla.learningpathapi.model.api.{EmbedContent, ValidationMessage}
 
 trait EmbedContentValidatorComponent {
   this: TextValidatorComponent with LanguageValidatorComponent =>

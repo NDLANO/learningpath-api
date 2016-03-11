@@ -2,6 +2,7 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._

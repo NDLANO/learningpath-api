@@ -1,5 +1,4 @@
-package no.ndla.learningpathapi.model
-
+package no.ndla.learningpathapi.model.domain
 
 object Sort extends Enumeration {
   val ByRelevanceDesc = Value("-relevance")

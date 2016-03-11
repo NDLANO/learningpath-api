@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{ValidationMessage, TestEnvironment, Title, UnitSuite}
+import no.ndla.learningpathapi.model.api.{ValidationMessage, Title}
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 
 import org.mockito.Mockito._
 import org.mockito.Matchers._

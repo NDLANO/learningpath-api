@@ -1,6 +1,8 @@
 package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 trait PrivateServiceComponent {
@@ -9,7 +11,7 @@ trait PrivateServiceComponent {
 
   class PrivateService {
     def all(owner: String): List[LearningPathSummary] = {
-      learningPathRepository.withStatusAndOwner(model.LearningPathStatus.PRIVATE, owner).map(converterService.asApiLearningpathSummary)
+      learningPathRepository.withStatusAndOwner(domain.LearningPathStatus.PRIVATE, owner).map(converterService.asApiLearningpathSummary)
     }
 
     def withId(learningPathId: Long, owner: String): Option[LearningPath] = {
@@ -20,9 +22,9 @@ trait PrivateServiceComponent {
       withId(learningPathId, owner).map(lp => LearningPathStatus(lp.status))
     }
 
-    def learningstepsFor(learningPathId: Long, owner: String): Option[List[LearningStep]] = {
+    def learningstepsFor(learningPathId: Long, owner: String): Option[List[LearningStepSummary]] = {
       withIdAndAccessGranted(learningPathId, owner) match {
-        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStep(ls, lp)))
+        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStepSummary(ls, lp)))
         case None => None
       }
     }
@@ -34,7 +36,7 @@ trait PrivateServiceComponent {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, owner: String): Option[model.LearningPath] = {
+    private def withIdAndAccessGranted(learningPathId: Long, owner: String): Option[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.foreach(_.verifyOwner(owner))
       learningPath

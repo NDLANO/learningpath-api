@@ -3,7 +3,9 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.LearningPathVerificationStatus
+import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.model.domain.{StepType, LearningPathVerificationStatus}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 
@@ -14,11 +16,11 @@ trait UpdateServiceComponent {
 
   class UpdateService {
     def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
-      val learningPath = model.LearningPath(None,None,
+      val learningPath = domain.LearningPath(None,None,
         newLearningPath.title.map(converterService.asTitle),
         newLearningPath.description.map(converterService.asDescription),
         newLearningPath.coverPhotoUrl,
-        newLearningPath.duration, model.LearningPathStatus.PRIVATE,
+        newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
         new Date(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List())
 
@@ -51,8 +53,8 @@ trait UpdateServiceComponent {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
         case Some(existing) => {
-          val newStatus = model.LearningPathStatus.valueOfOrDefault(status.status)
-          if(newStatus == model.LearningPathStatus.PUBLISHED){
+          val newStatus = domain.LearningPathStatus.valueOfOrDefault(status.status)
+          if(newStatus == domain.LearningPathStatus.PUBLISHED){
             existing.validateForPublishing()
           }
 
@@ -92,7 +94,7 @@ trait UpdateServiceComponent {
             case false => learningPath.learningsteps.map(_.seqNo).max + 1
           }
 
-          val newStep = model.LearningStep(
+          val newStep = domain.LearningStep(
             None,
             None,
             learningPath.id,
@@ -100,7 +102,7 @@ trait UpdateServiceComponent {
             newLearningStep.title.map(converterService.asTitle),
             newLearningStep.description.map(converterService.asDescription),
             newLearningStep.embedContent.map(converterService.asEmbedUrl),
-            model.StepType.valueOfOrDefault(newLearningStep.`type`),
+            StepType.valueOfOrDefault(newLearningStep.`type`),
             newLearningStep.license)
 
           val insertedStep = learningPathRepository.insertLearningStep(newStep)
@@ -128,7 +130,7 @@ trait UpdateServiceComponent {
                 title = newLearningStep.title.map(converterService.asTitle),
                 description = newLearningStep.description.map(converterService.asDescription),
                 embedUrl = newLearningStep.embedContent.map(converterService.asEmbedUrl),
-                `type` = model.StepType.valueOfOrDefault(newLearningStep.`type`),
+                `type` = domain.StepType.valueOfOrDefault(newLearningStep.`type`),
                 license = newLearningStep.license)
 
               val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
@@ -169,7 +171,7 @@ trait UpdateServiceComponent {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, owner: String): Option[model.LearningPath] = {
+    private def withIdAndAccessGranted(learningPathId: Long, owner: String): Option[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.foreach(_.verifyOwner(owner))
       learningPath

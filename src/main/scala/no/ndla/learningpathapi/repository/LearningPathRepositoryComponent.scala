@@ -3,6 +3,7 @@ package no.ndla.learningpathapi.repository
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.integration.DatasourceComponent
 import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.model.domain._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject

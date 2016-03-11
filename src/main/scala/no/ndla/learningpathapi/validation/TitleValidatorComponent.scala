@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{ValidationMessage, Title}
+import no.ndla.learningpathapi.model.api.{Title, ValidationMessage}
 
 
 trait TitleValidatorComponent {

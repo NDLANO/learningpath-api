@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.model.HttpRequestException
+import no.ndla.learningpathapi.model.domain.HttpRequestException
 import org.json4s.native.JsonMethods._
 
 import scala.util.{Failure, Success, Try}
