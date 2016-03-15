@@ -27,7 +27,6 @@ trait SearchConverterServiceComponent {
       )
     }
 
-
     def asSearchableLearningpath(learningPath: LearningPath): SearchableLearningPath = {
       SearchableLearningPath(
         learningPath.id.get,

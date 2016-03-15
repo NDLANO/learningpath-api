@@ -64,7 +64,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     def learningStepsFor(learningPathId: Long): List[LearningStep] = {
       val ls = LearningStep.syntax("ls")
       DB readOnly { implicit session =>
-        sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.learningPathId} = $learningPathId".map(LearningStep(ls.resultName)).list().apply()
+        sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.learningPathId} = $learningPathId".map(LearningStep(ls.resultName)).list().apply().sortBy(_.seqNo)
       }
     }
 
@@ -166,7 +166,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
                and lp.id between $min and $max"""
           .one(LearningPath(lp.resultName))
           .toMany(LearningStep.opt(ls.resultName))
-          .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps)}
+          .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.sortBy(_.seqNo))}
           .toList().apply()
       }
     }
@@ -189,7 +189,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} where $whereClause"
           .one(LearningPath(lp.resultName))
           .toMany(LearningStep.opt(ls.resultName))
-          .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps)}
+          .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.sortBy(_.seqNo))}
           .list.apply()
       }
     }
@@ -200,7 +200,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} where $whereClause"
           .one(LearningPath(lp.resultName))
           .toMany(LearningStep.opt(ls.resultName))
-          .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps)}
+          .map{(learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.sortBy(_.seqNo))}
           .single.apply()
       }
     }

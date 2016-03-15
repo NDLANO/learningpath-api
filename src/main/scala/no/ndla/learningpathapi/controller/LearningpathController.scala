@@ -15,7 +15,6 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
-import scala.Error
 import scala.util.Try
 
 class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
@@ -241,7 +240,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
     query match {
       case Some(q) => search.matchingQuery(
-        query = q.toLowerCase().split(" ").map(_.trim),
+        query = q.toLowerCase.split(" ").map(_.trim),
         language = language,
         sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
         page = page,
