@@ -2,6 +2,7 @@ package no.ndla.learningpathapi.model.domain
 
 import java.util.Date
 
+import no.ndla.learningpathapi.validation.DurationValidator
 import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
@@ -37,7 +38,7 @@ case class LearningPath(id: Option[Long], externalId: Option[String], title: Lis
   }
 
   def validateForPublishing() = {
-    val validationResult = ComponentRegistry.durationValidator.validateRequired(duration).toList
+    val validationResult = new DurationValidator().validateRequired(duration).toList
     validationResult.isEmpty match {
       case true => this
       case false => throw new ValidationException(errors = validationResult)

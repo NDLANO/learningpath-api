@@ -24,19 +24,6 @@ object ComponentRegistry
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
-  with CoverPhotoValidatorComponent
-  with DescriptionValidatorComponent
-  with DurationValidatorComponent
-  with EmbedContentValidatorComponent
-  with LanguageValidatorComponent
-  with LicenseValidatorComponent
-  with StatusValidatorComponent
-  with StepTypeValidatorComponent
-  with TagsValidatorComponent
-  with TextValidatorComponent
-  with TitleValidatorComponent
-  with NewLearningPathValidatorComponent
-  with NewLearningStepValidatorComponent
 {
   lazy val datasource = new PGPoolingDataSource()
   datasource.setUser(LearningpathApiProperties.MetaUserName)
@@ -64,20 +51,4 @@ object ComponentRegistry
   lazy val authClient = new AuthClient
   lazy val oEmbedClient = new OEmbedClient
   lazy val converterService = new ConverterService
-
-  lazy val coverPhotoValidator = new CoverPhotoValidator
-  lazy val durationValidator = new DurationValidator
-  lazy val embedContentValidator = new EmbedContentValidator
-  lazy val languageValidator = new LanguageValidator
-  lazy val licenseValidator = new LicenseValidator
-  lazy val statusValidator = new StatusValidator
-  lazy val stepTypeValidator = new StepTypeValidator
-  lazy val tagsValidator = new TagsValidator
-  lazy val noHtmlTextValidator = new TextValidator(allowHtml = false)
-  lazy val basicHtmlTextValidator = new TextValidator(allowHtml = true)
-  lazy val basicHtmlDescriptionValidator = new DescriptionValidator(allowHtml = true)
-  lazy val noHtmlDescriptionValidator = new DescriptionValidator(allowHtml = false)
-  lazy val titleValidator = new TitleValidator
-  lazy val newLearningPathValidator = new NewLearningPathValidator
-  lazy val newLearningStepValidator = new NewLearningStepValidator
 }

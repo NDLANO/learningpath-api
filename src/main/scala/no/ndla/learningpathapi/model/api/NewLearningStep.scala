@@ -2,6 +2,7 @@ package no.ndla.learningpathapi.model.api
 
 import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.domain.ValidationException
+import no.ndla.learningpathapi.validation.NewLearningStepValidator
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -16,7 +17,7 @@ case class NewLearningStep(
                             @(ApiModelProperty @field)(description = "The license for this step. Must be plain text") license:Option[String]
                             ) {
   def validate(): NewLearningStep = {
-    val validationResult = ComponentRegistry.newLearningStepValidator.validate(this)
+    val validationResult = new NewLearningStepValidator().validate(this)
     validationResult.isEmpty match {
       case true => this
       case false => throw new ValidationException(errors = validationResult)
