@@ -31,7 +31,6 @@ trait OEmbedClientComponent {
     }
 
     def doRequest(request: HttpRequest): Try[HttpResponse[String]] = {
-      logger.debug(s"Doing request to ${request.url}")
       val response = request.asString
       response.isError match {
         case true => Failure(new HttpRequestException(s"Got ${response.code} ${response.statusLine} when calling ${request.url}"))

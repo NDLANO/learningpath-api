@@ -5,8 +5,8 @@ import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{Sort, AccessDeniedException, ValidationException, HeaderMissingException}
+import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningStep, _}
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
@@ -30,6 +30,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   val response403 = ResponseMessageWithModel(403, "Access not granted", "Error")
   val response404 = ResponseMessageWithModel(404, "Not found", "Error")
   val response500 = ResponseMessageWithModel(500, "Unknown error", "Error")
+  val response502 = ResponseMessageWithModel(502, "Remote error", "Error")
 
   val getLearningpaths =
     (apiOperation[SearchResult]("getLearningpaths")
@@ -108,7 +109,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       pathParam[String]("path_id").description("The id of the learningpath."),
       pathParam[String]("step_id").description("The id of the learningpath.")
       )
-      responseMessages(response403, response404, response500)
+      responseMessages(response403, response404, response500, response502)
       )
 
   val addNewLearningpath =
@@ -136,7 +137,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       pathParam[String]("path_id").description("The id of the learningpath."),
       bodyParam[NewLearningStep]
       )
-      responseMessages(response400, response403, response404, response500)
+      responseMessages(response400, response403, response404, response500, response502)
       )
 
   val updateLearningPath =
@@ -163,7 +164,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       pathParam[String]("step_id").description("The id of the learningpath."),
       bodyParam[NewLearningStep]
       )
-      responseMessages(response400, response403, response404, response500)
+      responseMessages(response400, response403, response404, response500, response502)
       )
 
   val updateLearningPathStatus = (apiOperation[LearningPathStatus]("updateLearningPathStatus")
@@ -218,6 +219,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     case h:HeaderMissingException => halt(status = 403, body = Error(Error.HEADER_MISSING, h.getMessage))
     case v:ValidationException => halt(status = 400, body = ValidationError(messages = v.errors))
     case a:AccessDeniedException => halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
+    case hre: HttpRequestException => halt(status = 502, body = Error(Error.REMOTE_ERROR, hre.getMessage))
     case t:Throwable => {
       t.printStackTrace()
       logger.error(t.getMessage)

@@ -80,13 +80,13 @@ trait ConverterServiceComponent {
         learningPath.author)
     }
 
-    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, callOembedProxy: Boolean = true): LearningStep = {
+    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): LearningStep = {
       LearningStep(
         ls.id.get,
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
-        ls.embedUrl.map(e => asApiEmbedContent(e, callOembedProxy)),
+        ls.embedUrl.map(e => asApiEmbedContent(e)),
         ls.`type`.toString,
         ls.license, createUrlToLearningStep(ls, lp))
     }
@@ -109,13 +109,10 @@ trait ConverterServiceComponent {
       api.Description(description.description, description.language)
     }
 
-    def asApiEmbedContent(embedUrl: EmbedUrl, callOembedProxy: Boolean): EmbedContent = {
+    def asApiEmbedContent(embedUrl: EmbedUrl): EmbedContent = {
       api.EmbedContent(
         embedUrl.url,
-        callOembedProxy match {
-          case true => oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url)
-          case false => ""
-        },
+        oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url),
         embedUrl.language)
     }
 

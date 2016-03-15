@@ -20,6 +20,7 @@ object Error {
   val HEADER_MISSING = "HEADER_MISSING"
   val VALIDATION = "VALIDATION"
   val ACCESS_DENIED = "ACCESS_DENIED"
+  val REMOTE_ERROR = "REMOTE_ERROR"
 
   val GENERIC_DESCRIPTION = s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
   val VALIDATION_DESCRIPTION = "Validation Error"
