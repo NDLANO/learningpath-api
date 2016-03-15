@@ -7,17 +7,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   var service: SearchService = _
   var modelConverter: ConverterService = _
 
-  val DEFAULT_PAGE_SIZE = 12
-  val MAX_PAGE_SIZE = 548
-
-  before {
-    LearningpathApiProperties.setProperties(Map(
-      "SEARCH_MAX_PAGE_SIZE" -> Some(s"$MAX_PAGE_SIZE"),
-      "SEARCH_DEFAULT_PAGE_SIZE" -> Some(s"$DEFAULT_PAGE_SIZE")
-      ))
-
+  override def beforeEach() = {
     service = new SearchService
-
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {
