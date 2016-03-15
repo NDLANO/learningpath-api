@@ -41,7 +41,7 @@ case class NewLearningPath(
   @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags:List[LearningPathTag]
 ) {
   def validate(): NewLearningPath = {
-    val validationResult = ComponentRegistry.newLearningPathValidator.validate(this)
+    val validationResult = new NewLearningPathValidator().validate(this)
     validationResult.isEmpty match {
       case true => this
       case false => throw new ValidationException(errors = validationResult)
@@ -54,7 +54,7 @@ case class LearningPathStatus(
   @(ApiModelProperty @field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status:String
 ) {
   def validate() = {
-    ComponentRegistry.statusValidator.validate(status) match {
+    new StatusValidator().validate(status) match {
       case None => this
       case Some(result) => throw new ValidationException(errors = List(result))
     }
@@ -103,7 +103,7 @@ case class NewLearningStep(
   @(ApiModelProperty @field)(description = "The license for this step. Must be plain text") license:Option[String]
 ) {
   def validate(): NewLearningStep = {
-    val validationResult = ComponentRegistry.newLearningStepValidator.validate(this)
+    val validationResult = new NewLearningStepValidator().validate(this)
     validationResult.isEmpty match {
       case true => this
       case false => throw new ValidationException(errors = validationResult)
