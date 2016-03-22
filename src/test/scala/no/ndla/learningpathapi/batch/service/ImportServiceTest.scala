@@ -134,8 +134,8 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     verify(learningPathRepository, times(1)).update(any[LearningPath])
   }
 
-  private def nodeWithNidAndTnid(nid: Long, tnid: Long): Node = Node(nid, tnid, "en", "Tittel", 1, None)
-  private def packageWithNodeId(nid: Long):Package = Package(1, new Date(), 1, "Tittel", 1, 1, "en", nid)
+  private def nodeWithNidAndTnid(nid: Long, tnid: Long): Node = Node(nid, tnid, "en", "Tittel", 1, None, "Beskrivelse")
+  private def packageWithNodeId(nid: Long):Package = Package(1, new Date(), 1, "Tittel", 1, 1, "en", nid, "Beskrivelse")
   private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, language)
   private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, language)
 }

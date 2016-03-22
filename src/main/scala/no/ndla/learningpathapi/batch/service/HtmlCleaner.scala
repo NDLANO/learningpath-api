@@ -3,13 +3,17 @@ package no.ndla.learningpathapi.batch.service
 import no.ndla.learningpathapi.LearningpathApiProperties.BasicHtmlTags
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document.OutputSettings
+import org.jsoup.nodes.Entities
 import org.jsoup.safety.Whitelist
 
 object HtmlCleaner {
 
-  def cleanHtml(text: String): String = {
+  def cleanHtml(text: String, allowHtml: Boolean): String = {
     val withoutHeaders = changeHeadersToStrongWrappedInP(text)
-    Jsoup.clean(withoutHeaders, "", new Whitelist().addTags(BasicHtmlTags:_*), new OutputSettings().prettyPrint(false))
+    allowHtml match {
+      case true => Jsoup.clean(withoutHeaders, "", new Whitelist().addTags(BasicHtmlTags:_*), new OutputSettings().prettyPrint(false))
+      case false => Jsoup.clean(withoutHeaders, "", Whitelist.none(), new OutputSettings().prettyPrint(false).escapeMode(Entities.EscapeMode.xhtml))
+    }
   }
 
   def changeHeadersToStrongWrappedInP(text: String): String = {

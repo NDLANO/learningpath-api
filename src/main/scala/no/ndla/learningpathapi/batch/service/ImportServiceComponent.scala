@@ -11,8 +11,6 @@ trait ImportServiceComponent {
   val importService: ImportService
 
   class ImportService {
-    val placeholderShortText = "Kort beskrivelse på ikke mer enn 150 tegn. Sier noe fornuftig om læringsstien. Denne beskrivelsen her er på nøyaktig hundrede og femti tegn........nå."
-
     def doImport() = {
       val nodes: List[Node] = cmData.allLearningPaths()
       nodes.filterNot(_.isTranslation).foreach(node => {
@@ -24,7 +22,9 @@ trait ImportServiceComponent {
       optPakke.foreach(pakke => {
         val steps = packageData.stepsForPackage(pakke)
 
-        val descriptions = List(Description(placeholderShortText, Some("nb")))
+        val descriptions = Description(tidyUpDescription(pakke.description, allowHtml = false), Some(pakke.language)) ::
+          optTranslations.flatten.map(pak => Description(tidyUpDescription(pak.description, allowHtml = false), Some(pak.language)))
+
         val titles = Title(pakke.packageTitle, Some(pakke.language)) :: optTranslations.flatten.map(pak => Title(pak.packageTitle, Some(pak.language)))
         val tags = (keywordsService.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => keywordsService.forNodeId(tra.nodeId))).distinct
         val learningSteps = steps.map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
@@ -72,12 +72,12 @@ trait ImportServiceComponent {
       val lastUpdated = pakke.lastUpdated
 
       val owner = pakke.nodeId match {
-        case 149862 => "6e74cde7-1e83-49c8-8dcd-9bbef458f477" //Christer
-        case 156729 => "d6b2bbd0-2dd4-485a-9d9a-af2e7c9d57ad" //RST
-        case 156987 => "ddd2ff24-616a-484d-8172-55ddba52cd7a" //KW
-        case 149007 => "a62debc3-74a7-43f3-88c9-d35837a41698" //Remi
-        case 143822 => "e646b7f6-60ce-4364-9e77-2a88754b95db" // KES
-        case default => "6e74cde7-1e83-49c8-8dcd-9bbef458f477" //Christer
+        case 149862 => "404da227-450c-4ff5-8115-d7b1635cf081" //Christer
+        case 156729 => "d85b99fa-3a96-4095-aca3-a9e6ee2ef1fb" //RST
+        case 156987 => "06b1a241-0247-45a4-9dae-fe1ddc31d4ca" //KW
+        case 149007 => "4865bbb2-47c9-4872-b006-b42dcf447092" //Remi
+        case 143822 => "aa591365-181c-4339-ba9a-b125bb95eac4" // KES
+        case default => "404da227-450c-4ff5-8115-d7b1635cf081" //Christer
       }
 
       val publishStatus = pakke.nodeId match {
@@ -153,11 +153,11 @@ trait ImportServiceComponent {
       }
     }
 
-    def tidyUpDescription(description: String): String = {
+    def tidyUpDescription(description: String, allowHtml:Boolean = true): String = {
       Option(description) match {
         case None => ""
         case Some(desc) => {
-          HtmlCleaner.cleanHtml(desc.replaceAll("(\\r|\\n|\\t)", ""))
+          HtmlCleaner.cleanHtml(desc.replaceAll("(\\r|\\n|\\t)", ""), allowHtml)
         }
       }
     }

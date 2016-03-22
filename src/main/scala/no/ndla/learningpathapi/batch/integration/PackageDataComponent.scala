@@ -46,7 +46,8 @@ trait PackageDataComponent {
               rs.int("durationHours"),
               rs.int("durationMinutes"),
               node.language,
-              node.nid
+              node.nid,
+              node.description
             )
           ).single().apply()
       }
