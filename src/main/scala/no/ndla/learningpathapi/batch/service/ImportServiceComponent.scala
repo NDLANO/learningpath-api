@@ -157,7 +157,7 @@ trait ImportServiceComponent {
       Option(description) match {
         case None => ""
         case Some(desc) => {
-          HtmlCleaner.cleanHtml(desc.replaceAll("(\\r|\\n|\\t)", ""), allowHtml)
+          HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
         }
       }
     }
