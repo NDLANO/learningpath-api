@@ -46,7 +46,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
   }
 
   test("That tidyUpDescription removes \\r \\t and \\n, but nothing else") {
-    service.tidyUpDescription("1\r+\t1\n=2") should equal("1+1=2")
+    service.tidyUpDescription("1\r+\t1\n=\t2") should equal("1 + 1 = 2")
   }
 
   test("That descriptionsAsList returns descriptions of translations when origin-step is None") {
