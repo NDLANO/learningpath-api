@@ -110,17 +110,11 @@ trait ConverterServiceComponent {
     }
 
     def createUrlToLearningPath(lp: LearningPath): String = {
-      lp.isPrivate match {
-        case true => s"${ApplicationUrl.get}private/${lp.id.get}"
-        case false => s"${ApplicationUrl.get}${lp.id.get}"
-      }
+      s"${ApplicationUrl.get}${lp.id.get}"
     }
 
     def createUrlToLearningPath(lp: no.ndla.learningpathapi.LearningPath): String = {
-      lp.isPrivate match {
-        case true => s"${ApplicationUrl.get}private/${lp.id}"
-        case false => s"${ApplicationUrl.get}${lp.id}"
-      }
+      s"${ApplicationUrl.get}${lp.id}"
     }
   }
 }

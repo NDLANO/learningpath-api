@@ -13,8 +13,7 @@ import org.scalatest.mock.MockitoSugar
 
 trait TestEnvironment
   extends LearningPathRepositoryComponent
-  with PublicServiceComponent
-  with PrivateServiceComponent
+  with ReadServiceComponent
   with UpdateServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
@@ -30,8 +29,7 @@ trait TestEnvironment
   val searchIndexBuilderService = mock[SearchIndexBuilderService]
 
   val learningPathRepository = mock[LearningPathRepository]
-  val publicService = mock[PublicService]
-  val privateService = mock[PrivateService]
+  val readService = mock[ReadService]
   val updateService = mock[UpdateService]
   val searchService = mock[SearchService]
   val searchIndexService = mock[SearchIndexService]
@@ -42,6 +40,6 @@ trait TestEnvironment
 
   def resetMocks() = {
     Mockito.reset(
-      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, publicService, privateService, updateService, searchService, searchIndexService, authClient, converterService)
+      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService, updateService, searchService, searchIndexService, authClient, converterService)
   }
 }
