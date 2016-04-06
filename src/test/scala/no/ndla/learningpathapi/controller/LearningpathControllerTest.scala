@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.controller
 
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.model.{HeaderMissingException, AccessDeniedException}
+import no.ndla.learningpathapi.model.AccessDeniedException
 import no.ndla.learningpathapi.{UnitSuite, LearningpathApiProperties, LearningpathSwagger}
 import org.mockito.Mockito._
 
@@ -30,8 +30,8 @@ class LearningpathControllerTest extends UnitSuite {
     when(request.getHeader("username")).thenReturn(null)
     when(request.getRequestURI).thenReturn(""
     )
-    assertResult("The required header username is missing.") {
-      intercept[HeaderMissingException] { controller.requireHeader("username") }.getMessage
+    assertResult("You do not have access to the requested resource.") {
+      intercept[AccessDeniedException] { controller.requireHeader("username") }.getMessage
     }
   }
 

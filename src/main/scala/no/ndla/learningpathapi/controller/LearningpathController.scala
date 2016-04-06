@@ -4,8 +4,8 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi.{LearningPath, LearningStep, _}
 import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.{LearningPath, LearningStep, _}
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
@@ -214,7 +214,6 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   error{
-    case h:HeaderMissingException => halt(status = 403, body = Error(Error.HEADER_MISSING, h.getMessage))
     case v:ValidationException => halt(status = 400, body = ValidationError(messages = v.errors))
     case a:AccessDeniedException => halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
     case t:Throwable => {
@@ -395,7 +394,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       case Some(h) => Some(h)
       case None => {
         logger.warn(s"Request made to ${request.getRequestURI} without required header $headerName.")
-        throw new HeaderMissingException(s"The required header $headerName is missing.")
+        throw new AccessDeniedException("You do not have access to the requested resource.")
       }
     }
   }
