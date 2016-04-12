@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.service
 
-import no.ndla.learningpathapi.model.api.{LearningStep, LearningPathStatus, LearningPath, LearningPathSummary}
+import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi._
@@ -23,9 +23,9 @@ trait ReadServiceComponent {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
-    def learningstepsFor(learningPathId: Long, user: Option[String] = None): Option[List[LearningStep]] = {
+    def learningstepsFor(learningPathId: Long, user: Option[String] = None): Option[List[LearningStepSummary]] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStep(ls, lp)))
+        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStepSummary(ls, lp)))
         case None => None
       }
     }
