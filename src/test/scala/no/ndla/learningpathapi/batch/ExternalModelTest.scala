@@ -22,7 +22,8 @@ class ExternalModelTest extends UnitSuite {
     language = "",
     title = "",
     packageId = 1,
-    imageNid = None)
+    imageNid = None,
+    description = "")
 
   test("That Step.embedUrlToNdlaNo converts None to None") {
     testStep.copy(embedUrl = None).embedUrlToNdlaNo should equal(None)

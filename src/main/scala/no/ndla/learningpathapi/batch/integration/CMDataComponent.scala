@@ -26,10 +26,13 @@ trait CMDataComponent {
     def allLearningPaths(): List[Node] = {
       NamedDB('cm) readOnly { implicit session =>
         sql"""
-            select n.nid as nid, n.tnid as tnid, n.language as lang , n.title as title, replace(np.url, 'http://sti.ndla.no/package/', '') as packageId, img.field_ingress_bilde_nid as imgnid
+            select n.nid as nid, n.tnid as tnid, n.language as lang ,
+            n.title as title, replace(np.url, 'http://sti.ndla.no/package/', '') as packageId,
+            img.field_ingress_bilde_nid as imgnid, besk.field_ingress_value as description
             from node n
             left join ndla_packages np on n.nid = np.nid and n.vid = np.vid
             left join content_field_ingress_bilde img on n.nid = img.nid and n.vid = img.vid
+            left join content_field_ingress besk on n.nid = besk.nid and n.vid = besk.vid
             where n.type = 'package'
         """.stripMargin
           .map(rs =>
@@ -39,7 +42,8 @@ trait CMDataComponent {
               rs.string("lang"),
               rs.string("title"),
               rs.string("packageId").toLong,
-              rs.intOpt("imgnid"))).list().apply()
+              rs.intOpt("imgnid"),
+              rs.string("description"))).list().apply()
       }
     }
 

@@ -4,9 +4,9 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningStep, _}
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
@@ -52,10 +52,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       responseMessages response500
       )
 
-  val getPrivateLearningpaths =
-    (apiOperation[List[LearningPathSummary]]("getPrivateLearningpaths")
-      summary "Show your private learningpaths"
-      notes "Shows your private learningpaths."
+  val getMyLearningpaths =
+    (apiOperation[List[LearningPathSummary]]("getMyLearningpaths")
+      summary "Show your learningpaths"
+      notes "Shows your learningpaths."
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key.")
@@ -216,7 +216,6 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   error{
-    case h:HeaderMissingException => halt(status = 403, body = Error(Error.HEADER_MISSING, h.getMessage))
     case v:ValidationException => halt(status = 400, body = ValidationError(messages = v.errors))
     case a:AccessDeniedException => halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
     case hre: HttpRequestException => halt(status = 502, body = Error(Error.REMOTE_ERROR, hre.getMessage))
@@ -227,10 +226,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
-  val publicService = ComponentRegistry.publicService
-  val privateService = ComponentRegistry.privateService
+  val readService = ComponentRegistry.readService
   val updateService = ComponentRegistry.updateService
-  val search = ComponentRegistry.searchService
+  val searchService = ComponentRegistry.searchService
 
   get("/", operation(getLearningpaths)) {
     val query = params.get("query")
@@ -241,14 +239,14 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     logger.info("GET / with params query='{}', language={}, page={}, page-size={}", query, language, page, pageSize)
 
     query match {
-      case Some(q) => search.matchingQuery(
+      case Some(q) => searchService.matchingQuery(
         query = q.toLowerCase.split(" ").map(_.trim),
         language = language,
         sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
         page = page,
         pageSize = pageSize
       )
-      case None => search.all(
+      case None => searchService.all(
         sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
         language = language,
         page = page,
@@ -257,63 +255,35 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   get("/:path_id/?", operation(getLearningpath)) {
-    publicService.withId(long("path_id")) match {
+    readService.withId(long("path_id"), optionalUsernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/:path_id/status/?", operation(getLearningpathStatus)) {
-    publicService.statusFor(long("path_id")) match {
+    readService.statusFor(long("path_id"), optionalUsernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/:path_id/learningsteps/?", operation(getLearningsteps)) {
-    publicService.learningstepsFor(long("path_id")) match {
+    readService.learningstepsFor(long("path_id"), optionalUsernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
     }
   }
 
   get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-    publicService.learningstepFor(long("path_id"), long("step_id")) match {
+    readService.learningstepFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
       case Some(x) => x
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
     }
   }
 
-  get("/private/?", operation(getPrivateLearningpaths)) {
-    privateService.all(owner = usernameFromHeader)
-  }
-
-  get ("/private/:path_id/?", operation(getLearningpath)){
-    privateService.withId(long("path_id"), owner = usernameFromHeader) match {
-      case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-    }
-  }
-
-  get("/private/:path_id/status/?", operation(getLearningpathStatus)) {
-    privateService.statusFor(long("path_id"), owner = usernameFromHeader) match {
-      case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-    }
-  }
-
-  get("/private/:path_id/learningsteps/?", operation(getLearningsteps)) {
-    privateService.learningstepsFor(long("path_id"), owner = usernameFromHeader) match {
-      case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-    }
-  }
-
-  get("/private/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-    privateService.learningstepFor(long("path_id"), long("step_id"), owner = usernameFromHeader) match {
-      case Some(x) => x
-      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
-    }
+  get("/mine/?", operation(getMyLearningpaths)) {
+    readService.withOwner(owner = usernameFromHeader)
   }
 
   post("/", operation(addNewLearningpath)) {
@@ -411,6 +381,13 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
+  def optionalUsernameFromHeader(implicit request: HttpServletRequest): Option[String] = {
+    request.header(UsernameHeader) match {
+      case Some(h) => Some(h.replace("ndla-", ""))
+      case None => None
+    }
+  }
+
   def usernameFromHeader(implicit request: HttpServletRequest): String = {
     requireHeader(UsernameHeader).get.replace("ndla-", "")
   }
@@ -420,7 +397,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       case Some(h) => Some(h)
       case None => {
         logger.warn(s"Request made to ${request.getRequestURI} without required header $headerName.")
-        throw new HeaderMissingException(s"The required header $headerName is missing.")
+        throw new AccessDeniedException("You do not have access to the requested resource.")
       }
     }
   }

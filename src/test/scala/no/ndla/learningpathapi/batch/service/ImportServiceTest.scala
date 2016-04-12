@@ -46,7 +46,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
   }
 
   test("That tidyUpDescription removes \\r \\t and \\n, but nothing else") {
-    service.tidyUpDescription("1\r+\t1\n=2") should equal("1+1=2")
+    service.tidyUpDescription("1\r+\t1\n=\t2") should equal("1 + 1 = 2")
   }
 
   test("That descriptionsAsList returns descriptions of translations when origin-step is None") {
@@ -134,8 +134,8 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     verify(learningPathRepository, times(1)).update(any[LearningPath])
   }
 
-  private def nodeWithNidAndTnid(nid: Long, tnid: Long): Node = Node(nid, tnid, "en", "Tittel", 1, None)
-  private def packageWithNodeId(nid: Long):Package = Package(1, new Date(), 1, "Tittel", 1, 1, "en", nid)
+  private def nodeWithNidAndTnid(nid: Long, tnid: Long): Node = Node(nid, tnid, "en", "Tittel", 1, None, "Beskrivelse")
+  private def packageWithNodeId(nid: Long):Package = Package(1, new Date(), 1, "Tittel", 1, 1, "en", nid, "Beskrivelse")
   private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, language)
   private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, language)
 }

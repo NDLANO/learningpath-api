@@ -12,8 +12,7 @@ import org.postgresql.ds.PGPoolingDataSource
 
 object ComponentRegistry
   extends LearningPathRepositoryComponent
-  with PublicServiceComponent
-  with PrivateServiceComponent
+  with ReadServiceComponent
   with UpdateServiceComponent
   with SearchConverterServiceComponent
   with SearchServiceComponent
@@ -42,8 +41,7 @@ object ComponentRegistry
   lazy val searchIndexBuilderService = new SearchIndexBuilderService
 
   lazy val learningPathRepository = new LearningPathRepository
-  lazy val publicService = new PublicService
-  lazy val privateService = new PrivateService
+  lazy val readService = new ReadService
   lazy val updateService = new UpdateService
   lazy val searchConverterService = new SearchConverterService
   lazy val searchService = new SearchService

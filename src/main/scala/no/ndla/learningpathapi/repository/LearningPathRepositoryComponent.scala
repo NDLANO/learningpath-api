@@ -53,12 +53,8 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       }
     }
 
-    def withStatus(status: LearningPathStatus.Value): List[LearningPath] = {
-      learningPathsWhere(sqls"lp.document->>'status' = ${status.toString}")
-    }
-
-    def withStatusAndOwner(status: LearningPathStatus.Value, owner: String): List[LearningPath] = {
-      learningPathsWhere(sqls"lp.document->>'status' = ${status.toString} and lp.document->>'owner' = $owner")
+    def withOwner(owner: String): List[LearningPath] = {
+      learningPathsWhere(sqls"lp.document->>'owner' = $owner")
     }
 
     def learningStepsFor(learningPathId: Long): List[LearningStep] = {

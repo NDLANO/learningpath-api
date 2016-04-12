@@ -37,6 +37,15 @@ case class LearningPath(id: Option[Long], externalId: Option[String], title: Lis
     }
   }
 
+  def verifyOwnerOrPublic(loggedInUser: Option[String]) = {
+    if(isPrivate) {
+      loggedInUser match {
+        case Some(user) => verifyOwner(user)
+        case None => throw new AccessDeniedException("You do not have access to the requested resource.")
+      }
+    }
+  }
+
   def validateForPublishing() = {
     val validationResult = new DurationValidator().validateRequired(duration).toList
     validationResult.isEmpty match {

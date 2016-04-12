@@ -39,7 +39,7 @@ trait ConverterServiceComponent {
       Author("Forfatter", names.mkString(" "))
     }
 
-    def asApiLearningpath(lp: domain.LearningPath, callOEmbedProxy: Boolean = true): LearningPath = {
+    def asApiLearningpath(lp: domain.LearningPath): LearningPath = {
       api.LearningPath(lp.id.get,
         lp.title.map(asApiTitle),
         lp.description.map(asApiDescription),
@@ -125,17 +125,11 @@ trait ConverterServiceComponent {
     }
 
     def createUrlToLearningPath(lp: domain.LearningPath): String = {
-      lp.isPrivate match {
-        case true => s"${ApplicationUrl.get}private/${lp.id.get}"
-        case false => s"${ApplicationUrl.get}${lp.id.get}"
-      }
+      s"${ApplicationUrl.get}${lp.id.get}"
     }
 
     def createUrlToLearningPath(lp: LearningPath): String = {
-      lp.isPrivate match {
-        case true => s"${ApplicationUrl.get}private/${lp.id}"
-        case false => s"${ApplicationUrl.get}${lp.id}"
-      }
+      s"${ApplicationUrl.get}${lp.id}"
     }
   }
 }
