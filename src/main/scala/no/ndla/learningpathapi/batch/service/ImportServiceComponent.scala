@@ -105,7 +105,7 @@ trait ImportServiceComponent {
     }
 
     def asLearningStep(step: Step, translations: List[Step]): LearningStep = {
-      val seqNo = step.pos
+      val seqNo = step.pos - 1
       val stepType = s"${step.stepType}"
 
       val title = Title(step.title, Some(step.language)) :: translations.map(translation => Title(translation.title, Some(translation.language)))

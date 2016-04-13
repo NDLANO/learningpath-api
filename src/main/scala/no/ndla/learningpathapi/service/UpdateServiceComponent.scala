@@ -154,7 +154,7 @@ trait UpdateServiceComponent {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => false
             case Some(existing) => {
-              learningPathRepository.deleteLearningStep(learningStepId)
+              learningPathRepository.deleteLearningStep(learningPathId, learningStepId)
               val updatedPath = learningPathRepository.update(learningPath.copy(
                 learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
                 lastUpdated = new Date()))
