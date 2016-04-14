@@ -36,7 +36,9 @@ trait TestEnvironment
   val authClient = mock[AuthClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
 
-
+  override def inTransaction[A](work: => A):A = {
+    work
+  }
 
   def resetMocks() = {
     Mockito.reset(

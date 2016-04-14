@@ -111,6 +111,9 @@ case class NewLearningStep(
   }
 }
 
+@ApiModel(description = "Information about the sequence number for a step")
+case class LearningStepSeqNo(@(ApiModelProperty @field)(description = "The sequence number for the learningstep") seqNo:Int)
+
 @ApiModel(description = "Representation of a title")
 case class Title(
   @(ApiModelProperty @field)(description = "The title of the content. Must be plain text") title:String,

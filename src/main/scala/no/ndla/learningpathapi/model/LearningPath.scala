@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.model
 import java.util.Date
 
 import no.ndla.learningpathapi.validation.DurationValidator
-import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
+import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties, ValidationMessage}
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
@@ -43,6 +43,12 @@ case class LearningPath(id: Option[Long], externalId: Option[String], title: Lis
         case Some(user) => verifyOwner(user)
         case None => throw new AccessDeniedException("You do not have access to the requested resource.")
       }
+    }
+  }
+
+  def validateSeqNo(seqNo: Int) = {
+    if(seqNo < 0 || seqNo > learningsteps.length-1) {
+      throw new ValidationException(errors = List(ValidationMessage("seqNo", s"seqNo must be between 0 and ${learningsteps.length - 1}")))
     }
   }
 

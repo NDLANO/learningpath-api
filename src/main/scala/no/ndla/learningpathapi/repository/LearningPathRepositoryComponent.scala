@@ -12,32 +12,21 @@ import scalikejdbc._
 trait LearningPathRepositoryComponent extends LazyLogging {
   this: DatasourceComponent =>
   val learningPathRepository: LearningPathRepository
+  ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
+
+  def inTransaction[A](work: => A):A = {
+    DB localTx { implicit session =>
+      work
+    }
+  }
 
   class LearningPathRepository {
-    ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
-
     implicit val formats = org.json4s.DefaultFormats +
       LearningPath.JSonSerializer +
       LearningStep.JSonSerializer +
       new EnumNameSerializer(LearningPathStatus) +
       new EnumNameSerializer(LearningPathVerificationStatus) +
       new EnumNameSerializer(StepType)
-
-    def exists(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Boolean = {
-      sql"select exists(select 1 from learningpaths where id=$learningPathId)".map(rs => rs.boolean(1)).single().apply match {
-        case Some(t) => t
-        case None => false
-      }
-    }
-
-    def exists(learningPathId: Long, learningStepId: Long): Boolean = {
-      DB readOnly {implicit session =>
-        sql"select exists(select 1 from learningsteps where id=$learningStepId and learning_path_id = $learningPathId)".map(rs => rs.boolean(1)).single().apply match {
-          case Some(t) => t
-          case None => false
-        }
-      }
-    }
 
     def withId(id: Long): Option[LearningPath] = {
       learningPathWhere(sqls"lp.id = $id")
@@ -74,20 +63,18 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       }
     }
 
-    def insert(learningpath: LearningPath): LearningPath = {
+    def insert(learningpath: LearningPath)(implicit session: DBSession = AutoSession): LearningPath = {
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
       dataObject.setValue(write(learningpath))
 
-      DB localTx { implicit session =>
-        val learningPathId: Long = sql"insert into learningpaths(external_id, document) values(${learningpath.externalId}, $dataObject)".updateAndReturnGeneratedKey().apply
-        val learningSteps = learningpath.learningsteps.map(learningStep => {
-          insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
-        })
+      val learningPathId: Long = sql"insert into learningpaths(external_id, document) values(${learningpath.externalId}, $dataObject)".updateAndReturnGeneratedKey().apply
+      val learningSteps = learningpath.learningsteps.map(learningStep => {
+        insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
+      })
 
-        logger.info(s"Inserted learningpath with id $learningPathId")
-        learningpath.copy(id = Some(learningPathId), learningsteps = learningSteps)
-      }
+      logger.info(s"Inserted learningpath with id $learningPathId")
+      learningpath.copy(id = Some(learningPathId), learningsteps = learningSteps)
     }
 
     def insertLearningStep(learningStep: LearningStep)(implicit session: DBSession = AutoSession): LearningStep = {
@@ -100,7 +87,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningStep.copy(id = Some(learningStepId))
     }
 
-    def update(learningpath: LearningPath): LearningPath = {
+    def update(learningpath: LearningPath)(implicit session: DBSession = AutoSession): LearningPath = {
       if (learningpath.id.isEmpty) {
         throw new RuntimeException("A non-persisted learningpath cannot be updated without being saved first.")
       }
@@ -109,11 +96,10 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       dataObject.setType("jsonb")
       dataObject.setValue(write(learningpath))
 
-      DB localTx { implicit session =>
-        sql"update learningpaths set document = $dataObject where id = ${learningpath.id}".update().apply
-        logger.info(s"Updated learningpath with id ${learningpath.id}")
-        learningpath
-      }
+      sql"update learningpaths set document = $dataObject where id = ${learningpath.id}".update().apply
+      logger.info(s"Updated learningpath with id ${learningpath.id}")
+
+      learningpath
     }
 
     def updateLearningStep(learningStep: LearningStep)(implicit session: DBSession = AutoSession): LearningStep = {
@@ -130,22 +116,18 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningStep
     }
 
-    def delete(learningPathId: Long) = {
-      DB localTx { implicit session =>
-        sql"delete from learningpaths where id = $learningPathId".update().apply
-      }
+    def delete(learningPathId: Long)(implicit session: DBSession = AutoSession) = {
+      sql"delete from learningpaths where id = $learningPathId".update().apply
     }
 
-    def deleteLearningStep(learningPathId: Long, learningStepId: Long): Unit = {
-      DB localTx { implicit session =>
-        learningStepWithId(learningPathId, learningStepId).foreach(step => {
-          sql"delete from learningsteps where id = $learningStepId".update().apply
+    def deleteLearningStep(learningPathId: Long, learningStepId: Long)(implicit session: DBSession = AutoSession): Unit = {
+      learningStepWithId(learningPathId, learningStepId).foreach(step => {
+        sql"delete from learningsteps where id = $learningStepId".update().apply
 
-          learningStepsFor(learningPathId).filter(_.seqNo > step.seqNo).foreach(toUpdate => {
-            updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
-          })
+        learningStepsFor(learningPathId).filter(_.seqNo > step.seqNo).foreach(toUpdate => {
+          updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
         })
-      }
+      })
     }
 
     def learningPathsWithIdBetween(min: Long, max: Long)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {

@@ -110,6 +110,19 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       responseMessages(response403, response404, response500)
       )
 
+  val getLearningstepSeqNo =
+    (apiOperation[LearningStepSeqNo]("getLearningstepSeqNo")
+      summary "Show the sequence number for the given learningstep"
+      notes "Show the sequence number for the given learningstep"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      headerParam[Option[String]]("app-key").description("Your app-key."),
+      pathParam[String]("path_id").description("The id of the learningpath."),
+      pathParam[String]("step_id").description("The id of the learningpath.")
+      )
+      responseMessages(response403, response404, response500)
+      )
+
   val addNewLearningpath =
     (
       apiOperation[LearningPath]("addLearningpath")
@@ -163,6 +176,20 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       bodyParam[NewLearningStep]
       )
       responseMessages(response400, response403, response404, response500)
+      )
+
+  val updateLearningstepSeqNo =
+    (apiOperation[LearningStepSeqNo]("updatetLearningstepSeqNo")
+      summary "Update the learning step sequence number."
+      notes "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this."
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      headerParam[Option[String]]("app-key").description("Your app-key."),
+      pathParam[String]("path_id").description("The id of the learningpath."),
+      pathParam[String]("step_id").description("The id of the learningpath."),
+      bodyParam[LearningStepSeqNo]
+      )
+      responseMessages(response403, response404, response500)
       )
 
   val updateLearningPathStatus = (apiOperation[LearningPathStatus]("updateLearningPathStatus")
@@ -279,6 +306,13 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     }
   }
 
+  get("/:path_id/learningsteps/:step_id/seqNo/?", operation(getLearningstepSeqNo)) {
+    readService.seqNoFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
+      case Some(x) => x
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+    }
+  }
+
   get("/mine/?", operation(getMyLearningpaths)) {
     readService.withOwner(owner = usernameFromHeader)
   }
@@ -326,6 +360,14 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
         logger.info(s"UPDATED LearningStep with ID = ${params("step_id")} for LearningPath with ID = ${params("path_id")}")
         Ok(body = learningStep)
       }
+    }
+  }
+
+  put("/:path_id/learningsteps/:step_id/seqNo/?", operation(updateLearningstepSeqNo)) {
+    val newSeqNo = extract[LearningStepSeqNo](request.body)
+    updateService.updateSeqNo(long("path_id"), long("step_id"), newSeqNo.seqNo, usernameFromHeader) match {
+      case Some(seqNo) => seqNo
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
     }
   }
 

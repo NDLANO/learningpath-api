@@ -13,6 +13,7 @@ trait UpdateServiceComponent {
   val updateService: UpdateService
 
   class UpdateService {
+
     def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
       val learningPath = model.LearningPath(None,None,
         newLearningPath.title.map(converterService.asTitle),
@@ -86,9 +87,9 @@ trait UpdateServiceComponent {
     def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
-        case Some(learningPath) => {
+        case Some(learningPath) => inTransaction {
           val newSeqNo = learningPath.learningsteps.isEmpty match {
-            case true => 1
+            case true => 0
             case false => learningPath.learningsteps.map(_.seqNo).max + 1
           }
 
@@ -123,7 +124,7 @@ trait UpdateServiceComponent {
         case Some(learningPath) => {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
-            case Some(existing) => {
+            case Some(existing) => inTransaction {
               val toUpdate = existing.copy(
                 title = newLearningStep.title.map(converterService.asTitle),
                 description = newLearningStep.description.map(converterService.asDescription),
@@ -153,7 +154,7 @@ trait UpdateServiceComponent {
         case Some(learningPath) => {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => false
-            case Some(existing) => {
+            case Some(existing) => inTransaction {
               learningPathRepository.deleteLearningStep(learningPathId, learningStepId)
               val updatedPath = learningPathRepository.update(learningPath.copy(
                 learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
@@ -166,6 +167,46 @@ trait UpdateServiceComponent {
             }
           }
         }
+      }
+    }
+
+
+    def updateSeqNo(learningPathId: Long, learningStepId: Long, seqNo: Int, owner: String): Option[LearningStepSeqNo] = {
+      withIdAndAccessGranted(learningPathId, owner) match {
+        case None => None
+        case Some(learningPath) => {
+          learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
+            case None => None
+            case Some(learningStep) => {
+              learningPath.validateSeqNo(seqNo)
+
+              val from = learningStep.seqNo
+              val to = seqNo
+              val toUpdate = learningPath.learningsteps.filter(step => rangeToUpdate(from, to).contains(step.seqNo))
+
+              def addOrSubtract(seqNo: Int): Int = from > to match {
+                case true => seqNo + 1
+                case false => seqNo - 1
+              }
+
+              inTransaction {
+                learningPathRepository.updateLearningStep(learningStep.copy(seqNo = seqNo))
+                toUpdate.foreach(step => {
+                  learningPathRepository.updateLearningStep(step.copy(seqNo = addOrSubtract(step.seqNo)))
+                })
+              }
+
+              Some(LearningStepSeqNo(seqNo))
+            }
+          }
+        }
+      }
+    }
+
+    def rangeToUpdate(from: Int, to: Int): Range = {
+      from > to match {
+        case true => to to from-1
+        case false => from+1 to to
       }
     }
 

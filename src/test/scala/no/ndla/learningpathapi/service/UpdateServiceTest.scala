@@ -5,7 +5,7 @@ import java.util.Date
 import no.ndla.learningpathapi.LearningPathStatus
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.{ValidationException, AccessDeniedException, LearningStep, LearningPath, StepType, NdlaUserName}
-import org.mockito.Matchers._
+import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 
@@ -13,8 +13,8 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   
   var service: UpdateService = _
 
-  val PUBLISHED_ID = 1
-  val PRIVATE_ID = 2
+  val PUBLISHED_ID: Long = 1
+  val PRIVATE_ID: Long = 2
 
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
@@ -35,8 +35,8 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     when(authClient.getUserName(any[String])).thenReturn(NdlaUserName(Some("fornavn"), Some("mellomnavn"), Some("Etternavn")))
   }
 
-  test("That addLearningPath inserts the given LearningPath") {
-    when(learningPathRepository.insert(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+  test("That addLearningPath inserts th e given LearningPath") {
+    when(learningPathRepository.insert(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
     val saved = service.addLearningPath(NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
     assert(saved.id == PRIVATE_LEARNINGPATH.id.get)
 
@@ -53,7 +53,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningPath updates the learningpath when the given user is the owner if the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(PRIVATE_LEARNINGPATH.id.get){
       service.updateLearningPath(PRIVATE_ID, NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER).get.id
@@ -65,7 +65,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningPath updates the learningpath when the given user is the owner if the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
 
     assertResult(PUBLISHED_LEARNINGPATH.id.get){
       service.updateLearningPath(PUBLISHED_ID, NEW_PUBLISHED_LEARNINGPATH, PUBLISHED_OWNER).get.id
@@ -90,7 +90,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = model.LearningPathStatus.PRIVATE))
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = model.LearningPathStatus.PRIVATE))
     assertResult("PRIVATE"){
       service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PUBLISHED_OWNER).get.status
     }
@@ -100,7 +100,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = model.LearningPathStatus.PUBLISHED))
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = model.LearningPathStatus.PUBLISHED))
     assertResult("PUBLISHED"){
       service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER).get.status
     }
@@ -156,7 +156,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   test("That addLearningStep inserts the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.insertLearningStep(any[LearningStep])(any[DBSession])).thenReturn(STEP1)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(STEP1.id.get){
       service.addLearningStep(PRIVATE_ID, NEW_STEP, PRIVATE_OWNER).get.id
@@ -169,7 +169,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   test("That addLearningStep inserts the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.insertLearningStep(any[LearningStep])(any[DBSession])).thenReturn(STEP2)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
 
     assertResult(STEP2.id.get){
       service.addLearningStep(PUBLISHED_ID, NEW_STEP, PUBLISHED_OWNER).get.id
@@ -197,7 +197,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningStep returns None when the learningstep does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(None)
+    when(learningPathRepository.learningStepWithId(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(None)
     assertResult(None){
       service.updateLearningStep(PUBLISHED_ID, STEP1.id.get, NEW_STEP, PUBLISHED_OWNER)
     }
@@ -207,9 +207,9 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningStep updates the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
+    when(learningPathRepository.learningStepWithId(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
     when(learningPathRepository.updateLearningStep(any[LearningStep])(any[DBSession])).thenReturn(STEP1)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
 
     assertResult(STEP1.id.get){
       service.updateLearningStep(PUBLISHED_ID, STEP1.id.get, NEW_STEP, PUBLISHED_OWNER).get.id
@@ -221,9 +221,9 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That updateLearningStep updates the learningstep and update lastUpdated on the learningpath when the given user is the owner and status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(Some(STEP1))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
     when(learningPathRepository.updateLearningStep(any[LearningStep])(any[DBSession])).thenReturn(STEP1)
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(STEP1.id.get){
       service.updateLearningStep(PRIVATE_ID, STEP1.id.get, NEW_STEP, PRIVATE_OWNER).get.id
@@ -260,8 +260,8 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That deleteLearningStep deletes the learningstep when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(Some(STEP1))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PRIVATE_LEARNINGPATH)
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
     assertResult(true) {
       service.deleteLearningStep(PRIVATE_ID, STEP1.id.get, PRIVATE_OWNER)
@@ -273,8 +273,8 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
 
   test("That deleteLearningStep deletes the learningstep when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
-    when(learningPathRepository.update(any[LearningPath])).thenReturn(PUBLISHED_LEARNINGPATH)
+    when(learningPathRepository.learningStepWithId(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
     assertResult(true) {
       service.deleteLearningStep(PUBLISHED_ID, STEP1.id.get, PUBLISHED_OWNER)
     }
