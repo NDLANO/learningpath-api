@@ -19,14 +19,15 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PUBLISHED, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PRIVATE, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
+  val STEP1 = LearningStep(Some(1), None, None, 0, List(), List(), List(), StepType.TEXT, None)
+  val STEP2 = LearningStep(Some(2), None, None, 1, List(), List(), List(), StepType.TEXT, None)
+  val NEW_STEP: NewLearningStep = NewLearningStep(List(), List(), List(), "", None)
+
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PUBLISHED, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: Nil)
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), None, List(), List(), None, Some(1), model.LearningPathStatus.PRIVATE, model.LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: Nil)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
 
-  val STEP1 = LearningStep(Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None)
-  val STEP2 = LearningStep(Some(2), None, None, 2, List(), List(), List(), StepType.TEXT, None)
-  val NEW_STEP: NewLearningStep = NewLearningStep(List(), List(), List(), "", None)
 
   override def beforeEach() = {
     service = new UpdateService
@@ -35,7 +36,7 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     when(authClient.getUserName(any[String])).thenReturn(NdlaUserName(Some("fornavn"), Some("mellomnavn"), Some("Etternavn")))
   }
 
-  test("That addLearningPath inserts th e given LearningPath") {
+  test("That addLearningPath inserts the given LearningPath") {
     when(learningPathRepository.insert(any[LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
     val saved = service.addLearningPath(NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
     assert(saved.id == PRIVATE_LEARNINGPATH.id.get)
@@ -289,5 +290,28 @@ class UpdateServiceTest extends UnitSuite with TestEnvironment {
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] { service.deleteLearningStep(PRIVATE_ID, STEP1.id.get, PUBLISHED_OWNER) }.getMessage
     }
+  }
+
+  test("That updateSeqNo throws ValidationException when seqNo out of range") {
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
+
+    val exception = intercept[ValidationException] {
+      service.updateSeqNo(PRIVATE_ID, STEP1.id.get, 100, PRIVATE_OWNER)
+    }
+
+    exception.errors.length should be (1)
+    exception.errors.head.field should equal ("seqNo")
+    exception.errors.head.message should equal ("seqNo must be between 0 and 1")
+  }
+
+  test("That updateSeqNo also update seqNo for all affected steps") {
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
+
+    val updatedStep = service.updateSeqNo(PRIVATE_ID, STEP1.id.get, 1, PRIVATE_OWNER)
+    updatedStep.get.seqNo should equal (1)
+
+    verify(learningPathRepository, times(2)).updateLearningStep(any[LearningStep])
   }
 }
