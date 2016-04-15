@@ -3,13 +3,14 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
-import no.ndla.learningpathapi.integration.{AuthClientComponent, ElasticClientComponent, DatasourceComponent}
+import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchServiceComponent, SearchIndexServiceComponent, SearchIndexBuilderServiceComponent}
+import no.ndla.learningpathapi.service.search.{SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
 import no.ndla.learningpathapi.validation._
 import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
+import scalikejdbc.DBSession
 
 trait TestEnvironment
   extends LearningPathRepositoryComponent
@@ -35,10 +36,6 @@ trait TestEnvironment
   val searchIndexService = mock[SearchIndexService]
   val authClient = mock[AuthClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
-
-  override def inTransaction[A](work: => A):A = {
-    work
-  }
 
   def resetMocks() = {
     Mockito.reset(

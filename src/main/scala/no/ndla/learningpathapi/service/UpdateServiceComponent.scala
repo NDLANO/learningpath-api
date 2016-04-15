@@ -136,7 +136,6 @@ trait UpdateServiceComponent {
               val updatedPath = learningPathRepository.update(learningPath.copy(
                 learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
                 lastUpdated = new Date()))
-
               if (updatedPath.isPublished) {
                 searchIndexService.indexLearningPath(updatedPath)
               }

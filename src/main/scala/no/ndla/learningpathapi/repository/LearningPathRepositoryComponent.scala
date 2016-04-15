@@ -14,10 +14,8 @@ trait LearningPathRepositoryComponent extends LazyLogging {
   val learningPathRepository: LearningPathRepository
   ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
 
-  def inTransaction[A](work: => A):A = {
-    DB localTx { implicit session =>
-      work
-    }
+  def inTransaction[A](work: => A)(implicit session: DBSession = AutoSession):A = {
+    work
   }
 
   class LearningPathRepository {
