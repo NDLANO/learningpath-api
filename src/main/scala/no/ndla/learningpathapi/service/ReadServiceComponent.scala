@@ -36,10 +36,6 @@ trait ReadServiceComponent {
       }
     }
 
-    def seqNoFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStepSeqNo] = {
-      learningstepFor(learningPathId, learningstepId, user).map(step => LearningStepSeqNo(step.seqNo))
-    }
-
     private def withIdAndAccessGranted(learningPathId: Long, user: Option[String]): Option[model.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.foreach(_.verifyOwnerOrPublic(user))
