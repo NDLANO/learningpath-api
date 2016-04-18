@@ -15,9 +15,9 @@ trait OEmbedClientComponent {
     implicit val formats = org.json4s.DefaultFormats
     val oEmbedEndpoint = s"http://${LearningpathApiProperties.OEmbedHost}/oembed?url=:embed_url"
 
-    def getHtmlEmbedCodeForUrl(url: String): String = {
+    def getHtmlEmbedCodeForUrl(url: String): Option[String] = {
       getHtmlEmbedCodeForRequest(Http(oEmbedEndpoint.replace(":embed_url", url))) match {
-        case Success(embedCode) => embedCode
+        case Success(embedCode) => Some(embedCode)
         case Failure(exception) => throw exception
       }
     }

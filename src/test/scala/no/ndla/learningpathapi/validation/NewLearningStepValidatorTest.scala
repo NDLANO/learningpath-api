@@ -13,7 +13,7 @@ class NewLearningStepValidatorTest extends UnitSuite with TestEnvironment {
   val ValidLearningStep = NewLearningStep(
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("<strong>Gyldig description</strong>", Some("nb"))),
-    embedContent = List(EmbedContent("http://www.ndla.no/123", "html", Some("nb"))),
+    embedContent = List(EmbedContent("http://www.ndla.no/123", Some("html"), Some("nb"))),
     `type` = "TEXT",
     license = Some("Lisens")
   )
@@ -58,19 +58,19 @@ class NewLearningStepValidatorTest extends UnitSuite with TestEnvironment {
   }
 
   test("That validate returns error when embedContent contains html") {
-    val validationMessages = validator.validate(ValidLearningStep.copy(embedContent = List(EmbedContent("<strong>ikke gyldig</strong>", "html", Some("nb")))))
+    val validationMessages = validator.validate(ValidLearningStep.copy(embedContent = List(EmbedContent("<strong>ikke gyldig</strong>", Some("html"), Some("nb")))))
     validationMessages.size should be(1)
     validationMessages.head.field should equal("embedContent.url")
   }
 
   test("That validate returns error when embedContent.language is invalid") {
-    val validationMessages = validator.validate(ValidLearningStep.copy(embedContent = List(EmbedContent("http://www.ndla.no/123", "html", Some("bergensk")))))
+    val validationMessages = validator.validate(ValidLearningStep.copy(embedContent = List(EmbedContent("http://www.ndla.no/123", Some("html"), Some("bergensk")))))
     validationMessages.size should be(1)
     validationMessages.head.field should equal("embedContent.language")
   }
 
   test("That validate returns error for both embedContent.url and embedContent.language") {
-    val validationMessages = validator.validate(ValidLearningStep.copy(embedContent = List(EmbedContent("<h1>Ugyldig</h1>", "html", Some("bergensk")))))
+    val validationMessages = validator.validate(ValidLearningStep.copy(embedContent = List(EmbedContent("<h1>Ugyldig</h1>", Some("html"), Some("bergensk")))))
     validationMessages.size should be(2)
     validationMessages.head.field should equal("embedContent.url")
     validationMessages.last.field should equal("embedContent.language")
@@ -79,8 +79,8 @@ class NewLearningStepValidatorTest extends UnitSuite with TestEnvironment {
   test("That all embedContents are validated") {
     val validationMessages = validator.validate(ValidLearningStep.copy(embedContent =
       List(
-        EmbedContent("<h1>Ugyldig</h1>", "html", Some("nb")),
-        EmbedContent("http://www.ndla.no/123", "html", Some("bergensk"))
+        EmbedContent("<h1>Ugyldig</h1>", Some("html"), Some("nb")),
+        EmbedContent("http://www.ndla.no/123", Some("html"), Some("bergensk"))
       )))
     validationMessages.size should be(2)
     validationMessages.head.field should equal("embedContent.url")
