@@ -155,6 +155,10 @@ trait UpdateServiceComponent {
             case None => false
             case Some(existing) => inTransaction {
               learningPathRepository.deleteLearningStep(learningPathId, learningStepId)
+              learningPathRepository.learningStepsFor(learningPathId).filter(_.seqNo > existing.seqNo).foreach(toUpdate => {
+                learningPathRepository.updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
+              })
+
               val updatedPath = learningPathRepository.update(learningPath.copy(
                 learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
                 lastUpdated = new Date()))

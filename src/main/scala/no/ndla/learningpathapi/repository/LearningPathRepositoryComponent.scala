@@ -121,10 +121,6 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     def deleteLearningStep(learningPathId: Long, learningStepId: Long)(implicit session: DBSession = AutoSession): Unit = {
       learningStepWithId(learningPathId, learningStepId).foreach(step => {
         sql"delete from learningsteps where id = $learningStepId".update().apply
-
-        learningStepsFor(learningPathId).filter(_.seqNo > step.seqNo).foreach(toUpdate => {
-          updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
-        })
       })
     }
 
