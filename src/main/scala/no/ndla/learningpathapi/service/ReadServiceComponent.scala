@@ -25,10 +25,11 @@ trait ReadServiceComponent {
 
     def learningstepsFor(learningPathId: Long, user: Option[String] = None): Option[List[LearningStepSummary]] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStepSummary(ls, lp)))
+        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStepSummary(ls, lp)).sortBy(_.seqNo))
         case None => None
       }
     }
+
 
     def learningstepFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, user) match {

@@ -7,6 +7,7 @@ import no.ndla.learningpathapi.batch.{BatchTestEnvironment, Node, Package, Step}
 import no.ndla.learningpathapi.model.domain.{LearningPath, LearningPathStatus, LearningPathVerificationStatus}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
+import scalikejdbc.DBSession
 
 class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
 
@@ -127,7 +128,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     when(packageData.getTranslationSteps(any[List[Option[Package]]], any[Int])).thenReturn(List())
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
-    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])).thenReturn(None)
+    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
 
     service.importNode(Some(pakke), List(), None)
 

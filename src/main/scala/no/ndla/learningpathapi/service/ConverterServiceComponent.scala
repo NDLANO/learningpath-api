@@ -44,7 +44,7 @@ trait ConverterServiceComponent {
         lp.title.map(asApiTitle),
         lp.description.map(asApiDescription),
         createUrlToLearningPath(lp),
-        lp.learningsteps.map(ls => asApiLearningStepSummary(ls, lp)).toList,
+        lp.learningsteps.map(ls => asApiLearningStepSummary(ls, lp)).toList.sortBy(_.seqNo),
         createUrlToLearningSteps(lp),
         lp.coverPhotoUrl,
         lp.duration,

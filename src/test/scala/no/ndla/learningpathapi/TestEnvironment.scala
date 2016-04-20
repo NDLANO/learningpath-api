@@ -10,6 +10,7 @@ import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, 
 import no.ndla.learningpathapi.validation._
 import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
+import scalikejdbc.DBSession
 
 trait TestEnvironment
   extends LearningPathRepositoryComponent
@@ -39,8 +40,6 @@ trait TestEnvironment
   val authClient = mock[AuthClient]
   val oEmbedClient = mock[OEmbedClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
-
-
 
   def resetMocks() = {
     Mockito.reset(
