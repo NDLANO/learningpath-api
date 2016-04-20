@@ -73,12 +73,12 @@ trait ImportServiceComponent {
       val lastUpdated = pakke.lastUpdated
 
       val owner = pakke.nodeId match {
-        case 149862 => "404da227-450c-4ff5-8115-d7b1635cf081" //Christer
-        case 156729 => "d85b99fa-3a96-4095-aca3-a9e6ee2ef1fb" //RST
-        case 156987 => "06b1a241-0247-45a4-9dae-fe1ddc31d4ca" //KW
-        case 149007 => "4865bbb2-47c9-4872-b006-b42dcf447092" //Remi
-        case 143822 => "aa591365-181c-4339-ba9a-b125bb95eac4" // KES
-        case default => "404da227-450c-4ff5-8115-d7b1635cf081" //Christer
+        case 149862 => "410714a7-c09d-4e9a-9595-e7f13e19c463" //Christer
+        case 156729 => "4b1af961-e0b9-4696-b348-f1eb2433bb40" //RST
+        case 156987 => "7848c915-d254-48a6-aa2b-b4e5adeae142" //KW
+        case 149007 => "2242c74b-42fb-4ccc-8194-c8de02a50dc2" //Remi
+        case 143822 => "0fdb3901-07bb-44f6-a0c8-3d45dbd23698" // KES
+        case default => "410714a7-c09d-4e9a-9595-e7f13e19c463" //Christer
       }
 
       val publishStatus = pakke.nodeId match {
