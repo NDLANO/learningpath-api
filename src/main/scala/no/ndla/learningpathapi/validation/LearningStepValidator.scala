@@ -1,15 +1,24 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.api.{EmbedContent, Description, ValidationMessage, NewLearningStep}
-import no.ndla.learningpathapi.model.domain.{StepType, EmbedUrl}
+import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain.{EmbedUrl, StepType}
 
-class NewLearningStepValidator {
+class LearningStepValidator {
   val noHtmlTextValidator = new TextValidator(allowHtml = false)
   val basicHtmlTextValidator = new TextValidator(allowHtml = true)
   val languageValidator = new LanguageValidator
   val titleValidator = new TitleValidator
 
   val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedContent or both."
+
+  def validate(updatedLearningStep: UpdatedLearningStep): List[ValidationMessage] = {
+    titleValidator.validate(updatedLearningStep.title) :::
+      validateDescription(updatedLearningStep.description) :::
+      validateEmbedContent(updatedLearningStep.embedContent) :::
+      validateStepType(updatedLearningStep.`type`).toList :::
+      validateLicense(updatedLearningStep.license).toList :::
+      validateThatDescriptionOrEmbedUrlOrBothIsDefined(updatedLearningStep).toList
+  }
 
   def validate(newLearningStep: NewLearningStep): List[ValidationMessage] = {
     titleValidator.validate(newLearningStep.title) :::
@@ -53,6 +62,13 @@ class NewLearningStepValidator {
 
   def validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep: NewLearningStep): Option[ValidationMessage] = {
     newLearningStep.description.isEmpty && newLearningStep.embedContent.isEmpty match {
+      case true => Some(ValidationMessage("description|embedContent", MISSING_DESCRIPTION_OR_EMBED_URL))
+      case false => None
+    }
+  }
+
+  def validateThatDescriptionOrEmbedUrlOrBothIsDefined(updatedLearningStep: UpdatedLearningStep): Option[ValidationMessage] = {
+    updatedLearningStep.description.isEmpty && updatedLearningStep.embedContent.isEmpty match {
       case true => Some(ValidationMessage("description|embedContent", MISSING_DESCRIPTION_OR_EMBED_URL))
       case false => None
     }

@@ -131,7 +131,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
       pathParam[String]("path_id").description("The id of the learningpath."),
-      bodyParam[NewLearningPath])
+      bodyParam[UpdatedLearningPath])
       responseMessages(response400, response403, response404, response500))
 
   val updateLearningStep =
@@ -143,7 +143,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       headerParam[Option[String]]("app-key").description("Your app-key."),
       pathParam[String]("path_id").description("The id of the learningpath."),
       pathParam[String]("step_id").description("The id of the learningstep."),
-      bodyParam[NewLearningStep])
+      bodyParam[UpdatedLearningStep])
       responseMessages(response400, response403, response404, response500, response502))
 
   val updateLearningstepSeqNo =
@@ -204,6 +204,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   error {
     case v: ValidationException => halt(status = 400, body = ValidationError(messages = v.errors))
     case a: AccessDeniedException => halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
+    case ole: OptimisticLockException => halt(status = 409, body = Error(Error.RESOURCE_OUTDATED, Error.RESOURCE_OUTDATED_DESCRIPTION))
     case hre: HttpRequestException => halt(status = 502, body = Error(Error.REMOTE_ERROR, hre.getMessage))
     case t: Throwable => {
       t.printStackTrace()
@@ -280,8 +281,8 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   put("/:path_id/?", operation(updateLearningPath)) {
-    val newLearningPath = extract[NewLearningPath](request.body).validate()
-    val updatedLearningPath = updateService.updateLearningPath(long("path_id"), newLearningPath, usernameFromHeader)
+    val learningpathToUpdate = extract[UpdatedLearningPath](request.body).validate()
+    val updatedLearningPath = updateService.updateLearningPath(long("path_id"), learningpathToUpdate, usernameFromHeader)
     updatedLearningPath match {
       case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       case Some(learningPath) => {
@@ -304,9 +305,9 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   put("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
-    val newLearningStep = extract[NewLearningStep](request.body).validate()
+    val updatedLearningStep = extract[UpdatedLearningStep](request.body).validate()
     val createdLearningStep = updateService.updateLearningStep(long("path_id"), long("step_id"),
-      newLearningStep,
+      updatedLearningStep,
       usernameFromHeader)
 
     createdLearningStep match {

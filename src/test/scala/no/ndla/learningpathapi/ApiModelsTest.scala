@@ -8,7 +8,7 @@ import no.ndla.learningpathapi.model.domain.ValidationException
 
 class ApiModelsTest extends UnitSuite {
 
-  val testLearningPath = LearningPath(1, List(), List(), "", List(), "", None, Some(1), "PUBLIC", "", new Date(),List(), Author("Forfatter", "Ukjent"))
+  val testLearningPath = LearningPath(1, 1, List(), List(), "", List(), "", None, Some(1), "PUBLIC", "", new Date(),List(), Author("Forfatter", "Ukjent"))
 
   test("That LearningPathStatus.validate throws exception for unknown status") {
     val status = "Ikke gyldig"

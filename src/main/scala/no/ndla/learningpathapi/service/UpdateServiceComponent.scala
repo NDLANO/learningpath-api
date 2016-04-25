@@ -5,7 +5,7 @@ import java.util.Date
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{StepType, LearningPathVerificationStatus}
+import no.ndla.learningpathapi.model.domain.{LearningPathVerificationStatus, OptimisticLockException, StepType}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 
@@ -17,7 +17,7 @@ trait UpdateServiceComponent {
   class UpdateService {
 
     def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
-      val learningPath = domain.LearningPath(None,None,
+      val learningPath = domain.LearningPath(None, None, None,
         newLearningPath.title.map(converterService.asTitle),
         newLearningPath.description.map(converterService.asDescription),
         newLearningPath.coverPhotoUrl,
@@ -28,16 +28,17 @@ trait UpdateServiceComponent {
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath))
     }
 
-    def updateLearningPath(id: Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
+    def updateLearningPath(id: Long, learningPathToUpdate: UpdatedLearningPath, owner: String): Option[LearningPath] = {
       withIdAndAccessGranted(id, owner) match {
         case None => None
         case Some(existing) => {
           val toUpdate = existing.copy(
-            title = newLearningPath.title.map(converterService.asTitle),
-            description = newLearningPath.description.map(converterService.asDescription),
-            coverPhotoUrl = newLearningPath.coverPhotoUrl,
-            duration = newLearningPath.duration,
-            tags = newLearningPath.tags.map(converterService.asLearningPathTag),
+            version = Some(learningPathToUpdate.version),
+            title = learningPathToUpdate.title.map(converterService.asTitle),
+            description = learningPathToUpdate.description.map(converterService.asDescription),
+            coverPhotoUrl = learningPathToUpdate.coverPhotoUrl,
+            duration = learningPathToUpdate.duration,
+            tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
             lastUpdated = new Date())
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
@@ -55,7 +56,7 @@ trait UpdateServiceComponent {
         case None => None
         case Some(existing) => {
           val newStatus = domain.LearningPathStatus.valueOfOrDefault(status.status)
-          if(newStatus == domain.LearningPathStatus.PUBLISHED){
+          if (newStatus == domain.LearningPathStatus.PUBLISHED) {
             existing.validateForPublishing()
           }
 
@@ -87,57 +88,64 @@ trait UpdateServiceComponent {
     }
 
     def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
-      withIdAndAccessGranted(learningPathId, owner) match {
-        case None => None
-        case Some(learningPath) => inTransaction {
-          val newSeqNo = learningPath.learningsteps.isEmpty match {
-            case true => 0
-            case false => learningPath.learningsteps.map(_.seqNo).max + 1
+      optimisticLockRetries(10) {
+        withIdAndAccessGranted(learningPathId, owner) match {
+          case None => None
+          case Some(learningPath) => {
+            val newSeqNo = learningPath.learningsteps.isEmpty match {
+              case true => 0
+              case false => learningPath.learningsteps.map(_.seqNo).max + 1
+            }
+
+            val newStep = domain.LearningStep(None, None, None, learningPath.id, newSeqNo,
+              newLearningStep.title.map(converterService.asTitle),
+              newLearningStep.description.map(converterService.asDescription),
+              newLearningStep.embedContent.map(converterService.asEmbedUrl),
+              StepType.valueOfOrDefault(newLearningStep.`type`),
+              newLearningStep.license)
+
+            val (insertedStep, updatedPath) = inTransaction { implicit session =>
+              val insertedStep = learningPathRepository.insertLearningStep(newStep)
+              val updatedPath = learningPathRepository.update(learningPath.copy(
+                learningsteps = learningPath.learningsteps :+ insertedStep,
+                lastUpdated = new Date()))
+
+              (insertedStep, updatedPath)
+            }
+            if (updatedPath.isPublished) {
+              searchIndexService.indexLearningPath(updatedPath)
+            }
+            Some(converterService.asApiLearningStep(insertedStep, updatedPath))
           }
-
-          val newStep = domain.LearningStep(
-            None,
-            None,
-            learningPath.id,
-            newSeqNo,
-            newLearningStep.title.map(converterService.asTitle),
-            newLearningStep.description.map(converterService.asDescription),
-            newLearningStep.embedContent.map(converterService.asEmbedUrl),
-            StepType.valueOfOrDefault(newLearningStep.`type`),
-            newLearningStep.license)
-
-          val insertedStep = learningPathRepository.insertLearningStep(newStep)
-          val updatedPath = learningPathRepository.update(learningPath.copy(
-            learningsteps = learningPath.learningsteps :+ insertedStep,
-            lastUpdated = new Date()))
-
-          if (updatedPath.isPublished) {
-            searchIndexService.indexLearningPath(updatedPath)
-          }
-
-          Some(converterService.asApiLearningStep(insertedStep, updatedPath))
         }
       }
     }
 
-    def updateLearningStep(learningPathId: Long, learningStepId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
+
+    def updateLearningStep(learningPathId: Long, learningStepId: Long, learningStepToUpdate: UpdatedLearningStep, owner: String): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
         case Some(learningPath) => {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
-            case Some(existing) => inTransaction {
+            case Some(existing) => {
               val toUpdate = existing.copy(
-                title = newLearningStep.title.map(converterService.asTitle),
-                description = newLearningStep.description.map(converterService.asDescription),
-                embedUrl = newLearningStep.embedContent.map(converterService.asEmbedUrl),
-                `type` = domain.StepType.valueOfOrDefault(newLearningStep.`type`),
-                license = newLearningStep.license)
+                version = Some(learningStepToUpdate.version),
+                title = learningStepToUpdate.title.map(converterService.asTitle),
+                description = learningStepToUpdate.description.map(converterService.asDescription),
+                embedUrl = learningStepToUpdate.embedContent.map(converterService.asEmbedUrl),
+                `type` = domain.StepType.valueOfOrDefault(learningStepToUpdate.`type`),
+                license = learningStepToUpdate.license)
 
-              val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
-              val updatedPath = learningPathRepository.update(learningPath.copy(
-                learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
-                lastUpdated = new Date()))
+              val (updatedStep, updatedPath) = inTransaction { implicit session =>
+                val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
+                val updatedPath = learningPathRepository.update(learningPath.copy(
+                  learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
+                  lastUpdated = new Date()))
+
+                (updatedStep, updatedPath)
+              }
+
               if (updatedPath.isPublished) {
                 searchIndexService.indexLearningPath(updatedPath)
               }
@@ -155,15 +163,18 @@ trait UpdateServiceComponent {
         case Some(learningPath) => {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => false
-            case Some(existing) => inTransaction {
-              learningPathRepository.deleteLearningStep(learningPathId, learningStepId)
-              learningPathRepository.learningStepsFor(learningPathId).filter(_.seqNo > existing.seqNo).foreach(toUpdate => {
-                learningPathRepository.updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
-              })
+            case Some(existing) => {
 
-              val updatedPath = learningPathRepository.update(learningPath.copy(
-                learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
-                lastUpdated = new Date()))
+              val updatedPath = inTransaction { implicit session =>
+                learningPathRepository.deleteLearningStep(learningPathId, learningStepId)
+                learningPathRepository.learningStepsFor(learningPathId).filter(_.seqNo > existing.seqNo).foreach(toUpdate => {
+                  learningPathRepository.updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
+                })
+
+                learningPathRepository.update(learningPath.copy(
+                  learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
+                  lastUpdated = new Date()))
+              }
 
               if (updatedPath.isPublished) {
                 searchIndexService.indexLearningPath(updatedPath)
@@ -177,31 +188,33 @@ trait UpdateServiceComponent {
 
 
     def updateSeqNo(learningPathId: Long, learningStepId: Long, seqNo: Int, owner: String): Option[LearningStepSeqNo] = {
-      withIdAndAccessGranted(learningPathId, owner) match {
-        case None => None
-        case Some(learningPath) => {
-          learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
-            case None => None
-            case Some(learningStep) => {
-              learningPath.validateSeqNo(seqNo)
+      optimisticLockRetries(10) {
+        withIdAndAccessGranted(learningPathId, owner) match {
+          case None => None
+          case Some(learningPath) => {
+            learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
+              case None => None
+              case Some(learningStep) => {
+                learningPath.validateSeqNo(seqNo)
 
-              val from = learningStep.seqNo
-              val to = seqNo
-              val toUpdate = learningPath.learningsteps.filter(step => rangeToUpdate(from, to).contains(step.seqNo))
+                val from = learningStep.seqNo
+                val to = seqNo
+                val toUpdate = learningPath.learningsteps.filter(step => rangeToUpdate(from, to).contains(step.seqNo))
 
-              def addOrSubtract(seqNo: Int): Int = from > to match {
-                case true => seqNo + 1
-                case false => seqNo - 1
+                def addOrSubtract(seqNo: Int): Int = from > to match {
+                  case true => seqNo + 1
+                  case false => seqNo - 1
+                }
+
+                inTransaction { implicit session =>
+                  learningPathRepository.updateLearningStep(learningStep.copy(seqNo = seqNo))
+                  toUpdate.foreach(step => {
+                    learningPathRepository.updateLearningStep(step.copy(seqNo = addOrSubtract(step.seqNo)))
+                  })
+                }
+
+                Some(LearningStepSeqNo(seqNo))
               }
-
-              inTransaction {
-                learningPathRepository.updateLearningStep(learningStep.copy(seqNo = seqNo))
-                toUpdate.foreach(step => {
-                  learningPathRepository.updateLearningStep(step.copy(seqNo = addOrSubtract(step.seqNo)))
-                })
-              }
-
-              Some(LearningStepSeqNo(seqNo))
             }
           }
         }
@@ -210,8 +223,8 @@ trait UpdateServiceComponent {
 
     def rangeToUpdate(from: Int, to: Int): Range = {
       from > to match {
-        case true => to to from-1
-        case false => from+1 to to
+        case true => to to from - 1
+        case false => from + 1 to to
       }
     }
 
@@ -220,5 +233,15 @@ trait UpdateServiceComponent {
       learningPath.foreach(_.verifyOwner(owner))
       learningPath
     }
+
+    def optimisticLockRetries[T](n: Int)(fn: => T): T = {
+      try {
+        fn
+      } catch {
+        case ole: OptimisticLockException => if (n > 1) optimisticLockRetries(n - 1)(fn) else throw ole
+        case t: Throwable => throw t
+      }
+    }
   }
+
 }

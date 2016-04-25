@@ -6,7 +6,7 @@ import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
-class TitleValidatorTest extends UnitSuite with TestEnvironment{
+class TitleValidatorTest extends UnitSuite {
 
   var validator: TitleValidator = _
 

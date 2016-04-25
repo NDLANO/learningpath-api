@@ -3,7 +3,7 @@ import java.util.Properties
 
 import sbtdocker.Instructions
 
-val Scalaversion = "2.11.6"
+val Scalaversion = "2.11.8"
 val Scalatraversion = "2.3.1"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
@@ -24,17 +24,22 @@ lazy val commonSettings = Seq(
   scalaVersion := Scalaversion
 )
 
+lazy val ITest = config("it") extend(Test)
+
 lazy val learningpath_api = (project in file(".")).
+  configs(ITest).
   settings(commonSettings: _*).
+  settings(inConfig(ITest)(Defaults.testTasks): _*).
   settings(
     name := "learningpath-api",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-    scalacOptions := Seq("-target:jvm-1.8"),
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    scalacOptions := Seq("-target:jvm-1.7"),
     libraryDependencies ++= Seq(
       "ndla" %% "logging" % "0.1-SNAPSHOT",
       "ndla" %% "logging" % "0.1-SNAPSHOT" % "test" classifier "tests",
       "ndla" %% "network" % "0.1-SNAPSHOT",
       "ndla" %% "mapping" % "0.1-SNAPSHOT",
+      "org.specs2" %% "specs2-core" % "2.4.14" % "test",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
@@ -50,7 +55,9 @@ lazy val learningpath_api = (project in file(".")).
       "com.netaporter" %% "scala-uri" % "0.4.12",
       "org.jsoup" % "jsoup" % "1.7.3",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
-      "org.mockito" % "mockito-all" % MockitoVersion % "test")
+      "org.mockito" % "mockito-all" % MockitoVersion % "test",
+      "com.h2database"  %  "h2" % "1.4.191",
+      "org.flywaydb" % "flyway-core" % "4.0")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
 assemblyJarName in assembly := "learningpath-api.jar"
@@ -65,7 +72,10 @@ assemblyMergeStrategy in assembly := {
 }
 
 // Don't run Integration tests in default run
-testOptions in Test += Tests.Argument("-l", "no.ndla.IntegrationTest")
+def itFilter(name: String): Boolean = name endsWith "IntegrationTest"
+def unitFilter(name: String): Boolean = (name endsWith "Test") && !itFilter(name)
+testOptions in Test := Seq(Tests.Filter(unitFilter))
+testOptions in ITest := Seq(Tests.Filter(itFilter))
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)

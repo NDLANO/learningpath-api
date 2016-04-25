@@ -1,12 +1,12 @@
 package no.ndla.learningpathapi.integration
 
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
 import org.mockito.Mockito._
 import org.scalatest.TryValues._
 
 import scalaj.http.{HttpRequest, HttpResponse}
 
-class OEmbedClientTest extends UnitSuite with TestEnvironment {
+class OEmbedClientTest extends UnitSuite with UnitTestEnvironment {
 
   val DefaultOembed = OEmbed (
     `type` = "rich",

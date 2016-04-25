@@ -1,10 +1,10 @@
 package no.ndla.learningpathapi.integration
 
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
 import org.mockito.Mockito._
 
 import scalaj.http.{HttpRequest, HttpResponse}
-class AuthClientTest extends UnitSuite with TestEnvironment{
+class AuthClientTest extends UnitSuite with UnitTestEnvironment{
 
   val parseableResponse =
     """

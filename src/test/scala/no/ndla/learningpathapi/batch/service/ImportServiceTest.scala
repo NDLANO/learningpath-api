@@ -122,7 +122,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
   test("That importNode updates for an existing node") {
     val pakke = packageWithNodeId(1)
     val steps = List(stepWithDescriptionAndLanguage(Some("Beskrivelse"), "nb"))
-    val existingLearningPath = LearningPath(Some(1), Some("1"), List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "")
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "")
 
     when(packageData.stepsForPackage(pakke)).thenReturn(steps)
     when(packageData.getTranslationSteps(any[List[Option[Package]]], any[Int])).thenReturn(List())

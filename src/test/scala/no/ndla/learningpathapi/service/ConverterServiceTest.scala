@@ -4,14 +4,13 @@ import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.learningpathapi.model.api.{Author, LearningPath}
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
 import no.ndla.network.ApplicationUrl
-
 import org.mockito.Mockito._
 
-class ConverterServiceTest extends UnitSuite with TestEnvironment {
+class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
 
-  val apiLearningPath = LearningPath(1, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""))
+  val apiLearningPath = LearningPath(1, 1, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""))
 
   var service: ConverterService = _
 

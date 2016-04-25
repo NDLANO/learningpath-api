@@ -6,9 +6,9 @@ import no.ndla.learningpathapi.model.domain.EmbedUrl
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
-class NewLearningStepValidatorTest extends UnitSuite with TestEnvironment {
+class LearningStepValidatorTest extends UnitSuite {
 
-  var validator: NewLearningStepValidator = _
+  var validator: LearningStepValidator = _
 
   val ValidLearningStep = NewLearningStep(
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -19,7 +19,7 @@ class NewLearningStepValidatorTest extends UnitSuite with TestEnvironment {
   )
 
   override def beforeEach() = {
-    validator = new NewLearningStepValidator
+    validator = new LearningStepValidator
   }
 
   test("That a valid learningstep does not give an error") {

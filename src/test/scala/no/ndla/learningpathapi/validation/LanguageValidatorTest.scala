@@ -1,8 +1,8 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.UnitSuite
 
-class LanguageValidatorTest extends UnitSuite with TestEnvironment {
+class LanguageValidatorTest extends UnitSuite {
 
   var validator: LanguageValidator = _
 

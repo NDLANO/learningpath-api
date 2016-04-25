@@ -11,7 +11,7 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningPath(id: Option[Long], externalId: Option[String], title: List[Title], description: List[Description], coverPhotoUrl: Option[String],
+case class LearningPath(id: Option[Long], version:Option[Int], externalId: Option[String], title: List[Title], description: List[Description], coverPhotoUrl: Option[String],
                             duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: List[LearningPathTag],
                             owner: String, learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
@@ -95,14 +95,15 @@ object LearningPath extends SQLSyntaxSupport[LearningPath] {
   def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
     val meta = read[LearningPath](rs.string(lp.c("document")))
     LearningPath(
-      Some(rs.long(lp.c("id"))), rs.stringOpt(lp.c("external_id")), meta.title, meta.description, meta.coverPhotoUrl, meta.duration,
+      Some(rs.long(lp.c("id"))), Some(rs.int(lp.c("version"))), rs.stringOpt(lp.c("external_id")), meta.title, meta.description, meta.coverPhotoUrl, meta.duration,
       meta.status, meta.verificationStatus, meta.lastUpdated, meta.tags, meta.owner)
   }
 
   val JSonSerializer = FieldSerializer[LearningPath](
     ignore("id") orElse
     ignore("learningsteps") orElse
-    ignore("externalId")
+    ignore("externalId") orElse
+    ignore("version")
   )
 }
 

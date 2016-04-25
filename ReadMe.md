@@ -9,6 +9,9 @@ API for Learningpaths from NDLA
 ## Run tests
     sbt test
 
+## Run integration tests
+    sbt it:test
+
 ## Package and run locally
     ndla deploy local ndla/learningpath-api
 

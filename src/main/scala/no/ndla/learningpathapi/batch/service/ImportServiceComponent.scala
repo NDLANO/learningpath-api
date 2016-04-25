@@ -92,6 +92,7 @@ trait ImportServiceComponent {
 
       LearningPath(
         None,
+        None,
         Some(s"${pakke.packageId}"),
         titles,
         descriptions,
@@ -114,7 +115,7 @@ trait ImportServiceComponent {
 
       val embedUrls = embedUrlsAsList(step, translations)
 
-      LearningStep(None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, asLearningStepType(stepType), None)
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, asLearningStepType(stepType), None)
     }
 
     def asLearningStepType(stepType: String): StepType.Value = {

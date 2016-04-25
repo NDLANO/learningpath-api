@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.model.api
 
 import no.ndla.learningpathapi.model.domain.ValidationException
-import no.ndla.learningpathapi.validation.NewLearningPathValidator
+import no.ndla.learningpathapi.validation.LearningPathValidator
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
@@ -15,7 +15,7 @@ case class NewLearningPath(@(ApiModelProperty@field)(description = "The titles o
                            @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: List[LearningPathTag]) {
 
   def validate(): NewLearningPath = {
-    val validationResult = new NewLearningPathValidator().validate(this)
+    val validationResult = new LearningPathValidator().validate(this)
     validationResult.isEmpty match {
       case true => this
       case false => throw new ValidationException(errors = validationResult)

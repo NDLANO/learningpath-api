@@ -1,14 +1,14 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.{LearningPathTag, Description, Title, NewLearningPath}
+import no.ndla.learningpathapi.model.api.{Description, LearningPathTag, NewLearningPath, Title}
 
-class NewLearningPathValidatorTest extends UnitSuite with TestEnvironment {
+class LearningPathValidatorTest extends UnitSuite {
 
-  var validator: NewLearningPathValidator = _
+  var validator: LearningPathValidator = _
 
   override def beforeEach() = {
-    validator = new NewLearningPathValidator
+    validator = new LearningPathValidator
   }
 
   val ValidLearningPath = NewLearningPath(

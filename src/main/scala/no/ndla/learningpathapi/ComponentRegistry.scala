@@ -8,6 +8,7 @@ import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, 
 import no.ndla.learningpathapi.validation._
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.postgresql.ds.PGPoolingDataSource
+import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 
 object ComponentRegistry
@@ -33,6 +34,8 @@ object ComponentRegistry
   datasource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
   datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
   datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
+
+  ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
 
   lazy val elasticClient = ElasticClient.remote(
     ImmutableSettings.settingsBuilder().put("cluster.name", LearningpathApiProperties.SearchClusterName).build(),

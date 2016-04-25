@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.validation
 import no.ndla.learningpathapi.LearningpathApiProperties.BasicHtmlTags
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 
-class TextValidatorTest extends UnitSuite with TestEnvironment {
+class TextValidatorTest extends UnitSuite {
 
   var basicHtmlValidator: TextValidator = _
   var noHtmlValidator: TextValidator = _

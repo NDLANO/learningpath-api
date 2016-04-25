@@ -3,14 +3,12 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
-import no.ndla.learningpathapi.integration.{OEmbedClientComponent, AuthClientComponent, ElasticClientComponent, DatasourceComponent}
+import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchServiceComponent, SearchIndexServiceComponent, SearchIndexBuilderServiceComponent}
-import no.ndla.learningpathapi.validation._
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
 import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
-import scalikejdbc.DBSession
 
 trait TestEnvironment
   extends LearningPathRepositoryComponent

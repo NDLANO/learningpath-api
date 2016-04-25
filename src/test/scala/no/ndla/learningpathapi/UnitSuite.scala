@@ -3,8 +3,7 @@ package no.ndla.learningpathapi
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
 
-
-abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterEach with BeforeAndAfter {
+abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterAll with BeforeAndAfterEach {
   val DEFAULT_PAGE_SIZE = 12
   val MAX_PAGE_SIZE = 548
 
@@ -18,7 +17,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "DB_RESOURCE" -> Some("dbresource"),
     "DB_SERVER" -> Some("dbserver"),
     "DB_PORT" -> Some("1"),
-    "DB_SCHEMA" -> Some("dbschema"),
+    "DB_SCHEMA" -> Some("learningpathapi"),
 
     "SEARCH_ENGINE_ENV_TCP_PORT" -> Some("9300"),
     "SEARCH_ENGINE_ENV_CLUSTER_NAME" -> Some("search-engine"),
