@@ -22,7 +22,7 @@ case class LearningPath(@(ApiModelProperty@field)(description = "The unique id o
                         @(ApiModelProperty@field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
                         @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: List[LearningPathTag],
                         @(ApiModelProperty@field)(description = "The author of this learningpath") author: Author,
-                        @(ApiModelProperty@field)(description = "Can the user edit this learningpath") canEdit: Boolean) {
+                        @(ApiModelProperty@field)(description = "True if authenticated user may edit this learningpath") canEdit: Boolean) {
 
   def isPrivate: Boolean = {
     status == domain.LearningPathStatus.PRIVATE.toString
