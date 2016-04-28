@@ -8,7 +8,7 @@ import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 import scala.annotation.meta.field
 
 @ApiModel(description = "Information about a new learningstep")
-case class UpdatedLearningStep(@(ApiModelProperty@field)(description = "The version number for this learningstep") version: Int,
+case class UpdatedLearningStep(@(ApiModelProperty@field)(description = "The revision number for this learningstep") revision: Int,
                                @(ApiModelProperty@field)(description = "The titles of the learningstep") title: List[Title],
                                @(ApiModelProperty@field)(description = "The descriptions of the learningstep") description: List[Description],
                                @(ApiModelProperty@field)(description = "The embed content for the learningstep") embedContent: List[EmbedContent],

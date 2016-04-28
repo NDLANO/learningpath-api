@@ -7,7 +7,7 @@ import scala.annotation.meta.field
 
 @ApiModel(description = "Information about a learningstep")
 case class LearningStep(@(ApiModelProperty@field)(description = "The id of the learningstep") id: Long,
-                        @(ApiModelProperty@field)(description = "The version number for this learningstep") version: Int,
+                        @(ApiModelProperty@field)(description = "The revision number for this learningstep") revision: Int,
                         @(ApiModelProperty@field)(description = "The sequence number for the step. The first step has seqNo 0.") seqNo: Int,
                         @(ApiModelProperty@field)(description = "The titles of the learningstep") title: List[Title],
                         @(ApiModelProperty@field)(description = "The descriptions of the learningstep") description: List[Description],

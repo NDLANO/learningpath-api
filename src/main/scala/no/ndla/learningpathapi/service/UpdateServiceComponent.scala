@@ -33,7 +33,7 @@ trait UpdateServiceComponent {
         case None => None
         case Some(existing) => {
           val toUpdate = existing.copy(
-            version = Some(learningPathToUpdate.version),
+            revision = Some(learningPathToUpdate.revision),
             title = learningPathToUpdate.title.map(converterService.asTitle),
             description = learningPathToUpdate.description.map(converterService.asDescription),
             coverPhotoUrl = learningPathToUpdate.coverPhotoUrl,
@@ -130,7 +130,7 @@ trait UpdateServiceComponent {
             case None => None
             case Some(existing) => {
               val toUpdate = existing.copy(
-                version = Some(learningStepToUpdate.version),
+                revision = Some(learningStepToUpdate.revision),
                 title = learningStepToUpdate.title.map(converterService.asTitle),
                 description = learningStepToUpdate.description.map(converterService.asDescription),
                 embedUrl = learningStepToUpdate.embedContent.map(converterService.asEmbedUrl),

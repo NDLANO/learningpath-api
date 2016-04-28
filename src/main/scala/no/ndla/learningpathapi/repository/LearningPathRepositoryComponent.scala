@@ -68,29 +68,29 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def insert(learningpath: LearningPath)(implicit session: DBSession = AutoSession): LearningPath = {
-      val startVersion = 1
+      val startRevision = 1
       val dataObject = new PGobject()
       dataObject.setType("jsonb")
       dataObject.setValue(write(learningpath))
 
-      val learningPathId: Long = sql"insert into learningpaths(external_id, document, version) values(${learningpath.externalId}, $dataObject, $startVersion)".updateAndReturnGeneratedKey().apply
+      val learningPathId: Long = sql"insert into learningpaths(external_id, document, revision) values(${learningpath.externalId}, $dataObject, $startRevision)".updateAndReturnGeneratedKey().apply
       val learningSteps = learningpath.learningsteps.map(learningStep => {
         insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
       })
 
       logger.info(s"Inserted learningpath with id $learningPathId")
-      learningpath.copy(id = Some(learningPathId), version = Some(startVersion), learningsteps = learningSteps)
+      learningpath.copy(id = Some(learningPathId), revision = Some(startRevision), learningsteps = learningSteps)
     }
 
     def insertLearningStep(learningStep: LearningStep)(implicit session: DBSession = AutoSession): LearningStep = {
-      val startVersion = 1
+      val startRevision = 1
       val stepObject = new PGobject()
       stepObject.setType("jsonb")
       stepObject.setValue(write(learningStep))
 
-      val learningStepId: Long = sql"insert into learningsteps(learning_path_id, external_id, document, version) values (${learningStep.learningPathId}, ${learningStep.externalId}, $stepObject, $startVersion)".updateAndReturnGeneratedKey().apply()
+      val learningStepId: Long = sql"insert into learningsteps(learning_path_id, external_id, document, revision) values (${learningStep.learningPathId}, ${learningStep.externalId}, $stepObject, $startRevision)".updateAndReturnGeneratedKey().apply()
       logger.info(s"Inserted learningstep with id $learningStepId")
-      learningStep.copy(id = Some(learningStepId), version = Some(startVersion))
+      learningStep.copy(id = Some(learningStepId), revision = Some(startRevision))
     }
 
     def update(learningpath: LearningPath)(implicit session: DBSession = AutoSession): LearningPath = {
@@ -102,17 +102,17 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       dataObject.setType("jsonb")
       dataObject.setValue(write(learningpath))
 
-      val newVersion = learningpath.version.getOrElse(0) + 1
-      val count = sql"update learningpaths set document = $dataObject, version = ${newVersion} where id = ${learningpath.id} and version = ${learningpath.version}".update().apply
+      val newRevision = learningpath.revision.getOrElse(0) + 1
+      val count = sql"update learningpaths set document = $dataObject, revision = ${newRevision} where id = ${learningpath.id} and revision = ${learningpath.revision}".update().apply
 
       if(count != 1) {
-        val msg = s"Conflicting version is detected for learningPath with id = ${learningpath.id} and version = ${learningpath.version}"
+        val msg = s"Conflicting revision is detected for learningPath with id = ${learningpath.id} and revision = ${learningpath.revision}"
         logger.warn(msg)
         throw new OptimisticLockException(msg)
       }
 
       logger.info(s"Updated learningpath with id ${learningpath.id}")
-      learningpath.copy(version = Some(newVersion))
+      learningpath.copy(revision = Some(newRevision))
     }
 
     def updateLearningStep(learningStep: LearningStep)(implicit session: DBSession = AutoSession): LearningStep = {
@@ -124,16 +124,16 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       dataObject.setType("jsonb")
       dataObject.setValue(write(learningStep))
 
-      val newVersion = learningStep.version.getOrElse(0) + 1
-      val count = sql"update learningsteps set document = $dataObject, version = ${newVersion} where id = ${learningStep.id} and version = ${learningStep.version}".update().apply
+      val newRevision = learningStep.revision.getOrElse(0) + 1
+      val count = sql"update learningsteps set document = $dataObject, revision = ${newRevision} where id = ${learningStep.id} and revision = ${learningStep.revision}".update().apply
       if(count != 1) {
-        val msg = s"Conflicting version is detected for learningStep with id = ${learningStep.id} and version = ${learningStep.version}"
+        val msg = s"Conflicting revision is detected for learningStep with id = ${learningStep.id} and revision = ${learningStep.revision}"
         logger.warn(msg)
         throw new OptimisticLockException(msg)
       }
 
       logger.info(s"Updated learningstep with id ${learningStep.id}")
-      learningStep.copy(version = Some(newVersion))
+      learningStep.copy(revision = Some(newRevision))
     }
 
     def delete(learningPathId: Long)(implicit session: DBSession = AutoSession) = {

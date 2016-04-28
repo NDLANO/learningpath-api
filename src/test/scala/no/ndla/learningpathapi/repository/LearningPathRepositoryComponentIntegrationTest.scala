@@ -70,31 +70,31 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     val secondUpdate = repository.update(firstUpdate.copy(title = List(Title("Second change", None))))
     val thirdUpdate = repository.update(secondUpdate.copy(title = List(Title("Third change", None))))
 
-    inserted.version should equal (Some(1))
-    firstUpdate.version should equal (Some(2))
-    secondUpdate.version should equal (Some(3))
-    thirdUpdate.version should equal (Some(4))
+    inserted.revision should equal (Some(1))
+    firstUpdate.revision should equal (Some(2))
+    secondUpdate.revision should equal (Some(3))
+    thirdUpdate.revision should equal (Some(4))
 
     repository.delete(thirdUpdate.id.get)
   }
 
-  test("That trying to update a learningPath with old version throws optimistic locking exception") {
+  test("That trying to update a learningPath with old revision number throws optimistic locking exception") {
     val inserted = repository.insert(DefaultLearningPath)
     val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", None))))
 
-    assertResult(s"Conflicting version is detected for learningPath with id = ${inserted.id} and version = ${inserted.version}") {
-      intercept[OptimisticLockException] { repository.update(inserted.copy(title = List(Title("Second change, but with old version", None)))) }.getMessage
+    assertResult(s"Conflicting revision is detected for learningPath with id = ${inserted.id} and revision = ${inserted.revision}") {
+      intercept[OptimisticLockException] { repository.update(inserted.copy(title = List(Title("Second change, but with old revision", None)))) }.getMessage
     }
 
     repository.delete(inserted.id.get)
   }
 
-  test("That trying to update a learningStep with old version throws optimistic locking exception") {
+  test("That trying to update a learningStep with old revision throws optimistic locking exception") {
     val learningPath = repository.insert(DefaultLearningPath)
     val insertedStep = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
     val firstUpdate = repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", None))))
 
-    assertResult(s"Conflicting version is detected for learningStep with id = ${insertedStep.id} and version = ${insertedStep.version}") {
+    assertResult(s"Conflicting revision is detected for learningStep with id = ${insertedStep.id} and revision = ${insertedStep.revision}") {
       intercept[OptimisticLockException] { repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", None)))) }.getMessage
     }
 

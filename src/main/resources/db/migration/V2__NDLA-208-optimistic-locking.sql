@@ -1,3 +1,3 @@
--- NDLA-208: Add version column to support optimistic locking
-ALTER TABLE learningpaths ADD COLUMN VERSION INTEGER NOT NULL DEFAULT 1;
-ALTER TABLE learningsteps ADD COLUMN VERSION INTEGER NOT NULL DEFAULT 1;
+-- NDLA-208: Add revision column to support optimistic locking
+ALTER TABLE learningpaths ADD COLUMN REVISION INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE learningsteps ADD COLUMN REVISION INTEGER NOT NULL DEFAULT 1;

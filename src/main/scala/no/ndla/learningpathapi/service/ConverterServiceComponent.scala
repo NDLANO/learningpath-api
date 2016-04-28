@@ -41,7 +41,7 @@ trait ConverterServiceComponent {
 
     def asApiLearningpath(lp: domain.LearningPath): LearningPath = {
       api.LearningPath(lp.id.get,
-        lp.version.get,
+        lp.revision.get,
         lp.title.map(asApiTitle),
         lp.description.map(asApiDescription),
         createUrlToLearningPath(lp),
@@ -84,7 +84,7 @@ trait ConverterServiceComponent {
     def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): LearningStep = {
       LearningStep(
         ls.id.get,
-        ls.version.get,
+        ls.revision.get,
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
