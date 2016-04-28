@@ -13,4 +13,5 @@ case class LearningStep(@(ApiModelProperty@field)(description = "The id of the l
                         @(ApiModelProperty@field)(description = "The embed content for the learningstep") embedContent: List[EmbedContent],
                         @(ApiModelProperty@field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`: String,
                         @(ApiModelProperty@field)(description = "The license for this step.") license: Option[String],
-                        @(ApiModelProperty@field)(description = "The full url to where the complete metainformation about the learningstep can be found") metaUrl: String)
+                        @(ApiModelProperty@field)(description = "The full url to where the complete metainformation about the learningstep can be found") metaUrl: String,
+                        @(ApiModelProperty@field)(description = "True if authenticated user may edit this learningstep") canEdit: Boolean)

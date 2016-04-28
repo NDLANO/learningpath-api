@@ -25,7 +25,7 @@ trait UpdateServiceComponent {
         LearningPathVerificationStatus.EXTERNAL,
         new Date(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List())
 
-      converterService.asApiLearningpath(learningPathRepository.insert(learningPath))
+      converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
 
     def updateLearningPath(id: Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
@@ -45,7 +45,7 @@ trait UpdateServiceComponent {
             searchIndexService.indexLearningPath(updatedLearningPath)
           }
 
-          Some(converterService.asApiLearningpath(updatedLearningPath))
+          Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
         }
       }
     }
@@ -70,7 +70,7 @@ trait UpdateServiceComponent {
           }
 
 
-          Some(converterService.asApiLearningpath(updatedLearningPath))
+          Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
         }
       }
     }
@@ -115,7 +115,7 @@ trait UpdateServiceComponent {
             searchIndexService.indexLearningPath(updatedPath)
           }
 
-          Some(converterService.asApiLearningStep(insertedStep, updatedPath))
+          Some(converterService.asApiLearningStep(insertedStep, updatedPath, Option(owner)))
         }
       }
     }
@@ -142,7 +142,7 @@ trait UpdateServiceComponent {
                 searchIndexService.indexLearningPath(updatedPath)
               }
 
-              Some(converterService.asApiLearningStep(updatedStep, updatedPath))
+              Some(converterService.asApiLearningStep(updatedStep, updatedPath, Option(owner)))
             }
           }
         }

@@ -26,6 +26,13 @@ case class LearningPath(id: Option[Long], externalId: Option[String], title: Lis
     status == LearningPathStatus.NOT_LISTED
   }
 
+  def canEdit(user: Option[String]): Boolean = {
+    user match {
+      case Some(user) => user == owner
+      case None => false
+    }
+  }
+
   def verifyOwner(loggedInUser: String) = {
     if (loggedInUser != owner) {
       throw new AccessDeniedException("You do not have access to the requested resource.")
