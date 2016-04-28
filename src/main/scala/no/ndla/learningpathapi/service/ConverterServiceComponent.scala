@@ -39,7 +39,7 @@ trait ConverterServiceComponent {
       Author("Forfatter", names.mkString(" "))
     }
 
-    def asApiLearningpath(lp: domain.LearningPath): LearningPath = {
+    def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): LearningPath = {
       api.LearningPath(lp.id.get,
         lp.revision.get,
         lp.title.map(asApiTitle),
@@ -53,7 +53,8 @@ trait ConverterServiceComponent {
         lp.verificationStatus.toString,
         lp.lastUpdated,
         lp.tags.map(asApiLearningPathTag),
-        asAuthor(authClient.getUserName(lp.owner)))
+        asAuthor(authClient.getUserName(lp.owner)),
+        lp.canEdit(user))
     }
 
 
@@ -81,7 +82,7 @@ trait ConverterServiceComponent {
         learningPath.author)
     }
 
-    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): LearningStep = {
+    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): LearningStep = {
       LearningStep(
         ls.id.get,
         ls.revision.get,
@@ -90,7 +91,8 @@ trait ConverterServiceComponent {
         ls.description.map(asApiDescription),
         ls.embedUrl.map(e => asApiEmbedContent(e)),
         ls.`type`.toString,
-        ls.license, createUrlToLearningStep(ls, lp))
+        ls.license, createUrlToLearningStep(ls, lp),
+        lp.canEdit(user))
     }
 
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): LearningStepSummary = {
