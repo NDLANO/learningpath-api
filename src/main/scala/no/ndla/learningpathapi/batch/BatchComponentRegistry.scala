@@ -1,11 +1,12 @@
 package no.ndla.learningpathapi.batch
 
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.batch.integration.{KeywordsServiceComponent, CMDataComponent, PackageDataComponent}
+import no.ndla.learningpathapi.batch.integration.{CMDataComponent, KeywordsServiceComponent, PackageDataComponent}
 import no.ndla.learningpathapi.batch.service.ImportServiceComponent
 import no.ndla.learningpathapi.integration.DatasourceComponent
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.postgresql.ds.PGPoolingDataSource
+import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 
 object BatchComponentRegistry
@@ -40,6 +41,8 @@ object BatchComponentRegistry
   datasource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
   datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
   datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
+
+  ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
 
   val learningPathRepository = new LearningPathRepository
   val importService = new ImportService
