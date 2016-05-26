@@ -11,8 +11,6 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.domain.LearningPath
-import no.ndla.learningpathapi.service.ConverterServiceComponent
-import no.ndla.mapping.ISO639Mapping
 import no.ndla.mapping.ISO639Mapping._
 import org.json4s.native.Serialization._
 

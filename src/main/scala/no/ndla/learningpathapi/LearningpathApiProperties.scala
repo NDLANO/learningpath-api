@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.mapping.ISO639Mapping
 
 import scala.collection.mutable
 import scala.io.Source
@@ -34,7 +35,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val AuthHost = "auth"
   val OEmbedHost = "oembed-proxy"
-  val DefaultLanguage = "nb"
+  val DefaultLanguage = ISO639Mapping.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
 
   val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
