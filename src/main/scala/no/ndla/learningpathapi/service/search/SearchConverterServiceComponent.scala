@@ -24,7 +24,8 @@ trait SearchConverterServiceComponent {
         (titles.nb, Some(ISO639Mapping.NORWEGIAN_BOKMAL)),
         (titles.nn, Some(ISO639Mapping.NORWEGIAN_NYNORSK)),
         (titles.se, Some(ISO639Mapping.SAMI)),
-        (titles.es, Some(ISO639Mapping.SPANISH))
+        (titles.es, Some(ISO639Mapping.SPANISH)),
+        (titles.unknown, None)
       ).filter(_._1.isDefined).map(tuple => api.Title(tuple._1.get, tuple._2))
     }
 
@@ -36,7 +37,8 @@ trait SearchConverterServiceComponent {
         (descriptions.nb, Some(ISO639Mapping.NORWEGIAN_BOKMAL)),
         (descriptions.nn, Some(ISO639Mapping.NORWEGIAN_NYNORSK)),
         (descriptions.se, Some(ISO639Mapping.SAMI)),
-        (descriptions.es, Some(ISO639Mapping.SPANISH))
+        (descriptions.es, Some(ISO639Mapping.SPANISH)),
+        (descriptions.unknown, None)
       ).filter(_._1.isDefined).map(tuple => api.Description(tuple._1.get, tuple._2))
     }
 
