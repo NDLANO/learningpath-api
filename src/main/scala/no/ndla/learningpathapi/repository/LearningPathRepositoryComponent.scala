@@ -8,7 +8,6 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc._
-import scala.collection.breakOut
 
 trait LearningPathRepositoryComponent extends LazyLogging {
   this: DatasourceComponent =>
