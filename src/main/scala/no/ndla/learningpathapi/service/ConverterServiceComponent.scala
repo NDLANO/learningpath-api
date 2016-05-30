@@ -90,6 +90,7 @@ trait ConverterServiceComponent {
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
         ls.embedUrl.map(e => asApiEmbedContent(e)),
+        ls.showTitle.getOrElse(false),
         ls.`type`.toString,
         ls.license, createUrlToLearningStep(ls, lp),
         lp.canEdit(user))

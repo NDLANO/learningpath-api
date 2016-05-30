@@ -9,7 +9,7 @@ import scalikejdbc._
 
 case class LearningStep(id: Option[Long], revision:Option[Int], externalId:Option[String], learningPathId: Option[Long], seqNo: Int,
                         title: List[Title], description: List[Description], embedUrl: List[EmbedUrl],
-                        `type`: StepType.Value, license: Option[String])
+                        showTitle: Option[Boolean], `type`: StepType.Value, license: Option[String])
 
 object StepType extends Enumeration {
   val INTRODUCTION, TEXT, QUIZ, TASK, MULTIMEDIA, SUMMARY, TEST = Value
@@ -32,7 +32,7 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
 
   def apply(ls: ResultName[LearningStep])(rs: WrappedResultSet): LearningStep = {
     val meta = read[LearningStep](rs.string(ls.c("document")))
-    LearningStep(Some(rs.long(ls.c("id"))), Some(rs.int(ls.c("revision"))), rs.stringOpt(ls.c("external_id")), Some(rs.long(ls.c("learning_path_id"))), meta.seqNo, meta.title, meta.description, meta.embedUrl, meta.`type`, meta.license)
+    LearningStep(Some(rs.long(ls.c("id"))), Some(rs.int(ls.c("revision"))), rs.stringOpt(ls.c("external_id")), Some(rs.long(ls.c("learning_path_id"))), meta.seqNo, meta.title, meta.description, meta.embedUrl, meta.showTitle, meta.`type`, meta.license)
   }
 
   def opt(ls: ResultName[LearningStep])(rs: WrappedResultSet): Option[LearningStep] = rs.longOpt(ls.c("id")).map(_ => LearningStep(ls)(rs))

@@ -101,6 +101,7 @@ trait UpdateServiceComponent {
               newLearningStep.title.map(converterService.asTitle),
               newLearningStep.description.map(converterService.asDescription),
               newLearningStep.embedContent.map(converterService.asEmbedUrl),
+              newLearningStep.showTitle,
               StepType.valueOfOrDefault(newLearningStep.`type`),
               newLearningStep.license)
 
@@ -134,6 +135,7 @@ trait UpdateServiceComponent {
                 title = learningStepToUpdate.title.map(converterService.asTitle),
                 description = learningStepToUpdate.description.map(converterService.asDescription),
                 embedUrl = learningStepToUpdate.embedContent.map(converterService.asEmbedUrl),
+                showTitle = learningStepToUpdate.showTitle,
                 `type` = domain.StepType.valueOfOrDefault(learningStepToUpdate.`type`),
                 license = learningStepToUpdate.license)
 
