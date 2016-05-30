@@ -3,7 +3,6 @@ package no.ndla.learningpathapi.service
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi._
 
 
 trait ReadServiceComponent {
@@ -11,6 +10,11 @@ trait ReadServiceComponent {
   val readService: ReadService
 
   class ReadService {
+
+    def tags: List[LearningPathTag] = {
+      learningPathRepository.allPublishedTags.map(tag => LearningPathTag(tag.tag, tag.language))
+    }
+
     def withOwner(owner: String): List[LearningPathSummary] = {
       learningPathRepository.withOwner(owner).map(converterService.asApiLearningpathSummary)
     }
@@ -29,7 +33,6 @@ trait ReadServiceComponent {
         case None => None
       }
     }
-
 
     def learningstepFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, user) match {

@@ -3,11 +3,11 @@ package no.ndla.learningpathapi.repository
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.integration.DatasourceComponent
 import no.ndla.learningpathapi.model.domain._
+import org.json4s.JsonAST.{JField, JObject, JString}
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc._
-
 
 trait LearningPathRepositoryComponent extends LazyLogging {
   this: DatasourceComponent =>
@@ -170,6 +170,22 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         }
     }
 
+    def allPublishedTags(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPathTag] = {
+      val allTags = sql"""select document->>'tags' from learningpaths where document->>'status' = ${LearningPathStatus.PUBLISHED.toString}""".map(rs => {
+        rs.string(1)
+      }).list().apply()
+
+      val liste:List[LearningPathTag] = allTags.map(s => {
+        val json = org.json4s.native.JsonMethods.parse(s)
+        for {
+          JObject(child) <- json
+          JField("tag", JString(tag)) <- child
+          JField("language", JString(language)) <- child
+        } yield LearningPathTag(tag, Some(language))
+      }).flatten.distinct
+
+      liste.sortBy(_.tag)
+    }
 
     private def learningPathsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))

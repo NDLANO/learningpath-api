@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.repository
 import java.util.Date
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.{LearningPathTag, _}
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
@@ -99,6 +99,41 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     }
 
     repository.delete(learningPath.id.get)
+  }
+
+  test("That allPublishedTags returns only published tags") {
+    val publicPath = repository.insert(DefaultLearningPath.copy(
+      status = LearningPathStatus.PUBLISHED,
+      tags = List(
+        LearningPathTag("aaa", Some("nb")),
+        LearningPathTag("bbb", Some("nn")),
+        LearningPathTag("ccc", Some("en")))))
+
+    val privatePath = repository.insert(DefaultLearningPath.copy(
+      tags = List(LearningPathTag("ddd", Some("nb")))))
+
+    val publicTags = repository.allPublishedTags
+    publicTags should contain (LearningPathTag("aaa", Some("nb")))
+    publicTags should contain (LearningPathTag("bbb", Some("nn")))
+    publicTags should contain (LearningPathTag("ccc", Some("en")))
+    publicTags should not contain (LearningPathTag("ddd", Some("nb")))
+
+    repository.delete(publicPath.id.get)
+    repository.delete(privatePath.id.get)
+  }
+
+  test("That allPublishedTags removes duplicates") {
+    val publicPath1 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED, tags = List(LearningPathTag("aaa", Some("nb")), LearningPathTag("aaa", Some("nn")))))
+    val publicPath2 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED, tags = List(LearningPathTag("aaa", Some("nb")), LearningPathTag("bbb", Some("nb")))))
+
+    val publicTags = repository.allPublishedTags
+    publicTags should contain (LearningPathTag("aaa", Some("nb")))
+    publicTags should contain (LearningPathTag("aaa", Some("nn")))
+    publicTags should contain (LearningPathTag("bbb", Some("nb")))
+    publicTags.count(a => a.tag == "aaa" && a.language.contains("nb")) should be (1)
+
+    repository.delete(publicPath1.id.get)
+    repository.delete(publicPath2.id.get)
   }
 
   def deleteAllWithOwner(owner: String) = {

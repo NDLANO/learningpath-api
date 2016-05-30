@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningStep, _}
+import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningStep, LearningPathTag, _}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
@@ -192,6 +192,15 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       pathParam[String]("step_id").description("The id of the learningstep."))
       responseMessages(response403, response404, response500))
 
+  val getTags =
+    (apiOperation[List[LearningPathTag]]("getTags")
+      summary "Retrieves a list of all previously used tags in learningpaths"
+      notes "Retrieves a list of all previously used tags in learningpaths"
+      parameters(
+      headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+      headerParam[Option[String]]("app-key").description("Your app-key."))
+      responseMessages response500)
+
   before() {
     contentType = formats("json")
     LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
@@ -242,6 +251,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
         pageSize = pageSize)
     }
   }
+
 
   get("/:path_id/?", operation(getLearningpath)) {
     readService.withId(long("path_id"), optionalUsernameFromHeader) match {
@@ -365,6 +375,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
         halt(status = 204)
       }
     }
+  }
+
+  get("/tags/?", operation(getTags)) {
+    readService.tags
   }
 
   def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {
