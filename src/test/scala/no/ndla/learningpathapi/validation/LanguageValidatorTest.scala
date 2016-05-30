@@ -1,6 +1,8 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi.UnitSuite
+import no.ndla.learningpathapi.model.api.ValidationError
+import no.ndla.learningpathapi.model.domain.ValidationException
 
 class LanguageValidatorTest extends UnitSuite {
 
@@ -21,4 +23,15 @@ class LanguageValidatorTest extends UnitSuite {
     errorMessage.get.message should equal("Language 'something' is not a supported value.")
   }
 
+  test("That exception is thrown when calling singleton object") {
+    assertResult("Language 'error' is not a supported value.") {
+      intercept[ValidationException]{
+        LanguageValidator.validate("language", Some("error"))
+      }.errors.head.message
+    }
+  }
+
+  test("That input value is returned when no error") {
+    LanguageValidator.validate("language", Some("nb")) should equal (Some("nb"))
+  }
 }

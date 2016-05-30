@@ -6,8 +6,10 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningStep, _}
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
 import no.ndla.logging.LoggerContext
+import no.ndla.mapping.ISO639Mapping
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
@@ -48,7 +50,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
            Default is by -relevance (desc) when querying.
            When browsing, the default is title (asc).
            The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title""".stripMargin))
-      responseMessages response500)
+      responseMessages (response400, response500))
 
   val getMyLearningpaths =
     (apiOperation[List[LearningPathSummary]]("getMyLearningpaths")
@@ -219,7 +221,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   get("/", operation(getLearningpaths)) {
     val query = params.get("query")
-    val language = params.get("language")
+    val language = LanguageValidator.validate("language", params.get("language"))
     val sort = params.get("sort")
     val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
     val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
