@@ -37,6 +37,7 @@ object LearningpathApiProperties extends LazyLogging {
   val OEmbedHost = "oembed-proxy"
   val DefaultLanguage = ISO639Mapping.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
+  val DefaultShowTitle = false
 
   val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
     "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",
