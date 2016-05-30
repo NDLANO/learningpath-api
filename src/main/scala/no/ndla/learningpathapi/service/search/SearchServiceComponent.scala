@@ -3,19 +3,17 @@ package no.ndla.learningpathapi.service.search
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult, LearningPath}
+import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.Sort
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
-import no.ndla.learningpathapi.service.ConverterServiceComponent
-import no.ndla.learningpathapi.LearningpathApiProperties
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.indices.IndexMissingException
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.transport.RemoteTransportException
 import org.json4s.native.Serialization._
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -37,36 +35,23 @@ trait SearchServiceComponent extends LazyLogging {
     }
 
     def matchingQuery(query: Iterable[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val titleSearch = new ListBuffer[QueryDefinition]
-      titleSearch += matchQuery("title.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => titleSearch += termQuery("title.language", lang))
+      val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val descSearch = new ListBuffer[QueryDefinition]
-      descSearch += matchQuery("description.description", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => descSearch += termQuery("description.language", lang))
-
-      val stepTitleSearch = new ListBuffer[QueryDefinition]
-      stepTitleSearch += matchQuery("learningsteps.title.title", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => stepTitleSearch += termQuery("learningsteps.title.language", lang))
-
-      val stepDescSearch = new ListBuffer[QueryDefinition]
-      stepDescSearch += matchQuery("learningsteps.description.description", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => stepDescSearch += termQuery("learningsteps.description.language", lang))
-
-      val tagSearch = new ListBuffer[QueryDefinition]
-      tagSearch += matchQuery("tags.tag", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      language.foreach(lang => tagSearch += termQuery("tags.language", lang))
-
+      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       val authorSearch = matchQuery("author", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
 
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
         bool {
           should (
-            nestedQuery("title").query {bool {must (titleSearch.toList)}},
-            nestedQuery("description").query {bool {must (descSearch.toList)}},
-            nestedQuery("learningsteps.title").query {bool {must (stepTitleSearch.toList)}},
-            nestedQuery("learningsteps.description").query {bool {must (stepDescSearch.toList)}},
-            nestedQuery("tags").query {bool {must (tagSearch.toList)}},
+            nestedQuery("titles").query(titleSearch),
+            nestedQuery("descriptions").query(descSearch),
+            nestedQuery("learningsteps.titles").query(stepTitleSearch),
+            nestedQuery("learningsteps.descriptions").query(stepDescSearch),
+            nestedQuery("tags").query(tagSearch),
             authorSearch
           )
         }
@@ -100,8 +85,8 @@ trait SearchServiceComponent extends LazyLogging {
         case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
         case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
         case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByTitleAsc) => fieldSort("title.title.raw").nestedPath("title").nestedFilter(termFilter("title.language", sortingLanguage)).order(SortOrder.ASC).missing("_last")
-        case (Sort.ByTitleDesc) => fieldSort("title.title.raw").nestedPath("title").nestedFilter(termFilter("title.language", sortingLanguage)).order(SortOrder.DESC).missing("_last")
+        case (Sort.ByTitleAsc) => fieldSort(s"titles.$sortingLanguage.raw").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByTitleDesc) => fieldSort(s"titles.$sortingLanguage.raw").order(SortOrder.DESC).missing("_last")
         case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
         case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
       }
