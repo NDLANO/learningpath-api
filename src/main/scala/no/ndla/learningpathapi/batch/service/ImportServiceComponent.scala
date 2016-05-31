@@ -94,6 +94,7 @@ trait ImportServiceComponent {
         None,
         None,
         Some(s"${pakke.packageId}"),
+        None,
         titles,
         descriptions,
         imageUrl,

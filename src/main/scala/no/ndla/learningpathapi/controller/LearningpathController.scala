@@ -286,10 +286,19 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   }
 
   post("/", operation(addNewLearningpath)) {
-    val newLearningPath = extract[NewLearningPath](request.body).validate()
-    val createdLearningPath = updateService.addLearningPath(newLearningPath, usernameFromHeader)
-    logger.info(s"CREATED LearningPath with ID =  ${createdLearningPath.id}")
-    halt(status = 201, headers = Map("Location" -> createdLearningPath.metaUrl), body = createdLearningPath)
+    val newLearningPath = extract[NewLearningPath](request.body)
+    val createdLearningPath: Option[LearningPath] = optLong("copy-from") match {
+      case Some(id) => updateService.newFromExisting(id, newLearningPath.validate(titleRequired = false, descriptionRequired = false), usernameFromHeader)
+      case None => Some(updateService.addLearningPath(newLearningPath.validate(), usernameFromHeader))
+    }
+
+    createdLearningPath match {
+      case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("copy-from")} not found"))
+      case Some(learningPath) => {
+        logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
+        halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = createdLearningPath)
+      }
+    }
   }
 
   put("/:path_id/?", operation(updateLearningPath)) {
@@ -419,6 +428,10 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       case true => paramValue.toLong
       case false => throw new ValidationException(errors = List(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
     }
+  }
+
+  def optLong(paramName: String)(implicit request: HttpServletRequest): Option[Long] = {
+    params.get(paramName).filter(_.forall(_.isDigit)).map(_.toLong)
   }
 
 }

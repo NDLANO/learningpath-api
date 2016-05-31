@@ -3,9 +3,8 @@ package no.ndla.learningpathapi
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service._
+import no.ndla.learningpathapi.service.{Clock, _}
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
-import no.ndla.learningpathapi.validation._
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
@@ -24,6 +23,7 @@ object ComponentRegistry
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
+  with Clock
 {
   lazy val datasource = new PGPoolingDataSource()
   datasource.setUser(LearningpathApiProperties.MetaUserName)
@@ -52,4 +52,5 @@ object ComponentRegistry
   lazy val authClient = new AuthClient
   lazy val oEmbedClient = new OEmbedClient
   lazy val converterService = new ConverterService
+  lazy val clock = new SystemClock
 }
