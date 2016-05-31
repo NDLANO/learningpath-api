@@ -22,8 +22,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     List(Title("UNIT-TEST", None)),
     List(Description("UNIT-TEST", None)),
     List(EmbedUrl("http://www.vg.no", None)),
-    Some(true),
-    StepType.TEXT, None)
+    StepType.TEXT, None, true)
 
   override def beforeEach() = {
     repository = new LearningPathRepository()

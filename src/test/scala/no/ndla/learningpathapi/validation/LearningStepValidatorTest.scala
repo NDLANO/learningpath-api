@@ -14,7 +14,7 @@ class LearningStepValidatorTest extends UnitSuite {
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("<strong>Gyldig description</strong>", Some("nb"))),
     embedContent = List(EmbedContent("http://www.ndla.no/123", Some("html"), Some("nb"))),
-    showTitle = Some(true),
+    showTitle = true,
     `type` = "TEXT",
     license = Some("Lisens")
   )

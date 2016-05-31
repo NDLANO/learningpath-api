@@ -21,8 +21,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
   val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
 
-  val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(), List(), List(), Some(true), StepType.TEXT, None)
-  val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(), List(), List(), Some(true), StepType.TEXT, None)
+  val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, true)
+  val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, false)
 
   override def beforeEach() = {
     service = new ReadService

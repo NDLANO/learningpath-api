@@ -19,15 +19,15 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(), List(), List(), Some(true), StepType.TEXT, None)
-  val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(), List(), List(), Some(true), StepType.TEXT, None)
-  val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(), List(), List(), Some(true), StepType.TEXT, None)
-  val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(), List(), List(), Some(true), StepType.TEXT, None)
-  val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), Some(true), StepType.TEXT, None)
-  val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), Some(true), StepType.TEXT, None)
+  val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(), List(), List(), StepType.TEXT, None, showTitle = true)
+  val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = false)
+  val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = true)
+  val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false)
+  val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), StepType.TEXT, None, showTitle = true)
+  val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false)
 
-  val NEW_STEP = NewLearningStep(List(), List(), List(), Some(true), "", None)
-  val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), Some(true), "", None)
+  val NEW_STEP = NewLearningStep(List(), List(), List(), true, "", None)
+  val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), false, "", None)
 
   val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, List(), List(), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)

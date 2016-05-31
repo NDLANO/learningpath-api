@@ -101,9 +101,9 @@ trait UpdateServiceComponent {
               newLearningStep.title.map(converterService.asTitle),
               newLearningStep.description.map(converterService.asDescription),
               newLearningStep.embedContent.map(converterService.asEmbedUrl),
-              newLearningStep.showTitle,
               StepType.valueOfOrDefault(newLearningStep.`type`),
-              newLearningStep.license)
+              newLearningStep.license,
+              newLearningStep.showTitle)
 
             val (insertedStep, updatedPath) = inTransaction { implicit session =>
               val insertedStep = learningPathRepository.insertLearningStep(newStep)
