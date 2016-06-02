@@ -67,6 +67,7 @@ trait ConverterServiceComponent {
         learningpath.duration,
         learningpath.status.toString,
         learningpath.lastUpdated,
+        learningpath.tags.map(asApiLearningPathTag),
         asAuthor(authClient.getUserName(learningpath.owner)))
     }
 
@@ -79,6 +80,7 @@ trait ConverterServiceComponent {
         learningPath.duration,
         learningPath.status,
         learningPath.lastUpdated,
+        learningPath.tags,
         learningPath.author)
     }
 

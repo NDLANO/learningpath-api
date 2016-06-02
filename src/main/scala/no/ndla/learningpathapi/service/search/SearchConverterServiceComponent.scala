@@ -42,6 +42,18 @@ trait SearchConverterServiceComponent {
       ).filter(_._1.isDefined).map(tuple => api.Description(tuple._1.get, tuple._2))
     }
 
+    def asApiLearningPathTag(tags: SearchableTags): List[api.LearningPathTag] = {
+      tags.zh.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.CHINESE))) :::
+      tags.en.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.ENGLISH))) :::
+      tags.fr.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.FRENCH))) :::
+      tags.de.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.GERMAN))) :::
+      tags.nb.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_BOKMAL))) :::
+      tags.nn.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_NYNORSK))) :::
+      tags.se.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SAMI))) :::
+      tags.es.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SPANISH))) :::
+      tags.unknown.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.UNKNOWN)))
+    }
+
     def asApiLearningPathSummary(searchableLearningPath: SearchableLearningPath): LearningPathSummary = {
       LearningPathSummary(
         searchableLearningPath.id,
@@ -52,6 +64,7 @@ trait SearchConverterServiceComponent {
         searchableLearningPath.duration,
         searchableLearningPath.status,
         searchableLearningPath.lastUpdated,
+        asApiLearningPathTag(searchableLearningPath.tags),
         asAuthor(searchableLearningPath.author)
       )
     }
