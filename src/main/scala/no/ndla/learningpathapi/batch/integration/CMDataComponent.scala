@@ -47,8 +47,11 @@ trait CMDataComponent {
       }
     }
 
-    def imagePathForNid(imageNid: Option[Int]): Option[String] = {
-      val ThumbUrlPrefix = "http://api.ndla.no/images/thumbs/"
+    def imagePathForNid(imageNid: Option[Int], environment: String): Option[String] = {
+      val ThumbUrlPrefix = environment match {
+        case "prod" => "http://api.ndla.no/images/thumbs/"
+        case _ => s"http://api.$environment.ndla.no/images/thumbs/"
+      }
 
       imageNid match {
         case None => None

@@ -12,11 +12,16 @@ trait ImportServiceComponent {
   val importService: ImportService
 
   class ImportService {
-    def doImport() = {
+    def doImport(environment: String) = {
       val nodes: List[Node] = cmData.allLearningPaths()
-      nodes.filterNot(_.isTranslation).foreach(node => {
-        importNode(packageData.packageFor(node), getTranslations(node, nodes), cmData.imagePathForNid(node.imageNid))
+      val nodesToImport = nodes.filterNot(_.isTranslation)
+      val imagesToImport = nodesToImport.flatMap(_.imageNid)
+
+      nodesToImport.foreach(node => {
+        importNode(packageData.packageFor(node), getTranslations(node, nodes), cmData.imagePathForNid(node.imageNid, environment))
       })
+
+      logger.info("Need to import images with id: {}", imagesToImport.mkString(","))
     }
 
     def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]], imageUrl: Option[String]) = {
