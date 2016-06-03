@@ -4,12 +4,11 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningStep, LearningPathTag, _}
+import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTag, LearningStep, _}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
 import no.ndla.logging.LoggerContext
-import no.ndla.mapping.ISO639Mapping
 import no.ndla.network.ApplicationUrl
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
@@ -41,7 +40,8 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
       parameters(
       headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
       headerParam[Option[String]]("app-key").description("Your app-key."),
-      queryParam[Option[String]]("query").description("Return only Learningpaths's with content matching the specified query."),
+      queryParam[Option[String]]("query").description("Return only Learningpaths with content matching the specified query."),
+      queryParam[Option[String]]("tag").description("Return only Learningpaths that are tagged with this exact tag."),
       queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
       queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
       queryParam[Option[Int]]("page-size").description(s"The number of search hits to display for each page. Default is ${LearningpathApiProperties.DefaultPageSize}. Max page-size is ${LearningpathApiProperties.MaxPageSize}"),
@@ -230,6 +230,7 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
 
   get("/", operation(getLearningpaths)) {
     val query = params.get("query")
+    val tag = params.get("tag").map(_.trim)
     val language = LanguageValidator.validate("language", params.get("language"))
     val sort = params.get("sort")
     val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
@@ -239,12 +240,14 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
     query match {
       case Some(q) => searchService.matchingQuery(
         query = q.toLowerCase.split(" ").map(_.trim),
+        taggedWith = tag,
         language = language,
         sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
         page = page,
         pageSize = pageSize
       )
       case None => searchService.all(
+        taggedWith = tag,
         sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
         language = language,
         page = page,

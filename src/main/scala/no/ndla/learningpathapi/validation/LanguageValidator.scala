@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.api.{LearningPathTag, ValidationMessage}
 import no.ndla.learningpathapi.model.domain.ValidationException
 import no.ndla.mapping.ISO639Mapping
 
