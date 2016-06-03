@@ -10,7 +10,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   var repository: LearningPathRepository = _
 
   val DefaultLearningPath = LearningPath(
-    None, None, None,
+    None, None, None, None,
     List(Title("UNIT-TEST-1", None)),
     List(Description("UNIT-TEST", None)), None, None,
     LearningPathStatus.PRIVATE,

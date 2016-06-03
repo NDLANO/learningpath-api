@@ -42,6 +42,7 @@ trait ConverterServiceComponent {
     def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): LearningPath = {
       api.LearningPath(lp.id.get,
         lp.revision.get,
+        lp.isBasedOn,
         lp.title.map(asApiTitle),
         lp.description.map(asApiDescription),
         createUrlToLearningPath(lp),

@@ -23,7 +23,8 @@ trait TestEnvironment
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
-  with MockitoSugar {
+  with MockitoSugar
+  with Clock {
 
   val datasource = mock[DataSource]
   val elasticClient = mock[ElasticClient]
@@ -38,6 +39,7 @@ trait TestEnvironment
   val authClient = mock[AuthClient]
   val oEmbedClient = mock[OEmbedClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
+  val clock = mock[SystemClock]
 
   def resetMocks() = {
     Mockito.reset(

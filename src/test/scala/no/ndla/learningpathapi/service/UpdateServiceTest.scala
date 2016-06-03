@@ -29,8 +29,9 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val NEW_STEP = NewLearningStep(List(), List(), List(), true, "", None)
   val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), false, "", None)
 
-  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, List(), List(), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, List())
+  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
 
@@ -417,4 +418,110 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     verify(learningPathRepository, times(2)).updateLearningStep(any[LearningStep])(any[DBSession])
   }
+
+  test("That newFromExisting throws exception when user is not owner of the path and the path is private") {
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+
+    assertResult("You do not have access to the requested resource."){
+      intercept[AccessDeniedException] {
+        service.newFromExisting(PRIVATE_ID, NEW_PRIVATE_LEARNINGPATH, PUBLISHED_OWNER)
+      }.getMessage
+    }
+  }
+
+  test("That newFromExisting returns None when given id does not exist") {
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
+    service.newFromExisting(PUBLISHED_ID, NEW_PRIVATE_LEARNINGPATH, PUBLISHED_OWNER) should be (None)
+  }
+
+  test("That basic-information unique per learningpath is reset in newFromExisting") {
+    val now = new Date()
+    when(clock.now()).thenReturn(now)
+
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH_NO_STEPS))
+    when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
+
+    service.newFromExisting(PUBLISHED_ID, NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
+    val expectedNewLearningPath = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(
+      id = None,
+      revision = None,
+      externalId = None,
+      isBasedOn = Some(PUBLISHED_ID),
+      status = domain.LearningPathStatus.PRIVATE,
+      verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+      owner = PRIVATE_OWNER,
+      lastUpdated = now
+    )
+
+    verify(learningPathRepository, times(1)).insert(eqTo(expectedNewLearningPath))
+  }
+
+  test("That all editable fields are overridden if specified in input in newFromExisting") {
+    val now = new Date()
+    when(clock.now()).thenReturn(now)
+
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH_NO_STEPS))
+    when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
+
+    val titlesToOverride = List(api.Title("Overridden title", Some("nb")))
+    val descriptionsToOverride = List(api.Description("Overridden description", Some("nb")))
+    val tagsToOverride = List(api.LearningPathTag("Overridden tag", Some("nb")))
+    val coverPhotoToOverride = Some("OverridenUrlToCoverPhoto")
+    val durationOverride = Some(100)
+
+    service.newFromExisting(PUBLISHED_ID,
+      NEW_PRIVATE_LEARNINGPATH.copy(
+        title = titlesToOverride,
+        description = descriptionsToOverride,
+        tags = tagsToOverride,
+        coverPhotoUrl = coverPhotoToOverride,
+        duration = durationOverride),
+      PRIVATE_OWNER)
+
+    val expectedNewLearningPath = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(
+      id = None,
+      revision = None,
+      externalId = None,
+      isBasedOn = Some(PUBLISHED_ID),
+      status = domain.LearningPathStatus.PRIVATE,
+      verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+      owner = PRIVATE_OWNER,
+      lastUpdated = now,
+      title = titlesToOverride.map(converterService.asTitle),
+      description = descriptionsToOverride.map(converterService.asDescription),
+      tags = tagsToOverride.map(converterService.asLearningPathTag),
+      coverPhotoUrl = coverPhotoToOverride,
+      duration = durationOverride
+    )
+
+    verify(learningPathRepository, times(1)).insert(eqTo(expectedNewLearningPath))
+  }
+
+  test("That learningsteps are copied but with basic information reset in newFromExisting") {
+    val now = new Date()
+    when(clock.now()).thenReturn(now)
+
+    val toCopy = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(learningsteps = STEP1 :: Nil)
+
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
+
+    service.newFromExisting(PUBLISHED_ID, NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
+
+    val expectedNewLearningPath = PUBLISHED_LEARNINGPATH.copy(
+      id = None,
+      revision = None,
+      externalId = None,
+      isBasedOn = Some(PUBLISHED_ID),
+      status = domain.LearningPathStatus.PRIVATE,
+      verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+      owner = PRIVATE_OWNER,
+      lastUpdated = now,
+      learningsteps = PUBLISHED_LEARNINGPATH.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None))
+    )
+
+    verify(learningPathRepository, times(1)).insert(eqTo(expectedNewLearningPath))
+
+  }
+
 }

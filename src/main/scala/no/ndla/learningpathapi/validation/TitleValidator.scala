@@ -2,16 +2,17 @@ package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi.model.api.{Title, ValidationMessage}
 
-class TitleValidator {
+class TitleValidator(titleRequired: Boolean = true) {
   val MISSING_TITLE = "At least one title is required."
 
   val noHtmlTextValidator = new TextValidator(allowHtml = false)
   val languageValidator = new LanguageValidator
 
   def validate(titles: List[Title]): List[ValidationMessage] = {
-    titles.isEmpty match {
-      case true => List(ValidationMessage("title", MISSING_TITLE))
-      case false => titles.flatMap(title => validate(title))
+    (titleRequired, titles.isEmpty) match {
+      case (false, true) => List()
+      case (true, true) => List(ValidationMessage("title", MISSING_TITLE))
+      case (_, false) => titles.flatMap(title => validate(title))
     }
   }
 
