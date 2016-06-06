@@ -8,6 +8,7 @@ import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.Sort
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.transport.RemoteTransportException
@@ -31,7 +32,9 @@ trait SearchServiceComponent extends LazyLogging {
 
     def all(taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
-      val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument
+      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$language", tag)))
+
+      val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query filter(tagFilter)
 
       executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
     }
@@ -46,6 +49,8 @@ trait SearchServiceComponent extends LazyLogging {
       val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       val authorSearch = matchQuery("author", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
 
+      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$language", tag)))
+
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
         should(
           nestedQuery("titles").query(titleSearch),
@@ -55,7 +60,7 @@ trait SearchServiceComponent extends LazyLogging {
           nestedQuery("tags").query(tagSearch),
           authorSearch
         )
-        filter(nestedQuery("tags").query(termQuery("asdf", "asdf")))
+        filter(tagFilter)
       }
 
       executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
@@ -65,12 +70,7 @@ trait SearchServiceComponent extends LazyLogging {
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       try {
 
-        val filteredSearch = taggedWith match {
-          case Some(tag) => search.query(must(nestedQuery("tags").query(termQuery(s"tags.$language", tag))))
-          case None => search
-        }
-
-        val actualSearch = filteredSearch
+        val actualSearch = search
           .sort(getSortDefinition(sort, language))
           .start(startAt)
           .limit(numResults)
@@ -115,8 +115,7 @@ trait SearchServiceComponent extends LazyLogging {
 
     def errorHandler(exception: Throwable) = {
       exception match {
-        case ex: Exception =>
-          logger.error("Denne exceptionen er faktisk en " + ex.getClass.getName)
+        case ex: IndexNotFoundException =>
           logger.error(ex.getMessage)
           scheduleIndexDocuments()
           throw ex
