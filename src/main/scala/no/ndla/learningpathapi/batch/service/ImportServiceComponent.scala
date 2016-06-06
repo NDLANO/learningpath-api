@@ -18,13 +18,13 @@ trait ImportServiceComponent {
       val imagesToImport = nodesToImport.flatMap(_.imageNid)
 
       nodesToImport.foreach(node => {
-        importNode(packageData.packageFor(node), getTranslations(node, nodes), cmData.imagePathForNid(node.imageNid, environment))
+        importNode(packageData.packageFor(node), getTranslations(node, nodes), cmData.imagePathForNid(node.imageNid, environment), environment)
       })
 
       logger.info("Need to import images with id: {}", imagesToImport.mkString(","))
     }
 
-    def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]], imageUrl: Option[String]) = {
+    def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]], imageUrl: Option[String], environment: String) = {
       optPakke.foreach(pakke => {
         val steps = packageData.stepsForPackage(pakke)
 
@@ -35,7 +35,7 @@ trait ImportServiceComponent {
         val tags = (keywordsService.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => keywordsService.forNodeId(tra.nodeId))).distinct
         val learningSteps = steps.map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
 
-        val learningPath = asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl)
+        val learningPath = asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl, environment)
         learningPathRepository.withExternalId(learningPath.externalId) match {
           case None => {
             learningPathRepository.insert(learningPath)
@@ -48,7 +48,8 @@ trait ImportServiceComponent {
               duration = learningPath.duration,
               lastUpdated = learningPath.lastUpdated,
               tags = learningPath.tags,
-              owner = learningPath.owner
+              owner = learningPath.owner,
+              status = learningPath.status
             ))
 
             learningPath.learningsteps.foreach(learningStep => {
@@ -73,26 +74,14 @@ trait ImportServiceComponent {
       })
     }
 
-    def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[String]) = {
+    def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[String], environment: String) = {
       val duration = Some((pakke.durationHours * 60) + pakke.durationMinutes)
       val lastUpdated = pakke.lastUpdated
 
-      val owner = pakke.nodeId match {
-        case 149862 => "410714a7-c09d-4e9a-9595-e7f13e19c463" //Christer
-        case 156729 => "4b1af961-e0b9-4696-b348-f1eb2433bb40" //RST
-        case 156987 => "7848c915-d254-48a6-aa2b-b4e5adeae142" //KW
-        case 149007 => "2242c74b-42fb-4ccc-8194-c8de02a50dc2" //Remi
-        case 143822 => "0fdb3901-07bb-44f6-a0c8-3d45dbd23698" // KES
-        case default => "410714a7-c09d-4e9a-9595-e7f13e19c463" //Christer
-      }
-
-      val publishStatus = pakke.nodeId match {
-        case 149862 => LearningPathStatus.PRIVATE
-        case 156729 => LearningPathStatus.PRIVATE
-        case 156987 => LearningPathStatus.PRIVATE
-        case 149007 => LearningPathStatus.PRIVATE
-        case 143822 => LearningPathStatus.PRIVATE
-        case default => LearningPathStatus.PUBLISHED
+      val owner = environment match {
+        case "test" => "410714a7-c09d-4e9a-9595-e7f13e19c463" // Christer i test
+        case "staging" => "2dd7a2cd-b71b-4ea1-b9a3-efa4c49613ab" // Christer i staging
+        case prod => "unknown"
       }
 
       LearningPath(
@@ -104,7 +93,7 @@ trait ImportServiceComponent {
         descriptions,
         imageUrl,
         duration,
-        publishStatus,
+        LearningPathStatus.PUBLISHED,
         LearningPathVerificationStatus.CREATED_BY_NDLA,
         lastUpdated,
         tags,

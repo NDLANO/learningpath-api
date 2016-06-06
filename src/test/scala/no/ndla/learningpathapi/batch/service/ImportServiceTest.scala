@@ -114,7 +114,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
 
-    service.importNode(Some(pakke), List(), None)
+    service.importNode(Some(pakke), List(), None, "test")
 
     verify(learningPathRepository, times(1)).insert(any[LearningPath])
   }
@@ -130,7 +130,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
 
-    service.importNode(Some(pakke), List(), None)
+    service.importNode(Some(pakke), List(), None, "test")
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
   }
