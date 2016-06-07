@@ -4,7 +4,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi.UnitSuite
 import no.ndla.learningpathapi.batch.{BatchTestEnvironment, Node, Package, Step}
-import no.ndla.learningpathapi.model.domain.{LearningPath, LearningPathStatus, LearningPathVerificationStatus}
+import no.ndla.learningpathapi.model.domain._
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
@@ -133,6 +133,24 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     service.importNode(Some(pakke), List(), None, "test")
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
+  }
+
+  test("That asLearningPath returns expected values for test-environment") {
+    val pakke = packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1)
+    val titles = List(Title("Tittel", Some("nb")))
+    val descriptions = List(Description("Beskrivelse", Some("nb")))
+    val tags = List(LearningPathTag("Tag", Some("nb")))
+    val steps = List(LearningStep(None, None, None, None, 1, List(Title("StegTittel", Some("nb"))), List(Description("StegBeskrivelse", Some("nb"))), List(), StepType.INTRODUCTION, None))
+    val imageUrl = None
+
+
+    Map("test" -> ChristerTest, "staging" -> ChristerStaging, "prod" -> ChristerProd, "etannetmiljø" -> ChristerTest).foreach{ case (environment, expectedOwner) =>
+      val learningPath = service.asLearningPath(pakke, titles, descriptions, tags, steps, imageUrl, environment)
+
+      learningPath.owner should be (expectedOwner)
+      learningPath.duration should be (Some(61))
+    }
+
   }
 
   private def nodeWithNidAndTnid(nid: Long, tnid: Long): Node = Node(nid, tnid, "en", "Tittel", 1, None, "Beskrivelse")

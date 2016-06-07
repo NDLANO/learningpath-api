@@ -11,7 +11,12 @@ trait ImportServiceComponent {
   this: CMDataComponent with PackageDataComponent with LearningPathRepositoryComponent with KeywordsServiceComponent =>
   val importService: ImportService
 
+  val ChristerTest = "410714a7-c09d-4e9a-9595-e7f13e19c463"
+  val ChristerStaging = "2dd7a2cd-b71b-4ea1-b9a3-efa4c49613ab"
+  val ChristerProd = "unknown"
+
   class ImportService {
+
     def doImport(environment: String) = {
       val nodes: List[Node] = cmData.allLearningPaths()
       val nodesToImport = nodes.filterNot(_.isTranslation)
@@ -79,9 +84,10 @@ trait ImportServiceComponent {
       val lastUpdated = pakke.lastUpdated
 
       val owner = environment match {
-        case "test" => "410714a7-c09d-4e9a-9595-e7f13e19c463" // Christer i test
-        case "staging" => "2dd7a2cd-b71b-4ea1-b9a3-efa4c49613ab" // Christer i staging
-        case prod => "unknown"
+        case "test" => ChristerTest
+        case "staging" => ChristerStaging
+        case "prod" => ChristerProd
+        case _ => ChristerTest
       }
 
       LearningPath(
