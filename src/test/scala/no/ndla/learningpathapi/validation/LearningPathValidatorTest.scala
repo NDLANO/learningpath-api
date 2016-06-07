@@ -49,6 +49,10 @@ class LearningPathValidatorTest extends UnitSuite {
     errorMessages.head.message should equal("At least one description is required.")
   }
 
+  test("That validate does not return error message when no descriptions are defined and no descriptions are required") {
+    new LearningPathValidator(descriptionRequired = false).validate(ValidLearningPath.copy(description = List())) should equal (List())
+  }
+
   test("That validate returns error message when description contains html") {
     val validationErrors = validator.validate(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", Some("nb")))))
     validationErrors.size should be (1)
@@ -57,6 +61,18 @@ class LearningPathValidatorTest extends UnitSuite {
 
   test("That validate returns error when description has an illegal language") {
     val validationErrors = validator.validate(ValidLearningPath.copy(description = List(Description("Gyldig beskrivelse", Some("bergensk")))))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("description.language")
+  }
+
+  test("That validate returns error message when description contains html even if description is not required") {
+    val validationErrors = new LearningPathValidator(descriptionRequired = false).validate(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", Some("nb")))))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("description.description")
+  }
+
+  test("That validate returns error when description has an illegal language even if description is not required") {
+    val validationErrors = new LearningPathValidator(descriptionRequired = false).validate(ValidLearningPath.copy(description = List(Description("Gyldig beskrivelse", Some("bergensk")))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("description.language")
   }

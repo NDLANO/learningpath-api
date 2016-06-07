@@ -1,29 +1,59 @@
 package no.ndla.learningpathapi.service
 
-import java.util.Date
-
-import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{LearningPathVerificationStatus, OptimisticLockException, StepType}
+import no.ndla.learningpathapi.model.domain.{LearningPathStatus, LearningPathVerificationStatus, OptimisticLockException, StepType}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 
 
 trait UpdateServiceComponent {
-  this: LearningPathRepositoryComponent with ConverterServiceComponent with SearchIndexServiceComponent =>
+  this: LearningPathRepositoryComponent with ConverterServiceComponent with SearchIndexServiceComponent with Clock =>
   val updateService: UpdateService
 
   class UpdateService {
+    def newFromExisting(id: Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
+      learningPathRepository.withId(id) match {
+        case None => None
+        case Some(existing) => {
+          existing.verifyOwnerOrPublic(Some(owner))
+
+          val title = if(newLearningPath.title.nonEmpty) newLearningPath.title.map(converterService.asTitle) else existing.title
+          val description = if(newLearningPath.description.nonEmpty) newLearningPath.description.map(converterService.asDescription) else existing.description
+          val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTag) else existing.tags
+          val coverPhotoUrl = if(newLearningPath.coverPhotoUrl.nonEmpty) newLearningPath.coverPhotoUrl else existing.coverPhotoUrl
+          val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
+
+          val toInsert = existing.copy(
+            id = None,
+            revision = None,
+            externalId = None,
+            isBasedOn = existing.id,
+            title = title,
+            description = description,
+            status = LearningPathStatus.PRIVATE,
+            verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+            lastUpdated = clock.now(),
+            owner = owner,
+            learningsteps = existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
+            tags = tags,
+            coverPhotoUrl = coverPhotoUrl,
+            duration = duration)
+
+          Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
+        }
+      }
+    }
+
 
     def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
-      val learningPath = domain.LearningPath(None, None, None,
+      val learningPath = domain.LearningPath(None, None, None, None,
         newLearningPath.title.map(converterService.asTitle),
         newLearningPath.description.map(converterService.asDescription),
         newLearningPath.coverPhotoUrl,
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
-        new Date(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List())
+        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List())
 
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
@@ -39,7 +69,7 @@ trait UpdateServiceComponent {
             coverPhotoUrl = learningPathToUpdate.coverPhotoUrl,
             duration = learningPathToUpdate.duration,
             tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
-            lastUpdated = new Date())
+            lastUpdated = clock.now())
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
@@ -63,7 +93,7 @@ trait UpdateServiceComponent {
           val updatedLearningPath = learningPathRepository.update(
             existing.copy(
               status = newStatus,
-              lastUpdated = new Date()))
+              lastUpdated = clock.now()))
 
           updatedLearningPath.isPublished match {
             case true => searchIndexService.indexLearningPath(updatedLearningPath)
@@ -109,7 +139,7 @@ trait UpdateServiceComponent {
               val insertedStep = learningPathRepository.insertLearningStep(newStep)
               val updatedPath = learningPathRepository.update(learningPath.copy(
                 learningsteps = learningPath.learningsteps :+ insertedStep,
-                lastUpdated = new Date()))
+                lastUpdated = clock.now()))
 
               (insertedStep, updatedPath)
             }
@@ -143,7 +173,7 @@ trait UpdateServiceComponent {
                 val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
                 val updatedPath = learningPathRepository.update(learningPath.copy(
                   learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
-                  lastUpdated = new Date()))
+                  lastUpdated = clock.now()))
 
                 (updatedStep, updatedPath)
               }
@@ -175,7 +205,7 @@ trait UpdateServiceComponent {
 
                 learningPathRepository.update(learningPath.copy(
                   learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
-                  lastUpdated = new Date()))
+                  lastUpdated = clock.now()))
               }
 
               if (updatedPath.isPublished) {

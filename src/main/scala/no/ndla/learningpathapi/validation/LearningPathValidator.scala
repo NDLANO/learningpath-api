@@ -5,13 +5,13 @@ import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api._
 
 
-class LearningPathValidator {
+class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
   val MISSING_DESCRIPTION = "At least one description is required."
   val INVALID_COVER_PHOTO = "The url to the coverPhoto must point to an image in NDLA Image API."
 
   val languageValidator = new LanguageValidator
   val noHtmlTextValidator = new TextValidator(allowHtml = false)
-  val titleValidator = new TitleValidator
+  val titleValidator = new TitleValidator(titleRequired)
   val durationValidator = new DurationValidator
 
   def validate(updatedLearningPath: UpdatedLearningPath): List[ValidationMessage] = {
@@ -31,9 +31,10 @@ class LearningPathValidator {
   }
 
   def validateDescription(descriptions: List[Description]): List[ValidationMessage] = {
-    descriptions.isEmpty match {
-      case true => List(ValidationMessage("description", MISSING_DESCRIPTION))
-      case false => descriptions.flatMap(description => {
+    (descriptionRequired, descriptions.isEmpty) match {
+      case (false, true) => List()
+      case (true, true) => List(ValidationMessage("description", MISSING_DESCRIPTION))
+      case (_, false) => descriptions.flatMap(description => {
         noHtmlTextValidator.validate("description.description", description.description).toList :::
           languageValidator.validate("description.language", description.language).toList
       })

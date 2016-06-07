@@ -56,4 +56,14 @@ class TitleValidatorTest extends UnitSuite {
     validationErrors.head.field should equal("title.title")
     validationErrors.last.field should equal("title.title")
   }
+
+  test("That TitleValidator does not return error message when no titles are defined and no titles are required") {
+    new TitleValidator(titleRequired = false).validate(List()) should equal(List())
+  }
+
+  test("That TitleValidator returns error message for an invalid title even if no titles are required") {
+    val validationErrors = new TitleValidator(titleRequired = false).validate(List(DefaultTitle.copy(title = "<h1>Invalid text</h1>")))
+    validationErrors.size should be (1)
+    validationErrors.head.field should equal("title.title")
+  }
 }

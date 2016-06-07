@@ -14,8 +14,8 @@ case class NewLearningPath(@(ApiModelProperty@field)(description = "The titles o
                            @(ApiModelProperty@field)(description = "The duration of the learningpath in minutes. Must be greater than 0") duration: Option[Int],
                            @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: List[LearningPathTag]) {
 
-  def validate(): NewLearningPath = {
-    val validationResult = new LearningPathValidator().validate(this)
+  def validate(titleRequired: Boolean = true, descriptionRequired: Boolean = true): NewLearningPath = {
+    val validationResult = new LearningPathValidator(titleRequired, descriptionRequired).validate(this)
     validationResult.isEmpty match {
       case true => this
       case false => throw new ValidationException(errors = validationResult)
