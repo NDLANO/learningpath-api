@@ -32,8 +32,7 @@ trait SearchServiceComponent extends LazyLogging {
 
     def all(taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
-      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$language", tag)))
-
+      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query filter(tagFilter)
 
       executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
@@ -48,19 +47,22 @@ trait SearchServiceComponent extends LazyLogging {
       val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
       val authorSearch = matchQuery("author", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-
-      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$language", tag)))
+      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
 
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
-        should(
-          nestedQuery("titles").query(titleSearch),
-          nestedQuery("descriptions").query(descSearch),
-          nestedQuery("learningsteps.titles").query(stepTitleSearch),
-          nestedQuery("learningsteps.descriptions").query(stepDescSearch),
-          nestedQuery("tags").query(tagSearch),
-          authorSearch
-        )
-        filter(tagFilter)
+        bool {
+          must(
+            should(
+              nestedQuery("titles").query(titleSearch),
+              nestedQuery("descriptions").query(descSearch),
+              nestedQuery("learningsteps.titles").query(stepTitleSearch),
+              nestedQuery("learningsteps.descriptions").query(stepDescSearch),
+              nestedQuery("tags").query(tagSearch),
+              authorSearch
+            )
+            filter tagFilter
+          )
+        }
       }
 
       executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
