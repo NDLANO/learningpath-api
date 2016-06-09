@@ -41,12 +41,12 @@ trait SearchServiceComponent extends LazyLogging {
     def matchingQuery(query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val authorSearch = matchQuery("author", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" "))
+      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" "))
+      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" "))
+      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" "))
+      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" "))
+      val authorSearch = matchQuery("author", query.mkString(" "))
       val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
 
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
@@ -59,8 +59,8 @@ trait SearchServiceComponent extends LazyLogging {
               nestedQuery("learningsteps.descriptions").query(stepDescSearch),
               nestedQuery("tags").query(tagSearch),
               authorSearch
-            )
-            filter tagFilter
+            ),
+            filter (tagFilter)
           )
         }
       }
@@ -93,8 +93,8 @@ trait SearchServiceComponent extends LazyLogging {
         case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
         case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
         case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByTitleAsc) => fieldSort(s"titles.$language.raw").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByTitleDesc) => fieldSort(s"titles.$language.raw").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByTitleAsc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByTitleDesc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
         case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
         case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
       }

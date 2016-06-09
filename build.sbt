@@ -53,6 +53,7 @@ lazy val learningpath_api = (project in file(".")).
       "mysql" % "mysql-connector-java" % "5.1.36",
       "org.scalaj" %% "scalaj-http" % "1.1.5",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
+      "com.sksamuel.elastic4s" %% "elastic4s-testkit" % "2.3.0" % "test",
       "com.netaporter" %% "scala-uri" % "0.4.12",
       "org.jsoup" % "jsoup" % "1.7.3",
       "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
