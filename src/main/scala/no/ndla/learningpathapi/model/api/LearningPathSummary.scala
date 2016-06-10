@@ -11,6 +11,7 @@ import scala.annotation.meta.field
 case class LearningPathSummary(@(ApiModelProperty@field)(description = "The unique id of the learningpath") id: Long,
                                @(ApiModelProperty@field)(description = "The titles of the learningpath") title: List[Title],
                                @(ApiModelProperty@field)(description = "The descriptions of the learningpath") description: List[Description],
+                               @(ApiModelProperty@field)(description = "The introductions of the learningpath") introduction: List[Introduction],
                                @(ApiModelProperty@field)(description = "The full url to where the complete metainformation about the learningpath can be found") metaUrl: String,
                                @(ApiModelProperty@field)(description = "Url to where a cover photo can be found") coverPhotoUrl: Option[String],
                                @(ApiModelProperty@field)(description = "The duration of the learningpath in minutes") duration: Option[Int],

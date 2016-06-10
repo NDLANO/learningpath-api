@@ -4,6 +4,7 @@ import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.learningpathapi.model.api.{Author, LearningPath}
+import no.ndla.learningpathapi.model.domain.{Description, LearningStep, StepType, Title}
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
 import no.ndla.network.ApplicationUrl
 import org.mockito.Mockito._
@@ -11,7 +12,7 @@ import org.mockito.Mockito._
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
 
   val apiLearningPath = LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""), true)
-
+  val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   var service: ConverterService = _
 
   override def beforeEach() = {
@@ -27,5 +28,27 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
 
     ApplicationUrl.set(httpServletRequest)
     service.createUrlToLearningPath(apiLearningPath.copy(status = "PRIVATE")) should equal("http://localhost/servlet/1")
+  }
+
+  test("That asApiIntroduction returns an introduction for a given step") {
+    val introductions = service.asApiIntroduction(Some(domainLearningStep.copy(description = List(
+      Description("Introduksjon på bokmål", Some("nb")),
+      Description("Introduksjon på nynorsk", Some("nn")),
+      Description("Introduction in english", Some("en"))
+    ))))
+
+    introductions.size should be (3)
+    introductions.find(_.language.contains("nb")).map(_.introduction) should be (Some("Introduksjon på bokmål"))
+    introductions.find(_.language.contains("nn")).map(_.introduction) should be (Some("Introduksjon på nynorsk"))
+    introductions.find(_.language.contains("en")).map(_.introduction) should be (Some("Introduction in english"))
+  }
+
+  test("That asApiIntroduction returns empty list if no descriptions are available") {
+    val introductions = service.asApiIntroduction(Some(domainLearningStep))
+    introductions.size should be (0)
+  }
+
+  test("That asApiIntroduction returns an empty list if given a None") {
+    service.asApiIntroduction(None) should equal(List())
   }
 }

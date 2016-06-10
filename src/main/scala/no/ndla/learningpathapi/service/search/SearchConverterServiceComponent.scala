@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.service.search
 
 import no.ndla.learningpathapi.integration.AuthClientComponent
-import no.ndla.learningpathapi.model.api.{Author, LearningPathSummary}
+import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummary}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search._
@@ -54,11 +54,31 @@ trait SearchConverterServiceComponent {
       tags.unknown.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.UNKNOWN)))
     }
 
+    def asApiIntroduction(learningStep: Option[SearchableLearningStep]): List[Introduction] = {
+      learningStep.map(_.descriptions) match {
+        case None => List()
+        case Some(descriptions) => {
+          List(
+            (descriptions.zh, Some(ISO639Mapping.CHINESE)),
+            (descriptions.en, Some(ISO639Mapping.ENGLISH)),
+            (descriptions.fr, Some(ISO639Mapping.FRENCH)),
+            (descriptions.de, Some(ISO639Mapping.GERMAN)),
+            (descriptions.nb, Some(ISO639Mapping.NORWEGIAN_BOKMAL)),
+            (descriptions.nn, Some(ISO639Mapping.NORWEGIAN_NYNORSK)),
+            (descriptions.se, Some(ISO639Mapping.SAMI)),
+            (descriptions.es, Some(ISO639Mapping.SPANISH)),
+            (descriptions.unknown, Some(ISO639Mapping.UNKNOWN))
+          ).filter(_._1.isDefined).map(tuple => Introduction(tuple._1.get, tuple._2))
+        }
+      }
+    }
+
     def asApiLearningPathSummary(searchableLearningPath: SearchableLearningPath): LearningPathSummary = {
       LearningPathSummary(
         searchableLearningPath.id,
         asApiTitle(searchableLearningPath.titles),
         asApiDescription(searchableLearningPath.descriptions),
+        asApiIntroduction(searchableLearningPath.learningsteps.find(_.stepType == StepType.INTRODUCTION.toString)),
         createUrlToLearningPath(searchableLearningPath.id),
         searchableLearningPath.coverPhotoUrl,
         searchableLearningPath.duration,
@@ -128,7 +148,10 @@ trait SearchConverterServiceComponent {
     }
 
     def asSearchableLearningStep(learningStep: LearningStep): SearchableLearningStep = {
-      SearchableLearningStep(asSearchableTitles(learningStep.title), asSearchableDescriptions(learningStep.description))
+      SearchableLearningStep(
+        learningStep.`type`.toString,
+        asSearchableTitles(learningStep.title),
+        asSearchableDescriptions(learningStep.description))
     }
 
     def getAuthor(owner: String): String = {

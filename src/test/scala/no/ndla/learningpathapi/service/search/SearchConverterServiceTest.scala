@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.service.search
 
 import no.ndla.learningpathapi.model.domain.{Description, LearningPathTag, Title}
-import no.ndla.learningpathapi.model.search.{SearchableDescriptions, SearchableTitles}
+import no.ndla.learningpathapi.model.search.{SearchableDescriptions, SearchableLearningStep, SearchableTitles}
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 
 class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
@@ -132,6 +132,34 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
     searchableTags.fr should equal(Seq())
     searchableTags.se should equal(Seq())
     searchableTags.zh should equal(Seq())
+  }
+
+  test("That asApiIntroduction returns the step as an introduction in all available languages") {
+    val searchableTitles = SearchableTitles(None, None, None, None, None, None, None, None, None)
+    val searchableDescriptions = SearchableDescriptions(
+      nb = Some("Bokmål"), nn = Some("Nynorsk"), en = Some("English"),
+      None, None, None, None, None, None
+    )
+    val learningStep = SearchableLearningStep("INTRODUCTION", searchableTitles, searchableDescriptions)
+
+    val apiIntroductions = service.asApiIntroduction(Some(learningStep))
+    apiIntroductions.size should be (3)
+    apiIntroductions.find(_.language.contains("nb")).map(_.introduction) should be (Some("Bokmål"))
+    apiIntroductions.find(_.language.contains("nn")).map(_.introduction) should be (Some("Nynorsk"))
+    apiIntroductions.find(_.language.contains("en")).map(_.introduction) should be (Some("English"))
+  }
+
+  test("That asApiIntroduction returns no introduction if no descriptions are available") {
+    val searchableTitles = SearchableTitles(None, None, None, None, None, None, None, None, None)
+    val searchableDescriptions = SearchableDescriptions(None, None, None, None, None, None, None, None, None)
+    val learningStep = SearchableLearningStep("INTRODUCTION", searchableTitles, searchableDescriptions)
+
+    val apiIntroductions = service.asApiIntroduction(Some(learningStep))
+    apiIntroductions.size should be (0)
+  }
+
+  test("That asApiIntroduction returns an empty list for None") {
+    service.asApiIntroduction(None) should equal(List())
   }
 
 }

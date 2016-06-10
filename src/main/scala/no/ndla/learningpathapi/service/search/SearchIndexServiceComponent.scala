@@ -162,6 +162,7 @@ trait SearchIndexServiceComponent {
             languageSupportedField("tags"),
             "author" typed StringType,
             "learningsteps" typed NestedType as(
+              "stepType" typed StringType index "not_analyzed",
               languageSupportedField("titles"),
               languageSupportedField("descriptions")
             )

@@ -1,10 +1,8 @@
 package no.ndla.learningpathapi.service
 
-import no.ndla.learningpathapi
-import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.integration.{OEmbedClientComponent, AuthClientComponent}
+import no.ndla.learningpathapi.integration.{AuthClientComponent, OEmbedClientComponent}
 import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{NdlaUserName, EmbedUrl}
+import no.ndla.learningpathapi.model.domain.{EmbedUrl, LearningStep, NdlaUserName, StepType}
 import no.ndla.learningpathapi.model._
 import no.ndla.network.ApplicationUrl
 
@@ -59,10 +57,18 @@ trait ConverterServiceComponent {
     }
 
 
+    def asApiIntroduction(introStepOpt: Option[LearningStep]): List[Introduction] = {
+      introStepOpt match {
+        case None => List()
+        case Some(introStep) => introStep.description.map(desc => Introduction(desc.description, desc.language))
+      }
+    }
+
     def asApiLearningpathSummary(learningpath: domain.LearningPath): LearningPathSummary = {
       api.LearningPathSummary(learningpath.id.get,
         learningpath.title.map(asApiTitle),
         learningpath.description.map(asApiDescription),
+        asApiIntroduction(learningpath.learningsteps.find(_.`type` == StepType.INTRODUCTION)),
         createUrlToLearningPath(learningpath),
         learningpath.coverPhotoUrl,
         learningpath.duration,
@@ -72,21 +78,8 @@ trait ConverterServiceComponent {
         asAuthor(authClient.getUserName(learningpath.owner)))
     }
 
-    def asApiLearningPathSummary(learningPath: LearningPath): LearningPathSummary = {
-      LearningPathSummary(learningPath.id,
-        learningPath.title,
-        learningPath.description,
-        createUrlToLearningPath(learningPath),
-        learningPath.coverPhotoUrl,
-        learningPath.duration,
-        learningPath.status,
-        learningPath.lastUpdated,
-        learningPath.tags,
-        learningPath.author)
-    }
-
-    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): LearningStep = {
-      LearningStep(
+    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
+      api.LearningStep(
         ls.id.get,
         ls.revision.get,
         ls.seqNo,
