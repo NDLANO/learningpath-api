@@ -229,13 +229,13 @@ class LearningpathController(implicit val swagger: Swagger) extends ScalatraServ
   val searchService = ComponentRegistry.searchService
 
   get("/", operation(getLearningpaths)) {
-    val query = params.get("query")
-    val tag = params.get("tag").map(_.trim)
+    val query = params.get("query").filterNot(_.isEmpty)
+    val tag = params.get("tag").map(_.trim).filterNot(_.isEmpty())
     val language = LanguageValidator.validate("language", params.get("language"))
-    val sort = params.get("sort")
+    val sort = params.get("sort").filterNot(_.isEmpty)
     val pageSize = params.get("page-size").flatMap(ps => Try(ps.toInt).toOption)
     val page = params.get("page").flatMap(idx => Try(idx.toInt).toOption)
-    logger.info("GET / with params query='{}', language={}, page={}, page-size={}", query, language, page, pageSize)
+    logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}", query, language, tag, page, pageSize)
 
     query match {
       case Some(q) => searchService.matchingQuery(
