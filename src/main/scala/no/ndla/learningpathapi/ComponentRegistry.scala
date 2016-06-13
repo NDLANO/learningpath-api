@@ -5,7 +5,7 @@ import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceCompo
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{Clock, _}
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
-import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -37,8 +37,9 @@ object ComponentRegistry
 
   ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
 
-  lazy val elasticClient = ElasticClient.remote(
-    ImmutableSettings.settingsBuilder().put("cluster.name", LearningpathApiProperties.SearchClusterName).build(),
+
+  lazy val elasticClient = ElasticClient.transport(
+    Settings.settingsBuilder().put("cluster.name", LearningpathApiProperties.SearchClusterName).build(),
     ElasticsearchClientUri(s"elasticsearch://${LearningpathApiProperties.SearchHost}:${LearningpathApiProperties.SearchPort}"))
 
   lazy val searchIndexBuilderService = new SearchIndexBuilderService

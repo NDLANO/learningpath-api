@@ -8,8 +8,8 @@ import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.Sort
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.MatchQueryBuilder
-import org.elasticsearch.indices.IndexMissingException
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.transport.RemoteTransportException
 import org.json4s.native.Serialization._
@@ -22,6 +22,7 @@ trait SearchServiceComponent extends LazyLogging {
   val searchService: SearchService
 
   class SearchService {
+
     implicit object ContentHitAs extends HitAs[LearningPathSummary] {
       override def as(hit: RichSearchHit): LearningPathSummary = {
         implicit val formats = org.json4s.DefaultFormats
@@ -29,44 +30,53 @@ trait SearchServiceComponent extends LazyLogging {
       }
     }
 
-    def all(sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument
-      executeSearch(theSearch, sort, language, page, pageSize)
+    def all(taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+      val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
+      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
+      val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query filter(tagFilter)
+
+      executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
     }
 
-    def matchingQuery(query: Iterable[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def matchingQuery(query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
-      val authorSearch = matchQuery("author", query.mkString(" ")).operator(MatchQueryBuilder.Operator.AND)
+      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" "))
+      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" "))
+      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" "))
+      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" "))
+      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" "))
+      val authorSearch = matchQuery("author", query.mkString(" "))
+      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
 
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
         bool {
-          should (
-            nestedQuery("titles").query(titleSearch),
-            nestedQuery("descriptions").query(descSearch),
-            nestedQuery("learningsteps.titles").query(stepTitleSearch),
-            nestedQuery("learningsteps.descriptions").query(stepDescSearch),
-            nestedQuery("tags").query(tagSearch),
-            authorSearch
+          must(
+            should(
+              nestedQuery("titles").query(titleSearch),
+              nestedQuery("descriptions").query(descSearch),
+              nestedQuery("learningsteps.titles").query(stepTitleSearch),
+              nestedQuery("learningsteps.descriptions").query(stepDescSearch),
+              nestedQuery("tags").query(tagSearch),
+              authorSearch
+            ),
+            filter (tagFilter)
           )
         }
       }
 
-      executeSearch(theSearch, sort, language, page, pageSize)
+      executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
     }
 
-    def executeSearch(search: SearchDefinition, sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def executeSearch(search: SearchDefinition, taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       try {
 
-        search.sort(getSortDefinition(sort, language))
+        val actualSearch = search
+          .sort(getSortDefinition(sort, language))
+          .start(startAt)
+          .limit(numResults)
 
-        val actualSearch = search start startAt limit numResults
         val response = elasticClient.execute {
           actualSearch
         }.await
@@ -77,16 +87,14 @@ trait SearchServiceComponent extends LazyLogging {
       }
     }
 
-    def getSortDefinition(sort: Sort.Value, language: Option[String]): SortDefinition = {
-      val sortingLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
-
+    def getSortDefinition(sort: Sort.Value, language: String): SortDefinition = {
       sort match {
         case (Sort.ByDurationAsc) => fieldSort("duration").order(SortOrder.ASC).missing("_last")
         case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
         case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
         case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByTitleAsc) => fieldSort(s"titles.$sortingLanguage.raw").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByTitleDesc) => fieldSort(s"titles.$sortingLanguage.raw").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByTitleAsc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByTitleDesc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
         case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
         case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
       }
@@ -109,8 +117,8 @@ trait SearchServiceComponent extends LazyLogging {
 
     def errorHandler(exception: Throwable) = {
       exception match {
-        case ex: IndexMissingException =>
-          logger.error(ex.getDetailedMessage)
+        case ex: IndexNotFoundException =>
+          logger.error(ex.getMessage)
           scheduleIndexDocuments()
           throw ex
         case _ => throw exception
@@ -124,4 +132,5 @@ trait SearchServiceComponent extends LazyLogging {
       f onFailure { case t => logger.error("Unable to create index: " + t.getMessage) }
     }
   }
+
 }

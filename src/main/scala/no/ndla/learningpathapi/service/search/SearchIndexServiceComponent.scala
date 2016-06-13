@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.mappings.FieldType.{DateType, IntegerType, NestedType, StringType}
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
@@ -159,7 +159,7 @@ trait SearchIndexServiceComponent {
             "status" typed StringType index "not_analyzed",
             "verificationStatus" typed StringType index "not_analyzed",
             "lastUpdated" typed DateType,
-            languageSupportedField("tags"),
+            languageSupportedField("tags", keepRaw = true),
             "author" typed StringType,
             "learningsteps" typed NestedType as(
               "stepType" typed StringType index "not_analyzed",
