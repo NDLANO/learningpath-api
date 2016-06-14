@@ -12,5 +12,5 @@ case class SearchableLearningPath(id: Long,
                                   lastUpdated: Date,
                                   tags: SearchableTags,
                                   author: String,
-                                  learningsteps: List[SearchableLearningStep])
+                                  learningsteps: Seq[SearchableLearningStep])
 

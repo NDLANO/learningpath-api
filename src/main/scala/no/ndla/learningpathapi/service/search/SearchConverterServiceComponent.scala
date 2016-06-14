@@ -42,15 +42,15 @@ trait SearchConverterServiceComponent {
       ).filter(_._1.isDefined).map(tuple => api.Description(tuple._1.get, tuple._2))
     }
 
-    def asApiLearningPathTag(tags: SearchableTags): List[api.LearningPathTag] = {
-      tags.zh.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.CHINESE))) :::
-      tags.en.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.ENGLISH))) :::
-      tags.fr.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.FRENCH))) :::
-      tags.de.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.GERMAN))) :::
-      tags.nb.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_BOKMAL))) :::
-      tags.nn.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_NYNORSK))) :::
-      tags.se.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SAMI))) :::
-      tags.es.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SPANISH))) :::
+    def asApiLearningPathTag(tags: SearchableTags): Seq[api.LearningPathTag] = {
+      tags.zh.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.CHINESE))) ++
+      tags.en.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.ENGLISH))) ++
+      tags.fr.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.FRENCH))) ++
+      tags.de.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.GERMAN))) ++
+      tags.nb.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_BOKMAL))) ++
+      tags.nn.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_NYNORSK))) ++
+      tags.se.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SAMI))) ++
+      tags.es.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SPANISH))) ++
       tags.unknown.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.UNKNOWN)))
     }
 
@@ -105,7 +105,7 @@ trait SearchConverterServiceComponent {
         learningPath.learningsteps.map(asSearchableLearningStep).toList)
     }
 
-    def asSearchableTags(tags: List[LearningPathTag]): SearchableTags = {
+    def asSearchableTags(tags: Seq[LearningPathTag]): SearchableTags = {
       SearchableTags(
         nb = tags.filter(_.language.contains("nb")).map(_.tag),
         nn = tags.filter(_.language.contains("nn")).map(_.tag),
@@ -119,7 +119,7 @@ trait SearchConverterServiceComponent {
       )
     }
 
-    def asSearchableDescriptions(description: List[Description]): SearchableDescriptions = {
+    def asSearchableDescriptions(description: Seq[Description]): SearchableDescriptions = {
       SearchableDescriptions(
         nb = description.find(_.language.contains(ISO639Mapping.NORWEGIAN_BOKMAL)).map(_.description),
         nn = description.find(_.language.contains(ISO639Mapping.NORWEGIAN_NYNORSK)).map(_.description),
@@ -133,7 +133,7 @@ trait SearchConverterServiceComponent {
       )
     }
 
-    def asSearchableTitles(title: List[Title]): SearchableTitles = {
+    def asSearchableTitles(title: Seq[Title]): SearchableTitles = {
       SearchableTitles(
         nb = title.find(_.language.contains(ISO639Mapping.NORWEGIAN_BOKMAL)).map(_.title),
         nn = title.find(_.language.contains(ISO639Mapping.NORWEGIAN_NYNORSK)).map(_.title),

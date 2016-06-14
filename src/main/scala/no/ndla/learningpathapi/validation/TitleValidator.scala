@@ -8,7 +8,7 @@ class TitleValidator(titleRequired: Boolean = true) {
   val noHtmlTextValidator = new TextValidator(allowHtml = false)
   val languageValidator = new LanguageValidator
 
-  def validate(titles: List[Title]): List[ValidationMessage] = {
+  def validate(titles: Seq[Title]): Seq[ValidationMessage] = {
     (titleRequired, titles.isEmpty) match {
       case (false, true) => List()
       case (true, true) => List(ValidationMessage("title", MISSING_TITLE))
@@ -16,7 +16,7 @@ class TitleValidator(titleRequired: Boolean = true) {
     }
   }
 
-  private def validate(title: Title): List[ValidationMessage] = {
+  private def validate(title: Title): Seq[ValidationMessage] = {
     noHtmlTextValidator.validate("title.title", title.title).toList :::
       languageValidator.validate("title.language", title.language).toList
   }

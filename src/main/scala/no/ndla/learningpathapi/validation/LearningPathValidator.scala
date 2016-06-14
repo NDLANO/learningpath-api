@@ -14,23 +14,23 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
   val titleValidator = new TitleValidator(titleRequired)
   val durationValidator = new DurationValidator
 
-  def validate(updatedLearningPath: UpdatedLearningPath): List[ValidationMessage] = {
-    titleValidator.validate(updatedLearningPath.title) :::
-      validateDescription(updatedLearningPath.description) :::
-      validateDuration(updatedLearningPath.duration).toList :::
-      validateCoverPhoto(updatedLearningPath.coverPhotoUrl).toList :::
+  def validate(updatedLearningPath: UpdatedLearningPath): Seq[ValidationMessage] = {
+    titleValidator.validate(updatedLearningPath.title) ++
+      validateDescription(updatedLearningPath.description) ++
+      validateDuration(updatedLearningPath.duration).toList ++
+      validateCoverPhoto(updatedLearningPath.coverPhotoUrl).toList ++
       validateTags(updatedLearningPath.tags)
   }
 
-  def validate(newLearningPath: NewLearningPath): List[ValidationMessage] = {
-    titleValidator.validate(newLearningPath.title) :::
-      validateDescription(newLearningPath.description) :::
-      validateDuration(newLearningPath.duration).toList :::
-      validateCoverPhoto(newLearningPath.coverPhotoUrl).toList :::
+  def validate(newLearningPath: NewLearningPath): Seq[ValidationMessage] = {
+    titleValidator.validate(newLearningPath.title) ++
+      validateDescription(newLearningPath.description) ++
+      validateDuration(newLearningPath.duration).toList ++
+      validateCoverPhoto(newLearningPath.coverPhotoUrl).toList ++
       validateTags(newLearningPath.tags)
   }
 
-  def validateDescription(descriptions: List[Description]): List[ValidationMessage] = {
+  def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
     (descriptionRequired, descriptions.isEmpty) match {
       case (false, true) => List()
       case (true, true) => List(ValidationMessage("description", MISSING_DESCRIPTION))
@@ -64,7 +64,7 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
     })
   }
 
-  def validateTags(tags: List[LearningPathTag]): List[ValidationMessage] = {
+  def validateTags(tags: Seq[LearningPathTag]): Seq[ValidationMessage] = {
     tags.flatMap(tag => {
       noHtmlTextValidator.validate("tags.tag", tag.tag).toList :::
         languageValidator.validate("tags.language", tag.language).toList

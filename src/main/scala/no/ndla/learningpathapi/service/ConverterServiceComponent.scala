@@ -57,7 +57,7 @@ trait ConverterServiceComponent {
     }
 
 
-    def asApiIntroduction(introStepOpt: Option[LearningStep]): List[Introduction] = {
+    def asApiIntroduction(introStepOpt: Option[LearningStep]): Seq[Introduction] = {
       introStepOpt match {
         case None => List()
         case Some(introStep) => introStep.description.map(desc => Introduction(desc.description, desc.language))

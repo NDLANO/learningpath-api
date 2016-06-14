@@ -11,8 +11,8 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Option[String], isBasedOn: Option[Long], title: List[Title], description: List[Description], coverPhotoUrl: Option[String],
-                        duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: List[LearningPathTag],
+case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Option[String], isBasedOn: Option[Long], title: Seq[Title], description: Seq[Description], coverPhotoUrl: Option[String],
+                        duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: Seq[LearningPathTag],
                         owner: String, learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE

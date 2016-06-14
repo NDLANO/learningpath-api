@@ -11,25 +11,25 @@ class LearningStepValidator {
 
   val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedContent or both."
 
-  def validate(updatedLearningStep: UpdatedLearningStep): List[ValidationMessage] = {
-    titleValidator.validate(updatedLearningStep.title) :::
-      validateDescription(updatedLearningStep.description) :::
-      validateEmbedContent(updatedLearningStep.embedContent) :::
-      validateStepType(updatedLearningStep.`type`).toList :::
-      validateLicense(updatedLearningStep.license).toList :::
+  def validate(updatedLearningStep: UpdatedLearningStep): Seq[ValidationMessage] = {
+    titleValidator.validate(updatedLearningStep.title) ++
+      validateDescription(updatedLearningStep.description) ++
+      validateEmbedContent(updatedLearningStep.embedContent) ++
+      validateStepType(updatedLearningStep.`type`).toList ++
+      validateLicense(updatedLearningStep.license).toList ++
       validateThatDescriptionOrEmbedUrlOrBothIsDefined(updatedLearningStep).toList
   }
 
-  def validate(newLearningStep: NewLearningStep): List[ValidationMessage] = {
-    titleValidator.validate(newLearningStep.title) :::
-      validateDescription(newLearningStep.description) :::
-      validateEmbedContent(newLearningStep.embedContent) :::
-      validateStepType(newLearningStep.`type`).toList :::
-      validateLicense(newLearningStep.license).toList :::
+  def validate(newLearningStep: NewLearningStep): Seq[ValidationMessage] = {
+    titleValidator.validate(newLearningStep.title) ++
+      validateDescription(newLearningStep.description) ++
+      validateEmbedContent(newLearningStep.embedContent) ++
+      validateStepType(newLearningStep.`type`).toList ++
+      validateLicense(newLearningStep.license).toList ++
       validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep).toList
   }
 
-  def validateDescription(descriptions: List[Description]): List[ValidationMessage] = {
+  def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
     descriptions.isEmpty match {
       case true => List()
       case false => descriptions.flatMap(description => {
@@ -39,7 +39,7 @@ class LearningStepValidator {
     }
   }
 
-  def validateEmbedContent(embedContents: List[EmbedContent]): List[ValidationMessage] = {
+  def validateEmbedContent(embedContents: Seq[EmbedContent]): Seq[ValidationMessage] = {
     embedContents.flatMap(embedContent => {
       noHtmlTextValidator.validate("embedContent.url", embedContent.url).toList :::
         languageValidator.validate("embedContent.language", embedContent.language).toList
