@@ -8,7 +8,7 @@
 import javax.servlet.ServletContext
 
 import no.ndla.learningpathapi.controller.{AdminController, LearningpathController}
-import no.ndla.learningpathapi.{ResourcesApp, LearningpathSwagger}
+import no.ndla.learningpathapi.{ComponentRegistry, LearningpathSwagger, ResourcesApp}
 import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {
@@ -16,8 +16,8 @@ class ScalatraBootstrap extends LifeCycle {
   implicit val swagger = new LearningpathSwagger
 
   override def init(context: ServletContext) {
-    context.mount(new LearningpathController, "/learningpaths", "learningpaths")
+    context.mount(ComponentRegistry.learningpathController, "/learningpaths", "learningpaths")
+    context.mount(ComponentRegistry.adminController, "/admin")
     context.mount(new ResourcesApp, "/api-docs")
-    context.mount(new AdminController, "/admin")
   }
 }

@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi
 
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
+import no.ndla.learningpathapi.controller.{AdminController, LearningpathController}
 import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{Clock, _}
@@ -11,7 +12,9 @@ import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 
 object ComponentRegistry
-  extends LearningPathRepositoryComponent
+  extends LearningpathController
+  with AdminController
+  with LearningPathRepositoryComponent
   with ReadServiceComponent
   with UpdateServiceComponent
   with SearchConverterServiceComponent
@@ -23,8 +26,10 @@ object ComponentRegistry
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
-  with Clock
-{
+  with Clock {
+
+  implicit val swagger = new LearningpathSwagger
+
   lazy val datasource = new PGPoolingDataSource()
   datasource.setUser(LearningpathApiProperties.MetaUserName)
   datasource.setPassword(LearningpathApiProperties.MetaPassword)
@@ -54,4 +59,6 @@ object ComponentRegistry
   lazy val oEmbedClient = new OEmbedClient
   lazy val converterService = new ConverterService
   lazy val clock = new SystemClock
+  lazy val learningpathController = new LearningpathController
+  lazy val adminController = new AdminController
 }

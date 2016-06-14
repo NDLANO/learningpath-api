@@ -1,21 +1,29 @@
 package no.ndla.learningpathapi.controller
 
 
+import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.model.domain.AccessDeniedException
-import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, UnitSuite}
+import no.ndla.learningpathapi.model.api.{Author, LearningPathSummary, SearchResult, Title}
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Sort}
+import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, TestEnvironment, UnitSuite}
+import org.json4s.native.Serialization._
+import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
+import org.scalatra.test.scalatest.ScalatraFunSuite
 
-class LearningpathControllerTest extends UnitSuite {
+class LearningpathControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
+  implicit val formats = org.json4s.DefaultFormats
   implicit val swagger = new LearningpathSwagger
-  var controller:LearningpathController = _
 
+  val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""))
 
-  override def beforeEach() = {
-    controller = new LearningpathController
-  }
+  lazy val controller = new LearningpathController
+  addServlet(controller, "/*")
+
+  override def beforeEach() = resetMocks()
+
 
   test("That requireHeader returns header value when header exists") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]
@@ -49,5 +57,54 @@ class LearningpathControllerTest extends UnitSuite {
     assertResult("someotherword-123-123-123") {
       controller.usernameFromHeader
     }
+  }
+
+  test("That GET / will send all query-params to the search service") {
+    val query = "hoppetau"
+    val tag = "lek"
+    val language = "nb"
+    val page = 22
+    val pageSize = 111
+
+    val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
+    when(searchService.matchingQuery(eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+
+    get("/", Map(
+      "query" -> query,
+      "tag" -> tag,
+      "language" -> language,
+      "sort" -> "-duration",
+      "page-size" -> s"$pageSize",
+      "page" -> s"$page"
+    )) {
+      status should equal (200)
+      val convertedBody = read[SearchResult](body)
+      convertedBody.results.head.title.head.title should equal ("Tittel")
+    }
+  }
+
+  test("That GET / will handle all empty query-params as missing query params") {
+    val query = ""
+    val tag = ""
+    val language = ""
+    val page = ""
+    val pageSize = ""
+    val duration = ""
+
+    when(searchService.all(eqTo(None), eqTo(Sort.ByTitleAsc), eqTo(None), eqTo(None), eqTo(None))).thenReturn(SearchResult(-1, 1, 1, List()))
+
+    get("/", Map(
+      "query" -> query,
+      "tag" -> tag,
+      "language" -> language,
+      "sort" -> duration,
+      "page-size" -> s"$pageSize",
+      "page" -> s"$page"
+    )) {
+      status should equal (200)
+      val convertedBody = read[SearchResult](body)
+      convertedBody.totalCount should be (-1)
+    }
+
   }
 }

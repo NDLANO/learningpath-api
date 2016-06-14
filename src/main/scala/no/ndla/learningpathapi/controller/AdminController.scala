@@ -7,19 +7,24 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
 
-class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
+trait AdminController {
+  val adminController: AdminController
 
-  protected implicit override val jsonFormats: Formats = DefaultFormats
+  class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
 
-  post("/index"){
-    Ok(ComponentRegistry.searchIndexBuilderService.indexDocuments())
-  }
+    protected implicit override val jsonFormats: Formats = DefaultFormats
 
-  error{
-    case t:Throwable => {
-      logger.error(t.getMessage, t)
-      halt(status = 500, body = Error(description = t.getMessage))
+    post("/index") {
+      Ok(ComponentRegistry.searchIndexBuilderService.indexDocuments())
     }
+
+    error {
+      case t: Throwable => {
+        logger.error(t.getMessage, t)
+        halt(status = 500, body = Error(description = t.getMessage))
+      }
+    }
+
   }
 
 }

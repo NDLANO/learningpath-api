@@ -3,6 +3,7 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
+import no.ndla.learningpathapi.controller.LearningpathController
 import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -11,7 +12,8 @@ import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 
 trait TestEnvironment
-  extends LearningPathRepositoryComponent
+  extends LearningpathController
+  with LearningPathRepositoryComponent
   with ReadServiceComponent
   with UpdateServiceComponent
   with SearchConverterServiceComponent
@@ -40,6 +42,8 @@ trait TestEnvironment
   val oEmbedClient = mock[OEmbedClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
   val clock = mock[SystemClock]
+
+  val learningpathController = mock[LearningpathController]
 
   def resetMocks() = {
     Mockito.reset(

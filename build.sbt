@@ -42,6 +42,7 @@ lazy val learningpath_api = (project in file(".")).
       "joda-time" % "joda-time" % "2.8.2",
       "org.specs2" %% "specs2-core" % "2.4.14" % "test",
       "org.scalatra" %% "scalatra" % Scalatraversion,
+      "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
