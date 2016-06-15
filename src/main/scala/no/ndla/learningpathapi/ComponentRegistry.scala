@@ -61,4 +61,5 @@ object ComponentRegistry
   lazy val clock = new SystemClock
   lazy val learningpathController = new LearningpathController
   lazy val adminController = new AdminController
+  lazy val resourcesApp = new ResourcesApp
 }
