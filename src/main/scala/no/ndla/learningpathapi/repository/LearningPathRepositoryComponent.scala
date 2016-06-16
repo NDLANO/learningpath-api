@@ -47,7 +47,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningPathsWhere(sqls"lp.document->>'owner' = $owner")
     }
 
-    def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningStep] = {
+    def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {
       val ls = LearningStep.syntax("ls")
       sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.learningPathId} = $learningPathId".map(LearningStep(ls.resultName)).list().apply()
     }

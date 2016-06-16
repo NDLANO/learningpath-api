@@ -88,10 +88,31 @@ trait LearningpathController {
         pathParam[String]("path_id").description("The id of the learningpath."))
         responseMessages(response403, response404, response500))
 
+    val getLearningStepStatus =
+      (apiOperation[LearningStepStatus]("getLearningStepStatus")
+        summary "Show status for the learningstep"
+        notes "Shows status for the learningstep"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        pathParam[String]("path_id").description("The id of the learningpath."),
+        pathParam[String]("step_id").description("The id of the learningstep."))
+        responseMessages(response403, response404, response500))
+
     val getLearningsteps =
       (apiOperation[List[LearningStepSummary]]("getLearningsteps")
         summary "Show all learningsteps for given learningpath id"
         notes "Show all learningsteps for given learningpath id"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        pathParam[String]("path_id").description("The id of the learningpath."))
+        responseMessages(response403, response404, response500))
+
+    val getLearningStepsInTrash =
+      (apiOperation[List[LearningStepSummary]]("getLearningStepsInTrash")
+        summary "Show all learningsteps for the given learningpath that are marked as deleted"
+        notes "Show all learningsteps for the given learningpath that are marked as deleted"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
@@ -176,6 +197,18 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         bodyParam[LearningPathStatus])
+        responseMessages(response400, response403, response404, response500))
+
+    val updateLearningStepStatus =
+      (apiOperation[LearningStep]("updateLearningStepStatus")
+        summary "Updates the status of the given learningstep"
+        notes "Updates the status of the given learningstep"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        pathParam[String]("path_id").description("The id of the learningpath."),
+        pathParam[String]("step_id").description("The id of the learningstep."),
+        bodyParam[LearningStepStatus])
         responseMessages(response400, response403, response404, response500))
 
     val deleteLearningPath =
@@ -274,7 +307,14 @@ trait LearningpathController {
     }
 
     get("/:path_id/learningsteps/?", operation(getLearningsteps)) {
-      readService.learningstepsFor(long("path_id"), optionalUsernameFromHeader) match {
+      readService.learningstepsForWithStatus(long("path_id"), StepStatus.ACTIVE, optionalUsernameFromHeader) match {
+        case Some(x) => x
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+      }
+    }
+
+    get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
+      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(usernameFromHeader)) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
@@ -282,6 +322,13 @@ trait LearningpathController {
 
     get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
       readService.learningstepFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
+        case Some(x) => x
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+      }
+    }
+
+    get("/:path_id/learningsteps/:step_id/status/?", operation(getLearningStepStatus)) {
+      readService.learningStepStatusFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
@@ -354,6 +401,20 @@ trait LearningpathController {
       }
     }
 
+    put("/:path_id/learningsteps/:step_id/status/?", operation(updateLearningStepStatus)) {
+      val learningStepStatus = extract[LearningStepStatus](request.body).validate()
+      val stepStatus = StepStatus.valueOfOrDefault(learningStepStatus.status)
+
+      val updatedStep = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), stepStatus, usernameFromHeader)
+      updatedStep match {
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
+        case Some(learningStep) => {
+          logger.info(s"UPDATED LearningStep with id: ${params("step_id")} for LearningPath with id: ${params("path_id")} to STATUS = ${learningStep.status}")
+          Ok(body = learningStep)
+        }
+      }
+    }
+
     put("/:path_id/status/?", operation(updateLearningPathStatus)) {
       val learningPathStatus = extract[LearningPathStatus](request.body).validate()
       val updatedLearningPath: Option[LearningPath] = updateService.updateLearningPathStatus(
@@ -382,11 +443,11 @@ trait LearningpathController {
     }
 
     delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-      val deleted = updateService.deleteLearningStep(long("path_id"), long("step_id"), usernameFromHeader)
+      val deleted = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), StepStatus.DELETED, usernameFromHeader)
       deleted match {
-        case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
-        case true => {
-          logger.info(s"DELETED LearningStep with id: ${params("step_id")} for LearningPath with id: ${params("path_id")}")
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
+        case Some(learningStep) => {
+          logger.info(s"MARKED LearningStep with id: ${params("step_id")} for LearningPath with id: ${params("path_id")} as DELETED.")
           halt(status = 204)
         }
       }

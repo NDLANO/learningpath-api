@@ -2,6 +2,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.model.domain.StepStatus
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 
@@ -10,6 +11,7 @@ trait ReadServiceComponent {
   val readService: ReadService
 
   class ReadService {
+
 
     def tags: List[LearningPathTag] = {
       learningPathRepository.allPublishedTags.map(tag => LearningPathTag(tag.tag, tag.language))
@@ -27,9 +29,17 @@ trait ReadServiceComponent {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
-    def learningstepsFor(learningPathId: Long, user: Option[String] = None): Option[List[LearningStepSummary]] = {
+    def learningStepStatusFor(learningPathId: Long, learningStepId: Long, user: Option[String] = None): Option[LearningStepStatus] = {
+      learningstepFor(learningPathId, learningStepId, user).map(ls => LearningStepStatus(ls.status.toString))
+    }
+
+    def learningstepsForWithStatus(learningPathId: Long, status: StepStatus.Value, user: Option[String] = None): Option[Seq[LearningStepSummary]] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) => Some(learningPathRepository.learningStepsFor(lp.id.get).map(ls => converterService.asApiLearningStepSummary(ls, lp)).sortBy(_.seqNo))
+        case Some(lp) => Some(
+          learningPathRepository.learningStepsFor(lp.id.get)
+            .filter(_.status == status)
+            .map(ls => converterService.asApiLearningStepSummary(ls, lp)).sortBy(_.seqNo))
+
         case None => None
       }
     }
