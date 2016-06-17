@@ -196,19 +196,19 @@ trait UpdateServiceComponent {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
             case Some(learningStep) => {
-              val toUpdate = learningStep.copy(status = newStatus)
-              val learningstepsInSameLearningPathToUpdate = learningPathRepository.learningStepsFor(learningPathId).filter(_.seqNo > toUpdate.seqNo)
+              val stepToUpdate = learningStep.copy(status = newStatus)
+              val stepsToChangeSeqNoOn = learningPathRepository.learningStepsFor(learningPathId).filter(step => step.seqNo >= stepToUpdate.seqNo && step.id != stepToUpdate.id)
 
-              val learnStepssss = toUpdate.status match {
-                case StepStatus.DELETED => learningstepsInSameLearningPathToUpdate.map(step => step.copy(seqNo = step.seqNo - 1))
-                case StepStatus.ACTIVE => learningstepsInSameLearningPathToUpdate.map(step => step.copy(seqNo = step.seqNo + 1))
+              val stepsWithChangedSeqNo = stepToUpdate.status match {
+                case StepStatus.DELETED => stepsToChangeSeqNoOn.map(step => step.copy(seqNo = step.seqNo - 1))
+                case StepStatus.ACTIVE => stepsToChangeSeqNoOn.map(step => step.copy(seqNo = step.seqNo + 1))
               }
 
               val (updatedPath, updatedStep) = inTransaction{ implicit session =>
-                val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
-                learnStepssss.foreach(learningPathRepository.updateLearningStep)
+                val updatedStep = learningPathRepository.updateLearningStep(stepToUpdate)
+                stepsWithChangedSeqNo.foreach(learningPathRepository.updateLearningStep)
 
-                val newLearningSteps = learningPath.learningsteps.filterNot(step => learnStepssss.map(_.id).contains(step.id)) ++ learnStepssss
+                val newLearningSteps = learningPath.learningsteps.filterNot(step => stepsWithChangedSeqNo.map(_.id).contains(step.id)) ++ stepsWithChangedSeqNo
 
                 val updatedPath = learningPathRepository.update(learningPath.copy(
                   learningsteps = if(StepStatus.ACTIVE == updatedStep.status) newLearningSteps :+ updatedStep else newLearningSteps,

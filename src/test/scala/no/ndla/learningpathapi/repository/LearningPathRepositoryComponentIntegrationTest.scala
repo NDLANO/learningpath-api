@@ -22,7 +22,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     List(Title("UNIT-TEST", None)),
     List(Description("UNIT-TEST", None)),
     List(EmbedUrl("http://www.vg.no", None)),
-    StepType.TEXT, None, true)
+    StepType.TEXT, None, true, StepStatus.ACTIVE)
 
   override def beforeEach() = {
     repository = new LearningPathRepository()
@@ -134,6 +134,21 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
     repository.delete(publicPath1.id.get)
     repository.delete(publicPath2.id.get)
+  }
+
+  test("That only learningsteps with status ACTIVE are returned together with a learningpath") {
+    val learningPath = repository.insert(DefaultLearningPath)
+    val activeStep1 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
+    val activeStep2 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
+    val deletedStep = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id, status = StepStatus.DELETED))
+
+    learningPath.id.isDefined should be (true)
+    val savedLearningPath = repository.withId(learningPath.id.get)
+    savedLearningPath.isDefined should be (true)
+    savedLearningPath.get.learningsteps.size should be (2)
+    savedLearningPath.get.learningsteps.forall(_.status == StepStatus.ACTIVE) should be (true)
+
+    repository.delete(learningPath.id.get)
   }
 
   def deleteAllWithOwner(owner: String) = {

@@ -256,8 +256,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
 
     service.updateLearningStepStatus(PUBLISHED_ID, STEP1.id.get, StepStatus.DELETED, PUBLISHED_OWNER) should be (None)
-
-    verify(learningPathRepository, never).deleteLearningStep(PUBLISHED_ID, STEP1.id.get)
   }
 
   test("That updateLearningStepStatus returns None when the given learningstep does not exist") {
@@ -265,7 +263,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(None)
 
     service.updateLearningStepStatus(PUBLISHED_ID, STEP1.id.get, StepStatus.DELETED, PUBLISHED_OWNER) should be (None)
-    verify(learningPathRepository, never).deleteLearningStep(PUBLISHED_ID, STEP1.id.get)
   }
 
   test("That updateLearningStepStatus marks the learningstep as DELETED when the given user is the owner and the status is PRIVATE") {

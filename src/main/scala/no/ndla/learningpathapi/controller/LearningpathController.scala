@@ -313,17 +313,17 @@ trait LearningpathController {
       }
     }
 
-    get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
-      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(usernameFromHeader)) match {
-        case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-      }
-    }
-
     get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
       readService.learningstepFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+      }
+    }
+
+    get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
+      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(usernameFromHeader)) match {
+        case Some(x) => x
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
     }
 
