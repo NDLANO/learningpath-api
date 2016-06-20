@@ -2,9 +2,9 @@ package no.ndla.learningpathapi.batch
 
 import javax.sql.DataSource
 
-import no.ndla.learningpathapi.batch.integration.{KeywordsServiceComponent, PackageDataComponent, CMDataComponent}
+import no.ndla.learningpathapi.batch.integration.{CMDataComponent, KeywordsServiceComponent, PackageDataComponent}
 import no.ndla.learningpathapi.batch.service.ImportServiceComponent
-import no.ndla.learningpathapi.integration.DatasourceComponent
+import no.ndla.learningpathapi.integration.{DatasourceComponent, ImageApiClientComponent, NdlaClient}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.scalatest.mock.MockitoSugar
 
@@ -16,6 +16,8 @@ trait BatchTestEnvironment
   with PackageDataComponent
   with DatasourceComponent
   with KeywordsServiceComponent
+  with ImageApiClientComponent
+  with NdlaClient
   with MockitoSugar {
 
   val datasource = mock[DataSource]
@@ -24,4 +26,6 @@ trait BatchTestEnvironment
   val learningPathRepository = mock[LearningPathRepository]
   val importService = mock[ImportService]
   val keywordsService = mock[KeywordsService]
+  val imageApiClient = mock[ImageApiClient]
+  val ndlaClient = mock[NdlaClient]
 }

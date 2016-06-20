@@ -35,6 +35,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val AuthHost = "auth"
   val OEmbedHost = "oembed-proxy"
+  val ImageApiHost = "image-api"
   val DefaultLanguage = ISO639Mapping.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
 

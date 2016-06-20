@@ -21,7 +21,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
     revision = None, externalId = None, isBasedOn = None,
     title = List(),
     description = List(),
-    coverPhotoUrl = None,
+    coverPhoto = None,
     duration = Some(0),
     status = LearningPathStatus.PUBLISHED,
     verificationStatus = LearningPathVerificationStatus.EXTERNAL,

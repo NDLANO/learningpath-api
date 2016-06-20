@@ -18,7 +18,7 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
     titleValidator.validate(updatedLearningPath.title) ++
       validateDescription(updatedLearningPath.description) ++
       validateDuration(updatedLearningPath.duration).toList ++
-      validateCoverPhoto(updatedLearningPath.coverPhotoUrl).toList ++
+      validateCoverPhoto(updatedLearningPath.coverPhoto).toList ++
       validateTags(updatedLearningPath.tags)
   }
 
@@ -26,7 +26,7 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
     titleValidator.validate(newLearningPath.title) ++
       validateDescription(newLearningPath.description) ++
       validateDuration(newLearningPath.duration).toList ++
-      validateCoverPhoto(newLearningPath.coverPhotoUrl).toList ++
+      validateCoverPhoto(newLearningPath.coverPhoto).toList ++
       validateTags(newLearningPath.tags)
   }
 
@@ -48,8 +48,8 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
     }
   }
 
-  def validateCoverPhoto(coverPhotoUrl: Option[String]): Option[ValidationMessage] = {
-    coverPhotoUrl.flatMap(url => {
+  def validateCoverPhoto(coverPhotoOpt: Option[CoverPhoto]): Seq[ValidationMessage] = {
+    def validatePhotoUrl(url: String, field: String): Option[ValidationMessage] = {
       val possibleImageApiDomains = "api.ndla.no" :: LearningpathApiProperties.Domains.toList
       val parsedUrl = parse(url)
       val host = parsedUrl.host.getOrElse("")
@@ -59,9 +59,16 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
 
       hostCorrect && pathCorrect match {
         case true => None
-        case false => Some(ValidationMessage("coverPhotoUrl", INVALID_COVER_PHOTO))
+        case false => Some(ValidationMessage(field, INVALID_COVER_PHOTO))
       }
-    })
+    }
+
+    coverPhotoOpt match {
+      case None => List()
+      case Some(coverPhoto) => {
+        (validatePhotoUrl(coverPhoto.url, "coverPhoto.url") :: validatePhotoUrl(coverPhoto.metaUrl, "coverPhoto.metaUrl") :: Nil).flatten
+      }
+    }
   }
 
   def validateTags(tags: Seq[LearningPathTag]): Seq[ValidationMessage] = {

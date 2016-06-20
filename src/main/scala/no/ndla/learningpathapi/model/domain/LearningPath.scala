@@ -11,7 +11,7 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Option[String], isBasedOn: Option[Long], title: Seq[Title], description: Seq[Description], coverPhotoUrl: Option[String],
+case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Option[String], isBasedOn: Option[Long], title: Seq[Title], description: Seq[Description], coverPhoto: Option[CoverPhoto],
                         duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: Seq[LearningPathTag],
                         owner: String, learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
@@ -102,7 +102,7 @@ object LearningPath extends SQLSyntaxSupport[LearningPath] {
   def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
     val meta = read[LearningPath](rs.string(lp.c("document")))
     LearningPath(
-      Some(rs.long(lp.c("id"))), Some(rs.int(lp.c("revision"))), rs.stringOpt(lp.c("external_id")), meta.isBasedOn, meta.title, meta.description, meta.coverPhotoUrl, meta.duration,
+      Some(rs.long(lp.c("id"))), Some(rs.int(lp.c("revision"))), rs.stringOpt(lp.c("external_id")), meta.isBasedOn, meta.title, meta.description, meta.coverPhoto, meta.duration,
       meta.status, meta.verificationStatus, meta.lastUpdated, meta.tags, meta.owner)
   }
 

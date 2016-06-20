@@ -1,70 +1,25 @@
 package no.ndla.learningpathapi.integration
 
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
+import no.ndla.learningpathapi.model.domain.NdlaUserName
+import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 
-import scalaj.http.{HttpRequest, HttpResponse}
-class AuthClientTest extends UnitSuite with UnitTestEnvironment{
+import scala.util.{Failure, Success}
+import scalaj.http.HttpRequest
 
-  val parseableResponse =
-    """
-      |{
-      |  "first_name": "Fornavn",
-      |  "middle_name": "Mellomnavn",
-      |  "last_name": "Etternavn"
-      |}
-    """.stripMargin
+class AuthClientTest extends UnitSuite with UnitTestEnvironment {
 
-  var client: AuthClient = _
+  val NdlaUsername = NdlaUserName(Some("Fornavn"), Some("Mellomnavn"), Some("Etternavn"))
+  override val authClient = new AuthClient
 
-  override def beforeEach() = {
-    client = new AuthClient
+  test("That username is returned when fetching") {
+    when(ndlaClient.fetch[NdlaUserName](any[HttpRequest])(any[Manifest[NdlaUserName]])).thenReturn(Success(NdlaUsername))
+    authClient.getUserName("abc") should equal(NdlaUsername)
   }
 
-  test("That getUserNameFromRequest returns Unknown-user when http error") {
-    val request = mock[HttpRequest]
-    val response = mock[HttpResponse[String]]
-
-    when(request.asString).thenReturn(response)
-    when(request.url).thenReturn("ABC")
-    when(response.isError).thenReturn(true)
-    when(response.code).thenReturn(111)
-    when(response.statusLine).thenReturn("FEIL")
-
-    val ndlaUserName = client.getUserNameFromRequest(request)
-    ndlaUserName.first_name should equal(Some("Unknown"))
-    ndlaUserName.middle_name should be(None)
-    ndlaUserName.last_name should be(None)
-  }
-
-  test("That getUserNameFromRequest returns Unknown-user when parse-error") {
-    val request = mock[HttpRequest]
-    val response = mock[HttpResponse[String]]
-
-    when(request.asString).thenReturn(response)
-    when(request.url).thenReturn("ABC")
-    when(response.isError).thenReturn(false)
-    when(response.body).thenReturn("Unparseable string")
-
-
-    val ndlaUserName = client.getUserNameFromRequest(request)
-    ndlaUserName.first_name should equal(Some("Unknown"))
-    ndlaUserName.middle_name should be(None)
-    ndlaUserName.last_name should be(None)
-  }
-
-
-  test("That getUserNameFromRequest returns a NdlaUserName when OK") {
-    val request = mock[HttpRequest]
-    val response = mock[HttpResponse[String]]
-
-    when(request.asString).thenReturn(response)
-    when(response.isError).thenReturn(false)
-    when(response.body).thenReturn(parseableResponse)
-
-    val ndlaUserName = client.getUserNameFromRequest(request)
-    ndlaUserName.first_name.get should equal("Fornavn")
-    ndlaUserName.middle_name.get should equal("Mellomnavn")
-    ndlaUserName.last_name.get should equal("Etternavn")
+  test("That unknown user us returned if any failure occurs") {
+    when(ndlaClient.fetch[NdlaUserName](any[HttpRequest])(any[Manifest[NdlaUserName]])).thenReturn(Failure(new Exception("An error")))
+    authClient.getUserName("abc") should equal(authClient.unknownUser)
   }
 }

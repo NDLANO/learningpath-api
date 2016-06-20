@@ -28,6 +28,10 @@ trait ConverterServiceComponent {
       domain.LearningPathTag(tag.tag, tag.language)
     }
 
+    def asCoverPhoto(coverPhoto: CoverPhoto): domain.CoverPhoto = {
+      domain.CoverPhoto(coverPhoto.url, coverPhoto.metaUrl)
+    }
+
     def asApiLearningPathTag(tag: domain.LearningPathTag): LearningPathTag = {
       LearningPathTag(tag.tag, tag.language)
     }
@@ -46,7 +50,7 @@ trait ConverterServiceComponent {
         createUrlToLearningPath(lp),
         lp.learningsteps.map(ls => asApiLearningStepSummary(ls, lp)).toList.sortBy(_.seqNo),
         createUrlToLearningSteps(lp),
-        lp.coverPhotoUrl,
+        lp.coverPhoto.map(cp => api.CoverPhoto(cp.url, cp.metaUrl)),
         lp.duration,
         lp.status.toString,
         lp.verificationStatus.toString,
@@ -70,7 +74,7 @@ trait ConverterServiceComponent {
         learningpath.description.map(asApiDescription),
         asApiIntroduction(learningpath.learningsteps.find(_.`type` == StepType.INTRODUCTION)),
         createUrlToLearningPath(learningpath),
-        learningpath.coverPhotoUrl,
+        learningpath.coverPhoto.map(_.url),
         learningpath.duration,
         learningpath.status.toString,
         learningpath.lastUpdated,

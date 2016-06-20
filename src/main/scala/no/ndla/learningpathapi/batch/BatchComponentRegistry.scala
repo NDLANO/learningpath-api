@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.batch
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.batch.integration.{CMDataComponent, KeywordsServiceComponent, PackageDataComponent}
 import no.ndla.learningpathapi.batch.service.ImportServiceComponent
-import no.ndla.learningpathapi.integration.DatasourceComponent
+import no.ndla.learningpathapi.integration.{DatasourceComponent, ImageApiClientComponent, NdlaClient}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
@@ -15,7 +15,9 @@ object BatchComponentRegistry
   with CMDataComponent
   with PackageDataComponent
   with DatasourceComponent
-  with KeywordsServiceComponent {
+  with KeywordsServiceComponent
+  with ImageApiClientComponent
+  with NdlaClient {
 
   val CMPassword = scala.util.Properties.envOrNone("CM_PASSWORD")
   val CMUser = scala.util.Properties.envOrNone("CM_USER")
@@ -47,4 +49,6 @@ object BatchComponentRegistry
   val learningPathRepository = new LearningPathRepository
   val importService = new ImportService
   val keywordsService = new KeywordsService
+  val imageApiClient = new ImageApiClient
+  val ndlaClient = new NdlaClient
 }

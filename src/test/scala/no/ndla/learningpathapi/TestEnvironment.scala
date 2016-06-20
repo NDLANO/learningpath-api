@@ -4,7 +4,7 @@ import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
 import no.ndla.learningpathapi.controller.LearningpathController
-import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
+import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
@@ -20,8 +20,10 @@ trait TestEnvironment
   with SearchServiceComponent
   with SearchIndexServiceComponent
   with SearchIndexBuilderServiceComponent
+  with NdlaClient
   with AuthClientComponent
   with OEmbedClientComponent
+  with ImageApiClientComponent
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
@@ -42,6 +44,8 @@ trait TestEnvironment
   val oEmbedClient = mock[OEmbedClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
   val clock = mock[SystemClock]
+  val ndlaClient = mock[NdlaClient]
+  val imageApiClient = mock[ImageApiClient]
 
   val learningpathController = mock[LearningpathController]
 

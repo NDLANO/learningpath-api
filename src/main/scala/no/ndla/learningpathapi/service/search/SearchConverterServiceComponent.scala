@@ -95,7 +95,7 @@ trait SearchConverterServiceComponent {
         learningPath.id.get,
         asSearchableTitles(learningPath.title),
         asSearchableDescriptions(learningPath.description),
-        learningPath.coverPhotoUrl,
+        learningPath.coverPhoto.map(_.url),
         learningPath.duration,
         learningPath.status.toString,
         learningPath.verificationStatus.toString,

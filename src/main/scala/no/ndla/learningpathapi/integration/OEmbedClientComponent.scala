@@ -9,10 +9,10 @@ import scala.util.{Failure, Success, Try}
 import scalaj.http.{HttpResponse, Http, HttpRequest}
 
 trait OEmbedClientComponent {
+  this: NdlaClient =>
   val oEmbedClient: OEmbedClient
 
   class OEmbedClient extends LazyLogging {
-    implicit val formats = org.json4s.DefaultFormats
     val oEmbedEndpoint = s"http://${LearningpathApiProperties.OEmbedHost}/oembed?url=:embed_url"
 
     def getHtmlEmbedCodeForUrl(url: String): Option[String] = {
@@ -24,25 +24,9 @@ trait OEmbedClientComponent {
 
     def getHtmlEmbedCodeForRequest(request: HttpRequest): Try[String] = {
       for {
-        response <- doRequest(request)
-        oembed <- parseResponse(response)
+        oembed <- ndlaClient.fetch[OEmbed](request)
         url <- getHtml(oembed)
       } yield url
-    }
-
-    def doRequest(request: HttpRequest): Try[HttpResponse[String]] = {
-      val response = request.asString
-      response.isError match {
-        case true => Failure(new HttpRequestException(s"Got ${response.code} ${response.statusLine} when calling ${request.url}"))
-        case false => Success(response)
-      }
-    }
-
-    def parseResponse(response: HttpResponse[String]): Try[OEmbed] = {
-      parseOpt(response.body).flatMap(_.camelizeKeys.extractOpt[OEmbed]) match {
-        case Some(embed) => Success(embed)
-        case None => Failure(new HttpRequestException(s"Unreadable response ${response.body}"))
-      }
     }
 
     def getHtml(oembed: OEmbed): Try[String] = {

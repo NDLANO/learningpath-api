@@ -2,7 +2,7 @@ package no.ndla.learningpathapi
 
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.learningpathapi.controller.{AdminController, LearningpathController}
-import no.ndla.learningpathapi.integration.{AuthClientComponent, DatasourceComponent, ElasticClientComponent, OEmbedClientComponent}
+import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{Clock, _}
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
@@ -21,6 +21,7 @@ object ComponentRegistry
   with SearchServiceComponent
   with SearchIndexServiceComponent
   with SearchIndexBuilderServiceComponent
+  with NdlaClient
   with AuthClientComponent
   with OEmbedClientComponent
   with ConverterServiceComponent
@@ -62,4 +63,5 @@ object ComponentRegistry
   lazy val learningpathController = new LearningpathController
   lazy val adminController = new AdminController
   lazy val resourcesApp = new ResourcesApp
+  lazy val ndlaClient = new NdlaClient
 }

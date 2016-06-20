@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.{Description, LearningPathTag, NewLearningPath, Title}
+import no.ndla.learningpathapi.model.api._
 
 class LearningPathValidatorTest extends UnitSuite {
 
@@ -14,7 +14,7 @@ class LearningPathValidatorTest extends UnitSuite {
   val ValidLearningPath = NewLearningPath(
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
-    coverPhotoUrl = Some("http://api.ndla.no/images/full/sp2e9843.jpg"),
+    coverPhoto = Some(CoverPhoto("http://api.ndla.no/images/full/sp2e9843.jpg", "http://api.ndla.no/images/1")),
     duration = Some(180),
     tags = List(LearningPathTag("Gyldig tag", Some("nb"))))
 
@@ -24,22 +24,31 @@ class LearningPathValidatorTest extends UnitSuite {
 
   test("That validate returns no error for no coverPhoto") {
     validator.validate(ValidLearningPath.copy(
-      coverPhotoUrl = None
+      coverPhoto = None
     )) should be(List())
   }
 
-  test("That validate returns an error when pointing some another api on ndla") {
-    val validationError = validator.validate(ValidLearningPath.copy(coverPhotoUrl = Some("http://api.ndla.no/h5p/sp2e9843.jpg")))
+  test("That validate returns an error when imageUrl is pointing to some another api on ndla") {
+    val validationError = validator.validate(ValidLearningPath.copy(coverPhoto = Some(CoverPhoto("http://api.ndla.no/h5p/sp2e9843.jpg", "http://api.ndla.no/images/1"))))
     validationError.size should be (1)
-    validationError.head.field should equal("coverPhotoUrl")
+    validationError.head.field should equal("coverPhoto.url")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
   }
 
-  test("That validate returns an error when coverPhoto is pointing outside ndla") {
-    val validationError = validator.validate(ValidLearningPath.copy(coverPhotoUrl = Some("http://www.vg.no/abc/123")))
+  test("That validate returns an error when metaUrl is pointing to some another api on ndla") {
+    val validationError = validator.validate(ValidLearningPath.copy(coverPhoto = Some(CoverPhoto("http://api.ndla.no/images/full/sp2e9843.jpg", "http://api.ndla.no/h5p/1"))))
     validationError.size should be (1)
-    validationError.head.field should equal("coverPhotoUrl")
+    validationError.head.field should equal("coverPhoto.metaUrl")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
+  }
+
+  test("That validate returns two errors when both imageUrl and metaUrl for the coverPhoto is pointing outside ndla") {
+    val validationError = validator.validate(ValidLearningPath.copy(coverPhoto = Some(CoverPhoto("http://www.vg.no/abc/123", "http://www.vg.no/abc/123"))))
+    validationError.size should be (2)
+    validationError.head.field should equal("coverPhoto.url")
+    validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
+    validationError.last.field should equal("coverPhoto.metaUrl")
+    validationError.last.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
   }
 
   test("That validate returns error message when no descriptions are defined") {

@@ -2,13 +2,14 @@ package no.ndla.learningpathapi.batch.service
 
 import no.ndla.learningpathapi.batch._
 import no.ndla.learningpathapi.batch.integration.{CMDataComponent, KeywordsServiceComponent, PackageDataComponent}
+import no.ndla.learningpathapi.integration.{ImageApiClientComponent, ImageMetaInformation}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 
 trait ImportServiceComponent {
-  this: CMDataComponent with PackageDataComponent with LearningPathRepositoryComponent with KeywordsServiceComponent =>
+  this: CMDataComponent with PackageDataComponent with LearningPathRepositoryComponent with KeywordsServiceComponent with ImageApiClientComponent =>
   val importService: ImportService
 
   val ChristerTest = "410714a7-c09d-4e9a-9595-e7f13e19c463"
@@ -21,15 +22,21 @@ trait ImportServiceComponent {
       val nodes: List[Node] = cmData.allLearningPaths()
       val nodesToImport = nodes.filterNot(_.isTranslation)
       val imagesToImport = nodesToImport.flatMap(_.imageNid)
+      val imageExternToApiMap = imagesToImport.map(img => (img, imageApiClient.getImageMetaInformationForExternId(img.toString))).toMap
+
+      logger.info("Need to import images with id: {}", imageExternToApiMap.filter(_._2.isEmpty).keys.mkString("','"))
+
+      if(imageExternToApiMap.exists(_._2.isEmpty))
+        logger.info("All required images not found. Exiting")
+        System.exit(1)
 
       nodesToImport.foreach(node => {
-        importNode(packageData.packageFor(node), getTranslations(node, nodes), cmData.imagePathForNid(node.imageNid, environment), environment)
+        importNode(packageData.packageFor(node), getTranslations(node, nodes), node.imageNid.flatMap(id => imageExternToApiMap(id)), environment)
       })
 
-      logger.info("Need to import images with id: {}", imagesToImport.mkString(","))
     }
 
-    def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]], imageUrl: Option[String], environment: String) = {
+    def importNode(optPakke: Option[Package], optTranslations: List[Option[Package]], imageUrl: Option[ImageMetaInformation], environment: String) = {
       optPakke.foreach(pakke => {
         val steps = packageData.stepsForPackage(pakke)
 
@@ -49,7 +56,7 @@ trait ImportServiceComponent {
             learningPathRepository.update(existingLearningPath.copy(
               title = learningPath.title,
               description = learningPath.description,
-              coverPhotoUrl = learningPath.coverPhotoUrl,
+              coverPhoto = learningPath.coverPhoto,
               duration = learningPath.duration,
               lastUpdated = learningPath.lastUpdated,
               tags = learningPath.tags,
@@ -79,7 +86,7 @@ trait ImportServiceComponent {
       })
     }
 
-    def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[String], environment: String) = {
+    def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[ImageMetaInformation], environment: String) = {
       val duration = Some((pakke.durationHours * 60) + pakke.durationMinutes)
       val lastUpdated = pakke.lastUpdated
 
@@ -90,6 +97,11 @@ trait ImportServiceComponent {
         case _ => ChristerTest
       }
 
+      val imageApiPrefix = environment match {
+        case "prod" => "http://api.ndla.no/images/"
+        case _ => s"http://api.$environment.ndla.no/images/"
+      }
+
       LearningPath(
         None,
         None,
@@ -97,7 +109,7 @@ trait ImportServiceComponent {
         None,
         titles,
         descriptions,
-        imageUrl,
+        imageUrl.map(img => CoverPhoto(imageApiPrefix + img.images.full.get.url, imageApiPrefix + img.id)),
         duration,
         LearningPathStatus.PUBLISHED,
         LearningPathVerificationStatus.CREATED_BY_NDLA,
