@@ -14,7 +14,7 @@ trait ImageApiClientComponent {
 
   class ImageApiClient extends LazyLogging {
     val ExternalId = ":external_id"
-    val byExternalIdEndpoint = s"http://${LearningpathApiProperties.ImageApiHost}/admin/extern/$ExternalId"
+    val byExternalIdEndpoint = s"http://${LearningpathApiProperties.ImageApiHost}/intern/extern/$ExternalId"
 
     def imageMetaWithExternalId(externalId: String): Option[ImageMetaInformation] = {
       ndlaClient.fetch[ImageMetaInformation](Http(byExternalIdEndpoint.replace(ExternalId, externalId))) match {

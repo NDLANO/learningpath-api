@@ -26,9 +26,10 @@ trait ImportServiceComponent {
 
       logger.info("Need to import images with id: {}", imageExternToApiMap.filter(_._2.isEmpty).keys.mkString("','"))
 
-      if(imageExternToApiMap.exists(_._2.isEmpty))
+      if(imageExternToApiMap.exists(_._2.isEmpty)){
         logger.info("All required images not found. Exiting")
         System.exit(1)
+      }
 
       nodesToImport.foreach(node => {
         importNode(packageData.packageFor(node), getTranslations(node, nodes), node.imageNid.flatMap(id => imageExternToApiMap(id)), environment)
