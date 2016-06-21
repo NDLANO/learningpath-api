@@ -22,7 +22,7 @@ trait ImportServiceComponent {
       val nodes: List[Node] = cmData.allLearningPaths()
       val nodesToImport = nodes.filterNot(_.isTranslation)
       val imagesToImport = nodesToImport.flatMap(_.imageNid)
-      val imageExternToApiMap = imagesToImport.map(img => (img, imageApiClient.getImageMetaInformationForExternId(img.toString))).toMap
+      val imageExternToApiMap = imagesToImport.map(img => (img, imageApiClient.imageMetaWithExternalId(img.toString))).toMap
 
       logger.info("Need to import images with id: {}", imageExternToApiMap.filter(_._2.isEmpty).keys.mkString("','"))
 
@@ -56,7 +56,7 @@ trait ImportServiceComponent {
             learningPathRepository.update(existingLearningPath.copy(
               title = learningPath.title,
               description = learningPath.description,
-              coverPhoto = learningPath.coverPhoto,
+              coverPhotoMetaUrl = learningPath.coverPhotoMetaUrl,
               duration = learningPath.duration,
               lastUpdated = learningPath.lastUpdated,
               tags = learningPath.tags,
@@ -109,7 +109,7 @@ trait ImportServiceComponent {
         None,
         titles,
         descriptions,
-        imageUrl.map(img => CoverPhoto(imageApiPrefix + img.images.full.get.url, imageApiPrefix + img.id)),
+        imageUrl.map(img => imageApiPrefix + img.id),
         duration,
         LearningPathStatus.PUBLISHED,
         LearningPathVerificationStatus.CREATED_BY_NDLA,

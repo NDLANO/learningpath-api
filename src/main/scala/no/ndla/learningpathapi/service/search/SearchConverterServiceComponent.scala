@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.service.search
 
-import no.ndla.learningpathapi.integration.AuthClientComponent
+import no.ndla.learningpathapi.integration.{AuthClientComponent, ImageApiClientComponent}
 import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummary}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain._
@@ -11,7 +11,7 @@ import no.ndla.network.ApplicationUrl
 
 
 trait SearchConverterServiceComponent {
-  this: AuthClientComponent with ConverterServiceComponent =>
+  this: AuthClientComponent with ConverterServiceComponent with ImageApiClientComponent =>
   val searchConverterService: SearchConverterService
 
   class SearchConverterService {
@@ -95,7 +95,7 @@ trait SearchConverterServiceComponent {
         learningPath.id.get,
         asSearchableTitles(learningPath.title),
         asSearchableDescriptions(learningPath.description),
-        learningPath.coverPhoto.map(_.url),
+        learningPath.coverPhotoMetaUrl.flatMap(meta => converterService.asCoverPhoto(meta, imageApiClient.imageMetaOnUrl(meta)).map(_.url)),
         learningPath.duration,
         learningPath.status.toString,
         learningPath.verificationStatus.toString,

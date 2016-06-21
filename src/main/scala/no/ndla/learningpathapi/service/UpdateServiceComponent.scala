@@ -21,7 +21,7 @@ trait UpdateServiceComponent {
           val title = if(newLearningPath.title.nonEmpty) newLearningPath.title.map(converterService.asTitle) else existing.title
           val description = if(newLearningPath.description.nonEmpty) newLearningPath.description.map(converterService.asDescription) else existing.description
           val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTag) else existing.tags
-          val coverPhoto = if(newLearningPath.coverPhoto.nonEmpty) newLearningPath.coverPhoto.map(converterService.asCoverPhoto) else existing.coverPhoto
+          val coverPhotoMetaUrl = if(newLearningPath.coverPhotoMetaUrl.nonEmpty) newLearningPath.coverPhotoMetaUrl else existing.coverPhotoMetaUrl
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
 
           val toInsert = existing.copy(
@@ -37,7 +37,7 @@ trait UpdateServiceComponent {
             owner = owner,
             learningsteps = existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
             tags = tags,
-            coverPhoto = coverPhoto,
+            coverPhotoMetaUrl = coverPhotoMetaUrl,
             duration = duration)
 
           Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
@@ -50,7 +50,7 @@ trait UpdateServiceComponent {
       val learningPath = domain.LearningPath(None, None, None, None,
         newLearningPath.title.map(converterService.asTitle),
         newLearningPath.description.map(converterService.asDescription),
-        newLearningPath.coverPhoto.map(converterService.asCoverPhoto),
+        newLearningPath.coverPhotoMetaUrl,
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
         clock.now(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List())
@@ -66,7 +66,7 @@ trait UpdateServiceComponent {
             revision = Some(learningPathToUpdate.revision),
             title = learningPathToUpdate.title.map(converterService.asTitle),
             description = learningPathToUpdate.description.map(converterService.asDescription),
-            coverPhoto = learningPathToUpdate.coverPhoto.map(converterService.asCoverPhoto),
+            coverPhotoMetaUrl = learningPathToUpdate.coverPhotoMetaUrl,
             duration = learningPathToUpdate.duration,
             tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
             lastUpdated = clock.now())

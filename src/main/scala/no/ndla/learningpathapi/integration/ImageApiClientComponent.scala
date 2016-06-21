@@ -16,9 +16,17 @@ trait ImageApiClientComponent {
     val ExternalId = ":external_id"
     val byExternalIdEndpoint = s"http://${LearningpathApiProperties.ImageApiHost}/admin/extern/$ExternalId"
 
-    def getImageMetaInformationForExternId(externalId: String): Option[ImageMetaInformation] = {
+    def imageMetaWithExternalId(externalId: String): Option[ImageMetaInformation] = {
       ndlaClient.fetch[ImageMetaInformation](Http(byExternalIdEndpoint.replace(ExternalId, externalId))) match {
         case Success(metaInfo) => Some(metaInfo)
+        case Failure(hre: HttpRequestException) => if (hre.is404) None else throw hre
+        case Failure(ex: Throwable) => throw ex
+      }
+    }
+
+    def imageMetaOnUrl(url: String): Option[ImageMetaInformation] = {
+      ndlaClient.fetch[ImageMetaInformation](Http(url)) match {
+        case Success(metaInformation) => Some(metaInformation)
         case Failure(hre: HttpRequestException) => if (hre.is404) None else throw hre
         case Failure(ex: Throwable) => throw ex
       }

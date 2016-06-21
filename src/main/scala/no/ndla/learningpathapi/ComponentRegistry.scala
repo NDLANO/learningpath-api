@@ -24,6 +24,7 @@ object ComponentRegistry
   with NdlaClient
   with AuthClientComponent
   with OEmbedClientComponent
+  with ImageApiClientComponent
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
@@ -64,4 +65,5 @@ object ComponentRegistry
   lazy val adminController = new AdminController
   lazy val resourcesApp = new ResourcesApp
   lazy val ndlaClient = new NdlaClient
+  lazy val imageApiClient = new ImageApiClient
 }

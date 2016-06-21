@@ -18,7 +18,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
   test("That some metaInfo is returned when images is found") {
     when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Success(DefaultImage))
 
-    val imageMeta = imageApiClient.getImageMetaInformationForExternId("abc")
+    val imageMeta = imageApiClient.imageMetaWithExternalId("abc")
     imageMeta.isDefined should be (true)
     imageMeta.get.id should equal("1")
     imageMeta.get.images.full.get.size should be (1000)
@@ -30,7 +30,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
     when(exception.is404).thenReturn(true)
     when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
-    imageApiClient.getImageMetaInformationForExternId("abc") should be (None)
+    imageApiClient.imageMetaWithExternalId("abc") should be (None)
   }
 
   test("That exception is returned when http-error") {
@@ -39,7 +39,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
     when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     intercept[HttpRequestException]{
-      imageApiClient.getImageMetaInformationForExternId("abc")
+      imageApiClient.imageMetaWithExternalId("abc")
       fail("Exception should have been thrown")
     } should be (exception)
 
@@ -51,7 +51,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
     when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     intercept[NoSuchElementException]{
-      imageApiClient.getImageMetaInformationForExternId("abc")
+      imageApiClient.imageMetaWithExternalId("abc")
       fail("Exception should have been thrown")
     } should be (exception)
   }
