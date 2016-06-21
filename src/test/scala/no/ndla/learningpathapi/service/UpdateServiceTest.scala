@@ -4,7 +4,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, NewLearningPath, NewLearningStep, UpdatedLearningPath, UpdatedLearningStep}
+import no.ndla.learningpathapi.model.api.{LearningPathStatus, NewLearningPath, NewLearningStep, UpdatedLearningPath, UpdatedLearningStep}
 import no.ndla.learningpathapi.model.domain._
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
@@ -19,12 +19,12 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(), List(), List(), StepType.TEXT, None, showTitle = true)
-  val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = false)
-  val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = true)
-  val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false)
-  val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), StepType.TEXT, None, showTitle = true)
-  val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false)
+  val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
+  val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
+  val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
+  val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
+  val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
+  val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
 
   val NEW_STEP = NewLearningStep(List(), List(), List(), true, "", None)
   val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), false, "", None)
@@ -252,106 +252,158 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     }
   }
 
-  test("That deleteLearningStep returns false when the given learningpath does not exist") {
+  test("That updateLearningStepStatus returns None when the given learningpath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(false){
-      service.deleteLearningStep(PUBLISHED_ID, STEP1.id.get, PUBLISHED_OWNER)
-    }
-    verify(learningPathRepository, never).deleteLearningStep(PUBLISHED_ID, STEP1.id.get)
+
+    service.updateLearningStepStatus(PUBLISHED_ID, STEP1.id.get, StepStatus.DELETED, PUBLISHED_OWNER) should be (None)
   }
 
-  test("That deleteLearningStep returns false when the given learningstep does not exist") {
+  test("That updateLearningStepStatus returns None when the given learningstep does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(None)
-    assertResult(false){
-      service.deleteLearningStep(PUBLISHED_ID, STEP1.id.get, PUBLISHED_OWNER)
-    }
-    verify(learningPathRepository, never).deleteLearningStep(PUBLISHED_ID, STEP1.id.get)
+
+    service.updateLearningStepStatus(PUBLISHED_ID, STEP1.id.get, StepStatus.DELETED, PUBLISHED_OWNER) should be (None)
   }
 
-  test("That deleteLearningStep deletes the learningstep when the given user is the owner and the status is PRIVATE") {
+  test("That updateLearningStepStatus marks the learningstep as DELETED when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
     when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List())
+    when(learningPathRepository.updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])).thenReturn(STEP1.copy(status = StepStatus.DELETED))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
-    assertResult(true) {
-      service.deleteLearningStep(PRIVATE_ID, STEP1.id.get, PRIVATE_OWNER)
-    }
-    verify(learningPathRepository, times(1)).deleteLearningStep(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP1.id.get, StepStatus.DELETED, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.DELETED.toString)
+
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
     verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
-  test("That deleteLearningStep deletes the learningstep when the given user is the owner and the status is PUBLISHED") {
+  test("That updateLearningStepStatus marks the learningstep as DELETED when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
     when(learningPathRepository.learningStepsFor(eqTo(PUBLISHED_ID))(any[DBSession])).thenReturn(List())
+    when(learningPathRepository.updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])).thenReturn(STEP1.copy(status = StepStatus.DELETED))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
-    assertResult(true) {
-      service.deleteLearningStep(PUBLISHED_ID, STEP1.id.get, PUBLISHED_OWNER)
-    }
-    verify(learningPathRepository, times(1)).deleteLearningStep(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession])
+
+    val updatedStep = service.updateLearningStepStatus(PUBLISHED_ID, STEP1.id.get, StepStatus.DELETED, PUBLISHED_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.DELETED.toString)
+
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
     verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
-  test("That deleting the first learningStep changes the seqNo for all other learningsteps") {
+  test("That marking the first learningStep as deleted changes the seqNo for all other learningsteps") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1))
+    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3))
+    when(learningPathRepository.updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])).thenReturn(STEP1.copy(status = StepStatus.DELETED))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
-    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3, STEP4, STEP5, STEP6))
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP1.id.get, StepStatus.DELETED, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.DELETED.toString)
 
-    assertResult(true) {
-      service.deleteLearningStep(PRIVATE_ID, STEP1.id.get, PRIVATE_OWNER)
-    }
-
-    verify(learningPathRepository, times(5)).updateLearningStep(any[LearningStep])(any[DBSession])
-    verify(learningPathRepository, times(1)).deleteLearningStep(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP2.copy(seqNo = STEP2.seqNo - 1)))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo - 1)))(any[DBSession])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
-  test("That deleting the last learningStep does not affect any of the other learningsteps") {
+  test("That marking the first learningStep as active changes the seqNo for all other learningsteps") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP6.id.get))(any[DBSession])).thenReturn(Some(STEP6))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP1.id.get))(any[DBSession])).thenReturn(Some(STEP1.copy(status = StepStatus.DELETED)))
+    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3))
+    when(learningPathRepository.updateLearningStep(eqTo(STEP1.copy(status = StepStatus.ACTIVE)))(any[DBSession])).thenReturn(STEP1.copy(status = StepStatus.ACTIVE))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
-    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3, STEP4, STEP5, STEP6))
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP1.id.get, StepStatus.ACTIVE, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.ACTIVE.toString)
 
-    assertResult(true) {
-      service.deleteLearningStep(PRIVATE_ID, STEP6.id.get, PRIVATE_OWNER)
-    }
-
-    verify(learningPathRepository, never()).updateLearningStep(any[LearningStep])(any[DBSession])
-    verify(learningPathRepository, times(1)).deleteLearningStep(eqTo(PRIVATE_ID), eqTo(STEP6.id.get))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP1.copy(status = StepStatus.ACTIVE)))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP2.copy(seqNo = STEP2.seqNo + 1)))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo + 1)))(any[DBSession])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
-
-  test("That deleting the middle learningStep affects only subsequent learningsteps") {
+  test("That marking the last learningStep as deleted does not affect any of the other learningsteps") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP3.id.get))(any[DBSession])).thenReturn(Some(STEP3))
+    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3))
+    when(learningPathRepository.updateLearningStep(eqTo(STEP3.copy(status = StepStatus.DELETED)))(any[DBSession])).thenReturn(STEP3.copy(status = StepStatus.DELETED))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
-    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3, STEP4, STEP5, STEP6))
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP3.id.get, StepStatus.DELETED, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.DELETED.toString)
 
-    assertResult(true) {
-      service.deleteLearningStep(PRIVATE_ID, STEP3.id.get, PRIVATE_OWNER)
-    }
-
-    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP4.copy(seqNo = STEP4.seqNo - 1)))(any[DBSession])
-    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP5.copy(seqNo = STEP5.seqNo - 1)))(any[DBSession])
-    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP6.copy(seqNo = STEP6.seqNo - 1)))(any[DBSession])
-    verify(learningPathRepository, times(1)).deleteLearningStep(eqTo(PRIVATE_ID), eqTo(STEP3.id.get))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(any[LearningStep])(any[DBSession])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
+  }
+
+  test("That marking the last learningStep as active does not affect any of the other learningsteps") {
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP3.id.get))(any[DBSession])).thenReturn(Some(STEP3.copy(status = StepStatus.DELETED)))
+    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3))
+    when(learningPathRepository.updateLearningStep(eqTo(STEP3.copy(status = StepStatus.ACTIVE)))(any[DBSession])).thenReturn(STEP3.copy(status = StepStatus.ACTIVE))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
+
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP3.id.get, StepStatus.ACTIVE, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.ACTIVE.toString)
+
+    verify(learningPathRepository, times(1)).updateLearningStep(any[LearningStep])(any[DBSession])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
+  }
+
+  test("That marking the middle learningStep as deleted only affects subsequen learningsteps") {
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP2.id.get))(any[DBSession])).thenReturn(Some(STEP2))
+    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3))
+    when(learningPathRepository.updateLearningStep(eqTo(STEP2.copy(status = StepStatus.DELETED)))(any[DBSession])).thenReturn(STEP2.copy(status = StepStatus.DELETED))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
+
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP2.id.get, StepStatus.DELETED, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.DELETED.toString)
+
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP2.copy(status = StepStatus.DELETED)))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo - 1)))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
+  }
+
+  test("That marking the middle learningStep as active only affects subsequen learningsteps") {
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.learningStepWithId(eqTo(PRIVATE_ID), eqTo(STEP2.id.get))(any[DBSession])).thenReturn(Some(STEP2.copy(status = StepStatus.DELETED)))
+    when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List(STEP1, STEP2, STEP3))
+    when(learningPathRepository.updateLearningStep(eqTo(STEP2.copy(status = StepStatus.ACTIVE)))(any[DBSession])).thenReturn(STEP2.copy(status = StepStatus.ACTIVE))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
+
+    val updatedStep = service.updateLearningStepStatus(PRIVATE_ID, STEP2.id.get, StepStatus.ACTIVE, PRIVATE_OWNER)
+    updatedStep.isDefined should be (true)
+    updatedStep.get.status should equal(StepStatus.ACTIVE.toString)
+
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP2.copy(status = StepStatus.ACTIVE)))(any[DBSession])
+    verify(learningPathRepository, times(1)).updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo + 1)))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])(any[DBSession])
+    verify(searchIndexService, never).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That deleteLearningStep throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(Some(STEP1))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.deleteLearningStep(PRIVATE_ID, STEP1.id.get, PUBLISHED_OWNER) }.getMessage
+      intercept[AccessDeniedException] {service.updateLearningStepStatus(PRIVATE_ID, STEP1.id.get, StepStatus.DELETED, PUBLISHED_OWNER)}.getMessage
     }
   }
 

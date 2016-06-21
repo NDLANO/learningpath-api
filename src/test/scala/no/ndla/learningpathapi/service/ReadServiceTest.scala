@@ -21,8 +21,9 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
   val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
 
-  val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, true)
-  val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, false)
+  val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = true, StepStatus.ACTIVE)
+  val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
+  val STEP3 = LearningStep(Some(3), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
 
   override def beforeEach() = {
     service = new ReadService
@@ -116,7 +117,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   test("That learningstepsFor returns None when the learningPath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      service.learningstepsFor(PUBLISHED_ID)
+      service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.ACTIVE)
     }
   }
 
@@ -124,29 +125,40 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List())
     assertResult(0) {
-      service.learningstepsFor(PUBLISHED_ID).get.length
+      service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.ACTIVE).get.length
     }
   }
 
-  test("That learningstepsFor returns all learningsteps for a learningpath") {
+  test("That learningstepsFor returns only active steps when specifying status active") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2))
-    assertResult(2) {
-      service.learningstepsFor(PUBLISHED_ID).get.length
-    }
+    when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
+    val learningSteps = service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.ACTIVE)
+    learningSteps.isDefined should be (true)
+    learningSteps.get.size should be (2)
+    learningSteps.get.head.id should equal (STEP1.id.get)
+    learningSteps.get.last.id should equal (STEP3.id.get)
+  }
+
+  test("That learningstepsFor returns only deleted steps when specifying status deleted") {
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
+    val learningSteps = service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.DELETED)
+    learningSteps.isDefined should be (true)
+    learningSteps.get.size should be (1)
+    learningSteps.get.head.id should equal (STEP2.id.get)
   }
 
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.learningstepsFor(PRIVATE_ID) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepsForWithStatus(PRIVATE_ID, StepStatus.ACTIVE) }.getMessage
     }
   }
 
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.learningstepsFor(PRIVATE_ID, Some(PUBLISHED_OWNER)) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepsForWithStatus(PRIVATE_ID, StepStatus.ACTIVE, Some(PUBLISHED_OWNER)) }.getMessage
     }
   }
 
@@ -154,7 +166,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PRIVATE_ID)).thenReturn(List(STEP1, STEP2))
     assertResult(2) {
-      service.learningstepsFor(PRIVATE_ID, Some(PRIVATE_OWNER)).get.length
+      service.learningstepsForWithStatus(PRIVATE_ID, StepStatus.ACTIVE, Some(PRIVATE_OWNER)).get.length
     }
   }
 

@@ -93,7 +93,7 @@ trait ConverterServiceComponent {
         ls.showTitle,
         ls.`type`.toString,
         ls.license, createUrlToLearningStep(ls, lp),
-        lp.canEdit(user))
+        lp.canEdit(user), ls.status.toString)
     }
 
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): LearningStepSummary = {

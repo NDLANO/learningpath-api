@@ -47,7 +47,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningPathsWhere(sqls"lp.document->>'owner' = $owner")
     }
 
-    def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningStep] = {
+    def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {
       val ls = LearningStep.syntax("ls")
       sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.learningPathId} = $learningPathId".map(LearningStep(ls.resultName)).list().apply()
     }
@@ -140,12 +140,6 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       sql"delete from learningpaths where id = $learningPathId".update().apply
     }
 
-    def deleteLearningStep(learningPathId: Long, learningStepId: Long)(implicit session: DBSession = AutoSession): Unit = {
-      learningStepWithId(learningPathId, learningStepId).foreach(step => {
-        sql"delete from learningsteps where id = $learningStepId".update().apply
-      })
-    }
-
     def learningPathsWithIdBetween(min: Long, max: Long)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       val status = LearningPathStatus.PUBLISHED.toString
@@ -192,7 +186,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} where $whereClause"
           .one(LearningPath(lp.resultName))
           .toMany(LearningStep.opt(ls.resultName))
-          .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps) }
+          .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE)) }
           .list.apply()
     }
 
@@ -201,7 +195,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} where $whereClause"
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
-        .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps) }
+        .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE)) }
         .single.apply()
     }
   }

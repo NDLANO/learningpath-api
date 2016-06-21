@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{LearningPathStatus, LearningPathVerificationStatus, OptimisticLockException, StepType}
+import no.ndla.learningpathapi.model.domain.{LearningPathStatus, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 
@@ -189,29 +189,39 @@ trait UpdateServiceComponent {
       }
     }
 
-    def deleteLearningStep(learningPathId: Long, learningStepId: Long, owner: String): Boolean = {
+    def updateLearningStepStatus(learningPathId: Long, learningStepId: Long, newStatus: StepStatus.Value, owner:String): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, owner) match {
-        case None => false
+        case None => None
         case Some(learningPath) => {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
-            case None => false
-            case Some(existing) => {
+            case None => None
+            case Some(learningStep) => {
+              val stepToUpdate = learningStep.copy(status = newStatus)
+              val stepsToChangeSeqNoOn = learningPathRepository.learningStepsFor(learningPathId).filter(step => step.seqNo >= stepToUpdate.seqNo && step.id != stepToUpdate.id)
 
-              val updatedPath = inTransaction { implicit session =>
-                learningPathRepository.deleteLearningStep(learningPathId, learningStepId)
-                learningPathRepository.learningStepsFor(learningPathId).filter(_.seqNo > existing.seqNo).foreach(toUpdate => {
-                  learningPathRepository.updateLearningStep(toUpdate.copy(seqNo = toUpdate.seqNo - 1))
-                })
+              val stepsWithChangedSeqNo = stepToUpdate.status match {
+                case StepStatus.DELETED => stepsToChangeSeqNoOn.map(step => step.copy(seqNo = step.seqNo - 1))
+                case StepStatus.ACTIVE => stepsToChangeSeqNoOn.map(step => step.copy(seqNo = step.seqNo + 1))
+              }
 
-                learningPathRepository.update(learningPath.copy(
-                  learningsteps = learningPath.learningsteps.filterNot(_.id.get == learningStepId),
+              val (updatedPath, updatedStep) = inTransaction{ implicit session =>
+                val updatedStep = learningPathRepository.updateLearningStep(stepToUpdate)
+                stepsWithChangedSeqNo.foreach(learningPathRepository.updateLearningStep)
+
+                val newLearningSteps = learningPath.learningsteps.filterNot(step => stepsWithChangedSeqNo.map(_.id).contains(step.id)) ++ stepsWithChangedSeqNo
+
+                val updatedPath = learningPathRepository.update(learningPath.copy(
+                  learningsteps = if(StepStatus.ACTIVE == updatedStep.status) newLearningSteps :+ updatedStep else newLearningSteps,
                   lastUpdated = clock.now()))
+
+                (updatedPath, updatedStep)
               }
 
               if (updatedPath.isPublished) {
                 searchIndexService.indexLearningPath(updatedPath)
               }
-              true
+
+              Some(converterService.asApiLearningStep(updatedStep, updatedPath, Option(owner)))
             }
           }
         }
@@ -255,7 +265,7 @@ trait UpdateServiceComponent {
 
     def rangeToUpdate(from: Int, to: Int): Range = {
       from > to match {
-        case true => to to from - 1
+        case true => to until from
         case false => from + 1 to to
       }
     }
