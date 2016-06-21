@@ -7,10 +7,10 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
 
-trait AdminController {
-  val adminController: AdminController
+trait InternController {
+  val internController: InternController
 
-  class AdminController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
+  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
