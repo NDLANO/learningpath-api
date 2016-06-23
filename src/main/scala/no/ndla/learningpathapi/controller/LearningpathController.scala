@@ -354,9 +354,8 @@ trait LearningpathController {
       }
     }
 
-    put("/:path_id/?", operation(updateLearningPath)) {
-      val learningpathToUpdate = extract[UpdatedLearningPath](request.body).validate()
-      val updatedLearningPath = updateService.updateLearningPath(long("path_id"), learningpathToUpdate, usernameFromHeader)
+    patch("/:path_id/?", operation(updateLearningPath)) {
+      val updatedLearningPath = updateService.updateLearningPath(long("path_id"), extract[UpdatedLearningPath](request.body), usernameFromHeader)
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
@@ -378,8 +377,8 @@ trait LearningpathController {
       }
     }
 
-    put("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
-      val updatedLearningStep = extract[UpdatedLearningStep](request.body).validate()
+    patch("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
+      val updatedLearningStep = extract[UpdatedLearningStep](request.body)
       val createdLearningStep = updateService.updateLearningStep(long("path_id"), long("step_id"),
         updatedLearningStep,
         usernameFromHeader)

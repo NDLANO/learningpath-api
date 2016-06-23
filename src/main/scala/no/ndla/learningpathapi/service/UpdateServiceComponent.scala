@@ -5,6 +5,7 @@ import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
+import no.ndla.learningpathapi.validation.LearningPathValidator
 
 
 trait UpdateServiceComponent {
@@ -67,17 +68,17 @@ trait UpdateServiceComponent {
       withIdAndAccessGranted(id, owner) match {
         case None => None
         case Some(existing) => {
-          val titles = mergeLanguageFields(existing.title, learningPathToUpdate.title.map(converterService.asTitle))
-          val descriptions = mergeLanguageFields(existing.description, learningPathToUpdate.description.map(converterService.asDescription))
-
           val toUpdate = existing.copy(
             revision = Some(learningPathToUpdate.revision),
-            title = titles,
-            description = descriptions,
-            coverPhotoMetaUrl = learningPathToUpdate.coverPhotoMetaUrl,
-            duration = learningPathToUpdate.duration,
+            title = mergeLanguageFields(existing.title, learningPathToUpdate.title.map(converterService.asTitle)),
+            description = mergeLanguageFields(existing.description, learningPathToUpdate.description.map(converterService.asDescription)),
+            coverPhotoMetaUrl = if(learningPathToUpdate.coverPhotoMetaUrl.isDefined) learningPathToUpdate.coverPhotoMetaUrl else existing.coverPhotoMetaUrl,
+            duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
             tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
             lastUpdated = clock.now())
+
+          // TODO: Fix tags
+          // TODO: Validate here
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
@@ -177,9 +178,11 @@ trait UpdateServiceComponent {
                 title = titles,
                 description = descriptions,
                 embedUrl = embedUrls,
-                showTitle = learningStepToUpdate.showTitle,
-                `type` = domain.StepType.valueOfOrDefault(learningStepToUpdate.`type`),
-                license = learningStepToUpdate.license)
+                showTitle = learningStepToUpdate.showTitle.getOrElse(existing.showTitle),
+                `type` = learningStepToUpdate.`type`.map(domain.StepType.valueOfOrDefault).getOrElse(existing.`type`),
+                license = if(learningStepToUpdate.license.isDefined) learningStepToUpdate.license else existing.license)
+
+              // TODO: Validate that step is OK
 
               val (updatedStep, updatedPath) = inTransaction { implicit session =>
                 val updatedStep = learningPathRepository.updateLearningStep(toUpdate)

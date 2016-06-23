@@ -27,7 +27,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
 
   val NEW_STEP = NewLearningStep(List(), List(), List(), true, "", None)
-  val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), false, "", None)
+  val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), Some(false), None, None)
 
   val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, List())

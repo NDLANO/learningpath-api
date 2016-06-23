@@ -12,12 +12,13 @@ class LearningStepValidator {
   val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedContent or both."
 
   def validate(updatedLearningStep: UpdatedLearningStep): Seq[ValidationMessage] = {
-    titleValidator.validate(updatedLearningStep.title) ++
-      validateDescription(updatedLearningStep.description) ++
-      validateEmbedContent(updatedLearningStep.embedContent) ++
-      validateStepType(updatedLearningStep.`type`).toList ++
-      validateLicense(updatedLearningStep.license).toList ++
-      validateThatDescriptionOrEmbedUrlOrBothIsDefined(updatedLearningStep).toList
+//    titleValidator.validate(updatedLearningStep.title) ++
+//      validateDescription(updatedLearningStep.description) ++
+//      validateEmbedContent(updatedLearningStep.embedContent) ++
+//      validateStepType(updatedLearningStep.`type`).toList ++
+//      validateLicense(updatedLearningStep.license).toList ++
+//      validateThatDescriptionOrEmbedUrlOrBothIsDefined(updatedLearningStep).toList
+    Nil
   }
 
   def validate(newLearningStep: NewLearningStep): Seq[ValidationMessage] = {
