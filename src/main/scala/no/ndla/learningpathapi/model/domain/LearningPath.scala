@@ -4,7 +4,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.validation.DurationValidator
+import no.ndla.learningpathapi.validation.{DurationValidator, LearningPathValidator, LearningStepValidator}
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
@@ -67,6 +67,13 @@ case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Opti
       case false => throw new ValidationException(errors = validationResult)
     }
   }
+
+  def validate: LearningPath = {
+    new LearningPathValidator().validate(this) match {
+      case head :: tail => throw new ValidationException(errors = head :: tail)
+      case _ => this
+    }
+  }
 }
 
 object LearningPathStatus extends Enumeration {
@@ -74,6 +81,13 @@ object LearningPathStatus extends Enumeration {
 
   def valueOf(s:String): Option[LearningPathStatus.Value] = {
     LearningPathStatus.values.find(_.toString == s.toUpperCase)
+  }
+
+  def valueOfOrError(status: String): LearningPathStatus.Value = {
+    valueOf(status) match {
+      case Some(status) => status
+      case None => throw new ValidationException(errors = List(ValidationMessage("status", s"'$status' is not a valid publishingstatus.")))
+    }
   }
 
   def valueOfOrDefault(s:String): LearningPathStatus.Value = {

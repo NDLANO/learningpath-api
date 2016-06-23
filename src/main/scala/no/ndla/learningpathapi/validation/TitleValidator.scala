@@ -1,6 +1,7 @@
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.api.{Title, ValidationMessage}
+import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.domain.Title
 
 class TitleValidator(titleRequired: Boolean = true) {
   val MISSING_TITLE = "At least one title is required."

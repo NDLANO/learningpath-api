@@ -13,13 +13,4 @@ case class NewLearningStep(@(ApiModelProperty@field)(description = "The titles o
                            @(ApiModelProperty@field)(description = "The embed content for the learningstep") embedContent: Seq[EmbedContent],
                            @(ApiModelProperty@field)(description = "Determines if the title of the step should be displayed in viewmode") showTitle: Boolean,
                            @(ApiModelProperty@field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`: String,
-                           @(ApiModelProperty@field)(description = "The license for this step. Must be plain text") license: Option[String]) {
-
-  def validate(): NewLearningStep = {
-    val validationResult = new LearningStepValidator().validate(this)
-    validationResult.isEmpty match {
-      case true => this
-      case false => throw new ValidationException(errors = validationResult)
-    }
-  }
-}
+                           @(ApiModelProperty@field)(description = "The license for this step. Must be plain text") license: Option[String])

@@ -8,7 +8,6 @@ class TextValidatorTest extends UnitSuite {
   var basicHtmlValidator: TextValidator = _
   var noHtmlValidator: TextValidator = _
 
-  // TODO: Test også med allowHtml = false
   override def beforeEach() = {
     basicHtmlValidator = new TextValidator(allowHtml = true)
     noHtmlValidator = new TextValidator(allowHtml = false)

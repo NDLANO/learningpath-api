@@ -1,22 +1,26 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.service.Clock
 
-class LearningPathValidatorTest extends UnitSuite {
+class LearningPathValidatorTest extends UnitSuite with Clock {
 
   var validator: LearningPathValidator = _
+  val clock = new SystemClock
 
   override def beforeEach() = {
     validator = new LearningPathValidator
+
   }
 
-  val ValidLearningPath = NewLearningPath(
+  val ValidLearningPath = LearningPath(
+    id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
     coverPhotoMetaUrl = Some("http://api.ndla.no/images/1"),
     duration = Some(180),
-    tags = List(LearningPathTag("Gyldig tag", Some("nb"))))
+    tags = List(LearningPathTag("Gyldig tag", Some("nb"))), revision = None, externalId = None, isBasedOn = None, status = LearningPathStatus.PRIVATE, verificationStatus = LearningPathVerificationStatus.EXTERNAL, lastUpdated = clock.now(), owner = "")
 
   test("That valid learningpath returns no errors") {
     validator.validate(ValidLearningPath) should equal (List())

@@ -1,6 +1,8 @@
 package no.ndla.learningpathapi.model.domain
 
 import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.validation.LearningStepValidator
 import org.json4s.FieldSerializer._
 import org.json4s._
 import org.json4s.ext.EnumNameSerializer
@@ -18,13 +20,29 @@ case class LearningStep(id: Option[Long],
                         `type`: StepType.Value,
                         license: Option[String],
                         showTitle: Boolean = false,
-                        status: StepStatus.Value = StepStatus.ACTIVE)
+                        status: StepStatus.Value = StepStatus.ACTIVE) {
+
+  def validate: LearningStep = {
+    new LearningStepValidator().validate(this) match {
+      case head :: tail => throw new ValidationException(errors = head :: tail)
+      case _ => this
+    }
+  }
+}
 
 object StepStatus extends Enumeration {
+
   val ACTIVE, DELETED = Value
 
   def valueOf(s: String): Option[StepStatus.Value] = {
     StepStatus.values.find(_.toString == s)
+  }
+
+  def valueOfOrError(status: String): StepStatus.Value = {
+   valueOf(status) match {
+     case Some(s) => s
+     case None => throw new ValidationException(errors = List(ValidationMessage("status", s"'$status' is not a valid status.")))
+   }
   }
 
   def valueOfOrDefault(s: String): StepStatus.Value = {
@@ -37,6 +55,13 @@ object StepType extends Enumeration {
 
   def valueOf(s: String): Option[StepType.Value] = {
     StepType.values.find(_.toString == s)
+  }
+
+  def valueOfOrError(s: String): StepType.Value = {
+    valueOf(s) match {
+      case Some(stepType) => stepType
+      case None => throw new ValidationException(errors = List(ValidationMessage("type", s"'$s' is not a valid steptype.")))
+    }
   }
 
   def valueOfOrDefault(s: String): StepType.Value = {

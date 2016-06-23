@@ -26,13 +26,13 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
   val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
 
-  val NEW_STEP = NewLearningStep(List(), List(), List(), true, "", None)
-  val UPDATED_STEP = UpdatedLearningStep(1, List(), List(), List(), Some(false), None, None)
+  val NEW_STEP = NewLearningStep(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), List(), true, "TEXT", None)
+  val UPDATED_STEP = UpdatedLearningStep(1, List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), List(), Some(false), None, None)
 
-  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(), List(), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, List())
-  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
+  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, List())
+  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List())
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
 
   val UPDATED_PRIVATE_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List())
@@ -518,7 +518,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     val titlesToOverride = List(api.Title("Overridden title", Some("nb")))
     val descriptionsToOverride = List(api.Description("Overridden description", Some("nb")))
     val tagsToOverride = List(api.LearningPathTag("Overridden tag", Some("nb")))
-    val coverPhotoToOverride = Some("OverriddenMetaUrlToCoverPhoto")
+    val coverPhotoToOverride = Some("http://api.ndla.no/images/someImage")
     val durationOverride = Some(100)
 
     service.newFromExisting(PUBLISHED_ID,

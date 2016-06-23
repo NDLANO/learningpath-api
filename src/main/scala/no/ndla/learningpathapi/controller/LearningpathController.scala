@@ -341,8 +341,8 @@ trait LearningpathController {
     post("/", operation(addNewLearningpath)) {
       val newLearningPath = extract[NewLearningPath](request.body)
       val createdLearningPath: Option[LearningPath] = optLong("copy-from") match {
-        case Some(id) => updateService.newFromExisting(id, newLearningPath.validate(titleRequired = false, descriptionRequired = false), usernameFromHeader)
-        case None => Some(updateService.addLearningPath(newLearningPath.validate(), usernameFromHeader))
+        case Some(id) => updateService.newFromExisting(id, newLearningPath, usernameFromHeader)
+        case None => Some(updateService.addLearningPath(newLearningPath, usernameFromHeader))
       }
 
       createdLearningPath match {
@@ -366,7 +366,7 @@ trait LearningpathController {
     }
 
     post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
-      val newLearningStep = extract[NewLearningStep](request.body).validate()
+      val newLearningStep = extract[NewLearningStep](request.body)
       val createdLearningStep = updateService.addLearningStep(long("path_id"), newLearningStep, usernameFromHeader)
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
@@ -401,8 +401,8 @@ trait LearningpathController {
     }
 
     put("/:path_id/learningsteps/:step_id/status/?", operation(updateLearningStepStatus)) {
-      val learningStepStatus = extract[LearningStepStatus](request.body).validate()
-      val stepStatus = StepStatus.valueOfOrDefault(learningStepStatus.status)
+      val learningStepStatus = extract[LearningStepStatus](request.body)
+      val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
 
       val updatedStep = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), stepStatus, usernameFromHeader)
       updatedStep match {
@@ -415,10 +415,9 @@ trait LearningpathController {
     }
 
     put("/:path_id/status/?", operation(updateLearningPathStatus)) {
-      val learningPathStatus = extract[LearningPathStatus](request.body).validate()
       val updatedLearningPath: Option[LearningPath] = updateService.updateLearningPathStatus(
         long("path_id"),
-        learningPathStatus,
+        extract[LearningPathStatus](request.body),
         usernameFromHeader)
 
       updatedLearningPath match {

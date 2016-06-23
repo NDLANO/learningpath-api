@@ -2,10 +2,12 @@ package no.ndla.learningpathapi.validation
 
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.domain.{Description, LearningPath, LearningPathTag}
 
 
 class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
+
   val MISSING_DESCRIPTION = "At least one description is required."
   val INVALID_COVER_PHOTO = "The url to the coverPhoto must point to an image in NDLA Image API."
 
@@ -14,15 +16,7 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
   val titleValidator = new TitleValidator(titleRequired)
   val durationValidator = new DurationValidator
 
-  def validate(updatedLearningPath: UpdatedLearningPath): Seq[ValidationMessage] = {
-    titleValidator.validate(updatedLearningPath.title) ++
-      validateDescription(updatedLearningPath.description) ++
-      validateDuration(updatedLearningPath.duration).toList ++
-      validateCoverPhoto(updatedLearningPath.coverPhotoMetaUrl).toList ++
-      validateTags(updatedLearningPath.tags)
-  }
-
-  def validate(newLearningPath: NewLearningPath): Seq[ValidationMessage] = {
+  def validate(newLearningPath: LearningPath): Seq[ValidationMessage] = {
     titleValidator.validate(newLearningPath.title) ++
       validateDescription(newLearningPath.description) ++
       validateDuration(newLearningPath.duration).toList ++

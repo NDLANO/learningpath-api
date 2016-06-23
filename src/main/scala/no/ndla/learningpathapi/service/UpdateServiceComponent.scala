@@ -5,7 +5,7 @@ import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-import no.ndla.learningpathapi.validation.LearningPathValidator
+import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
 
 
 trait UpdateServiceComponent {
@@ -19,8 +19,8 @@ trait UpdateServiceComponent {
         case Some(existing) => {
           existing.verifyOwnerOrPublic(Some(owner))
 
-          val title = if(newLearningPath.title.nonEmpty) newLearningPath.title.map(converterService.asTitle) else existing.title
-          val description = if(newLearningPath.description.nonEmpty) newLearningPath.description.map(converterService.asDescription) else existing.description
+          val title = mergeLanguageFields[Title](existing.title, newLearningPath.title.map(converterService.asTitle))
+          val description = mergeLanguageFields(existing.description, newLearningPath.description.map(converterService.asDescription))
           val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTag) else existing.tags
           val coverPhotoMetaUrl = if(newLearningPath.coverPhotoMetaUrl.nonEmpty) newLearningPath.coverPhotoMetaUrl else existing.coverPhotoMetaUrl
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
@@ -39,7 +39,7 @@ trait UpdateServiceComponent {
             learningsteps = existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
             tags = tags,
             coverPhotoMetaUrl = coverPhotoMetaUrl,
-            duration = duration)
+            duration = duration).validate
 
           Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
         }
@@ -54,7 +54,7 @@ trait UpdateServiceComponent {
         newLearningPath.coverPhotoMetaUrl,
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
-        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List())
+        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List()).validate
 
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
@@ -75,10 +75,9 @@ trait UpdateServiceComponent {
             coverPhotoMetaUrl = if(learningPathToUpdate.coverPhotoMetaUrl.isDefined) learningPathToUpdate.coverPhotoMetaUrl else existing.coverPhotoMetaUrl,
             duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
             tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
-            lastUpdated = clock.now())
+            lastUpdated = clock.now()).validate
 
           // TODO: Fix tags
-          // TODO: Validate here
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
@@ -94,7 +93,7 @@ trait UpdateServiceComponent {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
         case Some(existing) => {
-          val newStatus = domain.LearningPathStatus.valueOfOrDefault(status.status)
+          val newStatus = domain.LearningPathStatus.valueOfOrError(status.status)
           if (newStatus == domain.LearningPathStatus.PUBLISHED) {
             existing.validateForPublishing()
           }
@@ -140,9 +139,9 @@ trait UpdateServiceComponent {
               newLearningStep.title.map(converterService.asTitle),
               newLearningStep.description.map(converterService.asDescription),
               newLearningStep.embedContent.map(converterService.asEmbedUrl),
-              StepType.valueOfOrDefault(newLearningStep.`type`),
+              StepType.valueOfOrError(newLearningStep.`type`),
               newLearningStep.license,
-              newLearningStep.showTitle)
+              newLearningStep.showTitle).validate
 
             val (insertedStep, updatedPath) = inTransaction { implicit session =>
               val insertedStep = learningPathRepository.insertLearningStep(newStep)
@@ -179,10 +178,8 @@ trait UpdateServiceComponent {
                 description = descriptions,
                 embedUrl = embedUrls,
                 showTitle = learningStepToUpdate.showTitle.getOrElse(existing.showTitle),
-                `type` = learningStepToUpdate.`type`.map(domain.StepType.valueOfOrDefault).getOrElse(existing.`type`),
-                license = if(learningStepToUpdate.license.isDefined) learningStepToUpdate.license else existing.license)
-
-              // TODO: Validate that step is OK
+                `type` = learningStepToUpdate.`type`.map(domain.StepType.valueOfOrError).getOrElse(existing.`type`),
+                license = if(learningStepToUpdate.license.isDefined) learningStepToUpdate.license else existing.license).validate
 
               val (updatedStep, updatedPath) = inTransaction { implicit session =>
                 val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
