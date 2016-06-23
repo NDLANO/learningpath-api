@@ -576,4 +576,57 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
   }
 
+  test("That mergeLanguageFields returns original list when updated is empty") {
+    val existing = Seq(Title("Tittel 1", Some("nb")), Title("Tittel 2", Some("nn")), Title("Tittel 3", None))
+    service.mergeLanguageFields(existing, Seq()) should equal (existing)
+  }
+
+  test("That mergeLanguageFields updated the english title only when specified") {
+    val tittel1 = Title("Tittel 1", Some("nb"))
+    val tittel2 = Title("Tittel 2", Some("nn"))
+    val tittel3 = Title("Tittel 3", Some("en"))
+    val oppdatertTittel3 = Title("Title 3 in english", Some("en"))
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(oppdatertTittel3)
+
+    service.mergeLanguageFields(existing, updated) should equal (Seq(tittel1, tittel2, oppdatertTittel3))
+  }
+
+  test("That mergeLanguageFields removes a title that is empty") {
+    val tittel1 = Title("Tittel 1", Some("nb"))
+    val tittel2 = Title("Tittel 2", Some("nn"))
+    val tittel3 = Title("Tittel 3", Some("en"))
+    val tittelToRemove = Title("", Some("nn"))
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(tittelToRemove)
+
+    service.mergeLanguageFields(existing, updated) should equal (Seq(tittel1, tittel3))
+  }
+
+  test("That mergeLanguageFields updates the title with no language specified") {
+    val tittel1 = Title("Tittel 1", Some("nb"))
+    val tittel2 = Title("Tittel 2", None)
+    val tittel3 = Title("Tittel 3", Some("en"))
+    val oppdatertTittel2 = Title("Tittel 2 er oppdatert", None)
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(oppdatertTittel2)
+
+    service.mergeLanguageFields(existing, updated) should equal (Seq(tittel1, tittel3, oppdatertTittel2))
+  }
+
+  test("That mergeLanguageFields also updates the correct description") {
+    val desc1 = Description("Beskrivelse 1", Some("nb"))
+    val desc2 = Description("Beskrivelse 2", None)
+    val desc3 = Description("Beskrivelse 3", Some("en"))
+    val oppdatertDesc2 = Description("Beskrivelse 2 er oppdatert", None)
+
+    val existing = Seq(desc1, desc2, desc3)
+    val updated = Seq(oppdatertDesc2)
+
+    service.mergeLanguageFields(existing, updated) should equal (Seq(desc1, desc3, oppdatertDesc2))
+  }
+
 }

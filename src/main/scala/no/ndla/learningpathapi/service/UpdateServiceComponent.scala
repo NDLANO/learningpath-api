@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{LearningPathStatus, LearningPath => _, LearningStep => _, _}
+import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 
@@ -58,14 +58,22 @@ trait UpdateServiceComponent {
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
 
+    def mergeLanguageFields[A <: LanguageField](existing: Seq[A], updated: Seq[A]): Seq[A] = {
+      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
+      (toKeep ++ updated).filterNot(_.value.isEmpty)
+    }
+
     def updateLearningPath(id: Long, learningPathToUpdate: UpdatedLearningPath, owner: String): Option[LearningPath] = {
       withIdAndAccessGranted(id, owner) match {
         case None => None
         case Some(existing) => {
+          val titles = mergeLanguageFields(existing.title, learningPathToUpdate.title.map(converterService.asTitle))
+          val descriptions = mergeLanguageFields(existing.description, learningPathToUpdate.description.map(converterService.asDescription))
+
           val toUpdate = existing.copy(
             revision = Some(learningPathToUpdate.revision),
-            title = learningPathToUpdate.title.map(converterService.asTitle),
-            description = learningPathToUpdate.description.map(converterService.asDescription),
+            title = titles,
+            description = descriptions,
             coverPhotoMetaUrl = learningPathToUpdate.coverPhotoMetaUrl,
             duration = learningPathToUpdate.duration,
             tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
@@ -160,11 +168,15 @@ trait UpdateServiceComponent {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
             case Some(existing) => {
+              val titles = mergeLanguageFields(existing.title, learningStepToUpdate.title.map(converterService.asTitle))
+              val descriptions = mergeLanguageFields(existing.description, learningStepToUpdate.description.map(converterService.asDescription))
+              val embedUrls = mergeLanguageFields(existing.embedUrl, learningStepToUpdate.embedContent.map(converterService.asEmbedUrl))
+
               val toUpdate = existing.copy(
                 revision = Some(learningStepToUpdate.revision),
-                title = learningStepToUpdate.title.map(converterService.asTitle),
-                description = learningStepToUpdate.description.map(converterService.asDescription),
-                embedUrl = learningStepToUpdate.embedContent.map(converterService.asEmbedUrl),
+                title = titles,
+                description = descriptions,
+                embedUrl = embedUrls,
                 showTitle = learningStepToUpdate.showTitle,
                 `type` = domain.StepType.valueOfOrDefault(learningStepToUpdate.`type`),
                 license = learningStepToUpdate.license)
