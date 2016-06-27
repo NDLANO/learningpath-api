@@ -12,4 +12,4 @@ case class NewLearningPath(@(ApiModelProperty@field)(description = "The titles o
                            @(ApiModelProperty@field)(description = "The descriptions of the learningpath") description: Seq[Description],
                            @(ApiModelProperty@field)(description = "Url to cover-photo in NDLA image-api.") coverPhotoMetaUrl: Option[String],
                            @(ApiModelProperty@field)(description = "The duration of the learningpath in minutes. Must be greater than 0") duration: Option[Int],
-                           @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTag])
+                           @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTags])

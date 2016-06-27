@@ -49,7 +49,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
       description = List(Description("Dette handler om fugler", Some("nb"))),
       duration = Some(1),
       lastUpdated = yesterday,
-      tags = List(LearningPathTag("superhelt", Some("nb")), LearningPathTag("kanikkefly", Some("nb")))
+      tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), Some("nb")))
     )
 
     val batman = DefaultLearningPath.copy(
@@ -58,7 +58,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
       description = List(Description("Dette handler om flaggermus, som kan ligne litt på en fugl", Some("nb"))),
       duration = Some(2),
       lastUpdated = today,
-      tags = List(LearningPathTag("superhelt", Some("nb")), LearningPathTag("kanfly", Some("nb")))
+      tags = List(LearningPathTags(Seq("superhelt", "kanfly"), Some("nb")))
     )
 
     val theDuck = DefaultLearningPath.copy(
@@ -67,7 +67,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
       description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", Some("nb"))),
       duration = Some(3),
       lastUpdated = tomorrow,
-      tags = List(LearningPathTag("disney", Some("nb")), LearningPathTag("kanfly", Some("nb")))
+      tags = List(LearningPathTags(Seq("disney", "kanfly"), Some("nb")))
     )
 
     val indexName = searchIndexService.createNewIndex()

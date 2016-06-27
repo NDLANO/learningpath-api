@@ -1,6 +1,6 @@
 package no.ndla.learningpathapi.service.search
 
-import no.ndla.learningpathapi.model.domain.{Description, LearningPathTag, Title}
+import no.ndla.learningpathapi.model.domain.{Description, LearningPathTags, Title}
 import no.ndla.learningpathapi.model.search.{SearchableDescriptions, SearchableLearningStep, SearchableTitles}
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 
@@ -114,13 +114,10 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
   test("That tags converts to correct place") {
     val searchableTags = service.asSearchableTags(List(
-      LearningPathTag("Tag1", Some("nb")),
-      LearningPathTag("Tag2", Some("nb")),
-      LearningPathTag("Tagg1", Some("nn")),
-      LearningPathTag("Tagg2", Some("nn")),
-      LearningPathTag("Los Taggos1", Some("es")),
-      LearningPathTag("Los Taggos2", Some("es")),
-      LearningPathTag("Lasdf adf", None)
+      LearningPathTags(Seq("Tag1", "Tag2"), Some("nb")),
+      LearningPathTags(Seq("Tagg1", "Tagg2"), Some("nn")),
+      LearningPathTags(Seq("Los Taggos1", "Los Taggos2"), Some("es")),
+      LearningPathTags(Seq("Lasdf adf"), None)
     ))
 
     searchableTags.nb should equal (Seq("Tag1", "Tag2"))

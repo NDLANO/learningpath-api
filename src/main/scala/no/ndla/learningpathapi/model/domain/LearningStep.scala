@@ -6,7 +6,7 @@ import no.ndla.learningpathapi.validation.LearningStepValidator
 import org.json4s.FieldSerializer._
 import org.json4s._
 import org.json4s.ext.EnumNameSerializer
-import org.json4s.native.Serialization._
+import org.json4s.jackson.Serialization._
 import scalikejdbc._
 
 case class LearningStep(id: Option[Long],

@@ -45,7 +45,7 @@ trait ImportServiceComponent {
           optTranslations.flatten.map(pak => Description(tidyUpDescription(pak.description, allowHtml = false), Some(pak.language)))
 
         val titles = Title(pakke.packageTitle, Some(pakke.language)) :: optTranslations.flatten.map(pak => Title(pak.packageTitle, Some(pak.language)))
-        val tags = (keywordsService.forNodeId(pakke.nodeId) ::: optTranslations.flatten.flatMap(tra => keywordsService.forNodeId(tra.nodeId))).distinct
+        val tags = (keywordsService.forNodeId(pakke.nodeId) ++ optTranslations.flatten.flatMap(tra => keywordsService.forNodeId(tra.nodeId))).distinct
         val learningSteps = steps.map(step => asLearningStep(step, packageData.getTranslationSteps(optTranslations, step.pos)))
 
         val learningPath = asLearningPath(pakke, titles, descriptions, tags, learningSteps, imageUrl, environment)
@@ -87,7 +87,7 @@ trait ImportServiceComponent {
       })
     }
 
-    def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: List[LearningPathTag], learningSteps: List[LearningStep], imageUrl: Option[ImageMetaInformation], environment: String) = {
+    def asLearningPath(pakke: Package, titles:List[Title], descriptions:List[Description], tags: Seq[LearningPathTags], learningSteps: List[LearningStep], imageUrl: Option[ImageMetaInformation], environment: String) = {
       val duration = Some((pakke.durationHours * 60) + pakke.durationMinutes)
       val lastUpdated = pakke.lastUpdated
 

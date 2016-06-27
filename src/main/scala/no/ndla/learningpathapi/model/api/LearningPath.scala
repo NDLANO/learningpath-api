@@ -22,7 +22,7 @@ case class LearningPath(@(ApiModelProperty@field)(description = "The unique id o
                         @(ApiModelProperty@field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status: String,
                         @(ApiModelProperty@field)(description = "Verification status", allowableValues = "CREATED_BY_NDLA,VERIFIED_BY_NDLA,EXTERNAL") verificationStatus: String,
                         @(ApiModelProperty@field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
-                        @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTag],
+                        @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTags],
                         @(ApiModelProperty@field)(description = "The author of this learningpath") author: Author,
                         @(ApiModelProperty@field)(description = "True if authenticated user may edit this learningpath") canEdit: Boolean) {
 

@@ -24,12 +24,12 @@ trait ConverterServiceComponent {
     }
 
 
-    def asLearningPathTag(tag: LearningPathTag): domain.LearningPathTag = {
-      domain.LearningPathTag(tag.tag, tag.language)
+    def asLearningPathTags(tags: LearningPathTags): domain.LearningPathTags = {
+      domain.LearningPathTags(tags.tag, tags.language)
     }
 
-    def asApiLearningPathTag(tag: domain.LearningPathTag): LearningPathTag = {
-      LearningPathTag(tag.tag, tag.language)
+    def asApiLearningPathTags(tags: domain.LearningPathTags): LearningPathTags = {
+      LearningPathTags(tags.tag, tags.language)
     }
 
     def asAuthor(user: NdlaUserName): Author = {
@@ -55,7 +55,7 @@ trait ConverterServiceComponent {
         lp.status.toString,
         lp.verificationStatus.toString,
         lp.lastUpdated,
-        lp.tags.map(asApiLearningPathTag),
+        lp.tags.map(asApiLearningPathTags),
         asAuthor(authClient.getUserName(lp.owner)),
         lp.canEdit(user))
     }
@@ -78,7 +78,7 @@ trait ConverterServiceComponent {
         learningpath.duration,
         learningpath.status.toString,
         learningpath.lastUpdated,
-        learningpath.tags.map(asApiLearningPathTag),
+        learningpath.tags.map(asApiLearningPathTags),
         asAuthor(authClient.getUserName(learningpath.owner)))
     }
 

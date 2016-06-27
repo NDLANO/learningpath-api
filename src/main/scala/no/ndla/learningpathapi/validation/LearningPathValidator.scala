@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.validation
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.model.domain.{Description, LearningPath, LearningPathTag}
+import no.ndla.learningpathapi.model.domain.{Description, LearningPath, LearningPathTags}
 
 
 class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
@@ -58,10 +58,10 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
     })
   }
 
-  def validateTags(tags: Seq[LearningPathTag]): Seq[ValidationMessage] = {
-    tags.flatMap(tag => {
-      noHtmlTextValidator.validate("tags.tag", tag.tag).toList :::
-        languageValidator.validate("tags.language", tag.language).toList
+  def validateTags(tags: Seq[LearningPathTags]): Seq[ValidationMessage] = {
+    tags.flatMap(tagList => {
+      tagList.tag.flatMap(noHtmlTextValidator.validate("tags.tag", _)).toList :::
+      languageValidator.validate("tags.language", tagList.language).toList
     })
   }
 }

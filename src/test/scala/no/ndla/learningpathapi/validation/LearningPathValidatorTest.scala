@@ -20,7 +20,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
     coverPhotoMetaUrl = Some("http://api.ndla.no/images/1"),
     duration = Some(180),
-    tags = List(LearningPathTag("Gyldig tag", Some("nb"))), revision = None, externalId = None, isBasedOn = None, status = LearningPathStatus.PRIVATE, verificationStatus = LearningPathVerificationStatus.EXTERNAL, lastUpdated = clock.now(), owner = "")
+    tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))), revision = None, externalId = None, isBasedOn = None, status = LearningPathStatus.PRIVATE, verificationStatus = LearningPathVerificationStatus.EXTERNAL, lastUpdated = clock.now(), owner = "")
 
   test("That valid learningpath returns no errors") {
     validator.validate(ValidLearningPath) should equal (List())
@@ -105,19 +105,19 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   }
 
   test("That validate returns error when tag contains html") {
-    val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTag("<strong>ugyldig</strong>", Some("nb")))))
+    val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), Some("nb")))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("tags.tag")
   }
 
   test("That validate returns error when tag language is invalid") {
-    val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTag("Gyldig", Some("bergensk")))))
+    val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("Gyldig"), Some("bergensk")))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("tags.language")
   }
 
   test("That returns error for both tag text and tag language") {
-    val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTag("<strong>ugyldig</strong>", Some("bergensk")))))
+    val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), Some("bergensk")))))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("tags.tag")
     validationErrors.last.field should equal("tags.language")
@@ -125,8 +125,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
 
   test("That validate returns error for all invalid tags") {
     val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(
-      LearningPathTag("<strong>ugyldig</strong>", Some("nb")),
-      LearningPathTag("<li>også ugyldig</li>", Some("nb"))
+      LearningPathTags(Seq("<strong>ugyldig</strong>", "<li>også ugyldig</li>"), Some("nb"))
     )))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("tags.tag")

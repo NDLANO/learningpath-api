@@ -8,11 +8,11 @@ import no.ndla.learningpathapi.validation.{DurationValidator, LearningPathValida
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
-import org.json4s.native.Serialization._
+import org.json4s.jackson.Serialization._
 import scalikejdbc._
 
 case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Option[String], isBasedOn: Option[Long], title: Seq[Title], description: Seq[Description], coverPhotoMetaUrl: Option[String],
-                        duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: Seq[LearningPathTag],
+                        duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: Seq[LearningPathTags],
                         owner: String, learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE

@@ -17,5 +17,5 @@ case class LearningPathSummary(@(ApiModelProperty@field)(description = "The uniq
                                @(ApiModelProperty@field)(description = "The duration of the learningpath in minutes") duration: Option[Int],
                                @(ApiModelProperty@field)(description = "The publishing status of the learningpath.", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status: String,
                                @(ApiModelProperty@field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
-                               @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTag],
+                               @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTags],
                                @(ApiModelProperty@field)(description = "The author of this learningpath") author: Author)

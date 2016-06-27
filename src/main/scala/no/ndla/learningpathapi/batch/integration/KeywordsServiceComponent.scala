@@ -1,9 +1,9 @@
 package no.ndla.learningpathapi.batch.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.model.domain.LearningPathTag
+import no.ndla.learningpathapi.model.domain.LearningPathTags
 import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
-import org.json4s.native.Serialization._
+import org.json4s.jackson.Serialization._
 
 import scala.util.matching.Regex
 import scalaj.http.{Http, HttpRequest}
@@ -15,11 +15,11 @@ trait KeywordsServiceComponent extends LazyLogging {
     val TopicAPIUrl = "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
 
-    def forNodeId(nid: Long): List[LearningPathTag] = {
+    def forNodeId(nid: Long): Seq[LearningPathTags] = {
       forRequest(Http(s"$TopicAPIUrl$nid"))
     }
 
-    def forRequest(request: HttpRequest): List[LearningPathTag] = {
+    def forRequest(request: HttpRequest): Seq[LearningPathTags] = {
       implicit val formats = org.json4s.DefaultFormats
 
       val response = request.asString
@@ -35,7 +35,9 @@ trait KeywordsServiceComponent extends LazyLogging {
               .flatMap(_.names)
               .flatMap(_.data)
               .flatMap(_.toIterable)
-              .map(t => LearningPathTag(t._2.trim.toLowerCase, getISO639(t._1)))
+              .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
+              .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
+              .map(entr => LearningPathTags(entr._2, entr._1)).toList
           } catch {
             case e: Exception => {
               logger.error(s"Could not extract tags for request = ${request.url}. Error was ${e.getMessage}")
@@ -54,12 +56,18 @@ trait KeywordsServiceComponent extends LazyLogging {
       }
     }
   }
+
 }
 
 case class Keywords(keyword: List[Keyword])
+
 case class Keyword(psi: Option[String], topicId: Option[String], visibility: Option[String], approved: Option[String], processState: Option[String], psis: List[String],
                    originatingSites: List[String], types: List[Any], names: List[KeywordName])
+
 case class Type(typeId: String)
+
 case class TypeName(isoLanguageCode: String)
+
 case class KeywordName(wordclass: String, data: List[Map[String, String]])
+
 case class KeywordNameName(isoLanguageCode: String)

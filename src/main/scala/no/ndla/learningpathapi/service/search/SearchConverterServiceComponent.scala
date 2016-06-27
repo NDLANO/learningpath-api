@@ -42,16 +42,16 @@ trait SearchConverterServiceComponent {
       ).filter(_._1.isDefined).map(tuple => api.Description(tuple._1.get, tuple._2))
     }
 
-    def asApiLearningPathTag(tags: SearchableTags): Seq[api.LearningPathTag] = {
-      tags.zh.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.CHINESE))) ++
-      tags.en.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.ENGLISH))) ++
-      tags.fr.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.FRENCH))) ++
-      tags.de.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.GERMAN))) ++
-      tags.nb.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_BOKMAL))) ++
-      tags.nn.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.NORWEGIAN_NYNORSK))) ++
-      tags.se.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SAMI))) ++
-      tags.es.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.SPANISH))) ++
-      tags.unknown.map(tag => api.LearningPathTag(tag, Some(ISO639Mapping.UNKNOWN)))
+    def asApiLearningPathTag(tags: SearchableTags): Seq[api.LearningPathTags] = {
+      Seq(api.LearningPathTags(tags.zh, Some(ISO639Mapping.CHINESE)),
+        api.LearningPathTags(tags.en, Some(ISO639Mapping.ENGLISH)),
+        api.LearningPathTags(tags.fr, Some(ISO639Mapping.FRENCH)),
+        api.LearningPathTags(tags.de, Some(ISO639Mapping.GERMAN)),
+        api.LearningPathTags(tags.nb, Some(ISO639Mapping.NORWEGIAN_BOKMAL)),
+        api.LearningPathTags(tags.nn, Some(ISO639Mapping.NORWEGIAN_NYNORSK)),
+        api.LearningPathTags(tags.se, Some(ISO639Mapping.SAMI)),
+        api.LearningPathTags(tags.es, Some(ISO639Mapping.SPANISH)),
+        api.LearningPathTags(tags.unknown, Some(ISO639Mapping.UNKNOWN))).filterNot(_.tag.isEmpty)
     }
 
     def asApiIntroduction(learningStep: Option[SearchableLearningStep]): List[Introduction] = {
@@ -105,17 +105,17 @@ trait SearchConverterServiceComponent {
         learningPath.learningsteps.map(asSearchableLearningStep).toList)
     }
 
-    def asSearchableTags(tags: Seq[LearningPathTag]): SearchableTags = {
+    def asSearchableTags(tags: Seq[LearningPathTags]): SearchableTags = {
       SearchableTags(
-        nb = tags.filter(_.language.contains("nb")).map(_.tag),
-        nn = tags.filter(_.language.contains("nn")).map(_.tag),
-        en = tags.filter(_.language.contains("en")).map(_.tag),
-        fr = tags.filter(_.language.contains("fr")).map(_.tag),
-        de = tags.filter(_.language.contains("de")).map(_.tag),
-        es = tags.filter(_.language.contains("es")).map(_.tag),
-        se = tags.filter(_.language.contains("se")).map(_.tag),
-        zh = tags.filter(_.language.contains("zh")).map(_.tag),
-        unknown = tags.filter(_.language.isEmpty).map(_.tag)
+        nb = tags.find(_.language.contains("nb")).map(_.tag).getOrElse(Seq()),
+        nn = tags.find(_.language.contains("nn")).map(_.tag).getOrElse(Seq()),
+        en = tags.find(_.language.contains("en")).map(_.tag).getOrElse(Seq()),
+        fr = tags.find(_.language.contains("fr")).map(_.tag).getOrElse(Seq()),
+        de = tags.find(_.language.contains("de")).map(_.tag).getOrElse(Seq()),
+        es = tags.find(_.language.contains("es")).map(_.tag).getOrElse(Seq()),
+        se = tags.find(_.language.contains("se")).map(_.tag).getOrElse(Seq()),
+        zh = tags.find(_.language.contains("zh")).map(_.tag).getOrElse(Seq()),
+        unknown = tags.find(_.language.isEmpty).map(_.tag).getOrElse(Seq())
       )
     }
 

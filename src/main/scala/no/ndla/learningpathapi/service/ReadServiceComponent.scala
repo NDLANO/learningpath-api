@@ -13,8 +13,8 @@ trait ReadServiceComponent {
   class ReadService {
 
 
-    def tags: List[LearningPathTag] = {
-      learningPathRepository.allPublishedTags.map(tag => LearningPathTag(tag.tag, tag.language))
+    def tags: List[LearningPathTags] = {
+      learningPathRepository.allPublishedTags.map(tags => LearningPathTags(tags.tag, tags.language))
     }
 
     def withOwner(owner: String): List[LearningPathSummary] = {

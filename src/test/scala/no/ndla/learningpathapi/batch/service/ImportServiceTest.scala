@@ -139,7 +139,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     val pakke = packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1)
     val titles = List(Title("Tittel", Some("nb")))
     val descriptions = List(Description("Beskrivelse", Some("nb")))
-    val tags = List(LearningPathTag("Tag", Some("nb")))
+    val tags = List(LearningPathTags(Seq("Tag"), Some("nb")))
     val steps = List(LearningStep(None, None, None, None, 1, List(Title("StegTittel", Some("nb"))), List(Description("StegBeskrivelse", Some("nb"))), List(), StepType.INTRODUCTION, None))
     val imageUrl = None
 

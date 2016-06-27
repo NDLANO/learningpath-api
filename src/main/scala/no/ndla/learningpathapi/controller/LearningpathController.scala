@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTag, LearningStep, _}
+import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, _}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
@@ -12,9 +12,9 @@ import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
-import org.json4s.native.Serialization.read
+import org.json4s.jackson.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json.NativeJsonSupport
+import org.scalatra.json.{JacksonJsonSupport}
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
@@ -25,7 +25,7 @@ trait LearningpathController {
   this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent =>
   val learningpathController: LearningpathController
 
-  class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
+  class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with SwaggerSupport with LazyLogging {
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
@@ -233,7 +233,7 @@ trait LearningpathController {
         responseMessages(response403, response404, response500))
 
     val getTags =
-      (apiOperation[List[LearningPathTag]]("getTags")
+      (apiOperation[List[LearningPathTags]]("getTags")
         summary "Retrieves a list of all previously used tags in learningpaths"
         notes "Retrieves a list of all previously used tags in learningpaths"
         parameters(

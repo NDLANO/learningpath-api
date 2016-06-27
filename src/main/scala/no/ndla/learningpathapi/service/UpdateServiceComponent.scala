@@ -21,7 +21,7 @@ trait UpdateServiceComponent {
 
           val title = mergeLanguageFields[Title](existing.title, newLearningPath.title.map(converterService.asTitle))
           val description = mergeLanguageFields(existing.description, newLearningPath.description.map(converterService.asDescription))
-          val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTag) else existing.tags
+          val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTags) else existing.tags
           val coverPhotoMetaUrl = if(newLearningPath.coverPhotoMetaUrl.nonEmpty) newLearningPath.coverPhotoMetaUrl else existing.coverPhotoMetaUrl
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
 
@@ -54,7 +54,7 @@ trait UpdateServiceComponent {
         newLearningPath.coverPhotoMetaUrl,
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
-        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTag), owner, List()).validate
+        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTags), owner, List()).validate
 
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
@@ -62,6 +62,11 @@ trait UpdateServiceComponent {
     def mergeLanguageFields[A <: LanguageField](existing: Seq[A], updated: Seq[A]): Seq[A] = {
       val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
       (toKeep ++ updated).filterNot(_.value.isEmpty)
+    }
+
+    def mergeLearningPathTags(existing: Seq[domain.LearningPathTags], updated: Seq[domain.LearningPathTags]): Seq[domain.LearningPathTags] = {
+      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
+      (toKeep ++ updated).filterNot(_.tag.isEmpty)
     }
 
     def updateLearningPath(id: Long, learningPathToUpdate: UpdatedLearningPath, owner: String): Option[LearningPath] = {
@@ -74,10 +79,8 @@ trait UpdateServiceComponent {
             description = mergeLanguageFields(existing.description, learningPathToUpdate.description.map(converterService.asDescription)),
             coverPhotoMetaUrl = if(learningPathToUpdate.coverPhotoMetaUrl.isDefined) learningPathToUpdate.coverPhotoMetaUrl else existing.coverPhotoMetaUrl,
             duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
-            tags = learningPathToUpdate.tags.map(converterService.asLearningPathTag),
+            tags = mergeLearningPathTags(existing.tags, learningPathToUpdate.tags.map(converterService.asLearningPathTags)),
             lastUpdated = clock.now()).validate
-
-          // TODO: Fix tags
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
