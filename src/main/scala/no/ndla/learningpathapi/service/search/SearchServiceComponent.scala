@@ -9,10 +9,9 @@ import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.Sort
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import org.elasticsearch.index.IndexNotFoundException
-import org.elasticsearch.index.query.MatchQueryBuilder
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.transport.RemoteTransportException
-import org.json4s.jackson.Serialization._
+import org.json4s.native.Serialization._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

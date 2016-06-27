@@ -5,8 +5,8 @@ import no.ndla.learningpathapi.integration.DatasourceComponent
 import no.ndla.learningpathapi.model.domain._
 import org.json4s.JsonAST.{JArray, JField, JObject, JString}
 import org.json4s.ext.EnumNameSerializer
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization._
+import org.json4s.native.JsonMethods._
+import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 

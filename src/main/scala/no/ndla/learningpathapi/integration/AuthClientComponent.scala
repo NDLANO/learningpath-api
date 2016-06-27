@@ -3,10 +3,9 @@ package no.ndla.learningpathapi.integration
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.domain.NdlaUserName
-import org.json4s.jackson.Serialization._
 
-import scala.util.{Failure, Success, Try}
-import scalaj.http.{HttpRequest, Http}
+import scala.util.{Failure, Success}
+import scalaj.http.Http
 
 trait AuthClientComponent {
   this: NdlaClient =>

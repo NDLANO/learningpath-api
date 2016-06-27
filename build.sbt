@@ -48,7 +48,6 @@ lazy val learningpath_api = (project in file(".")).
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s"   %% "json4s-native" % "3.2.11",
-      "org.json4s"   %% "json4s-jackson" % "3.2.11",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",

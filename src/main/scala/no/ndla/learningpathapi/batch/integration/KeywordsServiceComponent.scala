@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.batch.integration
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.LearningPathTags
 import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
-import org.json4s.jackson.Serialization._
+import org.json4s.native.Serialization._
 
 import scala.util.matching.Regex
 import scalaj.http.{Http, HttpRequest}

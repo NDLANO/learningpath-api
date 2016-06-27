@@ -3,8 +3,8 @@ package no.ndla.learningpathapi.batch
 import no.ndla.learningpathapi.PropertiesLoader
 import no.ndla.learningpathapi.model.domain.LearningPathTags
 import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization.write
+import org.json4s.native.JsonMethods._
+import org.json4s.native.Serialization.write
 import org.postgresql.util.PGobject
 import scalikejdbc._
 

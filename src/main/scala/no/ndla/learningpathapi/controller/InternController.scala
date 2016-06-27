@@ -4,13 +4,13 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.Error
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json.{JacksonJsonSupport, NativeJsonSupport}
+import org.scalatra.json.{NativeJsonSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
 trait InternController {
   val internController: InternController
 
-  class InternController extends ScalatraServlet with JacksonJsonSupport with LazyLogging {
+  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
