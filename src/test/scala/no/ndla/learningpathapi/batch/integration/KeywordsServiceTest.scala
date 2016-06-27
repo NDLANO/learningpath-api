@@ -70,10 +70,6 @@ class KeywordsServiceTest extends UnitSuite with BatchTestEnvironment {
     service.getISO639("http://psi.oasis-open.org/iso/639/#eng") should be(Some("en"))
   }
 
-  test("Live") {
-    service.forNodeId(122564)
-  }
-
   def mockRequestWithResponse(response: HttpResponse[String]) = {
     val req = mock[HttpRequest]
     when(req.asString).thenReturn(response)
