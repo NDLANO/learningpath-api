@@ -14,10 +14,10 @@ object LearningPathUpdater {
 
   def main(args: Array[String]){
     PropertiesLoader.load()
-    transformTagsToNewFormat(92, 90, 22)
+    transformTagsToNewFormat()
   }
 
-  def transformTagsToNewFormat(ids: Long*) = {
+  def transformTagsToNewFormat() = {
     case class OldTag(tag: String, language: Option[String])
 
     val datasource = BatchComponentRegistry.datasource
