@@ -184,6 +184,12 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
     searchResult.totalCount should be (2)
     searchResult.results.head.id should be(DonaldId)
     searchResult.results.last.id should be(BatmanId)
+  }
 
+  test("That a search for flaggremsu returns both Donald and Batman even if it is misspelled") {
+    val searchResult = searchService.matchingQuery(Seq("and", "flaggremsu"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
+    searchResult.totalCount should be (2)
+    searchResult.results.head.id should be (DonaldId)
+    searchResult.results.last.id should be (BatmanId)
   }
 }

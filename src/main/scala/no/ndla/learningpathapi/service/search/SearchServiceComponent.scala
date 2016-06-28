@@ -40,12 +40,12 @@ trait SearchServiceComponent extends LazyLogging {
     def matchingQuery(query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" "))
-      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" "))
-      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" "))
-      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" "))
-      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" "))
-      val authorSearch = matchQuery("author", query.mkString(" "))
+      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val authorSearch = matchQuery("author", query.mkString(" ")).fuzziness("AUTO")
       val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
 
       val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
