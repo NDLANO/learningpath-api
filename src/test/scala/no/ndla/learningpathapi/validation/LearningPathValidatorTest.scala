@@ -107,7 +107,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   test("That validate returns error when tag contains html") {
     val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), Some("nb")))))
     validationErrors.size should be (1)
-    validationErrors.head.field should equal("tags.tag")
+    validationErrors.head.field should equal("tags.tags")
   }
 
   test("That validate returns error when tag language is invalid") {
@@ -119,7 +119,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   test("That returns error for both tag text and tag language") {
     val validationErrors = validator.validate(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), Some("bergensk")))))
     validationErrors.size should be (2)
-    validationErrors.head.field should equal("tags.tag")
+    validationErrors.head.field should equal("tags.tags")
     validationErrors.last.field should equal("tags.language")
   }
 
@@ -128,8 +128,8 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
       LearningPathTags(Seq("<strong>ugyldig</strong>", "<li>også ugyldig</li>"), Some("nb"))
     )))
     validationErrors.size should be (2)
-    validationErrors.head.field should equal("tags.tag")
-    validationErrors.last.field should equal("tags.tag")
+    validationErrors.head.field should equal("tags.tags")
+    validationErrors.last.field should equal("tags.tags")
   }
 }
 

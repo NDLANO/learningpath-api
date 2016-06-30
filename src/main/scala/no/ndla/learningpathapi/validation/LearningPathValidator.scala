@@ -60,7 +60,7 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
 
   def validateTags(tags: Seq[LearningPathTags]): Seq[ValidationMessage] = {
     tags.flatMap(tagList => {
-      tagList.tag.flatMap(noHtmlTextValidator.validate("tags.tag", _)).toList :::
+      tagList.tags.flatMap(noHtmlTextValidator.validate("tags.tags", _)).toList :::
       languageValidator.validate("tags.language", tagList.language).toList
     })
   }

@@ -66,7 +66,7 @@ trait UpdateServiceComponent {
 
     def mergeLearningPathTags(existing: Seq[domain.LearningPathTags], updated: Seq[domain.LearningPathTags]): Seq[domain.LearningPathTags] = {
       val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
-      (toKeep ++ updated).filterNot(_.tag.isEmpty)
+      (toKeep ++ updated).filterNot(_.tags.isEmpty)
     }
 
     def updateLearningPath(id: Long, learningPathToUpdate: UpdatedLearningPath, owner: String): Option[LearningPath] = {
