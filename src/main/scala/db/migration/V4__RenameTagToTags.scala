@@ -2,15 +2,13 @@ package db.migration
 
 import java.sql.Connection
 
-import no.ndla.learningpathapi.model.domain.LearningPathTags
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration
-import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc._
 
-class V3__ChangeTagStructure extends JdbcMigration {
+class V4__RenameTagToTags extends JdbcMigration {
 
   implicit val formats = org.json4s.DefaultFormats
 
@@ -23,33 +21,35 @@ class V3__ChangeTagStructure extends JdbcMigration {
     }
   }
 
-  def allLearningPaths(implicit session: DBSession): List[V3_DBLearningPath] = {
-    sql"select id, document from learningpaths".map(rs => V3_DBLearningPath(rs.long("id"), rs.string("document"))).list().apply()
+  def allLearningPaths(implicit session: DBSession): List[V4_DBLearningPath] = {
+    sql"select id, document from learningpaths".map(rs => V4_DBLearningPath(rs.long("id"), rs.string("document"))).list().apply()
   }
 
-  def convertTagsToNewFormat(learningPath: V3_DBLearningPath): Option[V3_DBLearningPath] = {
+  def convertTagsToNewFormat(learningPath: V4_DBLearningPath): Option[V4_DBLearningPath] = {
     val json = parse(learningPath.document)
     val tags = json \\ "tags"
 
-    val oldTagsOpt: Option[List[V3_OldTag]] = tags.extractOpt[List[V3_OldTag]]
+    val oldTagsOpt: Option[List[V4_OldTag]] = tags.extractOpt[List[V4_OldTag]]
     oldTagsOpt match {
       case None => None
       case Some(oldTags) => {
-        val newTags = oldTags.groupBy(_.language).map(entry => (entry._1, entry._2.map(_.tag))).map(entr => V3_LearningPathTags(entr._2, entr._1))
+        val newTags = oldTags.map(oldTag => V4_LearningPathTags(oldTag.tag, oldTag.language))
         Some(learningPath.copy(document = compact(render(json.replace(List("tags"), parse(write(newTags)))))))
       }
     }
   }
 
-  def update(learningPath: V3_DBLearningPath)(implicit session: DBSession) = {
+  def update(learningPath: V4_DBLearningPath)(implicit session: DBSession) = {
     val dataObject = new PGobject()
     dataObject.setType("jsonb")
     dataObject.setValue(learningPath.document)
 
     sql"update learningpaths set document = $dataObject where id = ${learningPath.id}".update().apply
   }
+
 }
 
-case class V3_LearningPathTags(tag: Seq[String], language:Option[String])
-case class V3_OldTag(tag: String, language: Option[String])
-case class V3_DBLearningPath(id: Long, document: String)
+case class V4_LearningPathTags(tags: Seq[String], language:Option[String])
+case class V4_OldTag(tag: Seq[String], language:Option[String])
+case class V4_DBLearningPath(id: Long, document: String)
+

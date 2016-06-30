@@ -14,7 +14,7 @@ trait ReadServiceComponent {
 
 
     def tags: List[LearningPathTags] = {
-      learningPathRepository.allPublishedTags.map(tags => LearningPathTags(tags.tag, tags.language))
+      learningPathRepository.allPublishedTags.map(tags => LearningPathTags(tags.tags, tags.language))
     }
 
     def withOwner(owner: String): List[LearningPathSummary] = {

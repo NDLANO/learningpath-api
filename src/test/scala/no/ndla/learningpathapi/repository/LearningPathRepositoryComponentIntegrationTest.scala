@@ -130,7 +130,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     publicTags should contain (LearningPathTags(Seq("aaa", "bbb"), Some("nb")))
     publicTags should contain (LearningPathTags(Seq("aaa"), Some("nn")))
 
-    publicTags.find(_.language.contains("nb")).map(_.tag.count(_ == "aaa")).getOrElse(0) should be (1)
+    publicTags.find(_.language.contains("nb")).map(_.tags.count(_ == "aaa")).getOrElse(0) should be (1)
 
     repository.delete(publicPath1.id.get)
     repository.delete(publicPath2.id.get)

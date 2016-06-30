@@ -51,7 +51,7 @@ trait SearchConverterServiceComponent {
         api.LearningPathTags(tags.nn, Some(ISO639Mapping.NORWEGIAN_NYNORSK)),
         api.LearningPathTags(tags.se, Some(ISO639Mapping.SAMI)),
         api.LearningPathTags(tags.es, Some(ISO639Mapping.SPANISH)),
-        api.LearningPathTags(tags.unknown, Some(ISO639Mapping.UNKNOWN))).filterNot(_.tag.isEmpty)
+        api.LearningPathTags(tags.unknown, Some(ISO639Mapping.UNKNOWN))).filterNot(_.tags.isEmpty)
     }
 
     def asApiIntroduction(learningStep: Option[SearchableLearningStep]): List[Introduction] = {
@@ -107,15 +107,15 @@ trait SearchConverterServiceComponent {
 
     def asSearchableTags(tags: Seq[LearningPathTags]): SearchableTags = {
       SearchableTags(
-        nb = tags.find(_.language.contains("nb")).map(_.tag).getOrElse(Seq()),
-        nn = tags.find(_.language.contains("nn")).map(_.tag).getOrElse(Seq()),
-        en = tags.find(_.language.contains("en")).map(_.tag).getOrElse(Seq()),
-        fr = tags.find(_.language.contains("fr")).map(_.tag).getOrElse(Seq()),
-        de = tags.find(_.language.contains("de")).map(_.tag).getOrElse(Seq()),
-        es = tags.find(_.language.contains("es")).map(_.tag).getOrElse(Seq()),
-        se = tags.find(_.language.contains("se")).map(_.tag).getOrElse(Seq()),
-        zh = tags.find(_.language.contains("zh")).map(_.tag).getOrElse(Seq()),
-        unknown = tags.find(_.language.isEmpty).map(_.tag).getOrElse(Seq())
+        nb = tags.find(_.language.contains("nb")).map(_.tags).getOrElse(Seq()),
+        nn = tags.find(_.language.contains("nn")).map(_.tags).getOrElse(Seq()),
+        en = tags.find(_.language.contains("en")).map(_.tags).getOrElse(Seq()),
+        fr = tags.find(_.language.contains("fr")).map(_.tags).getOrElse(Seq()),
+        de = tags.find(_.language.contains("de")).map(_.tags).getOrElse(Seq()),
+        es = tags.find(_.language.contains("es")).map(_.tags).getOrElse(Seq()),
+        se = tags.find(_.language.contains("se")).map(_.tags).getOrElse(Seq()),
+        zh = tags.find(_.language.contains("zh")).map(_.tags).getOrElse(Seq()),
+        unknown = tags.find(_.language.isEmpty).map(_.tags).getOrElse(Seq())
       )
     }
 

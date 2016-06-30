@@ -25,11 +25,11 @@ trait ConverterServiceComponent {
 
 
     def asLearningPathTags(tags: LearningPathTags): domain.LearningPathTags = {
-      domain.LearningPathTags(tags.tag, tags.language)
+      domain.LearningPathTags(tags.tags, tags.language)
     }
 
     def asApiLearningPathTags(tags: domain.LearningPathTags): LearningPathTags = {
-      LearningPathTags(tags.tag, tags.language)
+      LearningPathTags(tags.tags, tags.language)
     }
 
     def asAuthor(user: NdlaUserName): Author = {

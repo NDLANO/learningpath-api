@@ -173,7 +173,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       allTags.flatMap(tag => {
         parse(tag).extract[List[LearningPathTags]]
       }).groupBy(_.language)
-        .map(entry => LearningPathTags(entry._2.flatMap(_.tag).distinct.sorted, entry._1)).toList
+        .map(entry => LearningPathTags(entry._2.flatMap(_.tags).distinct.sorted, entry._1)).toList
     }
 
     private def learningPathsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
