@@ -2,7 +2,6 @@ package db.migration
 
 import java.sql.Connection
 
-import no.ndla.learningpathapi.model.domain.LearningPathTags
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration
 import org.json4s._
 import org.json4s.native.JsonMethods._
