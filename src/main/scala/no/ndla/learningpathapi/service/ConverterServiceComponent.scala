@@ -23,13 +23,24 @@ trait ConverterServiceComponent {
       domain.Title(title.title, title.language)
     }
 
-
     def asLearningPathTags(tags: LearningPathTags): domain.LearningPathTags = {
       domain.LearningPathTags(tags.tags, tags.language)
     }
 
     def asApiLearningPathTags(tags: domain.LearningPathTags): LearningPathTags = {
       LearningPathTags(tags.tags, tags.language)
+    }
+
+    def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
+      api.Copyright(asApiLicense(copyright.license), copyright.origin, copyright.contributors.map(asApiAuthor))
+    }
+
+    def asApiLicense(license: domain.License): api.License = {
+      api.License(license.license, license.description, license.url)
+    }
+
+    def asApiAuthor(author: domain.Author): api.Author = {
+      api.Author(author.`type`, author.name)
     }
 
     def asAuthor(user: NdlaUserName): Author = {
@@ -39,6 +50,18 @@ trait ConverterServiceComponent {
 
     def asCoverPhoto(metaUrl: String, imageMeta: Option[ImageMetaInformation]): Option[CoverPhoto] = {
       imageMeta.flatMap(_.images.full).map(full => CoverPhoto(full.url, metaUrl))
+    }
+
+    def asCopyright(copyright: Copyright): domain.Copyright = {
+      domain.Copyright(asLicense(copyright.license), copyright.origin, copyright.contributers.map(asAuthor))
+    }
+
+    def asLicense(license: License): domain.License = {
+      domain.License(license.license, license.description, license.url)
+    }
+
+    def asAuthor(author: Author): domain.Author = {
+      domain.Author(author.`type`, author.name)
     }
 
     def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): LearningPath = {
@@ -57,9 +80,9 @@ trait ConverterServiceComponent {
         lp.lastUpdated,
         lp.tags.map(asApiLearningPathTags),
         asAuthor(authClient.getUserName(lp.owner)),
+        asApiCopyright(lp.copyright),
         lp.canEdit(user))
     }
-
 
     def asApiIntroduction(introStepOpt: Option[LearningStep]): Seq[Introduction] = {
       introStepOpt match {
@@ -92,7 +115,7 @@ trait ConverterServiceComponent {
         ls.embedUrl.map(e => asApiEmbedContent(e)),
         ls.showTitle,
         ls.`type`.toString,
-        ls.license, createUrlToLearningStep(ls, lp),
+        if (ls.copyright.isDefined) Some(asApiCopyright(ls.copyright.get)) else None, createUrlToLearningStep(ls, lp),
         lp.canEdit(user), ls.status.toString)
     }
 

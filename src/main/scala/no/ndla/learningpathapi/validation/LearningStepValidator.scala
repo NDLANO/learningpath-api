@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.validation
 
 
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.model.domain.{Description, EmbedUrl, LearningStep}
+import no.ndla.learningpathapi.model.domain.{Copyright, Description, EmbedUrl, LearningStep}
 
 class LearningStepValidator {
 
@@ -17,7 +17,7 @@ class LearningStepValidator {
     titleValidator.validate(newLearningStep.title) ++
       validateDescription(newLearningStep.description) ++
       validateEmbedUrl(newLearningStep.embedUrl) ++
-      validateLicense(newLearningStep.license).toList ++
+      validateCopyright(newLearningStep.copyright).toList ++
       validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep).toList
   }
 
@@ -38,10 +38,12 @@ class LearningStepValidator {
     })
   }
 
-  def validateLicense(licenseOpt: Option[String]): Option[ValidationMessage] = {
-    licenseOpt match {
+  def validateCopyright(copyrightOpt: Option[Copyright]): Option[ValidationMessage] = {
+    copyrightOpt match {
       case None => None
-      case Some(license) => noHtmlTextValidator.validate("license", license)
+      case Some(copyright) => {
+        noHtmlTextValidator.validate("license", copyright.license.license)
+      }
     }
   }
 

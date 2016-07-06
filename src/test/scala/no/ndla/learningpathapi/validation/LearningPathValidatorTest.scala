@@ -14,13 +14,24 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
 
   }
 
+  val trump = Author("author", "Donald Drumpf")
+  val license = License("Public Domain", "Public Domain", None)
+  val copyright = Copyright(license, "", List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
     coverPhotoMetaUrl = Some("http://api.ndla.no/images/1"),
     duration = Some(180),
-    tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))), revision = None, externalId = None, isBasedOn = None, status = LearningPathStatus.PRIVATE, verificationStatus = LearningPathVerificationStatus.EXTERNAL, lastUpdated = clock.now(), owner = "")
+    tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))),
+    revision = None,
+    externalId = None,
+    isBasedOn = None,
+    status = LearningPathStatus.PRIVATE,
+    verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+    lastUpdated = clock.now(),
+    owner = "",
+    copyright = copyright)
 
   test("That valid learningpath returns no errors") {
     validator.validate(ValidLearningPath) should equal (List())

@@ -29,14 +29,21 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val NEW_STEP = NewLearningStep(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), List(), true, "TEXT", None)
   val UPDATED_STEP = UpdatedLearningStep(1, List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), List(), Some(false), None, None)
 
-  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, List())
-  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List())
-  val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List())
+  val rubio = Author("author", "Little Marco")
+  val license = License("Public Domain", "Public Domain", None)
+  val copyright = Copyright(license, "", List(rubio))
+  val apiRubio = api.Author("author", "Little Marco")
+  val apiLicense = api.License("Public Domain", "Public Domain", None)
+  val apiCopyright = api.Copyright(apiLicense, "", List(apiRubio))
 
-  val UPDATED_PRIVATE_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List())
-  val UPDATED_PUBLISHED_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List())
+  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, List())
+  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), apiCopyright)
+  val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List(), apiCopyright)
+
+  val UPDATED_PRIVATE_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
+  val UPDATED_PUBLISHED_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
 
 
   override def beforeEach() = {

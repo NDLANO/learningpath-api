@@ -7,12 +7,15 @@ class LearningStepValidatorTest extends UnitSuite {
 
   var validator: LearningStepValidator = _
 
+  val warren = Author("author", "Goofy Elizabeth Warren")
+  val license = License("Public Domain", "Public Domain", None)
+  val copyright = Copyright(license, "", List(warren))
   val ValidLearningStep = LearningStep(id = None, revision = None, externalId = None, learningPathId = None, seqNo = 0,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("<strong>Gyldig description</strong>", Some("nb"))),
     embedUrl = List(EmbedUrl("http://www.ndla.no/123", Some("nb"))),
     `type` = StepType.TEXT,
-    license = Some("Lisens"),
+    copyright = Some(copyright),
     showTitle = true,
     status = StepStatus.ACTIVE
   )
@@ -86,28 +89,17 @@ class LearningStepValidatorTest extends UnitSuite {
     validationMessages.last.field should equal("embedContent.language")
   }
 
-//  test("That empty stepType gives validation error") {
-//    val validationMessages = validator.validate(ValidLearningStep.copy(`type` = ))
-//    validationMessages.size should be(1)
-//    validationMessages.head.field should equal("type")
-//    validationMessages.head.message should equal("'' is not a valid steptype.")
-//  }
-//
-//  test("That unsupported stepType gives validation error") {
-//    val validationMessages = validator.validate(ValidLearningStep.copy(`type` = "HOPPESTOKK"))
-//    validationMessages.size should be(1)
-//    validationMessages.head.field should equal("type")
-//    validationMessages.head.message should equal("'HOPPESTOKK' is not a valid steptype.")
-//  }
-
   test("That html-code in license returns an error") {
-    val validationMessages = validator.validate(ValidLearningStep.copy(license = Some("<strong>ugyldig</strong>")))
+    val trump = Author("author", "Donald Drumpf")
+    val license = License("<strong>ugyldig</strong>", "<strong>ugyldig</strong>", None)
+    val copyright = Copyright(license, "", List(trump))
+    val validationMessages = validator.validate(ValidLearningStep.copy(copyright = Some(copyright)))
     validationMessages.size should be(1)
     validationMessages.head.field should equal("license")
   }
 
   test("That None-license doesn't give an error") {
-    validator.validate(ValidLearningStep.copy(license = None)) should equal(List())
+    validator.validate(ValidLearningStep.copy(copyright = None)) should equal(List())
   }
 
   test("That error is returned when no descriptions or embedContents are defined") {

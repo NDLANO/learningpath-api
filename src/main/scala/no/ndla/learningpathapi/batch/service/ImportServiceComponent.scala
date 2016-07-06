@@ -77,7 +77,7 @@ trait ImportServiceComponent {
                     description = learningStep.description,
                     embedUrl = learningStep.embedUrl,
                     `type`= learningStep.`type`,
-                    license = learningStep.license
+                    copyright = learningStep.copyright
                   ))
                 }
               }
@@ -117,6 +117,7 @@ trait ImportServiceComponent {
         lastUpdated,
         tags,
         owner,
+        Copyright(License("", "", None), "", List()),
         learningSteps)
     }
 
