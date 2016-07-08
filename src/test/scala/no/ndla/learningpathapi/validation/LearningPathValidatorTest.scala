@@ -15,8 +15,8 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   }
 
   val trump = Author("author", "Donald Drumpf")
-  val license = License("Public Domain", "Public Domain", None)
-  val copyright = Copyright(license, "", List(trump))
+  val license = License("publicdomain", "Public Domain", "https://creativecommons.org/about/pdm")
+  val copyright = Copyright(license, "Bag End", List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -141,6 +141,56 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
     validationErrors.size should be (2)
     validationErrors.head.field should equal("tags.tags")
     validationErrors.last.field should equal("tags.tags")
+  }
+
+  test("That validate returns error when copyright.license is invalid") {
+    val invalidLicense = License("dummy license", "dummy description", "dummy url")
+    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (1)
+  }
+
+  test("That validate returns error when license description is invalid") {
+    val invalidLicense = License("by-sa", "dummy description", "https://creativecommons.org/licenses/by-sa/2.0/")
+    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (1)
+  }
+
+  test("That validate returns error when license url is invalid") {
+    val invalidLicense = License("by-sa", "Creative Commons Attribution-ShareAlike 2.0 Generic", "http://invalid/")
+    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (1)
+  }
+
+  test("That validate returns no errors when license is valid") {
+    validator.validate(ValidLearningPath).isEmpty should be (true)
+  }
+
+  test("That validate returns error when copyright.contributors contains html") {
+    val invalidCopyright = ValidLearningPath.copyright.copy(contributors = List(Author("<h1>wizardry</h1>", "<h1>Gandalf</h1>")))
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (2)
+  }
+
+  test("That validate returns no errors when copyright.contributors contains no html") {
+    validator.validate(ValidLearningPath).isEmpty should be (true)
+  }
+
+  test("That validate returns error when copyright.origin contains html") {
+    val invalidCopyright = ValidLearningPath.copyright.copy(origin = "<h1>Mordor</h1>")
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (1)
+  }
+
+  test("That validate returns no error when copyright.origin contains no html") {
+    validator.validate(ValidLearningPath).isEmpty should be (true)
   }
 }
 

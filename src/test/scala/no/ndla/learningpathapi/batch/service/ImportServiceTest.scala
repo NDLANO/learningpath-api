@@ -123,7 +123,7 @@ class ImportServiceTest extends UnitSuite with BatchTestEnvironment {
     val pakke = packageWithNodeId(1)
     val steps = List(stepWithDescriptionAndLanguage(Some("Beskrivelse"), "nb"))
     val sanders = Author("author", "Crazy Bernie")
-    val license = License("Public Domain", "Public Domain", None)
+    val license = License("publicdomain", "Public Domain", "https://creativecommons.org/about/pdm")
     val copyright = Copyright(license, "", List(sanders))
     val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
 

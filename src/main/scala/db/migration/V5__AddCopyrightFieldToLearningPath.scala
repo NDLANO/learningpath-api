@@ -34,8 +34,9 @@ class V5__AddCopyrightFieldToLearningPath extends JdbcMigration {
     oldCopyrightOpt match {
       case None => {
         val (description, url) = getLicenseDefinition("by-sa").getOrElse(("", ""))
-        val newCopyRight = V5_Copyright(V5_License("by-sa", description, Some(url)), "", List())
-        Some(learningPath.copy(document=compact(render(json.merge (parse(write(("copyright", parse(write(newCopyRight))))))))))
+        val newCopyRight = parse(write(V5_Copyright(V5_License("by-sa", description, url), "", List())))
+        val newCopyRightJson = parse(write(("copyright", newCopyRight)))
+        Some(learningPath.copy(document=compact(render(json merge newCopyRightJson))))
       }
       case Some(oldCopyright) => None
     }
@@ -52,5 +53,5 @@ class V5__AddCopyrightFieldToLearningPath extends JdbcMigration {
 
 case class V5_DBLearningPath(id: Long, document: String)
 case class V5_Copyright(license: V5_License, origin: String, contributors: Seq[V5_Author])
-case class V5_License(license: String, description: String, url: Option[String])
+case class V5_License(license: String, description: String, url: String)
 case class V5_Author(`type`: String, name: String)

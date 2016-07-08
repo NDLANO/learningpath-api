@@ -8,7 +8,7 @@ class LearningStepValidatorTest extends UnitSuite {
   var validator: LearningStepValidator = _
 
   val warren = Author("author", "Goofy Elizabeth Warren")
-  val license = License("Public Domain", "Public Domain", None)
+  val license = License("publicdomain", "Public Domain", "https://creativecommons.org/about/pdm")
   val copyright = Copyright(license, "", List(warren))
   val ValidLearningStep = LearningStep(id = None, revision = None, externalId = None, learningPathId = None, seqNo = 0,
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -91,7 +91,7 @@ class LearningStepValidatorTest extends UnitSuite {
 
   test("That html-code in license returns an error") {
     val trump = Author("author", "Donald Drumpf")
-    val license = License("<strong>ugyldig</strong>", "<strong>ugyldig</strong>", None)
+    val license = License("<strong>ugyldig</strong>", "<strong>ugyldig</strong>", "https://creativecommons.org/about/pdm")
     val copyright = Copyright(license, "", List(trump))
     val validationMessages = validator.validate(ValidLearningStep.copy(copyright = Some(copyright)))
     validationMessages.size should be(1)

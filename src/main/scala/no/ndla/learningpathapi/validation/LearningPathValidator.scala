@@ -3,7 +3,8 @@ package no.ndla.learningpathapi.validation
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.model.domain.{Description, LearningPath, LearningPathTags}
+import no.ndla.learningpathapi.model.domain._
+import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 
 
 class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
@@ -21,7 +22,8 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
       validateDescription(newLearningPath.description) ++
       validateDuration(newLearningPath.duration).toList ++
       validateCoverPhoto(newLearningPath.coverPhotoMetaUrl).toList ++
-      validateTags(newLearningPath.tags)
+      validateTags(newLearningPath.tags) ++
+      validateCopyright(newLearningPath.copyright)
   }
 
   def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
@@ -63,5 +65,36 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
       tagList.tags.flatMap(noHtmlTextValidator.validate("tags.tags", _)).toList :::
       languageValidator.validate("tags.language", tagList.language).toList
     })
+  }
+
+  def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
+    val licenseMessage = validateLicense(copyright.license)
+    val originMessage = noHtmlTextValidator.validate("copyright.origin", copyright.origin)
+    val contributorsMessages = copyright.contributors.flatMap(validateAuthor)
+
+    licenseMessage ++ originMessage ++ contributorsMessages
+  }
+
+  def validateLicense(license: License): Seq[ValidationMessage] = {
+    getLicenseDefinition(license.license) match {
+      case Some((description, url)) => {
+        val descriptionMessage = license.description == description match {
+          case false => Seq(new ValidationMessage("license.description", s"${license.description} is not a valid license descrition"))
+          case true => Seq()
+        }
+
+        val urlMessage = license.url == url match {
+          case false => Seq(new ValidationMessage("license.url", s"${license.url} is not a valid license url"))
+          case true => Seq()
+        }
+        descriptionMessage ++ urlMessage
+      }
+      case None => Seq(new ValidationMessage("license.license", s"${license.license} is not a valid license"))
+    }
+  }
+
+  def validateAuthor(author: Author): Seq[ValidationMessage] = {
+    noHtmlTextValidator.validate("author.type", author.`type`).toList ++
+      noHtmlTextValidator.validate("author.name", author.name).toList
   }
 }
