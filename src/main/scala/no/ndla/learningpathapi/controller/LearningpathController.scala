@@ -4,17 +4,18 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, _}
+import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, License, _}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.learningpathapi.{ComponentRegistry, LearningpathApiProperties}
+import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
+import no.ndla.mapping.LicenseMapping.licenseToLicenseDefinitionsMap
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json.{NativeJsonSupport}
+import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
@@ -58,6 +59,15 @@ trait LearningpathController {
            When browsing, the default is title (asc).
            The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title""".stripMargin))
         responseMessages(response400, response500))
+
+    val getLicenses =
+      (apiOperation[List[License]]("getLicenses")
+        summary "Show all valid licenses"
+        notes "Shows all valid licenses"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."))
+        responseMessages(response403, response500))
 
     val getMyLearningpaths =
       (apiOperation[List[LearningPathSummary]]("getMyLearningpaths")
@@ -336,6 +346,10 @@ trait LearningpathController {
 
     get("/mine/?", operation(getMyLearningpaths)) {
       readService.withOwner(owner = usernameFromHeader)
+    }
+
+    get("/licenses", operation(getLicenses)) {
+      licenseToLicenseDefinitionsMap.map(x => License(x._1, x._2._1, x._2._2)).toList
     }
 
     post("/", operation(addNewLearningpath)) {
