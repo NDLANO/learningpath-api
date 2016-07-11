@@ -19,7 +19,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   val PRIVATE_OWNER = "private_owner"
   val cruz = Author("author", "Lyin' Ted")
   val license = License("publicdomain")
-  val copyright = Copyright(license, "", List(cruz))
+  val copyright = Copyright(license, List(cruz))
 
   val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright)
   val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright)

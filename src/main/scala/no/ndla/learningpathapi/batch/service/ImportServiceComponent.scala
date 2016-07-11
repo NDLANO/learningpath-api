@@ -117,7 +117,7 @@ trait ImportServiceComponent {
         lastUpdated,
         tags,
         owner,
-        Copyright(License("by-sa"), "", List()),
+        Copyright(License("by-sa"), List()),
         learningSteps)
     }
 

@@ -33,7 +33,7 @@ trait ConverterServiceComponent {
     }
 
     def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(copyright.license.license), copyright.origin, copyright.contributors.map(asApiAuthor))
+      api.Copyright(asApiLicense(copyright.license.license), copyright.contributors.map(asApiAuthor))
     }
 
     def asApiLicense(license: String): api.License = {
@@ -55,7 +55,7 @@ trait ConverterServiceComponent {
     }
 
     def asCopyright(copyright: Copyright): domain.Copyright = {
-      domain.Copyright(asLicense(copyright.license.license), copyright.origin, copyright.contributors.map(asAuthor))
+      domain.Copyright(asLicense(copyright.license.license), copyright.contributors.map(asAuthor))
     }
 
     def asLicense(license: String): domain.License = {

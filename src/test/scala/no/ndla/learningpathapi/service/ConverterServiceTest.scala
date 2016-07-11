@@ -12,7 +12,7 @@ import org.mockito.Mockito._
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = Author("author", "Crooked Hillary")
   val license = License("publicdomain", "Public Domain", "https://creativecommons.org/about/pdm")
-  val copyright = Copyright(license, "", List(clinton))
+  val copyright = Copyright(license, List(clinton))
   val apiLearningPath = LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   var service: ConverterService = _

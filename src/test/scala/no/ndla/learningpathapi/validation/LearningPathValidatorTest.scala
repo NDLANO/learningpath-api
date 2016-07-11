@@ -16,7 +16,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
 
   val trump = Author("author", "Donald Drumpf")
   val license = License("publicdomain")
-  val copyright = Copyright(license, "Bag End", List(trump))
+  val copyright = Copyright(license, List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -163,17 +163,6 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   }
 
   test("That validate returns no errors when copyright.contributors contains no html") {
-    validator.validate(ValidLearningPath).isEmpty should be (true)
-  }
-
-  test("That validate returns error when copyright.origin contains html") {
-    val invalidCopyright = ValidLearningPath.copyright.copy(origin = "<h1>Mordor</h1>")
-    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
-
-    validationErrors.size should be (1)
-  }
-
-  test("That validate returns no error when copyright.origin contains no html") {
     validator.validate(ValidLearningPath).isEmpty should be (true)
   }
 }

@@ -18,7 +18,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
 
   val paul = Author("author", "Truly Weird Rand Paul")
   val license = License("publicdomain")
-  val copyright = Copyright(license, "", List(paul))
+  val copyright = Copyright(license, List(paul))
   val DefaultLearningPath = LearningPath(
     id = None,
     revision = None, externalId = None, isBasedOn = None,
