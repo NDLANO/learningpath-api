@@ -17,7 +17,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
   override val searchService: SearchService = new SearchService
 
   val paul = Author("author", "Truly Weird Rand Paul")
-  val license = License("publicdomain", "Public Domain", "https://creativecommons.org/about/pdm")
+  val license = License("publicdomain")
   val copyright = Copyright(license, "", List(paul))
   val DefaultLearningPath = LearningPath(
     id = None,
@@ -36,9 +36,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
   val PenguinId = 1
   val BatmanId = 2
   val DonaldId = 3
-
-  override def beforeEach() = {
-  }
 
   override def beforeAll() = {
     doReturn(api.Author("Forfatter", "En eier")).when(converterService).asAuthor(any[NdlaUserName])

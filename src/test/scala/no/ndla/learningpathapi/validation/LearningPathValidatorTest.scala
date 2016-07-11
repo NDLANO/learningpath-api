@@ -15,7 +15,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   }
 
   val trump = Author("author", "Donald Drumpf")
-  val license = License("publicdomain", "Public Domain", "https://creativecommons.org/about/pdm")
+  val license = License("publicdomain")
   val copyright = Copyright(license, "Bag End", List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
@@ -144,23 +144,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
   }
 
   test("That validate returns error when copyright.license is invalid") {
-    val invalidLicense = License("dummy license", "dummy description", "dummy url")
-    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
-    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
-
-    validationErrors.size should be (1)
-  }
-
-  test("That validate returns error when license description is invalid") {
-    val invalidLicense = License("by-sa", "dummy description", "https://creativecommons.org/licenses/by-sa/2.0/")
-    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
-    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
-
-    validationErrors.size should be (1)
-  }
-
-  test("That validate returns error when license url is invalid") {
-    val invalidLicense = License("by-sa", "Creative Commons Attribution-ShareAlike 2.0 Generic", "http://invalid/")
+    val invalidLicense = License("dummy license")
     val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
     val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
 

@@ -68,28 +68,17 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
   }
 
   def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
-    val licenseMessage = validateLicense(copyright.license)
+    val licenseMessage = validateLicense(copyright.license.license)
     val originMessage = noHtmlTextValidator.validate("copyright.origin", copyright.origin)
     val contributorsMessages = copyright.contributors.flatMap(validateAuthor)
 
     licenseMessage ++ originMessage ++ contributorsMessages
   }
 
-  def validateLicense(license: License): Seq[ValidationMessage] = {
-    getLicenseDefinition(license.license) match {
-      case Some((description, url)) => {
-        val descriptionMessage = license.description == description match {
-          case false => Seq(new ValidationMessage("license.description", s"${license.description} is not a valid license descrition"))
-          case true => Seq()
-        }
-
-        val urlMessage = license.url == url match {
-          case false => Seq(new ValidationMessage("license.url", s"${license.url} is not a valid license url"))
-          case true => Seq()
-        }
-        descriptionMessage ++ urlMessage
-      }
-      case None => Seq(new ValidationMessage("license.license", s"${license.license} is not a valid license"))
+  def validateLicense(license: String): Seq[ValidationMessage] = {
+    getLicenseDefinition(license) match {
+      case None => Seq(new ValidationMessage("license.license", s"${license} is not a valid license"))
+      case _ => Seq()
     }
   }
 

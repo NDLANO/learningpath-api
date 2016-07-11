@@ -4,6 +4,7 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{EmbedUrl, LearningStep, NdlaUserName, StepType}
 import no.ndla.learningpathapi.model._
+import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 import no.ndla.network.ApplicationUrl
 
 trait ConverterServiceComponent {
@@ -32,11 +33,12 @@ trait ConverterServiceComponent {
     }
 
     def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(copyright.license), copyright.origin, copyright.contributors.map(asApiAuthor))
+      api.Copyright(asApiLicense(copyright.license.license), copyright.origin, copyright.contributors.map(asApiAuthor))
     }
 
-    def asApiLicense(license: domain.License): api.License = {
-      api.License(license.license, license.description, license.url)
+    def asApiLicense(license: String): api.License = {
+      val (description, url) = getLicenseDefinition(license).getOrElse(("", ""))
+      api.License(license, description, url)
     }
 
     def asApiAuthor(author: domain.Author): api.Author = {
@@ -53,11 +55,11 @@ trait ConverterServiceComponent {
     }
 
     def asCopyright(copyright: Copyright): domain.Copyright = {
-      domain.Copyright(asLicense(copyright.license), copyright.origin, copyright.contributers.map(asAuthor))
+      domain.Copyright(asLicense(copyright.license.license), copyright.origin, copyright.contributors.map(asAuthor))
     }
 
-    def asLicense(license: License): domain.License = {
-      domain.License(license.license, license.description, license.url)
+    def asLicense(license: String): domain.License = {
+      domain.License(license)
     }
 
     def asAuthor(author: Author): domain.Author = {
@@ -115,8 +117,10 @@ trait ConverterServiceComponent {
         ls.embedUrl.map(e => asApiEmbedContent(e)),
         ls.showTitle,
         ls.`type`.toString,
-        if (ls.copyright.isDefined) Some(asApiCopyright(ls.copyright.get)) else None, createUrlToLearningStep(ls, lp),
-        lp.canEdit(user), ls.status.toString)
+        ls.license.map(asApiLicense),
+        createUrlToLearningStep(ls, lp),
+        lp.canEdit(user),
+        ls.status.toString)
     }
 
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): LearningStepSummary = {

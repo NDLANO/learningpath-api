@@ -146,7 +146,7 @@ trait UpdateServiceComponent {
               newLearningStep.description.map(converterService.asDescription),
               newLearningStep.embedContent.map(converterService.asEmbedUrl),
               StepType.valueOfOrError(newLearningStep.`type`),
-              if (newLearningStep.copyright.isDefined) Some(converterService.asCopyright(newLearningStep.copyright.get)) else None,
+              newLearningStep.license,
               newLearningStep.showTitle).validate
 
             val (insertedStep, updatedPath) = inTransaction { implicit session =>
@@ -185,7 +185,8 @@ trait UpdateServiceComponent {
                 embedUrl = embedUrls,
                 showTitle = learningStepToUpdate.showTitle.getOrElse(existing.showTitle),
                 `type` = learningStepToUpdate.`type`.map(domain.StepType.valueOfOrError).getOrElse(existing.`type`),
-                copyright = if(learningStepToUpdate.copyright.isDefined) Some(converterService.asCopyright(learningStepToUpdate.copyright.get)) else existing.copyright).validate
+                license = learningStepToUpdate.license
+              ).validate
 
               val (updatedStep, updatedPath) = inTransaction { implicit session =>
                 val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
