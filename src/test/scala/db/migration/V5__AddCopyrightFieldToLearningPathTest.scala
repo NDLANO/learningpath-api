@@ -8,8 +8,7 @@ class V5__AddCopyrightFieldToLearningPathTest extends UnitSuite {
   test("That addCopyrightField adds a copyright field if it does not exist") {
     val before = """{"tags":[{"tags":[],"language":"nb"},{"tags":[],"language":"en"}]}"""
     val expectedAfter = """{"tags":[{"tags":[],"language":"nb"},{"tags":[],"language":"en"}],
-        |"copyright":{"license":{"license":"by-sa","description":"Creative Commons Attribution-ShareAlike 2.0 Generic",
-        |"url":"https://creativecommons.org/licenses/by-sa/2.0/"},"origin":"","contributors":[]}}""".stripMargin.replace("\n", "")
+        |"copyright":{"license":"by-sa","contributors":[]}}""".stripMargin.replace("\n", "")
     val learningPath = V5_DBLearningPath(3, before)
 
     val optConverted = migration.addCopyrightField(learningPath)
@@ -20,8 +19,7 @@ class V5__AddCopyrightFieldToLearningPathTest extends UnitSuite {
 
   test("That addCopyrightField returns None if the copyright field already exist") {
     val before = """{"tags":[{"tags":[],"language":"nb"},{"tags":[],"language":"en"}],
-                   |"copyright":{"license":{"license":"by-sa","description":"Creative Commons Attribution-ShareAlike 2.0 Generic",
-                   |"url":"https://creativecommons.org/licenses/by-sa/2.0/"},"origin":"","contributors":[]}}""".stripMargin
+                   |"copyright":{"license":"by-sa","contributors":[]}}""".stripMargin
     val learningPath = V5_DBLearningPath(3, before)
 
     val optConverted = migration.addCopyrightField(learningPath)

@@ -68,7 +68,7 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
   }
 
   def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
-    val licenseMessage = validateLicense(copyright.license.license)
+    val licenseMessage = validateLicense(copyright.license)
     val contributorsMessages = copyright.contributors.flatMap(validateAuthor)
 
     licenseMessage ++ contributorsMessages

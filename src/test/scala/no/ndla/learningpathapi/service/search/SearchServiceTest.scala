@@ -17,7 +17,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
   override val searchService: SearchService = new SearchService
 
   val paul = Author("author", "Truly Weird Rand Paul")
-  val license = License("publicdomain")
+  val license = "publicdomain"
   val copyright = Copyright(license, List(paul))
   val DefaultLearningPath = LearningPath(
     id = None,

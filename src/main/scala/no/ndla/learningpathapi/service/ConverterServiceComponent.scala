@@ -33,13 +33,14 @@ trait ConverterServiceComponent {
     }
 
     def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(copyright.license.license), copyright.contributors.map(asApiAuthor))
+      api.Copyright(asApiLicense(copyright.license), copyright.contributors.map(asApiAuthor))
     }
 
-    def asApiLicense(license: String): api.License = {
-      val (description, url) = getLicenseDefinition(license).getOrElse(("", ""))
-      api.License(license, description, url)
-    }
+    def asApiLicense(license: String): api.License =
+      getLicenseDefinition(license) match {
+        case Some(l) => api.License(l.license, l.description, l.url)
+        case None => api.License(license, "Invalid license", None)
+      }
 
     def asApiAuthor(author: domain.Author): api.Author = {
       api.Author(author.`type`, author.name)
@@ -55,11 +56,7 @@ trait ConverterServiceComponent {
     }
 
     def asCopyright(copyright: Copyright): domain.Copyright = {
-      domain.Copyright(asLicense(copyright.license.license), copyright.contributors.map(asAuthor))
-    }
-
-    def asLicense(license: String): domain.License = {
-      domain.License(license)
+      domain.Copyright(copyright.license.license, copyright.contributors.map(asAuthor))
     }
 
     def asAuthor(author: Author): domain.Author = {

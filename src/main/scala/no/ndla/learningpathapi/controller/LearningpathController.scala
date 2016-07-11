@@ -12,7 +12,7 @@ import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
-import no.ndla.mapping.LicenseMapping.licenseToLicenseDefinitionsMap
+import no.ndla.mapping.LicenseMapping
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
@@ -349,7 +349,7 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      licenseToLicenseDefinitionsMap.map(x => License(x._1, x._2._1, x._2._2)).toList
+      LicenseMapping.getLicenses.map(x => License(x.license, x.description, x.url))
     }
 
     post("/", operation(addNewLearningpath)) {

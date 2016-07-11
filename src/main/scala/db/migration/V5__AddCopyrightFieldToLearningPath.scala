@@ -6,7 +6,6 @@ import org.flywaydb.core.api.migration.jdbc.JdbcMigration
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
-import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 import scalikejdbc._
 
 class V5__AddCopyrightFieldToLearningPath extends JdbcMigration {
@@ -33,8 +32,7 @@ class V5__AddCopyrightFieldToLearningPath extends JdbcMigration {
     val oldCopyrightOpt: Option[V5_Copyright] = copyright.extractOpt[V5_Copyright]
     oldCopyrightOpt match {
       case None => {
-        val (description, url) = getLicenseDefinition("by-sa").getOrElse(("", ""))
-        val newCopyRight = parse(write(V5_Copyright(V5_License("by-sa", description, url), "", List())))
+        val newCopyRight = parse(write(V5_Copyright("by-sa", List())))
         val newCopyRightJson = parse(write(("copyright", newCopyRight)))
         Some(learningPath.copy(document=compact(render(json merge newCopyRightJson))))
       }
@@ -52,6 +50,6 @@ class V5__AddCopyrightFieldToLearningPath extends JdbcMigration {
 }
 
 case class V5_DBLearningPath(id: Long, document: String)
-case class V5_Copyright(license: V5_License, origin: String, contributors: Seq[V5_Author])
-case class V5_License(license: String, description: String, url: String)
+case class V5_Copyright(license: String, contributors: Seq[V5_Author])
+case class V5_License(license: String)
 case class V5_Author(`type`: String, name: String)

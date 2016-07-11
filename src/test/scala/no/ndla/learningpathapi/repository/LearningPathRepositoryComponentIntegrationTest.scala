@@ -10,7 +10,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   var repository: LearningPathRepository = _
 
   val clinton = Author("author", "Hilla the Hun")
-  val license = License("publicdomain")
+  val license = "publicdomain"
   val copyright = Copyright(license, List(clinton))
   val DefaultLearningPath = LearningPath(
     None, None, None, None,
