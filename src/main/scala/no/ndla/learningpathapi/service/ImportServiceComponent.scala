@@ -7,7 +7,7 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 
 trait ImportServiceComponent {
@@ -22,12 +22,23 @@ trait ImportServiceComponent {
 
     def doImport(nodeId: String): Try[LearningPathSummary] = {
       for {
-        mainImport <- migrationApiClient.getLearningPath(nodeId)
-        learningPath <- upload(mainImport)
-      } yield converterService.asApiLearningpathSummary(learningPath)
+        metaData <- migrationApiClient.getLearningPath(nodeId)
+        converted <- Try(upload(metaData))
+        indexed <- indexLearningPath(converted)
+      } yield converterService.asApiLearningpathSummary(converted)
     }
 
-    def upload(mainImport: MainPackageImport): Try[LearningPath] = {
+    def indexLearningPath(learningPath: LearningPath): Try[Unit] = {
+      Try(searchIndexService.indexLearningPath(learningPath)) match {
+        case Success(_) => Success()
+        case Failure(f) => {
+          logger.warn(s"Could not add learningpath with id ${learningPath.id} to search index. Try recreating the index. The error was ${f.getMessage}")
+          Success()
+        }
+      }
+    }
+
+    def upload(mainImport: MainPackageImport): LearningPath = {
       val coverPhoto = mainImport.mainPackage.imageNid.flatMap(img => {
         imageApiClient.imageMetaWithExternalId(img.toString) match {
           case Some(image) => Some(image)
@@ -84,7 +95,7 @@ trait ImportServiceComponent {
           existingLearningPath
         }
       }
-      Success(persisted)
+      persisted
     }
 
     def asLearningStep(step: Step, translations: Seq[Step]): LearningStep = {
