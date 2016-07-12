@@ -2,7 +2,8 @@ package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.model.domain.HttpRequestException
+import no.ndla.network.NdlaClient
+import no.ndla.network.model.HttpRequestException
 
 import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, HttpRequest}

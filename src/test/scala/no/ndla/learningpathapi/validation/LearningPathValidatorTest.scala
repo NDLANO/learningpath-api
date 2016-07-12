@@ -26,6 +26,10 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
     validator.validate(ValidLearningPath) should equal (List())
   }
 
+  test("That learningpath with coverphoto pointing to localhost returns no errors") {
+    validator.validate(ValidLearningPath.copy(coverPhotoMetaUrl = Some("http://localhost/images/1"))) should equal (List())
+  }
+
   test("That validate returns no error for no coverPhoto") {
     validator.validate(ValidLearningPath.copy(
       coverPhotoMetaUrl = None

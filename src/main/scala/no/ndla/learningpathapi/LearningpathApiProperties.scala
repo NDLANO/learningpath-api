@@ -13,7 +13,7 @@ object LearningpathApiProperties extends LazyLogging {
   val ApplicationPort = 80
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
-  lazy val Domains = get("DOMAINS").split(",") ++ Array(HostAddr)
+  lazy val Domain = get("DOMAIN")
 
   lazy val MetaUserName = get("DB_USER_NAME")
   lazy val MetaPassword = get("DB_PASSWORD")
@@ -32,6 +32,10 @@ object LearningpathApiProperties extends LazyLogging {
   lazy val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
   lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
   lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")
+
+  lazy val MigrationHost = get("MIGRATION_HOST")
+  lazy val MigrationUser = get("MIGRATION_USER")
+  lazy val MigrationPassword = get("MIGRATION_PASSWORD")
 
   val AuthHost = "auth"
   val OEmbedHost = "oembed-proxy"

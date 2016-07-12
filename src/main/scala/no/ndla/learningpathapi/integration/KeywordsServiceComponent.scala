@@ -1,4 +1,4 @@
-package no.ndla.learningpathapi.batch.integration
+package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.LearningPathTags

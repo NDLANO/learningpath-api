@@ -1,12 +1,13 @@
-package no.ndla.learningpathapi.batch.integration
+package no.ndla.learningpathapi.integration
 
-import no.ndla.learningpathapi.UnitSuite
-import no.ndla.learningpathapi.batch.BatchTestEnvironment
+import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
+import org.mockito.Matchers.{eq => eqTo}
 import org.mockito.Mockito._
 
 import scalaj.http.{HttpRequest, HttpResponse}
 
-class KeywordsServiceTest extends UnitSuite with BatchTestEnvironment {
+
+class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
   val parseableResponse = """
       {"keyword": [{
             "names": [{
