@@ -5,6 +5,8 @@ import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.Error
 import no.ndla.learningpathapi.service.ImportServiceComponent
 import no.ndla.learningpathapi.service.search.SearchIndexBuilderServiceComponent
+import no.ndla.logging.LoggerContext
+import no.ndla.network.ApplicationUrl
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
@@ -18,6 +20,25 @@ trait InternController {
   class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
+
+    before() {
+      contentType = formats("json")
+      LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
+      ApplicationUrl.set(request)
+    }
+
+    after() {
+      LoggerContext.clearCorrelationID
+      ApplicationUrl.clear
+    }
+
+    error {
+      case t: Throwable => {
+        val error = Error(Error.GENERIC, t.getMessage)
+        logger.error(error.toString, t)
+        halt(status = 500, body = error)
+      }
+    }
 
     post("/index") {
       Ok(ComponentRegistry.searchIndexBuilderService.indexDocuments())
@@ -36,14 +57,6 @@ trait InternController {
         }
       }
     }
-
-    error {
-      case t: Throwable => {
-        logger.error(t.getMessage, t)
-        halt(status = 500, body = Error(description = t.getMessage))
-      }
-    }
-
   }
 
 }
