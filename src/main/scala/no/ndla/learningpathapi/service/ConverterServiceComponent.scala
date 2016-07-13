@@ -38,8 +38,8 @@ trait ConverterServiceComponent {
 
     def asApiLicense(license: String): api.License =
       getLicenseDefinition(license) match {
-        case Some(l) => api.License(l.license, l.description, l.url)
-        case None => api.License(license, "Invalid license", None)
+        case Some(l) => api.License(l.license, Some(l.description), l.url)
+        case None => api.License(license, Some("Invalid license"), None)
       }
 
     def asApiAuthor(author: domain.Author): api.Author = {

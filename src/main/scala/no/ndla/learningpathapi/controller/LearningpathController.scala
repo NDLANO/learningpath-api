@@ -349,7 +349,7 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      LicenseMapping.getLicenses.map(x => License(x.license, x.description, x.url))
+      LicenseMapping.getLicenses.map(x => License(x.license, Some(x.description), x.url))
     }
 
     post("/", operation(addNewLearningpath)) {
