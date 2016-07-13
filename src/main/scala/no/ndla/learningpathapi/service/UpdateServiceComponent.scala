@@ -24,6 +24,7 @@ trait UpdateServiceComponent {
           val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTags) else existing.tags
           val coverPhotoMetaUrl = if(newLearningPath.coverPhotoMetaUrl.nonEmpty) newLearningPath.coverPhotoMetaUrl else existing.coverPhotoMetaUrl
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
+          val copyright = converterService.asCopyright(newLearningPath.copyright)
 
           val toInsert = existing.copy(
             id = None,
@@ -36,6 +37,7 @@ trait UpdateServiceComponent {
             verificationStatus = LearningPathVerificationStatus.EXTERNAL,
             lastUpdated = clock.now(),
             owner = owner,
+            copyright = copyright,
             learningsteps = existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
             tags = tags,
             coverPhotoMetaUrl = coverPhotoMetaUrl,
@@ -46,7 +48,6 @@ trait UpdateServiceComponent {
       }
     }
 
-
     def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
       val learningPath = domain.LearningPath(None, None, None, None,
         newLearningPath.title.map(converterService.asTitle),
@@ -54,7 +55,8 @@ trait UpdateServiceComponent {
         newLearningPath.coverPhotoMetaUrl,
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
-        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTags), owner, List()).validate
+        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTags), owner,
+        converterService.asCopyright(newLearningPath.copyright), List()).validate
 
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
@@ -80,6 +82,7 @@ trait UpdateServiceComponent {
             coverPhotoMetaUrl = if(learningPathToUpdate.coverPhotoMetaUrl.isDefined) learningPathToUpdate.coverPhotoMetaUrl else existing.coverPhotoMetaUrl,
             duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
             tags = mergeLearningPathTags(existing.tags, learningPathToUpdate.tags.map(converterService.asLearningPathTags)),
+            copyright = converterService.asCopyright(learningPathToUpdate.copyright),
             lastUpdated = clock.now()).validate
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
@@ -182,7 +185,8 @@ trait UpdateServiceComponent {
                 embedUrl = embedUrls,
                 showTitle = learningStepToUpdate.showTitle.getOrElse(existing.showTitle),
                 `type` = learningStepToUpdate.`type`.map(domain.StepType.valueOfOrError).getOrElse(existing.`type`),
-                license = if(learningStepToUpdate.license.isDefined) learningStepToUpdate.license else existing.license).validate
+                license = learningStepToUpdate.license
+              ).validate
 
               val (updatedStep, updatedPath) = inTransaction { implicit session =>
                 val updatedStep = learningPathRepository.updateLearningStep(toUpdate)

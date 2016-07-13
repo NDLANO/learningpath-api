@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.validation
 
 
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.model.domain.{Description, EmbedUrl, LearningStep}
+import no.ndla.learningpathapi.model.domain._
 
 class LearningStepValidator {
 
@@ -41,7 +41,9 @@ class LearningStepValidator {
   def validateLicense(licenseOpt: Option[String]): Option[ValidationMessage] = {
     licenseOpt match {
       case None => None
-      case Some(license) => noHtmlTextValidator.validate("license", license)
+      case Some(license) => {
+        noHtmlTextValidator.validate("license", license)
+      }
     }
   }
 

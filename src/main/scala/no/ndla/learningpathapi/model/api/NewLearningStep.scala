@@ -13,4 +13,4 @@ case class NewLearningStep(@(ApiModelProperty@field)(description = "The titles o
                            @(ApiModelProperty@field)(description = "The embed content for the learningstep") embedContent: Seq[EmbedContent],
                            @(ApiModelProperty@field)(description = "Determines if the title of the step should be displayed in viewmode") showTitle: Boolean,
                            @(ApiModelProperty@field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`: String,
-                           @(ApiModelProperty@field)(description = "The license for this step. Must be plain text") license: Option[String])
+                           @(ApiModelProperty@field)(description = "Describes the copyright information for the learningstep") license: Option[String])

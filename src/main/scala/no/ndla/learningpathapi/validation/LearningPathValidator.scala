@@ -3,7 +3,8 @@ package no.ndla.learningpathapi.validation
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.model.domain.{Description, LearningPath, LearningPathTags}
+import no.ndla.learningpathapi.model.domain._
+import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 
 
 class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
@@ -21,7 +22,8 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
       validateDescription(newLearningPath.description) ++
       validateDuration(newLearningPath.duration).toList ++
       validateCoverPhoto(newLearningPath.coverPhotoMetaUrl).toList ++
-      validateTags(newLearningPath.tags)
+      validateTags(newLearningPath.tags) ++
+      validateCopyright(newLearningPath.copyright)
   }
 
   def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
@@ -63,5 +65,24 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
       tagList.tags.flatMap(noHtmlTextValidator.validate("tags.tags", _)).toList :::
       languageValidator.validate("tags.language", tagList.language).toList
     })
+  }
+
+  def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
+    val licenseMessage = validateLicense(copyright.license)
+    val contributorsMessages = copyright.contributors.flatMap(validateAuthor)
+
+    licenseMessage ++ contributorsMessages
+  }
+
+  def validateLicense(license: String): Seq[ValidationMessage] = {
+    getLicenseDefinition(license) match {
+      case None => Seq(new ValidationMessage("license.license", s"${license} is not a valid license"))
+      case _ => Seq()
+    }
+  }
+
+  def validateAuthor(author: Author): Seq[ValidationMessage] = {
+    noHtmlTextValidator.validate("author.type", author.`type`).toList ++
+      noHtmlTextValidator.validate("author.name", author.name).toList
   }
 }

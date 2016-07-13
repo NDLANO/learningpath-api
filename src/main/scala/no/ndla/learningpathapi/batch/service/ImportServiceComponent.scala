@@ -117,6 +117,7 @@ trait ImportServiceComponent {
         lastUpdated,
         tags,
         owner,
+        Copyright("by-sa", List()),
         learningSteps)
     }
 
@@ -130,7 +131,9 @@ trait ImportServiceComponent {
       val embedUrls = embedUrlsAsList(step, translations)
       val showTitle = descriptions.nonEmpty
 
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, None, showTitle)
+      val license = cmData.licenseForStep(step)
+
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, license, showTitle)
     }
 
     def asLearningStepType(stepType: String): StepType.Value = {

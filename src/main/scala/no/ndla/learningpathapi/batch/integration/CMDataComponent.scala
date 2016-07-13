@@ -1,8 +1,9 @@
 package no.ndla.learningpathapi.batch.integration
 
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource
-import no.ndla.learningpathapi.batch.Node
+import no.ndla.learningpathapi.batch.{Node, Package, Step}
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool, NamedDB, _}
+import com.netaporter.uri.dsl._
 
 trait CMDataComponent {
   val cmData: CMData
@@ -44,6 +45,20 @@ trait CMDataComponent {
               rs.string("packageId").toLong,
               rs.intOpt("imgnid"),
               rs.string("description"))).list().apply()
+      }
+    }
+
+    def licenseForStep(step: Step): Option[String] = {
+      val nodeIdPattern = "/node/(.*)$".r
+      val nodeId = step.embedUrl.getOrElse("").path match {
+        case nodeIdPattern(id) => id
+        case _ => return None
+      }
+
+      NamedDB('cm) readOnly { implicit session =>
+        sql"""
+          select license from creativecommons_lite where nid=$nodeId
+        """.stripMargin.map(rs => rs.string("license")).single.apply()
       }
     }
 

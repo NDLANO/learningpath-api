@@ -3,19 +3,22 @@ package no.ndla.learningpathapi.repository
 import java.util.Date
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.domain.{LearningPathTags, _}
+import no.ndla.learningpathapi.model.domain._
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
   var repository: LearningPathRepository = _
 
+  val clinton = Author("author", "Hilla the Hun")
+  val license = "publicdomain"
+  val copyright = Copyright(license, List(clinton))
   val DefaultLearningPath = LearningPath(
     None, None, None, None,
     List(Title("UNIT-TEST-1", None)),
     List(Description("UNIT-TEST", None)), None, None,
     LearningPathStatus.PRIVATE,
     LearningPathVerificationStatus.EXTERNAL,
-    new Date(), List(), "UNIT-TEST")
+    new Date(), List(), "UNIT-TEST", copyright)
 
   val DefaultLearningStep = LearningStep(
     None, None, None, None, 0,
