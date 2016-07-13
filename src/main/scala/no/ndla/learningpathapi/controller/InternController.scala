@@ -44,6 +44,18 @@ trait InternController {
       Ok(ComponentRegistry.searchIndexBuilderService.indexDocuments())
     }
 
+    post("/import") {
+      val start = System.currentTimeMillis
+      importService.importAll match {
+        case Success(importReport) => importReport
+        case Failure(ex: Throwable) => {
+          val errMsg = s"Import of learningpaths failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
+          logger.warn(errMsg, ex)
+          halt(status = 500, body = errMsg)
+        }
+      }
+    }
+
     post("/import/:node_id") {
       val start = System.currentTimeMillis
       val nodeId = params("node_id")

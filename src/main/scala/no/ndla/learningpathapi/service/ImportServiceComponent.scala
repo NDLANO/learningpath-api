@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
-import no.ndla.learningpathapi.model.api.LearningPathSummary
+import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummary}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
@@ -19,6 +19,22 @@ trait ImportServiceComponent {
   val ChristerProd = "unknown"
 
   class ImportService {
+
+    def importAll: Try[Seq[ImportReport]] = {
+      migrationApiClient.getAllLearningPathIds match {
+        case Failure(f) => Failure(f)
+        case Success(liste) => Success(liste
+            .map(id => (id, doImport(id)))
+            .map(tuple => ImportReport(tuple._1, getStatus(tuple._2))))
+      }
+    }
+
+    def getStatus(tri: Try[LearningPathSummary]): String = {
+      tri match {
+        case Success(learningPathSummary) => "OK"
+        case Failure(f) => f.getMessage
+      }
+    }
 
     def doImport(nodeId: String): Try[LearningPathSummary] = {
       for {
@@ -195,5 +211,4 @@ trait ImportServiceComponent {
       })
     }
   }
-
 }

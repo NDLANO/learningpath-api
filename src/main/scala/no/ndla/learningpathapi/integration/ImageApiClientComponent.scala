@@ -14,6 +14,7 @@ trait ImageApiClientComponent {
   val imageApiClient: ImageApiClient
 
   class ImageApiClient extends LazyLogging {
+    val ImageImportTimeout = 10 * 1000 // 10 seconds
     val ExternalId = ":external_id"
     val byExternalIdEndpoint = s"http://${LearningpathApiProperties.ImageApiHost}/intern/extern/$ExternalId"
     val importImageEndpoint = s"http://${LearningpathApiProperties.ImageApiHost}/intern/import/$ExternalId"
@@ -22,7 +23,7 @@ trait ImageApiClientComponent {
 
     def imageMetaOnUrl(url: String): Option[ImageMetaInformation] = doRequest(Http(url))
 
-    def importImage(externalId: String): Option[ImageMetaInformation] = doRequest(Http(importImageEndpoint.replace(ExternalId, externalId)).method("POST"))
+    def importImage(externalId: String): Option[ImageMetaInformation] = doRequest(Http(importImageEndpoint.replace(ExternalId, externalId)).timeout(ImageImportTimeout, ImageImportTimeout).method("POST"))
 
     private def doRequest(httpRequest: HttpRequest): Option[ImageMetaInformation] = {
       ndlaClient.fetch[ImageMetaInformation](httpRequest) match {
