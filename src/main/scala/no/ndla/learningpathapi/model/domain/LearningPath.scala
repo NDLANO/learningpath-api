@@ -11,9 +11,21 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningPath(id: Option[Long], revision:Option[Int], externalId: Option[String], isBasedOn: Option[Long], title: Seq[Title], description: Seq[Description], coverPhotoMetaUrl: Option[String],
-                        duration: Option[Int], status: LearningPathStatus.Value, verificationStatus: LearningPathVerificationStatus.Value, lastUpdated: Date, tags: Seq[LearningPathTags],
-                        owner: String, learningsteps: Seq[LearningStep] = Nil) {
+case class LearningPath(id: Option[Long],
+                        revision:Option[Int],
+                        externalId: Option[String],
+                        isBasedOn: Option[Long],
+                        title: Seq[Title],
+                        description: Seq[Description],
+                        coverPhotoMetaUrl: Option[String],
+                        duration: Option[Int],
+                        status: LearningPathStatus.Value,
+                        verificationStatus: LearningPathVerificationStatus.Value,
+                        lastUpdated: Date,
+                        tags: Seq[LearningPathTags],
+                        owner: String,
+                        copyright: Copyright,
+                        learningsteps: Seq[LearningStep] = Nil) {
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE
   }
@@ -117,7 +129,7 @@ object LearningPath extends SQLSyntaxSupport[LearningPath] {
     val meta = read[LearningPath](rs.string(lp.c("document")))
     LearningPath(
       Some(rs.long(lp.c("id"))), Some(rs.int(lp.c("revision"))), rs.stringOpt(lp.c("external_id")), meta.isBasedOn, meta.title, meta.description, meta.coverPhotoMetaUrl, meta.duration,
-      meta.status, meta.verificationStatus, meta.lastUpdated, meta.tags, meta.owner)
+      meta.status, meta.verificationStatus, meta.lastUpdated, meta.tags, meta.owner, meta.copyright)
   }
 
   val JSonSerializer = FieldSerializer[LearningPath](

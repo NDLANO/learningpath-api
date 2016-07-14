@@ -3,7 +3,7 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
+import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._
 import org.mockito.Matchers._
@@ -17,9 +17,12 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
 
   val PUBLISHED_OWNER = "published_owner"
   val PRIVATE_OWNER = "private_owner"
+  val cruz = Author("author", "Lyin' Ted")
+  val license = "publicdomain"
+  val copyright = Copyright(license, List(cruz))
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER)
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER)
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright)
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright)
 
   val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = true, StepStatus.ACTIVE)
   val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)

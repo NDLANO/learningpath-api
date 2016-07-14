@@ -24,7 +24,7 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
     pageAuthor = 1,
     embedUrl = None,
     description = None,
-    language = "")
+    language = "", license = None)
 
   val testNode = Node(
     nid = 1,

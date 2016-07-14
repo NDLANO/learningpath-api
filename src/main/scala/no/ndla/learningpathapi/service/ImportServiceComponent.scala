@@ -124,7 +124,7 @@ trait ImportServiceComponent {
       val embedUrls = embedUrlsAsList(step, translations)
       val showTitle = descriptions.nonEmpty
 
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, None, showTitle)
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license, showTitle)
     }
 
     def asLearningStepType(stepType: String): StepType.Value = {
@@ -192,6 +192,7 @@ trait ImportServiceComponent {
         lastUpdated,
         tags,
         getOwnerForEnvironment(LearningpathApiProperties.Domain),
+        Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
         learningSteps)
     }
 

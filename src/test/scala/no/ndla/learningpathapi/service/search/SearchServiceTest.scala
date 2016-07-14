@@ -2,7 +2,7 @@ package no.ndla.learningpathapi.service.search
 
 
 import com.sksamuel.elastic4s.testkit.ElasticSugar
-import no.ndla.learningpathapi.model.api.Author
+import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import org.joda.time.DateTime
@@ -16,6 +16,9 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
   override val searchIndexService: SearchIndexService = new SearchIndexService
   override val searchService: SearchService = new SearchService
 
+  val paul = Author("author", "Truly Weird Rand Paul")
+  val license = "publicdomain"
+  val copyright = Copyright(license, List(paul))
   val DefaultLearningPath = LearningPath(
     id = None,
     revision = None, externalId = None, isBasedOn = None,
@@ -27,17 +30,15 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
     verificationStatus = LearningPathVerificationStatus.EXTERNAL,
     lastUpdated = clock.now(),
     tags = List(),
-    owner = "owner")
+    owner = "owner",
+    copyright = copyright)
 
   val PenguinId = 1
   val BatmanId = 2
   val DonaldId = 3
 
-  override def beforeEach() = {
-  }
-
   override def beforeAll() = {
-    doReturn(Author("Forfatter", "En eier")).when(converterService).asAuthor(any[NdlaUserName])
+    doReturn(api.Author("Forfatter", "En eier")).when(converterService).asAuthor(any[NdlaUserName])
 
     val today = new DateTime().toDate
     val yesterday = new DateTime().minusDays(1).toDate

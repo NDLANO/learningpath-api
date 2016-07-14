@@ -3,15 +3,17 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.model.api.{Author, LearningPath}
-import no.ndla.learningpathapi.model.domain.{Description, LearningStep, StepType, Title}
-import no.ndla.learningpathapi.{TestEnvironment, UnitSuite, UnitTestEnvironment}
+import no.ndla.learningpathapi.model.api.{Author, Copyright, LearningPath, License}
+import no.ndla.learningpathapi.model.domain.{Description, LearningStep, StepType}
+import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.ApplicationUrl
 import org.mockito.Mockito._
 
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
-
-  val apiLearningPath = LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""), true)
+  val clinton = Author("author", "Crooked Hillary")
+  val license = License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
+  val copyright = Copyright(license, List(clinton))
+  val apiLearningPath = LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   var service: ConverterService = _
 

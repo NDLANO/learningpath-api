@@ -4,6 +4,7 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{EmbedUrl, LearningStep, NdlaUserName, StepType}
 import no.ndla.learningpathapi.model._
+import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 import no.ndla.network.ApplicationUrl
 
 trait ConverterServiceComponent {
@@ -23,13 +24,26 @@ trait ConverterServiceComponent {
       domain.Title(title.title, title.language)
     }
 
-
     def asLearningPathTags(tags: LearningPathTags): domain.LearningPathTags = {
       domain.LearningPathTags(tags.tags, tags.language)
     }
 
     def asApiLearningPathTags(tags: domain.LearningPathTags): LearningPathTags = {
       LearningPathTags(tags.tags, tags.language)
+    }
+
+    def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
+      api.Copyright(asApiLicense(copyright.license), copyright.contributors.map(asApiAuthor))
+    }
+
+    def asApiLicense(license: String): api.License =
+      getLicenseDefinition(license) match {
+        case Some(l) => api.License(l.license, Some(l.description), l.url)
+        case None => api.License(license, Some("Invalid license"), None)
+      }
+
+    def asApiAuthor(author: domain.Author): api.Author = {
+      api.Author(author.`type`, author.name)
     }
 
     def asAuthor(user: NdlaUserName): Author = {
@@ -39,6 +53,14 @@ trait ConverterServiceComponent {
 
     def asCoverPhoto(metaUrl: String, imageMeta: Option[ImageMetaInformation]): Option[CoverPhoto] = {
       imageMeta.flatMap(_.images.full).map(full => CoverPhoto(full.url, metaUrl))
+    }
+
+    def asCopyright(copyright: Copyright): domain.Copyright = {
+      domain.Copyright(copyright.license.license, copyright.contributors.map(asAuthor))
+    }
+
+    def asAuthor(author: Author): domain.Author = {
+      domain.Author(author.`type`, author.name)
     }
 
     def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): LearningPath = {
@@ -57,9 +79,9 @@ trait ConverterServiceComponent {
         lp.lastUpdated,
         lp.tags.map(asApiLearningPathTags),
         asAuthor(authClient.getUserName(lp.owner)),
+        asApiCopyright(lp.copyright),
         lp.canEdit(user))
     }
-
 
     def asApiIntroduction(introStepOpt: Option[LearningStep]): Seq[Introduction] = {
       introStepOpt match {
@@ -92,8 +114,10 @@ trait ConverterServiceComponent {
         ls.embedUrl.map(e => asApiEmbedContent(e)),
         ls.showTitle,
         ls.`type`.toString,
-        ls.license, createUrlToLearningStep(ls, lp),
-        lp.canEdit(user), ls.status.toString)
+        ls.license.map(asApiLicense),
+        createUrlToLearningStep(ls, lp),
+        lp.canEdit(user),
+        ls.status.toString)
     }
 
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): LearningStepSummary = {

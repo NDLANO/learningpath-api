@@ -88,7 +88,10 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That importNode updates for an existing node") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
-    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "")
+    val sanders = Author("author", "Crazy Bernie")
+    val license = "publicdomain"
+    val copyright = Copyright(license, List(sanders))
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
@@ -118,6 +121,6 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq())
-  private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, language)
-  private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, language)
+  private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, None, language)
+  private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, None, language)
 }

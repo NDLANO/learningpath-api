@@ -31,7 +31,7 @@ trait MigrationApiClient {
 
 case class MainPackageImport(mainPackage: Package, translations: Seq[Package])
 case class Node(nid: Long, tnid: Long, language: String, title: String, packageId: Long, imageNid: Option[Int], description: String)
-case class Step(packageId: Long, pageId: Long, pos: Int, title: String, stepType: Long, pageAuthor: Long, embedUrl: Option[String], description: Option[String], language: String) {
+case class Step(packageId: Long, pageId: Long, pos: Int, title: String, stepType: Long, pageAuthor: Long, embedUrl: Option[String], description: Option[String], license: Option[String], language: String) {
   def embedUrlToNdlaNo:Option[String] = {
     embedUrl match {
       case None => None

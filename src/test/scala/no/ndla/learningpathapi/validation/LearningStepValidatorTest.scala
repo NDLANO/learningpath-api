@@ -7,12 +7,13 @@ class LearningStepValidatorTest extends UnitSuite {
 
   var validator: LearningStepValidator = _
 
+  val license = "publicdomain"
   val ValidLearningStep = LearningStep(id = None, revision = None, externalId = None, learningPathId = None, seqNo = 0,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("<strong>Gyldig description</strong>", Some("nb"))),
     embedUrl = List(EmbedUrl("http://www.ndla.no/123", Some("nb"))),
     `type` = StepType.TEXT,
-    license = Some("Lisens"),
+    license = Some(license),
     showTitle = true,
     status = StepStatus.ACTIVE
   )
@@ -86,22 +87,9 @@ class LearningStepValidatorTest extends UnitSuite {
     validationMessages.last.field should equal("embedContent.language")
   }
 
-//  test("That empty stepType gives validation error") {
-//    val validationMessages = validator.validate(ValidLearningStep.copy(`type` = ))
-//    validationMessages.size should be(1)
-//    validationMessages.head.field should equal("type")
-//    validationMessages.head.message should equal("'' is not a valid steptype.")
-//  }
-//
-//  test("That unsupported stepType gives validation error") {
-//    val validationMessages = validator.validate(ValidLearningStep.copy(`type` = "HOPPESTOKK"))
-//    validationMessages.size should be(1)
-//    validationMessages.head.field should equal("type")
-//    validationMessages.head.message should equal("'HOPPESTOKK' is not a valid steptype.")
-//  }
-
   test("That html-code in license returns an error") {
-    val validationMessages = validator.validate(ValidLearningStep.copy(license = Some("<strong>ugyldig</strong>")))
+    val license = "<strong>ugyldig</strong>"
+    val validationMessages = validator.validate(ValidLearningStep.copy(license = Some(license)))
     validationMessages.size should be(1)
     validationMessages.head.field should equal("license")
   }

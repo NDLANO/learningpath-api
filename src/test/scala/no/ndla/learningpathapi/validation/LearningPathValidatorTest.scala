@@ -14,13 +14,24 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
 
   }
 
+  val trump = Author("author", "Donald Drumpf")
+  val license = "publicdomain"
+  val copyright = Copyright(license, List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
     coverPhotoMetaUrl = Some("http://api.ndla.no/images/1"),
     duration = Some(180),
-    tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))), revision = None, externalId = None, isBasedOn = None, status = LearningPathStatus.PRIVATE, verificationStatus = LearningPathVerificationStatus.EXTERNAL, lastUpdated = clock.now(), owner = "")
+    tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))),
+    revision = None,
+    externalId = None,
+    isBasedOn = None,
+    status = LearningPathStatus.PRIVATE,
+    verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+    lastUpdated = clock.now(),
+    owner = "",
+    copyright = copyright)
 
   test("That valid learningpath returns no errors") {
     validator.validate(ValidLearningPath) should equal (List())
@@ -134,6 +145,29 @@ class LearningPathValidatorTest extends UnitSuite with Clock {
     validationErrors.size should be (2)
     validationErrors.head.field should equal("tags.tags")
     validationErrors.last.field should equal("tags.tags")
+  }
+
+  test("That validate returns error when copyright.license is invalid") {
+    val invalidLicense = "dummy license"
+    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (1)
+  }
+
+  test("That validate returns no errors when license is valid") {
+    validator.validate(ValidLearningPath).isEmpty should be (true)
+  }
+
+  test("That validate returns error when copyright.contributors contains html") {
+    val invalidCopyright = ValidLearningPath.copyright.copy(contributors = List(Author("<h1>wizardry</h1>", "<h1>Gandalf</h1>")))
+    val validationErrors = validator.validate(ValidLearningPath.copy(copyright = invalidCopyright))
+
+    validationErrors.size should be (2)
+  }
+
+  test("That validate returns no errors when copyright.contributors contains no html") {
+    validator.validate(ValidLearningPath).isEmpty should be (true)
   }
 }
 
