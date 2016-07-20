@@ -4,8 +4,9 @@ import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.learningpathapi.controller.{InternController, LearningpathController}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.{Clock, _}
+import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.network.NdlaClient
 import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
@@ -28,6 +29,9 @@ object ComponentRegistry
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
+  with ImportServiceComponent
+  with MigrationApiClient
+  with KeywordsServiceComponent
   with Clock {
 
   implicit val swagger = new LearningpathSwagger
@@ -66,4 +70,7 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val ndlaClient = new NdlaClient
   lazy val imageApiClient = new ImageApiClient
+  lazy val importService = new ImportService
+  lazy val keywordsService = new KeywordsService
+  lazy val migrationApiClient = new MigrationApiClient
 }

@@ -3,6 +3,7 @@ package no.ndla.learningpathapi.integration
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.domain.NdlaUserName
+import no.ndla.network.NdlaClient
 
 import scala.util.{Failure, Success}
 import scalaj.http.Http

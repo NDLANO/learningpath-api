@@ -10,7 +10,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   LearningpathApiProperties.setProperties(Map(
     "CONTACT_EMAIL" -> Some("ndla@knowit.no"),
     "HOST_ADDR" -> Some("localhost"),
-    "DOMAINS" -> Some("localhost"),
+    "DOMAIN" -> Some("http://localhost"),
 
     "DB_USER_NAME" -> Some("user"),
     "DB_PASSWORD" -> Some("password"),
@@ -25,6 +25,10 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "SEARCH_DOCUMENT" -> Some("learningpath"),
     "SEARCH_DEFAULT_PAGE_SIZE" -> Some(s"$DEFAULT_PAGE_SIZE"),
     "SEARCH_MAX_PAGE_SIZE" -> Some(s"$MAX_PAGE_SIZE"),
-    "INDEX_BULK_SIZE" -> Some("500")
+    "INDEX_BULK_SIZE" -> Some("500"),
+
+    "MIGRATION_HOST" -> Some("migration-api"),
+    "MIGRATION_USER" -> Some("username"),
+    "MIGRATION_PASSWORD" -> Some("password")
   ))
 }

@@ -1,4 +1,4 @@
-package no.ndla.learningpathapi.batch.service
+package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.UnitSuite
 

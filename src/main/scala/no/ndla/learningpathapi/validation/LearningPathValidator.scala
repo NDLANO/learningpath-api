@@ -45,12 +45,13 @@ class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: 
   }
 
   def validateCoverPhoto(coverPhotoMetaUrl: Option[String]): Option[ValidationMessage] = {
-    coverPhotoMetaUrl.flatMap(url => {
-      val possibleImageApiDomains = "api.ndla.no" :: LearningpathApiProperties.Domains.toList
-      val parsedUrl = parse(url)
-      val host = parsedUrl.host.getOrElse("")
+    val possibleImageApiDomain = parse(LearningpathApiProperties.Domain).host
 
-      val hostCorrect = possibleImageApiDomains.contains(host)
+    coverPhotoMetaUrl.flatMap(url => {
+      val parsedUrl = parse(url)
+      val host = parsedUrl.host
+
+      val hostCorrect = possibleImageApiDomain == host
       val pathCorrect = parsedUrl.path.startsWith("/images")
 
       hostCorrect && pathCorrect match {

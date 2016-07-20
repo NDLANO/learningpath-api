@@ -1,10 +1,7 @@
-import java.io.FileInputStream
 import java.util.Properties
 
-import sbtdocker.Instructions
-
 val Scalaversion = "2.11.8"
-val Scalatraversion = "2.3.1"
+val Scalatraversion = "2.4.1"
 val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
 val ScalaTestVersion = "2.2.6"
@@ -37,7 +34,7 @@ lazy val learningpath_api = (project in file(".")).
     libraryDependencies ++= Seq(
       "ndla" %% "logging" % "0.1-SNAPSHOT",
       "ndla" %% "logging" % "0.1-SNAPSHOT" % "test" classifier "tests",
-      "ndla" %% "network" % "0.1-SNAPSHOT",
+      "ndla" %% "network" % "0.2-SNAPSHOT",
       "ndla" %% "mapping" % "0.1-SNAPSHOT",
       "joda-time" % "joda-time" % "2.8.2",
       "org.specs2" %% "specs2-core" % "2.4.14" % "test",
@@ -47,7 +44,7 @@ lazy val learningpath_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
-      "org.json4s"   %% "json4s-native" % "3.2.11",
+      "org.json4s"   %% "json4s-native" % "3.3.0",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",

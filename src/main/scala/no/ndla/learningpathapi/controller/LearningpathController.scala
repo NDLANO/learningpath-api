@@ -3,15 +3,16 @@ package no.ndla.learningpathapi.controller
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, License, _}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
+import no.ndla.network.model.HttpRequestException
 import no.ndla.mapping.LicenseMapping
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}

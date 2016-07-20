@@ -1,22 +1,22 @@
 package no.ndla.learningpathapi.integration
 
-import no.ndla.learningpathapi.model.domain.HttpRequestException
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
+import no.ndla.network.model.HttpRequestException
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
 import scala.util.{Failure, Success}
-import scalaj.http.HttpRequest
+import scalaj.http.{Http, HttpRequest}
 
 
 class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   override val imageApiClient = new ImageApiClient
 
-  val DefaultImage = ImageMetaInformation("1", ImageVariants(Some(Image("thumb", 10, "contentType")), Some(Image("full", 1000, "contentType"))))
+  val DefaultImage = ImageMetaInformation("1", "http://api.test.ndla.no/images/1", ImageVariants(Some(Image("thumb", 10, "contentType")), Some(Image("full", 1000, "contentType"))))
 
   test("That some metaInfo is returned when images is found") {
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Success(DefaultImage))
+    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[ImageMetaInformation]])).thenReturn(Success(DefaultImage))
 
     val imageMeta = imageApiClient.imageMetaWithExternalId("abc")
     imageMeta.isDefined should be (true)
@@ -28,18 +28,18 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
   test("That none is returned when http 404 is received") {
     val exception = mock[HttpRequestException]
     when(exception.is404).thenReturn(true)
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
+    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
-    imageApiClient.imageMetaWithExternalId("abc") should be (None)
+    imageApiClient.imageMetaOnUrl("abc") should be (None)
   }
 
   test("That exception is returned when http-error") {
     val exception = mock[HttpRequestException]
     when(exception.is404).thenReturn(false)
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
+    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     intercept[HttpRequestException]{
-      imageApiClient.imageMetaWithExternalId("abc")
+      imageApiClient.imageMetaOnUrl("abc")
       fail("Exception should have been thrown")
     } should be (exception)
 
@@ -48,7 +48,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   test("That exception is returned for a randomly chosen exception") {
     val exception = mock[NoSuchElementException]
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
+    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     intercept[NoSuchElementException]{
       imageApiClient.imageMetaWithExternalId("abc")

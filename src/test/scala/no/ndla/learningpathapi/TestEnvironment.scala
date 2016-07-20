@@ -8,6 +8,7 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.network.NdlaClient
 import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
 
@@ -28,6 +29,9 @@ trait TestEnvironment
   with ElasticClientComponent
   with DatasourceComponent
   with MockitoSugar
+  with KeywordsServiceComponent
+  with ImportServiceComponent
+  with MigrationApiClient
   with Clock {
 
   val datasource = mock[DataSource]
@@ -46,6 +50,9 @@ trait TestEnvironment
   val clock = mock[SystemClock]
   val ndlaClient = mock[NdlaClient]
   val imageApiClient = mock[ImageApiClient]
+  val keywordsService = mock[KeywordsService]
+  val migrationApiClient = mock[MigrationApiClient]
+  val importService = mock[ImportService]
 
   val learningpathController = mock[LearningpathController]
 
