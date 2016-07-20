@@ -29,8 +29,8 @@ trait ImportServiceComponent {
       }
     }
 
-    def getStatus(tri: Try[LearningPathSummary]): String = {
-      tri match {
+    def getStatus(learningPathSummaryTry: Try[LearningPathSummary]): String = {
+      learningPathSummaryTry match {
         case Success(learningPathSummary) => "OK"
         case Failure(f) => f.getMessage
       }
@@ -202,14 +202,6 @@ trait ImportServiceComponent {
         case s if s.contains("api.staging.ndla.no") => ChristerStaging
         case _ => ChristerTest
       }
-    }
-
-    def debug(learningPath: LearningPath) = {
-      learningPath.title.foreach(title => logger.info(s"TITLE -- ${title.title} - ${title.language}"))
-      learningPath.learningsteps.foreach(step => {
-        logger.info(s"    (${step.seqNo}) - ${step.title.head.title} - ${step.embedUrl.headOption.getOrElse(EmbedUrl("NONE", None)).url}")
-        step.title.tail.foreach(title => logger.info(s"       ${title.title} -- ${title.language}"))
-      })
     }
   }
 }

@@ -2,10 +2,10 @@ package no.ndla.learningpathapi
 
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import no.ndla.learningpathapi.controller.{InternController, LearningpathController}
-import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
+import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
-import no.ndla.learningpathapi.service.{Clock, ImportServiceComponent, _}
 import no.ndla.network.NdlaClient
 import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
