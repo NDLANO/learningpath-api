@@ -111,7 +111,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
-        ls.embedUrl.map(e => asApiEmbedContent(e)),
+        ls.embedUrl.map(asApiEmbedContent),
         ls.showTitle,
         ls.`type`.toString,
         ls.license.map(asApiLicense),
@@ -138,10 +138,8 @@ trait ConverterServiceComponent {
       api.Description(description.description, description.language)
     }
 
-    def asApiEmbedContent(embedUrl: EmbedUrl): EmbedContent = {
-      api.EmbedContent(
-        embedUrl.url,
-        embedUrl.language)
+    def asApiEmbedContent(embedUrl: domain.EmbedUrl): EmbedContent = {
+      api.EmbedContent(embedUrl.url, embedUrl.language)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {
