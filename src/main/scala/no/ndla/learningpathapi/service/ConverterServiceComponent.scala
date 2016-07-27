@@ -12,8 +12,8 @@ trait ConverterServiceComponent {
   val converterService: ConverterService
 
   class ConverterService {
-    def asEmbedUrl(embedContent: EmbedContent): EmbedUrl = {
-      domain.EmbedUrl(embedContent.url, embedContent.language)
+    def asEmbedUrl(embedUrl: EmbedUrl): EmbedUrl = {
+      domain.EmbedUrl(embedUrl.url, embedUrl.language)
     }
 
     def asDescription(description: Description): domain.Description = {
@@ -111,7 +111,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
-        ls.embedUrl.map(asApiEmbedContent),
+        ls.embedUrl.map(asApiEmbedUrl),
         ls.showTitle,
         ls.`type`.toString,
         ls.license.map(asApiLicense),
@@ -138,8 +138,8 @@ trait ConverterServiceComponent {
       api.Description(description.description, description.language)
     }
 
-    def asApiEmbedContent(embedUrl: domain.EmbedUrl): EmbedContent = {
-      api.EmbedContent(embedUrl.url, embedUrl.language)
+    def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
+      api.EmbedUrl(embedUrl.url, embedUrl.language)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {
