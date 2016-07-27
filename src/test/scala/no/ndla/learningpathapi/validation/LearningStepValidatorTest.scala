@@ -102,7 +102,7 @@ class LearningStepValidatorTest extends UnitSuite {
     val validationErrors = validator.validate(ValidLearningStep.copy(description = List(), embedUrl = Seq()))
     validationErrors.size should be(1)
     validationErrors.head.field should equal("description|embedUrl")
-    validationErrors.head.message should equal("A learningstep is required to have either a description, embedUrl or both.")
+    validationErrors.head.message should equal("A learningstep is required to have either a description, embedContent or both.")
   }
 
   test("That no error is returned when a description is present, but no embedUrls") {
