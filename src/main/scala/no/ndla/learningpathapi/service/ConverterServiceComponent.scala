@@ -8,7 +8,7 @@ import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 import no.ndla.network.ApplicationUrl
 
 trait ConverterServiceComponent {
-  this: AuthClientComponent with OEmbedClientComponent with ImageApiClientComponent =>
+  this: AuthClientComponent with ImageApiClientComponent =>
   val converterService: ConverterService
 
   class ConverterService {
@@ -141,7 +141,6 @@ trait ConverterServiceComponent {
     def asApiEmbedContent(embedUrl: EmbedUrl): EmbedContent = {
       api.EmbedContent(
         embedUrl.url,
-        oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url),
         embedUrl.language)
     }
 
