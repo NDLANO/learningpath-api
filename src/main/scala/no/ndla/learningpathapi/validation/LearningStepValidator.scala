@@ -11,7 +11,7 @@ class LearningStepValidator {
   val languageValidator = new LanguageValidator
   val titleValidator = new TitleValidator
 
-  val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedContent or both."
+  val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedUrl or both."
 
   def validate(newLearningStep: LearningStep): Seq[ValidationMessage] = {
     titleValidator.validate(newLearningStep.title) ++
