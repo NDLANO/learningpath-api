@@ -1,0 +1,49 @@
+package no.ndla.learningpathapi.integration
+
+import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.caching.Memoize
+import no.ndla.learningpathapi.model.api.License
+import no.ndla.network.NdlaClient
+
+import scala.util.{Failure, Success}
+import scalaj.http.Http
+
+trait MappingApiClient {
+  this: NdlaClient =>
+  val mappingApiClient: MappingApiClient
+
+  class MappingApiClient {
+
+    val allLanguageMappingsEndpoint = s"http://${LearningpathApiProperties.MappingHost}/iso639"
+    val allLicenseDefinitionsEndpoint = s"http://${LearningpathApiProperties.MappingHost}/licenses"
+
+    def getLicenseDefinition(licenseName: String): Option[License] = {
+      getLicenseDefinitions().find(_.license == licenseName).map(l => License(l.license, l.description, l.url))
+    }
+
+    def getLicenses : Seq[License] = {
+      getLicenseDefinitions().map(l => License(l.license, l.description, l.url))
+    }
+
+    def get6391CodeFor6392Code(languageCode6392: String): Option[String] = getLanguageMapping().find(_._1 == languageCode6392).map(_._2)
+
+    def languageCodeSupported(languageCode: String): Boolean = getLanguageMapping().exists(_._1 == languageCode)
+
+    private val getLicenseDefinitions = Memoize[Seq[LicenseDefinition]](LearningpathApiProperties.LicenseMappingCacheAgeInMs, () => {
+      ndlaClient.fetch[Seq[LicenseDefinition]](Http(allLicenseDefinitionsEndpoint)) match {
+        case Success(definitions) => definitions
+        case Failure(ex) => throw ex
+      }
+    })
+
+    private val getLanguageMapping = Memoize[Map[String, String]](LearningpathApiProperties.IsoMappingCacheAgeInMs, () => {
+      ndlaClient.fetch[Map[String, String]](Http(allLanguageMappingsEndpoint)) match {
+        case Success(map) => map
+        case Failure(ex) => throw ex
+      }
+    })
+  }
+}
+//def getLicenses: Seq[LicenseDefinition] = licenseToLicenseDefinitionsSeq
+
+case class LicenseDefinition(license: String, description: Option[String], url: Option[String])

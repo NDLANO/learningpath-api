@@ -1,27 +1,30 @@
 package no.ndla.learningpathapi.validation
 
+import no.ndla.learningpathapi.integration.MappingApiClient
 import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain.ValidationException
-import no.ndla.mapping.ISO639Mapping
 
-object LanguageValidator {
-  def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[String] = {
-    new LanguageValidator().validate(fieldPath, languageCodeOpt) match {
-      case Some(validationMessage) => throw new ValidationException(errors = validationMessage :: Nil)
-      case None => languageCodeOpt
+trait LanguageValidator {
+  this : MappingApiClient =>
+  val languageValidator : LanguageValidator
+  class LanguageValidator {
+    def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[ValidationMessage] = {
+      languageCodeOpt match {
+        case None => None
+        case Some(languageCode) => {
+          languageCode.nonEmpty && mappingApiClient.languageCodeSupported(languageCode) match {
+            case true => None
+            case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
+          }
+        }
+      }
     }
   }
-}
-
-class LanguageValidator {
-  def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[ValidationMessage] = {
-    languageCodeOpt match {
-      case None => None
-      case Some(languageCode) => {
-        languageCode.nonEmpty && ISO639Mapping.languageCodeSupported(languageCode) match {
-          case true => None
-          case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
-        }
+  object LanguageValidator {
+    def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[String] = {
+      languageValidator.validate(fieldPath, languageCodeOpt) match {
+        case Some(validationMessage) => throw new ValidationException(errors = validationMessage :: Nil)
+        case None => languageCodeOpt
       }
     }
   }

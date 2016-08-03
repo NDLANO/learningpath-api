@@ -2,13 +2,13 @@ package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.LearningPathTags
-import no.ndla.mapping.ISO639Mapping.get6391CodeFor6392Code
 import org.json4s.native.Serialization._
 
 import scala.util.matching.Regex
 import scalaj.http.{Http, HttpRequest}
 
 trait KeywordsServiceComponent extends LazyLogging {
+  this : MappingApiClient =>
   val keywordsService: KeywordsService
 
   class KeywordsService {
@@ -51,7 +51,7 @@ trait KeywordsServiceComponent extends LazyLogging {
 
     def getISO639(languageUrl: String): Option[String] = {
       Option(languageUrl) collect { case pattern(group) => group } match {
-        case Some(x) => if (x == "language-neutral") None else get6391CodeFor6392Code(x)
+        case Some(x) => if (x == "language-neutral") None else mappingApiClient.get6391CodeFor6392Code((x))
         case None => None
       }
     }

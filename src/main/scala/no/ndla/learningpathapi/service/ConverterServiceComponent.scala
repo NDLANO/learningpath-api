@@ -4,11 +4,10 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{EmbedUrl, LearningStep, NdlaUserName, StepType}
 import no.ndla.learningpathapi.model._
-import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 import no.ndla.network.ApplicationUrl
 
 trait ConverterServiceComponent {
-  this: AuthClientComponent with OEmbedClientComponent with ImageApiClientComponent =>
+  this: AuthClientComponent with OEmbedClientComponent with ImageApiClientComponent with MappingApiClient =>
   val converterService: ConverterService
 
   class ConverterService {
@@ -37,8 +36,8 @@ trait ConverterServiceComponent {
     }
 
     def asApiLicense(license: String): api.License =
-      getLicenseDefinition(license) match {
-        case Some(l) => api.License(l.license, Some(l.description), l.url)
+      mappingApiClient.getLicenseDefinition(license) match {
+        case Some(l) => api.License(l.license, l.description, l.url)
         case None => api.License(license, Some("Invalid license"), None)
       }
 

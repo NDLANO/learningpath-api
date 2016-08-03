@@ -21,13 +21,6 @@ case class LearningStep(id: Option[Long],
                         license: Option[String],
                         showTitle: Boolean = false,
                         status: StepStatus.Value = StepStatus.ACTIVE) {
-
-  def validate: LearningStep = {
-    new LearningStepValidator().validate(this) match {
-      case head :: tail => throw new ValidationException(errors = head :: tail)
-      case _ => this
-    }
-  }
 }
 
 object StepStatus extends Enumeration {

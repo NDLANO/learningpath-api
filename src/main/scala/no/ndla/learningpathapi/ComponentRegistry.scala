@@ -6,6 +6,7 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.learningpathapi.validation.{TitleValidator, LearningStepValidator, LearningPathValidator, LanguageValidator}
 import no.ndla.network.NdlaClient
 import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
@@ -26,13 +27,18 @@ object ComponentRegistry
   with AuthClientComponent
   with OEmbedClientComponent
   with ImageApiClientComponent
+  with MappingApiClient
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
   with ImportServiceComponent
   with MigrationApiClient
   with KeywordsServiceComponent
-  with Clock {
+  with Clock
+  with LanguageValidator
+  with LearningPathValidator
+  with LearningStepValidator
+  with TitleValidator {
 
   implicit val swagger = new LearningpathSwagger
 
@@ -73,4 +79,10 @@ object ComponentRegistry
   lazy val importService = new ImportService
   lazy val keywordsService = new KeywordsService
   lazy val migrationApiClient = new MigrationApiClient
+  lazy val mappingApiClient = new MappingApiClient
+  lazy val languageValidator = new LanguageValidator
+  lazy val titleValidator = new TitleValidator
+  lazy val learningPathValidator = new LearningPathValidator
+  lazy val learningStepValidator = new LearningStepValidator
+
 }

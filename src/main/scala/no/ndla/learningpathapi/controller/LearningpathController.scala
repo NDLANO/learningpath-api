@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
+import no.ndla.learningpathapi.integration.MappingApiClient
 import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, License, _}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
@@ -13,7 +14,6 @@ import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import no.ndla.network.model.HttpRequestException
-import no.ndla.mapping.LicenseMapping
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
@@ -24,7 +24,7 @@ import scala.util.Try
 
 trait LearningpathController {
 
-  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent =>
+  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with MappingApiClient with LanguageValidator =>
   val learningpathController: LearningpathController
 
   class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
@@ -350,7 +350,7 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      LicenseMapping.getLicenses.map(x => License(x.license, Some(x.description), x.url))
+      mappingApiClient.getLicenses.map(x => License(x.license, x.description, x.url))
     }
 
     post("/", operation(addNewLearningpath)) {
