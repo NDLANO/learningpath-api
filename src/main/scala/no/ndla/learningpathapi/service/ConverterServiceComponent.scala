@@ -1,35 +1,35 @@
 package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration._
-import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{EmbedUrl, LearningStep, NdlaUserName, StepType}
+import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model._
 import no.ndla.mapping.LicenseMapping.getLicenseDefinition
 import no.ndla.network.ApplicationUrl
 
 trait ConverterServiceComponent {
-  this: AuthClientComponent with OEmbedClientComponent with ImageApiClientComponent =>
+  this: AuthClientComponent with ImageApiClientComponent =>
   val converterService: ConverterService
 
   class ConverterService {
-    def asEmbedUrl(embedContent: EmbedContent): EmbedUrl = {
-      domain.EmbedUrl(embedContent.url, embedContent.language)
+    def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
+      domain.EmbedUrl(embedUrl.url, embedUrl.language)
     }
 
-    def asDescription(description: Description): domain.Description = {
+    def asDescription(description: api.Description): domain.Description = {
       domain.Description(description.description, description.language)
     }
 
-    def asTitle(title: Title): domain.Title = {
+    def asTitle(title: api.Title): domain.Title = {
       domain.Title(title.title, title.language)
     }
 
-    def asLearningPathTags(tags: LearningPathTags): domain.LearningPathTags = {
+    def asLearningPathTags(tags: api.LearningPathTags): domain.LearningPathTags = {
       domain.LearningPathTags(tags.tags, tags.language)
     }
 
-    def asApiLearningPathTags(tags: domain.LearningPathTags): LearningPathTags = {
-      LearningPathTags(tags.tags, tags.language)
+    def asApiLearningPathTags(tags: domain.LearningPathTags): api.LearningPathTags = {
+      api.LearningPathTags(tags.tags, tags.language)
     }
 
     def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
@@ -46,24 +46,24 @@ trait ConverterServiceComponent {
       api.Author(author.`type`, author.name)
     }
 
-    def asAuthor(user: NdlaUserName): Author = {
+    def asAuthor(user: domain.NdlaUserName): api.Author = {
       val names = Array(user.first_name, user.middle_name, user.last_name).filter(_.isDefined).map(_.get)
-      Author("Forfatter", names.mkString(" "))
+      api.Author("Forfatter", names.mkString(" "))
     }
 
-    def asCoverPhoto(metaUrl: String, imageMeta: Option[ImageMetaInformation]): Option[CoverPhoto] = {
-      imageMeta.flatMap(_.images.full).map(full => CoverPhoto(full.url, metaUrl))
+    def asCoverPhoto(metaUrl: String, imageMeta: Option[ImageMetaInformation]): Option[api.CoverPhoto] = {
+      imageMeta.flatMap(_.images.full).map(full => api.CoverPhoto(full.url, metaUrl))
     }
 
-    def asCopyright(copyright: Copyright): domain.Copyright = {
+    def asCopyright(copyright: api.Copyright): domain.Copyright = {
       domain.Copyright(copyright.license.license, copyright.contributors.map(asAuthor))
     }
 
-    def asAuthor(author: Author): domain.Author = {
+    def asAuthor(author: api.Author): domain.Author = {
       domain.Author(author.`type`, author.name)
     }
 
-    def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): LearningPath = {
+    def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): api.LearningPath = {
       api.LearningPath(lp.id.get,
         lp.revision.get,
         lp.isBasedOn,
@@ -83,18 +83,18 @@ trait ConverterServiceComponent {
         lp.canEdit(user))
     }
 
-    def asApiIntroduction(introStepOpt: Option[LearningStep]): Seq[Introduction] = {
+    def asApiIntroduction(introStepOpt: Option[domain.LearningStep]): Seq[api.Introduction] = {
       introStepOpt match {
         case None => List()
-        case Some(introStep) => introStep.description.map(desc => Introduction(desc.description, desc.language))
+        case Some(introStep) => introStep.description.map(desc => api.Introduction(desc.description, desc.language))
       }
     }
 
-    def asApiLearningpathSummary(learningpath: domain.LearningPath): LearningPathSummary = {
+    def asApiLearningpathSummary(learningpath: domain.LearningPath): api.LearningPathSummary = {
       api.LearningPathSummary(learningpath.id.get,
         learningpath.title.map(asApiTitle),
         learningpath.description.map(asApiDescription),
-        asApiIntroduction(learningpath.learningsteps.find(_.`type` == StepType.INTRODUCTION)),
+        asApiIntroduction(learningpath.learningsteps.find(_.`type` == domain.StepType.INTRODUCTION)),
         createUrlToLearningPath(learningpath),
         learningpath.coverPhotoMetaUrl.flatMap(metaUrl => asCoverPhoto(metaUrl, imageApiClient.imageMetaOnUrl(metaUrl)).map(_.url)),
         learningpath.duration,
@@ -111,7 +111,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         ls.title.map(asApiTitle),
         ls.description.map(asApiDescription),
-        ls.embedUrl.map(e => asApiEmbedContent(e)),
+        ls.embedUrl.map(asApiEmbedUrl),
         ls.showTitle,
         ls.`type`.toString,
         ls.license.map(asApiLicense),
@@ -120,8 +120,8 @@ trait ConverterServiceComponent {
         ls.status.toString)
     }
 
-    def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): LearningStepSummary = {
-      LearningStepSummary(
+    def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): api.LearningStepSummary = {
+      api.LearningStepSummary(
         ls.id.get,
         ls.seqNo,
         ls.title.map(asApiTitle),
@@ -130,19 +130,16 @@ trait ConverterServiceComponent {
       )
     }
 
-    def asApiTitle(title: domain.Title): Title = {
+    def asApiTitle(title: domain.Title): api.Title = {
       api.Title(title.title, title.language)
     }
 
-    def asApiDescription(description: domain.Description): Description = {
+    def asApiDescription(description: domain.Description): api.Description = {
       api.Description(description.description, description.language)
     }
 
-    def asApiEmbedContent(embedUrl: EmbedUrl): EmbedContent = {
-      api.EmbedContent(
-        embedUrl.url,
-        oEmbedClient.getHtmlEmbedCodeForUrl(embedUrl.url),
-        embedUrl.language)
+    def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
+      api.EmbedUrl(embedUrl.url, embedUrl.language)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {
@@ -157,7 +154,7 @@ trait ConverterServiceComponent {
       s"${ApplicationUrl.get}${lp.id.get}"
     }
 
-    def createUrlToLearningPath(lp: LearningPath): String = {
+    def createUrlToLearningPath(lp: api.LearningPath): String = {
       s"${ApplicationUrl.get}${lp.id}"
     }
   }
