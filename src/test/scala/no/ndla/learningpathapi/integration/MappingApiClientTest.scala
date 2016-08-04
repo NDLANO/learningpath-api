@@ -37,11 +37,11 @@ class MappingApiClientTest extends UnitSuite with TestEnvironment {
   test("That getLicenseDefinition returns a license if found") {
     val expectedResult = Some(License("by", Some("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")))
     when(ndlaClient.fetch[Seq[LicenseDefinition]](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[Seq[LicenseDefinition]]])).thenReturn(Success(sampleLicenses))
-    client.getLicenseDefinition("by") should equal(expectedResult)
+    client.getLicense("by") should equal(expectedResult)
   }
 
   test("That getLicenseDefinition returns None if license is not found") {
-    client.getLicenseDefinition("garbage") should equal(None)
+    client.getLicense("garbage") should equal(None)
   }
 
   test("That getLicenseDefinition throws an exception if the http call failed") {
@@ -50,7 +50,7 @@ class MappingApiClientTest extends UnitSuite with TestEnvironment {
     when(ndlaClient.fetch[Seq[LicenseDefinition]](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[Seq[LicenseDefinition]]])).thenReturn(Failure(exception))
 
     intercept[HttpRequestException] {
-      client.getLicenseDefinition("garbage")
+      client.getLicense("garbage")
     }
   }
 
@@ -70,7 +70,7 @@ class MappingApiClientTest extends UnitSuite with TestEnvironment {
     when(ndlaClient.fetch[Map[String, String]](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[Map[String, String]]])).thenReturn(Failure(exception))
 
     intercept[HttpRequestException] {
-      client.getLicenseDefinition("garbage")
+      client.getLicense("garbage")
     }
   }
 

@@ -36,7 +36,7 @@ trait ConverterServiceComponent {
     }
 
     def asApiLicense(license: String): api.License =
-      mappingApiClient.getLicenseDefinition(license) match {
+      mappingApiClient.getLicense(license) match {
         case Some(l) => api.License(l.license, l.description, l.url)
         case None => api.License(license, Some("Invalid license"), None)
       }

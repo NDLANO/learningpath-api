@@ -7,6 +7,7 @@ import no.ndla.learningpathapi.model.domain._
 trait LearningStepValidator {
   this : TitleValidator with LanguageValidator =>
   val learningStepValidator : LearningStepValidator
+
   class LearningStepValidator {
     val noHtmlTextValidator = new TextValidator(allowHtml = false)
     val basicHtmlTextValidator = new TextValidator(allowHtml = true)
@@ -14,13 +15,13 @@ trait LearningStepValidator {
     val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedContent or both."
 
     def validate(newLearningStep: LearningStep): LearningStep = {
-      validateMessages(newLearningStep) match {
+      validateLearningStep(newLearningStep) match {
         case head :: tail => throw new ValidationException(errors = head :: tail)
         case _ => newLearningStep
       }
     }
 
-    def validateMessages(newLearningStep: LearningStep): Seq[ValidationMessage] = {
+    def validateLearningStep(newLearningStep: LearningStep): Seq[ValidationMessage] = {
       titleValidator.validate(newLearningStep.title) ++
         validateDescription(newLearningStep.description) ++
         validateEmbedUrl(newLearningStep.embedUrl) ++

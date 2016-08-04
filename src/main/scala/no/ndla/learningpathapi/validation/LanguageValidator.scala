@@ -7,6 +7,7 @@ import no.ndla.learningpathapi.model.domain.ValidationException
 trait LanguageValidator {
   this : MappingApiClient =>
   val languageValidator : LanguageValidator
+
   class LanguageValidator {
     def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[ValidationMessage] = {
       languageCodeOpt match {
@@ -20,6 +21,7 @@ trait LanguageValidator {
       }
     }
   }
+
   object LanguageValidator {
     def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[String] = {
       languageValidator.validate(fieldPath, languageCodeOpt) match {

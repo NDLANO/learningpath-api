@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
-
+import no.ndla.learningpathapi.model.domain.Language
 import scala.collection.mutable
 import scala.io.Source
 object LearningpathApiProperties extends LazyLogging {
@@ -38,7 +38,7 @@ object LearningpathApiProperties extends LazyLogging {
   val AuthHost = "auth"
   val OEmbedHost = "oembed-proxy"
   val ImageApiHost = "image-api"
-  val DefaultLanguage = "nb"
+  val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
   val MappingHost = "mapping-api"
 

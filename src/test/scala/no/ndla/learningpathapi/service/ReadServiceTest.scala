@@ -45,7 +45,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
 
   test("That withId returns a learningPath when the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(mappingApiClient.getLicenseDefinition("publicdomain")).thenReturn(Some(License("publicdomain", Some("hei"), Some("hei"))))
+    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("hei"), Some("hei"))))
     val learningPath = service.withId(PUBLISHED_ID)
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
@@ -54,7 +54,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
 
   test("That withId returns a learningPath when the status is PUBLISHED and user is not the owner") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(mappingApiClient.getLicenseDefinition("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
+    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
     val learningPath = service.withId(PUBLISHED_ID, Some(PRIVATE_OWNER))
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
@@ -77,7 +77,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
 
   test("That withId returns a learningPath when the status is PRIVATE and user is the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(mappingApiClient.getLicenseDefinition("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
+    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
     val learningPath = service.withId(PRIVATE_ID, Some(PRIVATE_OWNER))
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PRIVATE_ID)

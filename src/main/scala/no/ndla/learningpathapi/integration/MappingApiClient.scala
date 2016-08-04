@@ -25,7 +25,7 @@ trait MappingApiClient {
     val allLanguageMappingsEndpoint = s"http://${LearningpathApiProperties.MappingHost}/iso639"
     val allLicenseDefinitionsEndpoint = s"http://${LearningpathApiProperties.MappingHost}/licenses"
 
-    def getLicenseDefinition(licenseName: String): Option[License] = {
+    def getLicense(licenseName: String): Option[License] = {
       getLicenseDefinitions().find(_.license == licenseName).map(l => License(l.license, l.description, l.url))
     }
 

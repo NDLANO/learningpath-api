@@ -9,6 +9,7 @@ import no.ndla.learningpathapi.model.domain._
 trait LearningPathValidator {
   this: LanguageValidator with MappingApiClient with TitleValidator =>
   val learningPathValidator : LearningPathValidator
+
   class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
 
     val MISSING_DESCRIPTION = "At least one description is required."
@@ -18,13 +19,13 @@ trait LearningPathValidator {
     val durationValidator = new DurationValidator
 
     def validate(newLearningPath: LearningPath): LearningPath = {
-     validateMessages(newLearningPath) match {
+      validateLearningPath(newLearningPath) match {
         case head :: tail => throw new ValidationException(errors = head :: tail)
         case _ => newLearningPath
       }
     }
 
-    def validateMessages(newLearningPath: LearningPath) : Seq[ValidationMessage] = {
+    def validateLearningPath(newLearningPath: LearningPath) : Seq[ValidationMessage] = {
       titleValidator.validate(newLearningPath.title) ++
         validateDescription(newLearningPath.description) ++
         validateDuration(newLearningPath.duration).toList ++
@@ -32,6 +33,7 @@ trait LearningPathValidator {
         validateTags(newLearningPath.tags) ++
         validateCopyright(newLearningPath.copyright)
     }
+
     def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
       (descriptionRequired, descriptions.isEmpty) match {
         case (false, true) => List()
@@ -82,7 +84,7 @@ trait LearningPathValidator {
     }
 
     def validateLicense(license: String): Seq[ValidationMessage] = {
-      mappingApiClient.getLicenseDefinition(license) match {
+      mappingApiClient.getLicense(license) match {
         case None => Seq(new ValidationMessage("license.license", s"${license} is not a valid license"))
         case _ => Seq()
       }

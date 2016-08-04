@@ -6,6 +6,7 @@ import no.ndla.learningpathapi.model.domain.Title
 trait TitleValidator {
   this : LanguageValidator =>
   val titleValidator : TitleValidator
+
   class TitleValidator(titleRequired: Boolean = true) {
     val MISSING_TITLE = "At least one title is required."
 
