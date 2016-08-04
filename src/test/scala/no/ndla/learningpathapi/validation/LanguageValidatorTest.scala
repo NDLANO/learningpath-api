@@ -14,12 +14,12 @@ class LanguageValidatorTest extends UnitSuite with TestEnvironment {
   }
 
   test("That LanguageValidator returns no error message for nb") {
-    when(mappingApiClient.languageCodeSupported("nb")).thenReturn(true)
+    when(mappingApiClient.languageCodeSupported6391("nb")).thenReturn(true)
     validator.validate("path1.path2", Some("nb")) should be(None)
   }
 
   test("That LanguageValidator returns error for something") {
-    when(mappingApiClient.languageCodeSupported("something")).thenReturn(false)
+    when(mappingApiClient.languageCodeSupported6391("something")).thenReturn(false)
     val errorMessage = validator.validate("path1.path2", Some("something"))
     errorMessage.isDefined should be(right = true)
     errorMessage.get.field should equal("path1.path2")

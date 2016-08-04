@@ -12,7 +12,7 @@ trait LanguageValidator {
       languageCodeOpt match {
         case None => None
         case Some(languageCode) => {
-          languageCode.nonEmpty && mappingApiClient.languageCodeSupported(languageCode) match {
+          languageCode.nonEmpty && mappingApiClient.languageCodeSupported6391(languageCode) match {
             case true => None
             case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
           }

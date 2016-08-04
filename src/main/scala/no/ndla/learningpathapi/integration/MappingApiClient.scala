@@ -27,7 +27,9 @@ trait MappingApiClient {
 
     def get6391CodeFor6392Code(languageCode6392: String): Option[String] = getLanguageMapping().find(_._1 == languageCode6392).map(_._2)
 
-    def languageCodeSupported(languageCode: String): Boolean = getLanguageMapping().exists(_._1 == languageCode)
+    def languageCodeSupported6391(languageCode: String): Boolean = getLanguageMapping().exists(_._2 == languageCode)
+
+    def languageCodeSupported6392(languageCode: String): Boolean = getLanguageMapping().exists(_._1 == languageCode)
 
     private val getLicenseDefinitions = Memoize[Seq[LicenseDefinition]](LearningpathApiProperties.LicenseMappingCacheAgeInMs, () => {
       ndlaClient.fetch[Seq[LicenseDefinition]](Http(allLicenseDefinitionsEndpoint)) match {
