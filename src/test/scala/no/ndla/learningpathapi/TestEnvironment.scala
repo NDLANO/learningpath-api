@@ -24,7 +24,6 @@ trait TestEnvironment
   with SearchIndexBuilderServiceComponent
   with NdlaClient
   with AuthClientComponent
-  with OEmbedClientComponent
   with ImageApiClientComponent
   with ConverterServiceComponent
   with ElasticClientComponent
@@ -51,7 +50,6 @@ trait TestEnvironment
   val searchService = mock[SearchService]
   val searchIndexService = mock[SearchIndexService]
   val authClient = mock[AuthClient]
-  val oEmbedClient = mock[OEmbedClient]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
   val clock = mock[SystemClock]
   val ndlaClient = mock[NdlaClient]
@@ -67,6 +65,9 @@ trait TestEnvironment
   val titleValidator = mock[TitleValidator]
   def resetMocks() = {
     Mockito.reset(
-      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService, updateService, searchService, searchIndexService, authClient, converterService, searchConverterService, oEmbedClient, languageValidator, titleValidator, mappingApiClient)
+      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService,
+      updateService, searchService, searchIndexService, authClient, converterService, searchConverterService,
+      languageValidator, titleValidator, mappingApiClient
+    )
   }
 }

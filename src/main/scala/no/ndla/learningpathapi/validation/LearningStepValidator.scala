@@ -12,7 +12,7 @@ trait LearningStepValidator {
     val noHtmlTextValidator = new TextValidator(allowHtml = false)
     val basicHtmlTextValidator = new TextValidator(allowHtml = true)
 
-    val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedContent or both."
+    val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedUrl or both."
 
     def validate(newLearningStep: LearningStep): LearningStep = {
       validateLearningStep(newLearningStep) match {
@@ -40,10 +40,10 @@ trait LearningStepValidator {
       }
     }
 
-    def validateEmbedUrl(embedContents: Seq[EmbedUrl]): Seq[ValidationMessage] = {
-      embedContents.flatMap(embedContent => {
-        noHtmlTextValidator.validate("embedContent.url", embedContent.url).toList :::
-          languageValidator.validate("embedContent.language", embedContent.language).toList
+    def validateEmbedUrl(embedUrls: Seq[EmbedUrl]): Seq[ValidationMessage] = {
+      embedUrls.flatMap(embedUrl => {
+        noHtmlTextValidator.validate("embedUrl.url", embedUrl.url).toList :::
+          languageValidator.validate("embedUrl.language", embedUrl.language).toList
       })
     }
 
@@ -58,7 +58,7 @@ trait LearningStepValidator {
 
     def validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep: LearningStep): Option[ValidationMessage] = {
       newLearningStep.description.isEmpty && newLearningStep.embedUrl.isEmpty match {
-        case true => Some(ValidationMessage("description|embedContent", MISSING_DESCRIPTION_OR_EMBED_URL))
+        case true => Some(ValidationMessage("description|embedUrl", MISSING_DESCRIPTION_OR_EMBED_URL))
         case false => None
       }
     }

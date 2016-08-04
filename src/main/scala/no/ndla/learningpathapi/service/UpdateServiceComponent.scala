@@ -147,7 +147,7 @@ trait UpdateServiceComponent {
             val newStep = domain.LearningStep(None, None, None, learningPath.id, newSeqNo,
               newLearningStep.title.map(converterService.asTitle),
               newLearningStep.description.map(converterService.asDescription),
-              newLearningStep.embedContent.map(converterService.asEmbedUrl),
+              newLearningStep.embedUrl.map(converterService.asEmbedUrl),
               StepType.valueOfOrError(newLearningStep.`type`),
               newLearningStep.license,
               newLearningStep.showTitle)
@@ -181,7 +181,7 @@ trait UpdateServiceComponent {
             case Some(existing) => {
               val titles = mergeLanguageFields(existing.title, learningStepToUpdate.title.map(converterService.asTitle))
               val descriptions = mergeLanguageFields(existing.description, learningStepToUpdate.description.map(converterService.asDescription))
-              val embedUrls = mergeLanguageFields(existing.embedUrl, learningStepToUpdate.embedContent.map(converterService.asEmbedUrl))
+              val embedUrls = mergeLanguageFields(existing.embedUrl, learningStepToUpdate.embedUrl.map(converterService.asEmbedUrl))
 
               val toUpdate = existing.copy(
                 revision = Some(learningStepToUpdate.revision),
