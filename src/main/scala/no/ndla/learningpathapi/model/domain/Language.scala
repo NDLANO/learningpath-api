@@ -1,8 +1,13 @@
+/*
+ * Part of NDLA learningpath_api.
+ * Copyright (C) 2016 NDLA
+ *
+ * See LICENSE
+ *
+ */
+
 package no.ndla.learningpathapi.model.domain
 
-/**
-  * Created by chrpeter on 28/07/16.
-  */
 object Language {
   val CHINESE = "zh"
   val ENGLISH = "en"
