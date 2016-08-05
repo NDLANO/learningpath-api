@@ -1,11 +1,9 @@
 package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.mapping.ISO639Mapping
-
+import no.ndla.learningpathapi.model.domain.Language
 import scala.collection.mutable
 import scala.io.Source
-
 object LearningpathApiProperties extends LazyLogging {
 
   var LearningpathApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
@@ -39,8 +37,12 @@ object LearningpathApiProperties extends LazyLogging {
 
   val AuthHost = "auth"
   val ImageApiHost = "image-api"
-  val DefaultLanguage = ISO639Mapping.NORWEGIAN_BOKMAL
+  val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
+  val MappingHost = "mapping-api"
+
+  val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
+  val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
 
   val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
     "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",

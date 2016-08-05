@@ -68,7 +68,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
     val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
     when(searchService.matchingQuery(eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
-
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
     get("/", Map(
       "query" -> query,
       "tag" -> tag,
@@ -92,6 +92,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val duration = ""
 
     when(searchService.all(eqTo(None), eqTo(Sort.ByTitleAsc), eqTo(None), eqTo(None), eqTo(None))).thenReturn(SearchResult(-1, 1, 1, List()))
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
     get("/", Map(
       "query" -> query,

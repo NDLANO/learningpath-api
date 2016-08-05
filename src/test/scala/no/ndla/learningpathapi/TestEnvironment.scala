@@ -8,6 +8,7 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.learningpathapi.validation._
 import no.ndla.network.NdlaClient
 import org.mockito.Mockito
 import org.scalatest.mock.MockitoSugar
@@ -31,7 +32,12 @@ trait TestEnvironment
   with KeywordsServiceComponent
   with ImportServiceComponent
   with MigrationApiClient
-  with Clock {
+  with Clock
+  with LanguageValidator
+  with LearningPathValidator
+  with LearningStepValidator
+  with MappingApiClient
+  with TitleValidator {
 
   val datasource = mock[DataSource]
   val elasticClient = mock[ElasticClient]
@@ -51,11 +57,17 @@ trait TestEnvironment
   val keywordsService = mock[KeywordsService]
   val migrationApiClient = mock[MigrationApiClient]
   val importService = mock[ImportService]
-
+  val languageValidator = mock[LanguageValidator]
   val learningpathController = mock[LearningpathController]
-
+  val mappingApiClient = mock[MappingApiClient]
+  val learningStepValidator = mock[LearningStepValidator]
+  val learningPathValidator = mock[LearningPathValidator]
+  val titleValidator = mock[TitleValidator]
   def resetMocks() = {
     Mockito.reset(
-      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService, updateService, searchService, searchIndexService, authClient, converterService, searchConverterService)
+      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService,
+      updateService, searchService, searchIndexService, authClient, converterService, searchConverterService,
+      languageValidator, titleValidator, mappingApiClient
+    )
   }
 }

@@ -79,13 +79,6 @@ case class LearningPath(id: Option[Long],
       case false => throw new ValidationException(errors = validationResult)
     }
   }
-
-  def validate: LearningPath = {
-    new LearningPathValidator().validate(this) match {
-      case head :: tail => throw new ValidationException(errors = head :: tail)
-      case _ => this
-    }
-  }
 }
 
 object LearningPathStatus extends Enumeration {
