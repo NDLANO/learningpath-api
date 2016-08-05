@@ -54,6 +54,5 @@ trait MappingApiClient {
     })
   }
 }
-//def getLicenses: Seq[LicenseDefinition] = licenseToLicenseDefinitionsSeq
 
 case class LicenseDefinition(license: String, description: Option[String], url: Option[String])
