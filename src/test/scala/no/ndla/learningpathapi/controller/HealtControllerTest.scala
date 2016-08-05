@@ -1,5 +1,5 @@
 /*
- * Part of NDLA oembed_proxy.
+ * Part of NDLA learningpath_api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
