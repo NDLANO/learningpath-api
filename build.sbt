@@ -6,6 +6,8 @@ val Jettyversion = "9.2.10.v20150310"
 val AwsSdkversion = "1.10.26"
 val ScalaTestVersion = "2.2.6"
 val MockitoVersion = "1.10.19"
+val ScalaLoggingVersion = "3.1.0"
+val Log4JVersion = "2.6"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -32,10 +34,8 @@ lazy val learningpath_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     scalacOptions := Seq("-target:jvm-1.7"),
     libraryDependencies ++= Seq(
-      "ndla" %% "logging" % "0.1-SNAPSHOT",
-      "ndla" %% "logging" % "0.1-SNAPSHOT" % "test" classifier "tests",
-      "ndla" %% "network" % "0.2-SNAPSHOT",
       "joda-time" % "joda-time" % "2.8.2",
+      "ndla" %% "network" % "0.4",
       "org.specs2" %% "specs2-core" % "2.4.14" % "test",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
@@ -47,6 +47,10 @@ lazy val learningpath_api = (project in file(".")).
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
       "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
+      "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
+      "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
+      "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % Log4JVersion,
       "mysql" % "mysql-connector-java" % "5.1.36",
       "org.scalaj" %% "scalaj-http" % "1.1.5",
       "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
