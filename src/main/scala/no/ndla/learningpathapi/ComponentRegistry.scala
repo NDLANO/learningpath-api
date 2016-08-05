@@ -1,7 +1,7 @@
 package no.ndla.learningpathapi
 
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
-import no.ndla.learningpathapi.controller.{InternController, LearningpathController}
+import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathController}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -15,6 +15,7 @@ import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 object ComponentRegistry
   extends LearningpathController
   with InternController
+  with HealthController
   with LearningPathRepositoryComponent
   with ReadServiceComponent
   with UpdateServiceComponent
@@ -71,4 +72,6 @@ object ComponentRegistry
   lazy val importService = new ImportService
   lazy val keywordsService = new KeywordsService
   lazy val migrationApiClient = new MigrationApiClient
+  lazy val healthController = new HealthController
+
 }
