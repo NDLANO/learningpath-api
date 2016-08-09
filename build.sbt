@@ -35,7 +35,6 @@ lazy val learningpath_api = (project in file(".")).
       "ndla" %% "logging" % "0.1-SNAPSHOT",
       "ndla" %% "logging" % "0.1-SNAPSHOT" % "test" classifier "tests",
       "ndla" %% "network" % "0.2-SNAPSHOT",
-      "ndla" %% "mapping" % "0.1-SNAPSHOT",
       "joda-time" % "joda-time" % "2.8.2",
       "org.specs2" %% "specs2-core" % "2.4.14" % "test",
       "org.scalatra" %% "scalatra" % Scalatraversion,
