@@ -3,7 +3,7 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
-import no.ndla.learningpathapi.controller.LearningpathController
+import no.ndla.learningpathapi.controller.{HealthController, LearningpathController}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -33,6 +33,7 @@ trait TestEnvironment
   with ImportServiceComponent
   with MigrationApiClient
   with Clock
+  with HealthController
   with LanguageValidator
   with LearningPathValidator
   with LearningStepValidator
@@ -59,10 +60,12 @@ trait TestEnvironment
   val importService = mock[ImportService]
   val languageValidator = mock[LanguageValidator]
   val learningpathController = mock[LearningpathController]
+  val healthController = mock[HealthController]
   val mappingApiClient = mock[MappingApiClient]
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
+
   def resetMocks() = {
     Mockito.reset(
       datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService,
