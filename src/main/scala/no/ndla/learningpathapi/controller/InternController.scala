@@ -18,21 +18,16 @@ trait InternController {
   this: ImportServiceComponent with SearchIndexBuilderServiceComponent =>
   val internController: InternController
 
-  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
+  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     before() {
       contentType = formats("json")
-
-      CorrelationID.set(Option(request.getHeader(CorrelationIdHeader)))
-      ThreadContext.put(CorrelationIdKey, CorrelationID.get.getOrElse(""))
       ApplicationUrl.set(request)
     }
 
     after() {
-      CorrelationID.clear()
-      ThreadContext.remove(CorrelationIdKey)
       ApplicationUrl.clear
     }
 

@@ -27,7 +27,7 @@ trait LearningpathController {
   this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with MappingApiClient with LanguageValidator =>
   val learningpathController: LearningpathController
 
-  class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
+  class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging with CorrelationIdSupport {
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
@@ -254,15 +254,10 @@ trait LearningpathController {
 
     before() {
       contentType = formats("json")
-
-      CorrelationID.set(Option(request.getHeader(CorrelationIdHeader)))
-      ThreadContext.put(CorrelationIdKey, CorrelationID.get.getOrElse(""))
       ApplicationUrl.set(request)
     }
 
     after() {
-      CorrelationID.clear()
-      ThreadContext.remove(CorrelationIdKey)
       ApplicationUrl.clear()
     }
 
