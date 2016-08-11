@@ -1,0 +1,6 @@
+Configuration:
+  status: debug
+
+  Loggers:
+    Root:
+      level: debug

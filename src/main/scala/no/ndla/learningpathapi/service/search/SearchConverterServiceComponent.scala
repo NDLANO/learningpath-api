@@ -162,7 +162,7 @@ trait SearchConverterServiceComponent {
     }
 
     def createUrlToLearningPath(id: Long): String = {
-      s"${ApplicationUrl.get()}$id"
+      s"${ApplicationUrl.get}$id"
     }
   }
 

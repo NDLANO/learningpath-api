@@ -1,34 +1,33 @@
 package no.ndla.learningpathapi.controller
 
-import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.Error
 import no.ndla.learningpathapi.service.ImportServiceComponent
 import no.ndla.learningpathapi.service.search.SearchIndexBuilderServiceComponent
-import no.ndla.logging.LoggerContext
-import no.ndla.network.ApplicationUrl
+import no.ndla.network.{ApplicationUrl, CorrelationID}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{Ok, ScalatraServlet}
-
+import no.ndla.learningpathapi.LearningpathApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import org.apache.logging.log4j.ThreadContext
 import scala.util.{Failure, Success}
+import com.typesafe.scalalogging.LazyLogging
+
 
 trait InternController {
   this: ImportServiceComponent with SearchIndexBuilderServiceComponent =>
   val internController: InternController
 
-  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
+  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     before() {
       contentType = formats("json")
-      LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
       ApplicationUrl.set(request)
     }
 
     after() {
-      LoggerContext.clearCorrelationID
       ApplicationUrl.clear
     }
 

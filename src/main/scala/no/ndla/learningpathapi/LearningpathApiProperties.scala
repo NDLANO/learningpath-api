@@ -48,6 +48,9 @@ object LearningpathApiProperties extends LazyLogging {
     "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",
     "sub", "sup", "u", "ul")
 
+  val CorrelationIdKey = "correlationID"
+  val CorrelationIdHeader = "X-Correlation-ID"
+
   def setProperties(properties: Map[String, Option[String]]) = {
     properties.foreach(prop => LearningpathApiProps.put(prop._1, prop._2))
   }

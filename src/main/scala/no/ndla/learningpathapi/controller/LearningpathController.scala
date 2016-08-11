@@ -4,14 +4,12 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.LearningpathApiProperties.UsernameHeader
 import no.ndla.learningpathapi.integration.MappingApiClient
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, License, _}
-import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain.{ValidationException, AccessDeniedException, OptimisticLockException, Sort, StepStatus}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.logging.LoggerContext
 import no.ndla.network.ApplicationUrl
 import no.ndla.network.model.HttpRequestException
 import org.json4s.native.Serialization.read
@@ -27,7 +25,7 @@ trait LearningpathController {
   this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with MappingApiClient with LanguageValidator =>
   val learningpathController: LearningpathController
 
-  class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging {
+  class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging with CorrelationIdSupport {
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
@@ -254,12 +252,10 @@ trait LearningpathController {
 
     before() {
       contentType = formats("json")
-      LoggerContext.setCorrelationID(Option(request.getHeader("X-Correlation-ID")))
       ApplicationUrl.set(request)
     }
 
     after() {
-      LoggerContext.clearCorrelationID()
       ApplicationUrl.clear()
     }
 
@@ -482,14 +478,14 @@ trait LearningpathController {
     }
 
     def optionalUsernameFromHeader(implicit request: HttpServletRequest): Option[String] = {
-      request.header(UsernameHeader) match {
+      request.header(LearningpathApiProperties.UsernameHeader) match {
         case Some(h) => Some(h.replace("ndla-", ""))
         case None => None
       }
     }
 
     def usernameFromHeader(implicit request: HttpServletRequest): String = {
-      requireHeader(UsernameHeader).get.replace("ndla-", "")
+      requireHeader(LearningpathApiProperties.UsernameHeader).get.replace("ndla-", "")
     }
 
     def requireHeader(headerName: String)(implicit request: HttpServletRequest): Option[String] = {
