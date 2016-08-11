@@ -47,7 +47,6 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
     when(languageValidator.validate("embedUrl.language", Some("nb"))).thenReturn(None)
     val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<strong>Gyldig beskrivelse</strong>", Some("bergensk")))))
-    println(validationErrors)
     validationErrors.size should be(1)
     validationErrors.head.field should equal("description.language")
   }

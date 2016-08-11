@@ -29,6 +29,8 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That forRequest returns empty list when http-error") {
     val resp = mock[HttpResponse[String]]
     when(resp.isError).thenReturn(true)
+    when(resp.statusLine).thenReturn("statusline")
+    when(resp.code).thenReturn(404)
 
     service.forRequest(mockRequestWithResponse(resp)) should equal(List())
   }
