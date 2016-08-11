@@ -1,8 +1,9 @@
 /*
- * Part of NDLA LEARNINGPATH API. API for searching learningpaths from NDLA.
- * Copyright (C) 2015 NDLA
+ * Part of NDLA learningpath_api.
+ * Copyright (C) 2016 NDLA
  *
  * See LICENSE
+ *
  */
 
 import javax.servlet.ServletContext
