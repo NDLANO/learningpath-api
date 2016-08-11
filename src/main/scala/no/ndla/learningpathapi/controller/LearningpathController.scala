@@ -4,16 +4,14 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.LearningpathApiProperties._
 import no.ndla.learningpathapi.integration.MappingApiClient
-import no.ndla.learningpathapi.model.api.{LearningPath, LearningPathStatus, LearningPathTags, LearningStep, License, _}
-import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain.{ValidationException, AccessDeniedException, OptimisticLockException, Sort, StepStatus}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.network.{CorrelationID, ApplicationUrl}
+import no.ndla.network.ApplicationUrl
 import no.ndla.network.model.HttpRequestException
-import org.apache.logging.log4j.ThreadContext
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
@@ -480,14 +478,14 @@ trait LearningpathController {
     }
 
     def optionalUsernameFromHeader(implicit request: HttpServletRequest): Option[String] = {
-      request.header(UsernameHeader) match {
+      request.header(LearningpathApiProperties.UsernameHeader) match {
         case Some(h) => Some(h.replace("ndla-", ""))
         case None => None
       }
     }
 
     def usernameFromHeader(implicit request: HttpServletRequest): String = {
-      requireHeader(UsernameHeader).get.replace("ndla-", "")
+      requireHeader(LearningpathApiProperties.UsernameHeader).get.replace("ndla-", "")
     }
 
     def requireHeader(headerName: String)(implicit request: HttpServletRequest): Option[String] = {

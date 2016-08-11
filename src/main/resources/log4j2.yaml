@@ -1,5 +1,5 @@
 Configuration:
-  status: warn
+  status: info
 
   Properties:
     Property:
@@ -21,6 +21,6 @@ Configuration:
       AppenderRef:
         - ref: Console
     Root:
-      level: warn
+      level: info
       AppenderRef:
         - ref: Console

@@ -1,6 +1,6 @@
 Configuration:
-  status: fatal
+  status: debug
 
   Loggers:
     Root:
-      level: fatal
+      level: debug
