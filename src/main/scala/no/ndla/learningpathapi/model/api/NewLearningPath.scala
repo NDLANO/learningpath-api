@@ -8,8 +8,6 @@
 
 package no.ndla.learningpathapi.model.api
 
-import no.ndla.learningpathapi.model.domain.ValidationException
-import no.ndla.learningpathapi.validation.LearningPathValidator
 import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 

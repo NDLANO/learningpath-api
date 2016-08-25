@@ -154,10 +154,18 @@ trait LearningpathController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
-        queryParam[Option[String]]("copy-from").description("Id of learningPath to use as basis for the new one."),
         bodyParam[NewLearningPath])
         responseMessages(response400, response403, response404, response500))
 
+    val copyLearningpath =
+      (apiOperation[LearningPath]("copyLearningpath")
+        summary "Copies the given learningpath"
+        notes "Copies the given learningpath, with the option to override some fields"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        bodyParam[NewCopyLearningPath])
+        responseMessages(response400, response403, response404, response500))
 
     val addNewLearningStep =
       (apiOperation[LearningStep]("addLearningStep")
@@ -359,16 +367,19 @@ trait LearningpathController {
 
     post("/", operation(addNewLearningpath)) {
       val newLearningPath = extract[NewLearningPath](request.body)
-      val createdLearningPath: Option[LearningPath] = optLong("copy-from") match {
-        case Some(id) => updateService.newFromExisting(id, newLearningPath, usernameFromHeader)
-        case None => Some(updateService.addLearningPath(newLearningPath, usernameFromHeader))
-      }
+      val learningPath = updateService.addLearningPath(newLearningPath, usernameFromHeader)
+      logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
+      halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+    }
 
-      createdLearningPath match {
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("copy-from")} not found"))
+    post("/copy/:path_id", operation(copyLearningpath)) {
+      val newLearningPath = extract[NewCopyLearningPath](request.body)
+      val pathId = long("path_id")
+      updateService.newFromExisting(pathId, newLearningPath, usernameFromHeader) match {
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
         case Some(learningPath) => {
-          logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
-          halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = createdLearningPath)
+          logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
+          halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
         }
       }
     }
