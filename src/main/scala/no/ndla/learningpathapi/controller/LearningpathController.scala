@@ -445,7 +445,7 @@ trait LearningpathController {
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
-          logger.info(s"UPDATED publishing status of LearningPath with ID =  ${learningPath.id}")
+          logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
           Ok(body = learningPath)
         }
       }
@@ -453,11 +453,10 @@ trait LearningpathController {
 
     delete("/:path_id/?", operation(deleteLearningPath)) {
       val deleted = updateService.updateLearningPathStatus(long("path_id"), LearningPathStatus.DELETED, usernameFromHeader)
-      //val deleted = updateService.deleteLearningPath(long("path_id"), usernameFromHeader)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
-          logger.info(s"DELETED LearningPath with ID: ${params("path_id")}")
+          logger.info(s"MARKED LearningPath with ID: ${params("path_id")} as DELETED")
           halt(status = 204)
         }
       }
