@@ -106,18 +106,18 @@ trait UpdateServiceComponent {
       }
     }
 
-    def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus, owner: String): Option[LearningPath] = {
+    def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus.Value, owner: String): Option[LearningPath] = {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
         case Some(existing) => {
-          val newStatus = domain.LearningPathStatus.valueOfOrError(status.status)
-          if (newStatus == domain.LearningPathStatus.PUBLISHED) {
+          if (status == domain.LearningPathStatus.PUBLISHED) {
             existing.validateForPublishing()
+
           }
 
           val updatedLearningPath = learningPathRepository.update(
             existing.copy(
-              status = newStatus,
+              status = status,
               lastUpdated = clock.now()))
 
           updatedLearningPath.isPublished match {
@@ -131,7 +131,7 @@ trait UpdateServiceComponent {
       }
     }
 
-    def deleteLearningPath(learningPathId: Long, owner: String): Boolean = {
+   /* def deleteLearningPath(learningPathId: Long, owner: String): Boolean = {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => false
         case Some(existing) => {
@@ -140,7 +140,7 @@ trait UpdateServiceComponent {
           true
         }
       }
-    }
+    }*/
 
     def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
       optimisticLockRetries(10) {

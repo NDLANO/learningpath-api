@@ -12,7 +12,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.model.api.{LearningPathStatus, NewLearningPath, NewLearningStep, UpdatedLearningPath, UpdatedLearningStep}
+import no.ndla.learningpathapi.model.api.{NewLearningPath, NewLearningStep, UpdatedLearningPath, UpdatedLearningStep}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.api.{License}
 import org.mockito.Matchers.{eq => eqTo, _}
@@ -115,7 +115,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatus returns None when the given ID does not exist") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(None)
     assertResult(None){
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER)
+      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER)
     }
   }
 
@@ -125,7 +125,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("PRIVATE"){
-      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PUBLISHED_OWNER).get.status
+      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER).get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).deleteLearningPath(any[domain.LearningPath])
@@ -137,7 +137,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("PUBLISHED"){
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER).get.status
+      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER).get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
@@ -146,36 +146,15 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PRIVATE_OWNER) }.getMessage
+      intercept[AccessDeniedException] { service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PRIVATE_OWNER) }.getMessage
     }
   }
 
-  test("That deleteLearningPath returns false when the given ID does not exist") {
-    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(false) {
-      service.deleteLearningPath(PUBLISHED_ID, PUBLISHED_OWNER)
-    }
-  }
-
-  test("That deleteLearningPath deletes the learningpath when the given user is the owner. Regardless of status") {
-    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult(true) {
-      service.deleteLearningPath(PUBLISHED_ID, PUBLISHED_OWNER)
-    }
-    assertResult(true) {
-      service.deleteLearningPath(PRIVATE_ID, PRIVATE_OWNER)
-    }
-
-    verify(learningPathRepository, times(1)).delete(PUBLISHED_ID)
-    verify(learningPathRepository, times(1)).delete(PRIVATE_ID)
-    verify(searchIndexService, times(1)).deleteLearningPath(PUBLISHED_LEARNINGPATH)
-  }
 
   test("That deleteLearningPath throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.deleteLearningPath(PRIVATE_ID, PUBLISHED_OWNER) }.getMessage
+      intercept[AccessDeniedException] { service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.DELETED, PUBLISHED_OWNER) }.getMessage
     }
   }
 

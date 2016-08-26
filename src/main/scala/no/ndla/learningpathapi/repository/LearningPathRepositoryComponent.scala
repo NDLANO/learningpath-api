@@ -47,12 +47,12 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     def withExternalId(externalId: Option[String]): Option[LearningPath] = {
       externalId match {
         case None => None
-        case Some(extId) => learningPathWhere(sqls"lp.external_id = $extId")
+        case Some(extId) => learningPathWhere(sqls"lp.external_id = $extId AND lp.document->>'status' <> ${LearningPathStatus.DELETED.toString}")
       }
     }
 
     def withOwner(owner: String): List[LearningPath] = {
-      learningPathsWhere(sqls"lp.document->>'owner' = $owner")
+      learningPathsWhere(sqls"lp.document->>'status' <> ${LearningPathStatus.DELETED.toString} AND lp.document->>'owner' = $owner")
     }
 
     def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {

@@ -90,7 +90,7 @@ case class LearningPath(id: Option[Long],
 }
 
 object LearningPathStatus extends Enumeration {
-  val PUBLISHED, PRIVATE, NOT_LISTED = Value
+  val PUBLISHED, PRIVATE, NOT_LISTED, DELETED = Value
 
   def valueOf(s:String): Option[LearningPathStatus.Value] = {
     LearningPathStatus.values.find(_.toString == s.toUpperCase)
