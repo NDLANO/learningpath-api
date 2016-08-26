@@ -49,7 +49,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), apiCopyright)
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List(), apiCopyright)
-  val NEW_COPY_LEARNINGPATH = NewCopyLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), None)
+  val NEW_COPIED_LEARNINGPATH = NewCopyLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), None)
 
   val UPDATED_PRIVATE_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
   val UPDATED_PUBLISHED_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
@@ -500,14 +500,14 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     assertResult("You do not have access to the requested resource."){
       intercept[AccessDeniedException] {
-        service.newFromExisting(PRIVATE_ID, NEW_COPY_LEARNINGPATH, PUBLISHED_OWNER)
+        service.newFromExisting(PRIVATE_ID, NEW_COPIED_LEARNINGPATH, PUBLISHED_OWNER)
       }.getMessage
     }
   }
 
   test("That newFromExisting returns None when given id does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    service.newFromExisting(PUBLISHED_ID, NEW_COPY_LEARNINGPATH, PUBLISHED_OWNER) should be (None)
+    service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PUBLISHED_OWNER) should be (None)
   }
 
   test("That basic-information unique per learningpath is reset in newFromExisting") {
@@ -518,7 +518,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
     when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
-    service.newFromExisting(PUBLISHED_ID, NEW_COPY_LEARNINGPATH, PRIVATE_OWNER)
+    service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
     val expectedNewLearningPath = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(
       id = None,
       revision = None,
@@ -548,7 +548,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     val durationOverride = Some(100)
 
     service.newFromExisting(PUBLISHED_ID,
-      NEW_COPY_LEARNINGPATH.copy(
+      NEW_COPIED_LEARNINGPATH.copy(
         title = titlesToOverride,
         description = descriptionsToOverride,
         tags = tagsToOverride,
@@ -585,7 +585,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
     when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
-    service.newFromExisting(PUBLISHED_ID, NEW_COPY_LEARNINGPATH, PRIVATE_OWNER)
+    service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
 
     val expectedNewLearningPath = PUBLISHED_LEARNINGPATH.copy(
       id = None,
