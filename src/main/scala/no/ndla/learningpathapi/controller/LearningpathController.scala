@@ -14,7 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.MappingApiClient
 import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{ValidationException, AccessDeniedException, OptimisticLockException, Sort, StepStatus}
+import no.ndla.learningpathapi.model.domain.{ValidationException, AccessDeniedException, OptimisticLockException, Sort, StepStatus, LearningPathStatus}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
@@ -446,26 +446,29 @@ trait LearningpathController {
     }
 
     put("/:path_id/status/?", operation(updateLearningPathStatus)) {
+      val learningPathStatus = extract[LearningPathStatus](request.body)
+      val pathStatus = LearningPathStatus.valueOfOrError(learningPathStatus.status)
+
       val updatedLearningPath: Option[LearningPath] = updateService.updateLearningPathStatus(
         long("path_id"),
-        extract[LearningPathStatus](request.body),
+        pathStatus,
         usernameFromHeader)
 
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
-          logger.info(s"UPDATED publishing status of LearningPath with ID =  ${learningPath.id}")
+          logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
           Ok(body = learningPath)
         }
       }
     }
 
     delete("/:path_id/?", operation(deleteLearningPath)) {
-      val deleted = updateService.deleteLearningPath(long("path_id"), usernameFromHeader)
+      val deleted = updateService.updateLearningPathStatus(long("path_id"), LearningPathStatus.DELETED, usernameFromHeader)
       deleted match {
-        case false => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-        case true => {
-          logger.info(s"DELETED LearningPath with ID: ${params("path_id")}")
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case Some(learningPath) => {
+          logger.info(s"MARKED LearningPath with ID: ${params("path_id")} as DELETED")
           halt(status = 204)
         }
       }
