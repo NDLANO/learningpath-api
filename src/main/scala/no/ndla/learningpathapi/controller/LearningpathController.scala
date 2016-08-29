@@ -164,6 +164,7 @@ trait LearningpathController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
+        pathParam[String]("path_id").description("The id of the learningpath to copy."),
         bodyParam[NewCopyLearningPath])
         responseMessages(response400, response403, response404, response500))
 
@@ -372,7 +373,7 @@ trait LearningpathController {
       halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
     }
 
-    post("/copy/:path_id", operation(copyLearningpath)) {
+    post("/:path_id/copy", operation(copyLearningpath)) {
       val newLearningPath = extract[NewCopyLearningPath](request.body)
       val pathId = long("path_id")
       updateService.newFromExisting(pathId, newLearningPath, usernameFromHeader) match {
