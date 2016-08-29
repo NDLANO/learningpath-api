@@ -41,6 +41,10 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       new EnumNameSerializer(StepType)
 
     def withId(id: Long)(implicit session: DBSession = AutoSession): Option[LearningPath] = {
+      learningPathWhere(sqls"lp.id = $id AND lp.document->>'status' <> ${LearningPathStatus.DELETED.toString}")
+    }
+
+    def withIdIncludingDeleted(id: Long)(implicit session: DBSession = AutoSession): Option[LearningPath] = {
       learningPathWhere(sqls"lp.id = $id")
     }
 
@@ -52,7 +56,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def withOwner(owner: String): List[LearningPath] = {
-      learningPathsWhere(sqls"lp.document->>'owner' = $owner")
+      learningPathsWhere(sqls"lp.document->>'owner' = $owner AND lp.document->>'status' <> ${LearningPathStatus.DELETED.toString}")
     }
 
     def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {

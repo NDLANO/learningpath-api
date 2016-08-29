@@ -12,7 +12,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.model.api.{LearningPathStatus, NewLearningPath, NewLearningStep, UpdatedLearningPath, UpdatedLearningStep}
+import no.ndla.learningpathapi.model.api.{NewLearningPath, NewLearningStep, UpdatedLearningPath, UpdatedLearningStep}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.api.{License}
 import org.mockito.Matchers.{eq => eqTo, _}
@@ -48,6 +48,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, List())
   val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val DELETED_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.DELETED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), apiCopyright)
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List(), apiCopyright)
 
@@ -113,69 +114,51 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That updateLearningPathStatus returns None when the given ID does not exist") {
-    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(None)
+    when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(None)
     assertResult(None){
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER)
+      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER)
     }
   }
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
-    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PRIVATE))
     when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("PRIVATE"){
-      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PUBLISHED_OWNER).get.status
+      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER).get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).deleteLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PRIVATE") {
-    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = domain.LearningPathStatus.PUBLISHED))
+    when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = domain.LearningPathStatus.DELETED))
+    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
+
+    assertResult("DELETED"){
+      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.DELETED, PRIVATE_OWNER).get.status
+    }
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+  }
+
+  test("That updateLearningPathStatus updates the status when the given user is the owner and the status is DELETED") {
+    when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(Some(DELETED_LEARNINGPATH))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(DELETED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PUBLISHED))
     when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("PUBLISHED"){
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus("PUBLISHED"), PRIVATE_OWNER).get.status
+      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER).get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).indexLearningPath(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
-    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus("PRIVATE"), PRIVATE_OWNER) }.getMessage
-    }
-  }
-
-  test("That deleteLearningPath returns false when the given ID does not exist") {
-    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(false) {
-      service.deleteLearningPath(PUBLISHED_ID, PUBLISHED_OWNER)
-    }
-  }
-
-  test("That deleteLearningPath deletes the learningpath when the given user is the owner. Regardless of status") {
-    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult(true) {
-      service.deleteLearningPath(PUBLISHED_ID, PUBLISHED_OWNER)
-    }
-    assertResult(true) {
-      service.deleteLearningPath(PRIVATE_ID, PRIVATE_OWNER)
-    }
-
-    verify(learningPathRepository, times(1)).delete(PUBLISHED_ID)
-    verify(learningPathRepository, times(1)).delete(PRIVATE_ID)
-    verify(searchIndexService, times(1)).deleteLearningPath(PUBLISHED_LEARNINGPATH)
-  }
-
-  test("That deleteLearningPath throws an AccessDeniedException when the given user is NOT the owner") {
-    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.deleteLearningPath(PRIVATE_ID, PUBLISHED_OWNER) }.getMessage
+      intercept[AccessDeniedException] { service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PRIVATE_OWNER) }.getMessage
     }
   }
 

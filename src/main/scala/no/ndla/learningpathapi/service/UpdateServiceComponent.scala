@@ -106,18 +106,17 @@ trait UpdateServiceComponent {
       }
     }
 
-    def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus, owner: String): Option[LearningPath] = {
-      withIdAndAccessGranted(learningPathId, owner) match {
+    def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus.Value, owner: String): Option[LearningPath] = {
+      withIdAndAccessGranted(learningPathId, owner, includeDeleted = true) match {
         case None => None
         case Some(existing) => {
-          val newStatus = domain.LearningPathStatus.valueOfOrError(status.status)
-          if (newStatus == domain.LearningPathStatus.PUBLISHED) {
+          if (status == domain.LearningPathStatus.PUBLISHED) {
             existing.validateForPublishing()
           }
 
           val updatedLearningPath = learningPathRepository.update(
             existing.copy(
-              status = newStatus,
+              status = status,
               lastUpdated = clock.now()))
 
           updatedLearningPath.isPublished match {
@@ -127,17 +126,6 @@ trait UpdateServiceComponent {
 
 
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
-        }
-      }
-    }
-
-    def deleteLearningPath(learningPathId: Long, owner: String): Boolean = {
-      withIdAndAccessGranted(learningPathId, owner) match {
-        case None => false
-        case Some(existing) => {
-          learningPathRepository.delete(learningPathId)
-          searchIndexService.deleteLearningPath(existing)
-          true
         }
       }
     }
@@ -302,8 +290,16 @@ trait UpdateServiceComponent {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, owner: String): Option[domain.LearningPath] = {
-      val learningPath = learningPathRepository.withId(learningPathId)
+    private def withIdAndAccessGranted(learningPathId: Long, owner: String, includeDeleted: Boolean = false): Option[domain.LearningPath] = {
+      val learningPath = includeDeleted match {
+        case false => learningPathRepository.withId(learningPathId)
+        case true => learningPathRepository.withIdIncludingDeleted(learningPathId)
+      }
+
+      accessGranted(learningPath, owner)
+    }
+
+    private def accessGranted(learningPath: Option[domain.LearningPath], owner: String): Option[domain.LearningPath] = {
       learningPath.foreach(_.verifyOwner(owner))
       learningPath
     }
