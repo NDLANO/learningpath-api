@@ -21,7 +21,7 @@ trait UpdateServiceComponent {
   val updateService: UpdateService
 
   class UpdateService {
-    def newFromExisting(id: Long, newLearningPath: NewLearningPath, owner: String): Option[LearningPath] = {
+    def newFromExisting(id: Long, newLearningPath: NewCopyLearningPath, owner: String): Option[LearningPath] = {
       learningPathRepository.withId(id) match {
         case None => None
         case Some(existing) => {
@@ -32,7 +32,7 @@ trait UpdateServiceComponent {
           val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTags) else existing.tags
           val coverPhotoMetaUrl = if(newLearningPath.coverPhotoMetaUrl.nonEmpty) newLearningPath.coverPhotoMetaUrl else existing.coverPhotoMetaUrl
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
-          val copyright = converterService.asCopyright(newLearningPath.copyright)
+          val copyright = newLearningPath.copyright.map(converterService.asCopyright).getOrElse(existing.copyright)
 
           val toInsert = existing.copy(
             id = None,
