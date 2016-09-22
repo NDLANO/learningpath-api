@@ -11,6 +11,7 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import com.sksamuel.elastic4s.ElasticClient
+import io.searchbox.client.JestClient
 import no.ndla.learningpathapi.controller.{HealthController, LearningpathController}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -49,7 +50,6 @@ trait TestEnvironment
   with TitleValidator {
 
   val datasource = mock[DataSource]
-  val elasticClient = mock[ElasticClient]
   val searchIndexBuilderService = mock[SearchIndexBuilderService]
 
   val learningPathRepository = mock[LearningPathRepository]
@@ -73,12 +73,13 @@ trait TestEnvironment
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
+  val jestClient = mock[JestClient]
 
   def resetMocks() = {
     Mockito.reset(
-      datasource, elasticClient, searchIndexBuilderService, learningPathRepository, readService,
+      datasource, searchIndexBuilderService, learningPathRepository, readService,
       updateService, searchService, searchIndexService, authClient, converterService, searchConverterService,
-      languageValidator, titleValidator, mappingApiClient
+      languageValidator, titleValidator, mappingApiClient, jestClient
     )
   }
 }

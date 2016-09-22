@@ -8,17 +8,20 @@
 
 package no.ndla.learningpathapi.service.search
 
-import com.sksamuel.elastic4s.ElasticDsl._
-import com.sksamuel.elastic4s._
+import com.google.gson.JsonObject
 import com.typesafe.scalalogging.LazyLogging
+import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
+import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.Sort
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-import org.elasticsearch.search.sort.SortOrder
-import org.elasticsearch.transport.RemoteTransportException
+import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
+import org.elasticsearch.search.builder.SearchSourceBuilder
+import org.elasticsearch.search.sort.{FieldSortBuilder, SortBuilders, SortOrder}
 import org.json4s.native.Serialization._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,81 +32,96 @@ trait SearchServiceComponent extends LazyLogging {
   val searchService: SearchService
 
   class SearchService {
-
-    implicit object ContentHitAs extends HitAs[LearningPathSummary] {
-      override def as(hit: RichSearchHit): LearningPathSummary = {
-        implicit val formats = org.json4s.DefaultFormats
-        searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](hit.sourceAsString))
+    def getHits(response: JestSearchResult): Seq[LearningPathSummary] = {
+      var resultList = Seq[LearningPathSummary]()
+      response.getTotal match {
+        case count: Integer if count > 0 => {
+          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
+          val iterator = resultArray.iterator()
+          while (iterator.hasNext) {
+            resultList = resultList :+ hitAsLearningPathSummary(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject])
+          }
+          resultList
+        }
+        case _ => Seq()
       }
     }
 
-    def all(taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
-      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
-      val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query filter(tagFilter)
+    def hitAsLearningPathSummary(jsonObject: JsonObject): LearningPathSummary = {
+      implicit val formats = org.json4s.DefaultFormats
+      searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](jsonObject.toString))
+    }
 
-      executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
+    def all(taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+      executeSearch(
+        QueryBuilders.boolQuery(),
+        taggedWith,
+        sort,
+        language.getOrElse(LearningpathApiProperties.DefaultLanguage),
+        page,
+        pageSize)
     }
 
     def matchingQuery(query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val titleSearch = matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val descSearch = matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val stepTitleSearch = matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val stepDescSearch = matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val tagSearch = matchQuery(s"tags.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val authorSearch = matchQuery("author", query.mkString(" ")).fuzziness("AUTO")
-      val tagFilter = taggedWith.map(tag => nestedQuery("tags").query(termQuery(s"tags.$searchLanguage.raw", tag)))
+      val titleSearch = QueryBuilders.matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val descSearch = QueryBuilders.matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val stepTitleSearch = QueryBuilders.matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val stepDescSearch = QueryBuilders.matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val tagSearch = QueryBuilders.matchQuery(s"tags.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
+      val authorSearch = QueryBuilders.matchQuery("author", query.mkString(" ")).fuzziness("AUTO")
 
-      val theSearch = search in LearningpathApiProperties.SearchIndex -> LearningpathApiProperties.SearchDocument query {
-        bool {
-          must(
-            should(
-              nestedQuery("titles").query(titleSearch),
-              nestedQuery("descriptions").query(descSearch),
-              nestedQuery("learningsteps.titles").query(stepTitleSearch),
-              nestedQuery("learningsteps.descriptions").query(stepDescSearch),
-              nestedQuery("tags").query(tagSearch),
-              authorSearch
-            ),
-            filter (tagFilter)
-          )
-        }
-      }
+      val fullQuery = QueryBuilders.boolQuery()
+        .must(
+          QueryBuilders.boolQuery()
+            .should(QueryBuilders.nestedQuery("titles", titleSearch))
+            .should(QueryBuilders.nestedQuery("descriptions", descSearch))
+            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch))
+            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch))
+            .should(QueryBuilders.nestedQuery("tags", tagSearch))
+            .should(authorSearch))
 
-      executeSearch(theSearch, taggedWith, sort, searchLanguage, page, pageSize)
+      executeSearch(fullQuery, taggedWith, sort, searchLanguage, page, pageSize)
     }
 
-    def executeSearch(search: SearchDefinition, taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def executeSearch(queryBuilder: BoolQueryBuilder, taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+      val filteredSearch = taggedWith match {
+        case None => queryBuilder
+        case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag)))
+      }
+
+      val searchQuery = new SearchSourceBuilder().query(filteredSearch).sort(getSortDefinition(sort, language))
+
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      try {
+      val request = new Search.Builder(searchQuery.toString)
+        .addIndex(LearningpathApiProperties.SearchIndex)
+        .setParameter(Parameters.SIZE, numResults)
+        .setParameter("from", startAt)
 
-        val actualSearch = search
-          .sort(getSortDefinition(sort, language))
-          .start(startAt)
-          .limit(numResults)
-
-        val response = elasticClient.execute {
-          actualSearch
-        }.await
-
-        SearchResult(response.getHits.getTotalHits, page.getOrElse(1), numResults, response.as[LearningPathSummary])
-      } catch {
-        case e: RemoteTransportException => errorHandler(e.getCause)
+      val response = jestClient.execute(request.build())
+      response.isSucceeded match {
+        case true => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case false => errorHandler(response)
       }
     }
 
-    def getSortDefinition(sort: Sort.Value, language: String): SortDefinition = {
+    def countDocuments(): Int = {
+      jestClient.execute(
+        new Count.Builder().addIndex(LearningpathApiProperties.SearchIndex).build()
+      ).getCount.toInt
+    }
+
+    def getSortDefinition(sort: Sort.Value, language: String): FieldSortBuilder = {
       sort match {
-        case (Sort.ByDurationAsc) => fieldSort("duration").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByTitleAsc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByTitleDesc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
-        case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
+        case (Sort.ByDurationAsc) => SortBuilders.fieldSort("duration").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByDurationDesc) => SortBuilders.fieldSort("duration").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByLastUpdatedAsc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByLastUpdatedDesc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByTitleAsc) => SortBuilders.fieldSort(s"titles.$language.raw").setNestedPath("titles").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByTitleDesc) => SortBuilders.fieldSort(s"titles.$language.raw").setNestedPath("titles").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByRelevanceAsc) => SortBuilders.fieldSort("_score").order(SortOrder.ASC)
+        case (Sort.ByRelevanceDesc) => SortBuilders.fieldSort("_score").order(SortOrder.DESC)
       }
     }
 
@@ -122,13 +140,17 @@ trait SearchServiceComponent extends LazyLogging {
       (startAt, numResults)
     }
 
-    def errorHandler(exception: Throwable) = {
-      exception match {
-        case ex: IndexNotFoundException =>
-          logger.error(ex.getMessage)
+    private def errorHandler(response: JestSearchResult) = {
+      response.getResponseCode match {
+        case notFound: Int if notFound == 404 => {
+          logger.error(s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex.")
           scheduleIndexDocuments()
-          throw ex
-        case _ => throw exception
+          throw new IndexNotFoundException(s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex")
+        }
+        case _ => {
+          logger.error(response.getErrorMessage)
+          throw new ElasticsearchException(s"Unable to execute search in ${LearningpathApiProperties.SearchIndex}", response.getErrorMessage)
+        }
       }
     }
 

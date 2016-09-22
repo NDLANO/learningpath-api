@@ -9,12 +9,13 @@
 package no.ndla.learningpathapi
 
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
+import io.searchbox.client.JestClient
 import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathController}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
-import no.ndla.learningpathapi.validation.{TitleValidator, LearningStepValidator, LearningPathValidator, LanguageValidator}
+import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator, LearningStepValidator, TitleValidator}
 import no.ndla.network.NdlaClient
 import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
@@ -62,11 +63,6 @@ object ComponentRegistry
 
   ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
 
-
-  lazy val elasticClient = ElasticClient.transport(
-    Settings.settingsBuilder().put("cluster.name", LearningpathApiProperties.SearchClusterName).build(),
-    ElasticsearchClientUri(s"elasticsearch://${LearningpathApiProperties.SearchHost}:${LearningpathApiProperties.SearchPort}"))
-
   lazy val searchIndexBuilderService = new SearchIndexBuilderService
 
   lazy val learningPathRepository = new LearningPathRepository
@@ -92,5 +88,5 @@ object ComponentRegistry
   lazy val titleValidator = new TitleValidator
   lazy val learningPathValidator = new LearningPathValidator
   lazy val learningStepValidator = new LearningStepValidator
-
+  lazy val jestClient = JestClientFactory.getClient()
 }

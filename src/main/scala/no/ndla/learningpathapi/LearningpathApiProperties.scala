@@ -16,7 +16,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   var LearningpathApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
-  val ApplicationPort = 80
+  lazy val ApplicationPort = getInt("APPLICATION_PORT")
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
   lazy val Domain = get("DOMAIN")
@@ -31,6 +31,9 @@ object LearningpathApiProperties extends LazyLogging {
   val MetaMaxConnections = 20
 
   val SearchHost = "search-engine"
+  lazy val SearchServer = get("SEARCH_SERVER")
+  lazy val SearchRegion = get("SEARCH_REGION")
+  lazy val RunWithSignedSearchRequests = getBoolean("RUN_WITH_SIGNED_SEARCH_REQUESTS")
   lazy val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
   lazy val SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
   lazy val SearchIndex = get("SEARCH_INDEX")
@@ -82,6 +85,10 @@ object LearningpathApiProperties extends LazyLogging {
 
   private def getInt(envKey: String): Integer = {
     get(envKey).toInt
+  }
+
+  private def getBoolean(envKey: String): Boolean = {
+    get(envKey).toBoolean
   }
 }
 
