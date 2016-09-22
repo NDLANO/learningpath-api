@@ -103,3 +103,5 @@ imageNames in docker := Seq(
 )
 
 parallelExecution in Test := false
+
+resolvers ++= scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "Release Sonatype Nexus Repository Manager" at repo).toSeq
