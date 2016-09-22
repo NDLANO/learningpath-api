@@ -31,8 +31,8 @@ lazy val learningpath_api = (project in file(".")).
   settings(inConfig(ITest)(Defaults.testTasks): _*).
   settings(
     name := "learningpath-api",
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-    scalacOptions := Seq("-target:jvm-1.8"),
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    scalacOptions := Seq("-target:jvm-1.7"),
     libraryDependencies ++= Seq(
       "joda-time" % "joda-time" % "2.8.2",
       "ndla" %% "network" % "0.4",
