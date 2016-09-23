@@ -16,10 +16,15 @@ import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.mappings.FieldType.{DateType, IntegerType, NestedType, StringType}
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
+import io.searchbox.core.{Bulk, Delete, Index}
+import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
+import io.searchbox.indices.mapping.PutMapping
+import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.domain.LearningPath
 import no.ndla.learningpathapi.model.domain.Language._
+import no.ndla.learningpathapi.model.domain.LearningPath
+import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization._
 
 
@@ -43,90 +48,133 @@ trait SearchIndexServiceComponent {
     implicit val formats = org.json4s.DefaultFormats
 
     def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
-      elasticClient.execute {
-        bulk(learningPaths.map(learningPath => {
-          index into indexName -> LearningpathApiProperties.SearchDocument source write(searchConverterService.asSearchableLearningpath(learningPath)) id learningPath.id.get
-        }))
-      }.await
+      val bulkBuilder = new Bulk.Builder()
+      learningPaths.foreach(lp => {
+        val source = write(searchConverterService.asSearchableLearningpath(lp))
+        bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(LearningpathApiProperties.SearchDocument).id(s"${lp.id.get}").build())
+      })
 
+      val response = jestClient.execute(bulkBuilder.build())
+      if (!response.isSucceeded) {
+        throw new ElasticsearchException(s"Unable to index documents to ${LearningpathApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
+      }
       logger.info(s"Indexed ${learningPaths.size} documents")
       learningPaths.size
     }
 
     def indexLearningPath(learningPath: LearningPath): Unit = {
+
       aliasTarget.foreach(indexName => {
-        elasticClient.execute {
-          index into indexName -> LearningpathApiProperties.SearchDocument source write(searchConverterService.asSearchableLearningpath(learningPath)) id learningPath.id.get
-        }.await
+        val source = write(searchConverterService.asSearchableLearningpath(learningPath))
+        val indexReq = new Index.Builder(source).index(indexName).`type`(LearningpathApiProperties.SearchDocument).id(s"${learningPath.id.get}").build()
+        val response = jestClient.execute(indexReq)
+        if (!response.isSucceeded) {
+          throw new ElasticsearchException(s"Unable to index document with id ${learningPath.id} to ${LearningpathApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
+        }
       })
     }
 
     def deleteLearningPath(learningPath: LearningPath): Unit = {
       aliasTarget.foreach(indexName => {
-        elasticClient.execute {
-          delete id learningPath.id.get from indexName / LearningpathApiProperties.SearchDocument
-        }.await
+        val deleteReq = new Delete.Builder(s"${learningPath.id.get}").index(indexName).`type`(LearningpathApiProperties.SearchDocument).build()
+        val response = jestClient.execute(deleteReq)
+        if (!response.isSucceeded) {
+          throw new ElasticsearchException(s"Unable to delete document with id ${learningPath.id} from ${LearningpathApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
+        }
       })
     }
 
     def createNewIndex(): String = {
       val indexName = LearningpathApiProperties.SearchIndex + "_" + getTimestamp
-
-      val existsDefinition = elasticClient.execute {
-        index exists indexName.toString
-      }.await
-
-      if (!existsDefinition.isExists) {
-        createElasticIndex(indexName)
+      if (!indexExists(indexName)) {
+        val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
+        createIndexResponse.isSucceeded match {
+          case false => throw new ElasticsearchException(s"Unable to create index $indexName. ErrorMessage: {}", createIndexResponse.getErrorMessage)
+          case true => createMapping(indexName)
+        }
       }
       indexName
     }
 
-    def removeIndex(indexName: String): Unit = {
-      val existsDefinition = elasticClient.execute {
-        index exists indexName
-      }.await
+    def createMapping(indexName: String) = {
+      val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, LearningpathApiProperties.SearchDocument, buildMapping()).build())
+      if (!mappingResponse.isSucceeded) {
+        throw new ElasticsearchException(s"Unable to create mapping for index $indexName. ErrorMessage: {}", mappingResponse.getErrorMessage)
+      }
+    }
 
-      if (existsDefinition.isExists) {
-        elasticClient.execute {
-          deleteIndex(indexName)
-        }.await
+    def removeIndex(indexName: String) = {
+      if (indexExists(indexName)) {
+        val response = jestClient.execute(new DeleteIndex.Builder(indexName).build())
+        if (!response.isSucceeded) {
+          throw new ElasticsearchException(s"Unable to delete index $indexName. ErrorMessage: {}", response.getErrorMessage)
+        }
       } else {
         throw new IllegalArgumentException(s"No such index: $indexName")
       }
     }
 
     def aliasTarget: Option[String] = {
-      val res = elasticClient.execute {
-        get alias LearningpathApiProperties.SearchIndex
-      }.await
-      val aliases = res.getAliases.keysIt()
-      aliases.hasNext match {
-        case true => Some(aliases.next())
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${LearningpathApiProperties.SearchIndex}").build()
+      val result = jestClient.execute(getAliasRequest)
+      result.isSucceeded match {
         case false => None
+        case true => {
+          val aliasIterator = result.getJsonObject.entrySet().iterator()
+          aliasIterator.hasNext match {
+            case true => Some(aliasIterator.next().getKey)
+            case false => None
+          }
+        }
       }
     }
 
-    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Unit = {
-      val existsDefinition = elasticClient.execute {
-        index exists newIndexName
-      }.await
+    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String) = {
+      if (indexExists(newIndexName)) {
+        val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, LearningpathApiProperties.SearchIndex).build()
+        val modifyAliasRequest = oldIndexName match {
+          case None => new ModifyAliases.Builder(addAliasDefinition).build()
+          case Some(oldIndex) => {
+            new ModifyAliases.Builder(
+              new RemoveAliasMapping.Builder(oldIndex, LearningpathApiProperties.SearchIndex).build()
+            ).addAlias(addAliasDefinition).build()
+          }
+        }
 
-      if (existsDefinition.isExists) {
-        elasticClient.execute {
-          oldIndexName.foreach(oldIndexName => {
-            remove alias LearningpathApiProperties.SearchIndex on oldIndexName
-
-          })
-          add alias LearningpathApiProperties.SearchIndex on newIndexName
-        }.await
+        val response = jestClient.execute(modifyAliasRequest)
+        if (!response.isSucceeded) {
+          logger.error(response.getErrorMessage)
+          throw new ElasticsearchException(s"Unable to modify alias ${LearningpathApiProperties.SearchIndex} -> $oldIndexName to ${LearningpathApiProperties.SearchIndex} -> $newIndexName. ErrorMessage: {}", response.getErrorMessage)
+        }
       } else {
         throw new IllegalArgumentException(s"No such index: $newIndexName")
       }
     }
 
-    private def languageSupportedField(fieldName: String, keepRaw:Boolean = false) = {
-      if(keepRaw) {
+
+
+    private def buildMapping() = {
+      mapping(LearningpathApiProperties.SearchDocument).fields(
+        "id" typed IntegerType,
+        languageSupportedField("titles", keepRaw = true),
+        languageSupportedField("descriptions"),
+        "coverPhotoUrl" typed StringType index "not_analyzed",
+        "duration" typed IntegerType,
+        "status" typed StringType index "not_analyzed",
+        "verificationStatus" typed StringType index "not_analyzed",
+        "lastUpdated" typed DateType,
+        languageSupportedField("tags", keepRaw = true),
+        "author" typed StringType,
+        "learningsteps" typed NestedType as(
+          "stepType" typed StringType index "not_analyzed",
+          languageSupportedField("titles"),
+          languageSupportedField("descriptions")
+          )
+      ).buildWithName.string()
+    }
+
+    private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
+      if (keepRaw) {
         new NestedFieldDefinition(fieldName).as(
           NORWEGIAN_BOKMAL typed StringType analyzer langToAnalyzer(NORWEGIAN_BOKMAL) fields ("raw" typed StringType index "not_analyzed"),
           NORWEGIAN_NYNORSK typed StringType analyzer langToAnalyzer(NORWEGIAN_NYNORSK) fields ("raw" typed StringType index "not_analyzed"),
@@ -153,30 +201,8 @@ trait SearchIndexServiceComponent {
       }
     }
 
-
-
-    private def createElasticIndex(indexName: String) = {
-      elasticClient.execute {
-        createIndex(indexName) mappings (
-          LearningpathApiProperties.SearchDocument as(
-            "id" typed IntegerType,
-            languageSupportedField("titles", keepRaw = true),
-            languageSupportedField("descriptions"),
-            "coverPhotoUrl" typed StringType index "not_analyzed",
-            "duration" typed IntegerType,
-            "status" typed StringType index "not_analyzed",
-            "verificationStatus" typed StringType index "not_analyzed",
-            "lastUpdated" typed DateType,
-            languageSupportedField("tags", keepRaw = true),
-            "author" typed StringType,
-            "learningsteps" typed NestedType as(
-              "stepType" typed StringType index "not_analyzed",
-              languageSupportedField("titles"),
-              languageSupportedField("descriptions")
-            )
-          )
-        )
-      }.await
+    def indexExists(indexName: String): Boolean = {
+      jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
     }
 
     private def getTimestamp: String = {

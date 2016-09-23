@@ -27,8 +27,9 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
     "DB_PORT" -> Some("1"),
     "DB_SCHEMA" -> Some("learningpathapi"),
 
-    "SEARCH_ENGINE_ENV_TCP_PORT" -> Some("9300"),
-    "SEARCH_ENGINE_ENV_CLUSTER_NAME" -> Some("search-engine"),
+    "SEARCH_SERVER" -> Some("search-server"),
+    "RUN_WITH_SIGNED_SEARCH_REQUESTS" -> Some("false"),
+    "SEARCH_REGION" -> Some("some-region"),
     "SEARCH_INDEX" -> Some("learningpaths"),
     "SEARCH_DOCUMENT" -> Some("learningpath"),
     "SEARCH_DEFAULT_PAGE_SIZE" -> Some(s"$DEFAULT_PAGE_SIZE"),

@@ -9,17 +9,26 @@
 package no.ndla.learningpathapi.service.search
 
 
-import com.sksamuel.elastic4s.testkit.ElasticSugar
+import no.ndla.learningpathapi.integration.JestClientFactory
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
+import org.elasticsearch.common.settings.Settings
+import org.elasticsearch.node.{Node, NodeBuilder}
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 
-class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar {
+import scala.reflect.io.Path
 
-  override val elasticClient = client
+
+class SearchServiceTest extends UnitSuite with TestEnvironment {
+
+  val esHttpPort = 29999
+  val esDataDir = "esTestData"
+  var esNode: Node = _
+
+  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esHttpPort")
   override val searchConverterService: SearchConverterService = new SearchConverterService
   override val searchIndexService: SearchIndexService = new SearchIndexService
   override val searchService: SearchService = new SearchService
@@ -46,6 +55,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
   val DonaldId = 3
 
   override def beforeAll() = {
+    Path(esDataDir).deleteRecursively()
     doReturn(api.Author("Forfatter", "En eier")).when(converterService).asAuthor(any[NdlaUserName])
 
     val today = new DateTime().toDate
@@ -79,14 +89,29 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
       tags = List(LearningPathTags(Seq("disney", "kanfly"), Some("nb")))
     )
 
+    val settings = Settings.settingsBuilder()
+      .put("path.home", esDataDir)
+      .put("index.number_of_shards", "1")
+      .put("index.number_of_replicas", "0")
+      .put("http.port", esHttpPort)
+      .build()
+
+    esNode = new NodeBuilder().settings(settings).node()
+    esNode.start()
+
+
     val indexName = searchIndexService.createNewIndex()
     searchIndexService.updateAliasTarget(None, indexName)
-
     searchIndexService.indexLearningPath(thePenguin)
     searchIndexService.indexLearningPath(batman)
     searchIndexService.indexLearningPath(theDuck)
 
-    blockUntilCount(3, indexName)
+    blockUntil(() => searchService.countDocuments() == 3)
+  }
+
+  override def afterAll() = {
+    esNode.close()
+    Path(esDataDir).deleteRecursively()
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {
@@ -112,77 +137,77 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
 
   test("That all learningpaths are returned ordered by title descending") {
     val searchResult = searchService.all(None, Sort.ByTitleDesc, Some("nb"), None, None)
-    searchResult.totalCount should be (3)
-    searchResult.results.head.id should be (PenguinId)
+    searchResult.totalCount should be(3)
+    searchResult.results.head.id should be(PenguinId)
   }
 
   test("That all learningpaths are returned ordered by title ascending") {
     val searchResult = searchService.all(None, Sort.ByTitleAsc, Some("nb"), None, None)
-    searchResult.totalCount should be (3)
-    searchResult.results.head.id should be (BatmanId)
+    searchResult.totalCount should be(3)
+    searchResult.results.head.id should be(BatmanId)
   }
 
   test("That order by durationDesc orders search result by duration descending") {
     val searchResult = searchService.all(None, Sort.ByDurationDesc, Some("nb"), None, None)
-    searchResult.totalCount should be (3)
-    searchResult.results.head.id should be (DonaldId)
+    searchResult.totalCount should be(3)
+    searchResult.results.head.id should be(DonaldId)
   }
 
   test("That order ByDurationAsc orders search result by duration ascending") {
     val searchResult = searchService.all(None, Sort.ByDurationAsc, Some("nb"), None, None)
-    searchResult.totalCount should be (3)
-    searchResult.results.head.id should be (PenguinId)
+    searchResult.totalCount should be(3)
+    searchResult.results.head.id should be(PenguinId)
   }
 
   test("That order ByLastUpdatedDesc orders search result by last updated date descending") {
     val searchResult = searchService.all(None, Sort.ByLastUpdatedDesc, Some("nb"), None, None)
-    searchResult.totalCount should be (3)
-    searchResult.results.head.id should be (DonaldId)
-    searchResult.results.last.id should be (PenguinId)
+    searchResult.totalCount should be(3)
+    searchResult.results.head.id should be(DonaldId)
+    searchResult.results.last.id should be(PenguinId)
   }
 
   test("That order ByLastUpdatedAsc orders search result by last updated date ascending") {
     val searchResult = searchService.all(None, Sort.ByLastUpdatedAsc, Some("nb"), None, None)
-    searchResult.totalCount should be (3)
-    searchResult.results.head.id should be (PenguinId)
-    searchResult.results.last.id should be (DonaldId)
+    searchResult.totalCount should be(3)
+    searchResult.results.head.id should be(PenguinId)
+    searchResult.results.last.id should be(DonaldId)
   }
 
   test("That searching only returns documents matching the query") {
     val searchResult = searchService.matchingQuery(Seq("heltene"), None, Some("nb"), Sort.ByTitleAsc, None, None)
-    searchResult.totalCount should be (1)
-    searchResult.results.head.id should be (BatmanId)
+    searchResult.totalCount should be(1)
+    searchResult.results.head.id should be(BatmanId)
   }
 
   test("That searching only returns documents matching the query in the specified language") {
     val searchResult = searchService.matchingQuery(Seq("guy"), None, Some("en"), Sort.ByTitleAsc, None, None)
-    searchResult.totalCount should be (1)
-    searchResult.results.head.id should be (BatmanId)
+    searchResult.totalCount should be(1)
+    searchResult.results.head.id should be(BatmanId)
   }
 
   test("That filtering on tag only returns documents where the tag is present") {
     val searchResult = searchService.all(Some("superhelt"), Sort.ByTitleAsc, Some("nb"), None, None)
-    searchResult.totalCount should be (2)
-    searchResult.results.head.id should be (BatmanId)
-    searchResult.results.last.id should be (PenguinId)
+    searchResult.totalCount should be(2)
+    searchResult.results.head.id should be(BatmanId)
+    searchResult.results.last.id should be(PenguinId)
   }
 
   test("That filtering on tag combined with search only returns documents where the tag is present and the search matches the query") {
-    val searchResult = searchService.matchingQuery(Seq("heltene"), Some("superhelt"), Some("nb"), Sort.ByTitleAsc, None, None)
-    searchResult.totalCount should be (1)
-    searchResult.results.head.id should be (BatmanId)
+    val searchResult = searchService.matchingQuery(Seq("heltene"), Some("kanfly"), Some("nb"), Sort.ByTitleAsc, None, None)
+    searchResult.totalCount should be(1)
+    searchResult.results.head.id should be(BatmanId)
   }
 
   test("That searching and ordering by relevance is returning Donald before Batman when searching for tough weirdos") {
     val searchResult = searchService.matchingQuery(Seq("tøff", "rar"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    searchResult.totalCount should be (2)
+    searchResult.totalCount should be(2)
     searchResult.results.head.id should be(DonaldId)
     searchResult.results.last.id should be(BatmanId)
   }
 
   test("That searching and ordering by relevance is returning Donald before Batman and the penguin when searching for duck, bat and bird") {
     val searchResult = searchService.matchingQuery(Seq("and", "flaggermus", "fugl"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    searchResult.totalCount should be (3)
+    searchResult.totalCount should be(3)
     searchResult.results.toList(0).id should be(DonaldId)
     searchResult.results.toList(1).id should be(BatmanId)
     searchResult.results.toList(2).id should be(PenguinId)
@@ -190,15 +215,32 @@ class SearchServiceTest extends UnitSuite with TestEnvironment with ElasticSugar
 
   test("That searching and ordering by relevance is not returning Penguin when searching for duck, bat and bird, but filtering on kanfly") {
     val searchResult = searchService.matchingQuery(Seq("and", "flaggermus", "fugl"), Some("kanfly"), Some("nb"), Sort.ByRelevanceDesc, None, None)
-    searchResult.totalCount should be (2)
+    searchResult.totalCount should be(2)
     searchResult.results.head.id should be(DonaldId)
     searchResult.results.last.id should be(BatmanId)
   }
 
   test("That a search for flaggremsu returns both Donald and Batman even if it is misspelled") {
     val searchResult = searchService.matchingQuery(Seq("and", "flaggremsu"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    searchResult.totalCount should be (2)
-    searchResult.results.head.id should be (DonaldId)
-    searchResult.results.last.id should be (BatmanId)
+    searchResult.totalCount should be(2)
+    searchResult.results.head.id should be(DonaldId)
+    searchResult.results.last.id should be(BatmanId)
+  }
+
+  def blockUntil(predicate: () => Boolean) = {
+    var backoff = 0
+    var done = false
+
+    while (backoff <= 16 && !done) {
+      if (backoff > 0) Thread.sleep(200 * backoff)
+      backoff = backoff + 1
+      try {
+        done = predicate()
+      } catch {
+        case e: Throwable => println("problem while testing predicate", e)
+      }
+    }
+
+    require(done, s"Failed waiting for predicate")
   }
 }

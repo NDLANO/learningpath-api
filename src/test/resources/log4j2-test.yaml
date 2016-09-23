@@ -1,6 +1,6 @@
 Configuration:
-  status: debug
+  status: warn
 
   Loggers:
     Root:
-      level: debug
+      level: warn
