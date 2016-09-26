@@ -6,8 +6,9 @@
  *
  */
 
-package no.ndla.learningpathapi
+package no.ndla.learningpathapi.controller
 
+import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
 class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraFunSuite {
@@ -15,7 +16,7 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
   lazy val controller = new HealthController
   addServlet(controller, "/*")
 
-  test("That /health returns 200 no content") {
+  test("That /health returns 200 ok") {
     get("/") {
       status should equal (200)
     }
