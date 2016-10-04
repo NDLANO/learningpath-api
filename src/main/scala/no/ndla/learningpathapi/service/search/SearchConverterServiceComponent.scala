@@ -92,7 +92,8 @@ trait SearchConverterServiceComponent {
         searchableLearningPath.status,
         searchableLearningPath.lastUpdated,
         asApiLearningPathTag(searchableLearningPath.tags),
-        asAuthor(searchableLearningPath.author)
+        asAuthor(searchableLearningPath.author),
+        searchableLearningPath.isBasedOn
       )
     }
 
@@ -109,7 +110,8 @@ trait SearchConverterServiceComponent {
         learningPath.lastUpdated,
         asSearchableTags(learningPath.tags),
         getAuthor(learningPath.owner),
-        learningPath.learningsteps.map(asSearchableLearningStep).toList)
+        learningPath.learningsteps.map(asSearchableLearningStep).toList,
+        learningPath.isBasedOn)
     }
 
     def asSearchableTags(tags: Seq[LearningPathTags]): SearchableTags = {
