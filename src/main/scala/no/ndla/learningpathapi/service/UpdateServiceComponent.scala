@@ -118,10 +118,9 @@ trait UpdateServiceComponent {
             existing.copy(
               status = status,
               lastUpdated = clock.now()))
-
           updatedLearningPath.isPublished match {
             case true => searchIndexService.indexLearningPath(updatedLearningPath)
-            case false => searchIndexService.deleteLearningPath(updatedLearningPath)
+            case false => if(existing.isPublished) searchIndexService.deleteLearningPath(updatedLearningPath)
           }
 
 
