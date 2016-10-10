@@ -169,6 +169,17 @@ trait SearchIndexServiceComponent {
           "stepType" typed StringType index "not_analyzed",
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
+          ),
+        "copyright" typed NestedType as(
+          "license" typed NestedType as(
+              "license" typed StringType index "not_analyzed",
+              "description" typed StringType index "not_analyzed",
+              "url" typed StringType index "not_analyzed"
+            ),
+          "contributors" typed NestedType as(
+            "type" typed StringType index "not_analyzed",
+            "name" typed StringType index "not_analyzed"
+            )
           )
       ).buildWithName.string()
     }

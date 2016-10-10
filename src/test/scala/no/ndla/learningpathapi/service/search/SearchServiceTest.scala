@@ -89,6 +89,9 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       tags = List(LearningPathTags(Seq("disney", "kanfly"), Some("nb")))
     )
 
+    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(api.License("publicdomain", None, None)))
+
+
     val settings = Settings.settingsBuilder()
       .put("path.home", esDataDir)
       .put("index.number_of_shards", "1")
@@ -98,7 +101,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
     esNode = new NodeBuilder().settings(settings).node()
     esNode.start()
-
 
     val indexName = searchIndexService.createNewIndex()
     searchIndexService.updateAliasTarget(None, indexName)

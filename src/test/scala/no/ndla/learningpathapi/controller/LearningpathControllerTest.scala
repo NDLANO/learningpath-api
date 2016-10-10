@@ -12,7 +12,7 @@ package no.ndla.learningpathapi.controller
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.model.api.{Author, LearningPathSummary, SearchResult, Title}
+import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Sort}
 import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, TestEnvironment, UnitSuite}
 import org.json4s.native.Serialization._
@@ -25,13 +25,13 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   implicit val formats = org.json4s.DefaultFormats
   implicit val swagger = new LearningpathSwagger
 
-  val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""))
+  val copyright = Copyright(License("by-sa", None, None), List())
+  val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""), copyright)
 
   lazy val controller = new LearningpathController
   addServlet(controller, "/*")
 
   override def beforeEach() = resetMocks()
-
 
   test("That requireHeader returns header value when header exists") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]

@@ -49,7 +49,7 @@ trait ConverterServiceComponent {
         case Some(l) => api.License(l.license, l.description, l.url)
         case None => api.License(license, Some("Invalid license"), None)
       }
-
+    
     def asApiAuthor(author: domain.Author): api.Author = {
       api.Author(author.`type`, author.name)
     }
@@ -109,7 +109,8 @@ trait ConverterServiceComponent {
         learningpath.status.toString,
         learningpath.lastUpdated,
         learningpath.tags.map(asApiLearningPathTags),
-        asAuthor(authClient.getUserName(learningpath.owner)))
+        asAuthor(authClient.getUserName(learningpath.owner)),
+        asApiCopyright(learningpath.copyright))
     }
 
     def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
