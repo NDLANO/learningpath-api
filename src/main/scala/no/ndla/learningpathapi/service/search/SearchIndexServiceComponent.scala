@@ -180,7 +180,8 @@ trait SearchIndexServiceComponent {
             "type" typed StringType index "not_analyzed",
             "name" typed StringType index "not_analyzed"
             )
-          )
+          ),
+        "isBasedOn" typed BooleanType index "not_analyzed"
       ).buildWithName.string()
 
       /*

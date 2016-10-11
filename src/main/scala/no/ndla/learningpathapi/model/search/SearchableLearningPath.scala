@@ -23,5 +23,6 @@ case class SearchableLearningPath(id: Long,
                                   tags: SearchableTags,
                                   author: String,
                                   learningsteps: Seq[SearchableLearningStep],
-                                  copyright: Copyright)
+                                  copyright: Copyright,
+                                  isBasedOn: Option[Long])
 

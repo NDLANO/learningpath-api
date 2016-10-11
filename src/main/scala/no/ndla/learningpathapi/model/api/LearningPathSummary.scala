@@ -27,6 +27,5 @@ case class LearningPathSummary(@(ApiModelProperty@field)(description = "The uniq
                                @(ApiModelProperty@field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
                                @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTags],
                                @(ApiModelProperty@field)(description = "The author of this learningpath") owner: Author,
-                               @(ApiModelProperty@field)(description = "The contributors of this learningpath") copyright: Copyright)
-
-
+                               @(ApiModelProperty@field)(description = "The contributors of this learningpath") copyright: Copyright,
+                               @(ApiModelProperty@field)(description = "The id this learningpath is based on, if any") isBasedOn: Option[Long])
