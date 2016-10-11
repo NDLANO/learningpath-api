@@ -109,7 +109,8 @@ trait ConverterServiceComponent {
         learningpath.status.toString,
         learningpath.lastUpdated,
         learningpath.tags.map(asApiLearningPathTags),
-        asAuthor(authClient.getUserName(learningpath.owner)))
+        asAuthor(authClient.getUserName(learningpath.owner)),
+        learningpath.isBasedOn)
     }
 
     def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {

@@ -13,7 +13,7 @@ import java.util.Calendar
 
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.analyzers._
-import com.sksamuel.elastic4s.mappings.FieldType.{DateType, IntegerType, NestedType, StringType}
+import com.sksamuel.elastic4s.mappings.FieldType._
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Delete, Index}
@@ -169,7 +169,8 @@ trait SearchIndexServiceComponent {
           "stepType" typed StringType index "not_analyzed",
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
-          )
+          ),
+        "isBasedOn" typed BooleanType index "not_analyzed"
       ).buildWithName.string()
     }
 
