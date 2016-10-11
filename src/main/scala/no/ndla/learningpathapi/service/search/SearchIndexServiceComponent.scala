@@ -183,12 +183,6 @@ trait SearchIndexServiceComponent {
           ),
         "isBasedOn" typed BooleanType index "not_analyzed"
       ).buildWithName.string()
-
-      /*
-      result.id
-      result.copyright.license.license
-      result.contributors.type = ["lasdf", "asdf"]
-       */
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
