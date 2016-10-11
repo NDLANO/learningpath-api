@@ -13,7 +13,7 @@ import java.util.Calendar
 
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.analyzers._
-import com.sksamuel.elastic4s.mappings.FieldType.{DateType, IntegerType, NestedType, StringType}
+import com.sksamuel.elastic4s.mappings.FieldType._
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Delete, Index}
@@ -170,8 +170,8 @@ trait SearchIndexServiceComponent {
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
           ),
-        "copyright" typed NestedType as(
-          "license" typed NestedType as(
+        "copyright" typed ObjectType as(
+          "license" typed ObjectType as(
               "license" typed StringType index "not_analyzed",
               "description" typed StringType index "not_analyzed",
               "url" typed StringType index "not_analyzed"
@@ -182,6 +182,12 @@ trait SearchIndexServiceComponent {
             )
           )
       ).buildWithName.string()
+
+      /*
+      result.id
+      result.copyright.license.license
+      result.contributors.type = ["lasdf", "asdf"]
+       */
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {

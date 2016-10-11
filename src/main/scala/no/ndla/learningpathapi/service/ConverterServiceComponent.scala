@@ -49,7 +49,7 @@ trait ConverterServiceComponent {
         case Some(l) => api.License(l.license, l.description, l.url)
         case None => api.License(license, Some("Invalid license"), None)
       }
-    
+
     def asApiAuthor(author: domain.Author): api.Author = {
       api.Author(author.`type`, author.name)
     }
