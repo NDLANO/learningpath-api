@@ -119,11 +119,11 @@ trait UpdateServiceComponent {
               status = status,
               lastUpdated = clock.now()))
 
-          updatedLearningPath.isPublished match {
-            case true => searchIndexService.indexLearningPath(updatedLearningPath)
-            case false => searchIndexService.deleteLearningPath(updatedLearningPath)
+          if (updatedLearningPath.isPublished) {
+            searchIndexService.indexLearningPath(updatedLearningPath)
+          } else if (existing.isPublished) {
+            searchIndexService.deleteLearningPath(updatedLearningPath)
           }
-
 
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
         }
