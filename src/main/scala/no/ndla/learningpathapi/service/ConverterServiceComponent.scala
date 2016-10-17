@@ -110,6 +110,7 @@ trait ConverterServiceComponent {
         learningpath.lastUpdated,
         learningpath.tags.map(asApiLearningPathTags),
         asAuthor(authClient.getUserName(learningpath.owner)),
+        asApiCopyright(learningpath.copyright),
         learningpath.isBasedOn)
     }
 

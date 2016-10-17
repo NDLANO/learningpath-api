@@ -10,6 +10,8 @@ package no.ndla.learningpathapi.model.search
 
 import java.util.Date
 
+import no.ndla.learningpathapi.model.api.{Copyright}
+
 case class SearchableLearningPath(id: Long,
                                   titles: SearchableTitles,
                                   descriptions: SearchableDescriptions,
@@ -21,5 +23,6 @@ case class SearchableLearningPath(id: Long,
                                   tags: SearchableTags,
                                   author: String,
                                   learningsteps: Seq[SearchableLearningStep],
+                                  copyright: Copyright,
                                   isBasedOn: Option[Long])
 

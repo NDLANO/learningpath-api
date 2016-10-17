@@ -170,6 +170,17 @@ trait SearchIndexServiceComponent {
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
           ),
+        "copyright" typed ObjectType as(
+          "license" typed ObjectType as(
+              "license" typed StringType index "not_analyzed",
+              "description" typed StringType index "not_analyzed",
+              "url" typed StringType index "not_analyzed"
+            ),
+          "contributors" typed NestedType as(
+            "type" typed StringType index "not_analyzed",
+            "name" typed StringType index "not_analyzed"
+            )
+          ),
         "isBasedOn" typed BooleanType index "not_analyzed"
       ).buildWithName.string()
     }
