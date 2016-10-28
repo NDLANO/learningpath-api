@@ -19,7 +19,8 @@ object LearningpathApiProperties extends LazyLogging {
   lazy val ApplicationPort = getInt("APPLICATION_PORT")
   lazy val ContactEmail = get("CONTACT_EMAIL")
   lazy val HostAddr = get("HOST_ADDR")
-  lazy val Domain = get("DOMAIN")
+  lazy val Environment = get("NDLA_ENVIRONMENT")
+  lazy val Domain = getDomain
 
   lazy val MetaUserName = get("DB_USER_NAME")
   lazy val MetaPassword = get("DB_PASSWORD")
@@ -74,6 +75,12 @@ object LearningpathApiProperties extends LazyLogging {
       logger.error("Shutting down.")
       System.exit(1)
     }
+  }
+
+  private def getDomain: String = {
+    Map("local" -> "http://localhost",
+      "prod" -> "http://api.ndla.no"
+    ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
   }
 
   private def get(envKey: String): String = {
