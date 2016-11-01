@@ -21,7 +21,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   override val imageApiClient = new ImageApiClient
 
-  val DefaultImage = ImageMetaInformation("1", "http://api.test.ndla.no/images/1", ImageVariants(Some(Image("thumb", 10, "contentType")), Some(Image("full", 1000, "contentType"))))
+  val DefaultImage = ImageMetaInformation("1", "http://api.test.ndla.no/images/1", ImageVariants(Some(Image("full", 1000, "contentType"))))
 
   test("That some metaInfo is returned when images is found") {
     when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[ImageMetaInformation]])).thenReturn(Success(DefaultImage))
@@ -30,7 +30,6 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
     imageMeta.isDefined should be (true)
     imageMeta.get.id should equal("1")
     imageMeta.get.images.full.get.size should be (1000)
-    imageMeta.get.images.small.get.size should be (10)
   }
 
   test("That none is returned when http 404 is received") {
