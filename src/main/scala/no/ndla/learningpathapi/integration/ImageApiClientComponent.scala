@@ -46,6 +46,6 @@ trait ImageApiClientComponent {
 
 case class ImageMetaInformation(id: String, metaUrl: String, images: ImageVariants)
 
-case class ImageVariants(small: Option[Image], full: Option[Image])
+case class ImageVariants(full: Option[Image])
 
 case class Image(url: String, size: Int, contentType: String)
