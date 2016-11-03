@@ -111,9 +111,9 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That getOwnerForEnvironment returns expected owner for each environment") {
-    val envToOwner = Map("api.test.ndla" -> ChristerTest,
-      "api.staging.ndla.no" -> ChristerStaging,
-      "api.ndla.no" -> ChristerProd,
+    val envToOwner = Map("test" -> ChristerTest,
+      "staging" -> ChristerStaging,
+      "prod" -> ChristerProd,
       "etannetmiljø" -> ChristerTest)
 
     envToOwner.foreach {
