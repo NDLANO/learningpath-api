@@ -199,7 +199,7 @@ trait ImportServiceComponent {
         LearningPathVerificationStatus.CREATED_BY_NDLA,
         lastUpdated,
         tags,
-        getOwnerForEnvironment(LearningpathApiProperties.NdlaEnvironment),
+        getOwnerForEnvironment(LearningpathApiProperties.Environment),
         Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
         learningSteps)
     }

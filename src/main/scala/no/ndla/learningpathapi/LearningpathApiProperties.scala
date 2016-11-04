@@ -21,7 +21,7 @@ object LearningpathApiProperties extends LazyLogging {
   var LearningpathApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
 
   val SecretsFile = "learningpath_api.secrets"
-  val NdlaEnvironment = Properties.envOrElse("NDLA_ENVIRONMENT", "local")
+  lazy val Environment = getOrElse("NDLA_ENVIRONMENT", "local")
 
   lazy val ApplicationPort = 80
   lazy val ContactEmail = "christergundersen@ndla.no"

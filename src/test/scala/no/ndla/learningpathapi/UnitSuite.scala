@@ -17,7 +17,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   LearningpathApiProperties.setProperties(Map(
     "CONTACT_EMAIL" -> Some("ndla@knowit.no"),
     "HOST_ADDR" -> Some("localhost"),
-    "DOMAIN" -> Some("http://localhost"),
+    "NDLA_ENVIRONMENT" -> Some("local"),
 
     "META_USER_NAME" -> Some("user"),
     "META_PASSWORD" -> Some("password"),
