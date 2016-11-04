@@ -60,7 +60,7 @@ trait ConverterServiceComponent {
     }
 
     def asCoverPhoto(metaUrl: String, imageMeta: Option[ImageMetaInformation]): Option[api.CoverPhoto] = {
-      imageMeta.map(_.url).map(url => api.CoverPhoto(url, metaUrl))
+      imageMeta.map(image => api.CoverPhoto(image.imageUrl, metaUrl))
     }
 
     def asCopyright(copyright: api.Copyright): domain.Copyright = {
