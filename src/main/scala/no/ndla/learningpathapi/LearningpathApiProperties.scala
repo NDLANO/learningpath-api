@@ -47,33 +47,35 @@ object LearningpathApiProperties extends LazyLogging {
   val CorrelationIdHeader = "X-Correlation-ID"
 
   val secrets = readSecrets(SecretsFile).getOrElse(throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile"))
-  val Environment = envOrElse("NDLA_ENVIRONMENT", "local")
+  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
 
-  val MetaUserName = secretOrEnv(PropertyKeys.MetaUserNameKey)
-  val MetaPassword = secretOrEnv(PropertyKeys.MetaPasswordKey)
-  val MetaResource = secretOrEnv(PropertyKeys.MetaResourceKey)
-  val MetaServer = secretOrEnv(PropertyKeys.MetaServerKey)
-  val MetaPort = secretOrEnv(PropertyKeys.MetaPortKey).toInt
-  val MetaSchema = secretOrEnv(PropertyKeys.MetaSchemaKey)
+  val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
+  val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
+  val MetaResource = prop(PropertyKeys.MetaResourceKey)
+  val MetaServer = prop(PropertyKeys.MetaServerKey)
+  val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
+  val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val SearchServer = envOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
-  val SearchRegion = envOrElse("SEARCH_REGION", "eu-central-1")
-  val RunWithSignedSearchRequests = envOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
+  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
+  val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
+  val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
-  val MigrationHost = env("MIGRATION_HOST")
-  val MigrationUser = env("MIGRATION_USER")
-  val MigrationPassword = env("MIGRATION_PASSWORD")
+  val MigrationHost = prop("MIGRATION_HOST")
+  val MigrationUser = prop("MIGRATION_USER")
+  val MigrationPassword = prop("MIGRATION_PASSWORD")
 
-  def env(envVariable: String): String = {
-    envOrNone(envVariable) match {
-      case Some(x) => x
-      case None => {
-        throw new RuntimeException(s"Unable to load property $envVariable")
-      }
-    }
+  def prop(key: String): String = {
+    propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
   }
 
-  def secretOrEnv(key: String): String = {
-    secrets.get(key).flatten.getOrElse(env(key))
+  def propOrElse(key: String, default: => String): String = {
+    secrets.get(key).flatten match {
+      case Some(secret) => secret
+      case None =>
+        envOrNone(key) match {
+          case Some(env) => env
+          case None => default
+        }
+    }
   }
 }
