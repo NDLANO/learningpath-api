@@ -49,22 +49,22 @@ object LearningpathApiProperties extends LazyLogging {
   val secrets = readSecrets(SecretsFile).getOrElse(throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile"))
   val Environment = envOrElse("NDLA_ENVIRONMENT", "local")
 
-  val MetaUserName = secretOrEnvOrFail(PropertyKeys.MetaUserNameKey)
-  val MetaPassword = secretOrEnvOrFail(PropertyKeys.MetaPasswordKey)
-  val MetaResource = secretOrEnvOrFail(PropertyKeys.MetaResourceKey)
-  val MetaServer = secretOrEnvOrFail(PropertyKeys.MetaServerKey)
-  val MetaPort = secretOrEnvOrFail(PropertyKeys.MetaPortKey).toInt
-  val MetaSchema = secretOrEnvOrFail(PropertyKeys.MetaSchemaKey)
+  val MetaUserName = secretOrEnv(PropertyKeys.MetaUserNameKey)
+  val MetaPassword = secretOrEnv(PropertyKeys.MetaPasswordKey)
+  val MetaResource = secretOrEnv(PropertyKeys.MetaResourceKey)
+  val MetaServer = secretOrEnv(PropertyKeys.MetaServerKey)
+  val MetaPort = secretOrEnv(PropertyKeys.MetaPortKey).toInt
+  val MetaSchema = secretOrEnv(PropertyKeys.MetaSchemaKey)
 
   val SearchServer = envOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
   val SearchRegion = envOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = envOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
-  val MigrationHost = envOrFail("MIGRATION_HOST")
-  val MigrationUser = envOrFail("MIGRATION_USER")
-  val MigrationPassword = envOrFail("MIGRATION_PASSWORD")
+  val MigrationHost = env("MIGRATION_HOST")
+  val MigrationUser = env("MIGRATION_USER")
+  val MigrationPassword = env("MIGRATION_PASSWORD")
 
-  def envOrFail(envVariable: String): String = {
+  def env(envVariable: String): String = {
     envOrNone(envVariable) match {
       case Some(x) => x
       case None => {
@@ -73,7 +73,7 @@ object LearningpathApiProperties extends LazyLogging {
     }
   }
 
-  def secretOrEnvOrFail(key: String): String = {
-    secrets.get(key).flatten.getOrElse(envOrFail(key))
+  def secretOrEnv(key: String): String = {
+    secrets.get(key).flatten.getOrElse(env(key))
   }
 }
