@@ -74,6 +74,6 @@ object LearningpathApiProperties extends LazyLogging {
   }
 
   def secretOrEnvOrFail(key: String): String = {
-    secrets.getOrElse(key, envOrFail(key))
+    secrets.get(key).flatten.getOrElse(envOrFail(key))
   }
 }
