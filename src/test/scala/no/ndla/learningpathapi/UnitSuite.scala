@@ -8,30 +8,33 @@
 
 package no.ndla.learningpathapi
 
+import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
 
 abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterAll with BeforeAndAfterEach {
 
+  setEnv("NDLA_ENVIRONMENT", "local")
 
-  LearningpathApiProperties.setProperties(Map(
-    "CONTACT_EMAIL" -> Some("ndla@knowit.no"),
-    "HOST_ADDR" -> Some("localhost"),
-    "NDLA_ENVIRONMENT" -> Some("local"),
+  setEnv(PropertyKeys.MetaUserNameKey, "user")
+  setEnv(PropertyKeys.MetaPasswordKey, "password")
+  setEnv(PropertyKeys.MetaResourceKey, "dbresource")
+  setEnv(PropertyKeys.MetaServerKey, "dbserver")
+  setEnv(PropertyKeys.MetaPortKey, "1")
+  setEnv(PropertyKeys.MetaSchemaKey, "learningpathapi")
 
-    "META_USER_NAME" -> Some("user"),
-    "META_PASSWORD" -> Some("password"),
-    "META_RESOURCE" -> Some("dbresource"),
-    "META_SERVER" -> Some("dbserver"),
-    "META_PORT" -> Some("1"),
-    "META_SCHEMA" -> Some("learningpathapi"),
+  setEnv("SEARCH_SERVER", "search-server")
+  setEnv("SEARCH_REGION", "some-region")
+  setEnv("RUN_WITH_SIGNED_SEARCH_REQUESTS", "false")
 
-    "SEARCH_SERVER" -> Some("search-server"),
-    "RUN_WITH_SIGNED_SEARCH_REQUESTS" -> Some("false"),
-    "SEARCH_REGION" -> Some("some-region"),
+  setEnv("MIGRATION_HOST", "migration-api")
+  setEnv("MIGRATION_USER", "username")
+  setEnv("MIGRATION_PASSWORD", "password")
 
-    "MIGRATION_HOST" -> Some("migration-api"),
-    "MIGRATION_USER" -> Some("username"),
-    "MIGRATION_PASSWORD" -> Some("password")
-  ))
+  def setEnv(key: String, value: String) = {
+    val field = System.getenv().getClass.getDeclaredField("m")
+    field.setAccessible(true)
+    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
+    map.put(key, value)
+  }
 }
