@@ -40,7 +40,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   override def beforeAll() = {
-    val datasource = getDataSource()
+    val datasource = getDataSource
     DBMigrator.migrate(datasource)
     ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
   }

@@ -8,25 +8,22 @@
 
 package no.ndla.learningpathapi
 
-import java.util.Properties
 import javax.sql.DataSource
 
+import no.ndla.network.secrets.PropertyKeys
 import org.postgresql.ds.PGPoolingDataSource
-import org.scalatest.Tag
-
-import scala.collection.JavaConversions.propertiesAsScalaMap
 
 abstract class IntegrationSuite extends UnitSuite {
-  val TestProperties = "integration-test.properties"
-  println(s"Reading properties from $TestProperties")
 
-  val integrationTestProperties = new Properties()
-  integrationTestProperties.load(getClass.getResourceAsStream(s"/$TestProperties"))
+  setEnv(PropertyKeys.MetaUserNameKey, "postgres")
+  setEnv(PropertyKeys.MetaPasswordKey, "hemmelig")
+  setEnv(PropertyKeys.MetaResourceKey, "postgres")
+  setEnv(PropertyKeys.MetaServerKey, "127.0.0.1")
+  setEnv(PropertyKeys.MetaPortKey, "5432")
+  setEnv(PropertyKeys.MetaSchemaKey, "learningpathapi")
 
-  val learningPathApiProperties = propertiesAsScalaMap(integrationTestProperties).map(entry => (entry._1, Option(entry._2))).toMap
-  LearningpathApiProperties.setProperties(learningPathApiProperties)
 
-  def getDataSource(): DataSource = {
+  def getDataSource: DataSource = {
     val datasource = new PGPoolingDataSource()
     datasource.setUser(LearningpathApiProperties.MetaUserName)
     datasource.setPassword(LearningpathApiProperties.MetaPassword)
