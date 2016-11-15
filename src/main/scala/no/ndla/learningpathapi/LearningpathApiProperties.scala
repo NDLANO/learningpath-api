@@ -16,7 +16,7 @@ import no.ndla.network.secrets.Secrets.readSecrets
 import scala.util.Properties._
 object LearningpathApiProperties extends LazyLogging {
 
-  val SecretsFile = "learningpath_api.secrets"
+  val SecretsFile = "learningpath-api.secrets"
 
   val ApplicationPort = 80
   val ContactEmail = "christergundersen@ndla.no"
@@ -46,7 +46,7 @@ object LearningpathApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
-  val secrets = readSecrets(SecretsFile).getOrElse(throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile"))
+  lazy val secrets = readSecrets(SecretsFile).getOrElse(throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile"))
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
 
   val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
