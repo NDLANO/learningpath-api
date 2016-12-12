@@ -14,7 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.MappingApiClient
 import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{ValidationException, AccessDeniedException, OptimisticLockException, Sort, StepStatus, LearningPathStatus}
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, LearningPathStatus, OptimisticLockException, Sort, StepStatus, ValidationException}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
@@ -23,7 +23,7 @@ import no.ndla.network.model.HttpRequestException
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
 import scala.util.Try
@@ -42,11 +42,11 @@ trait LearningpathController {
     registerModel[ValidationError]()
     registerModel[Error]()
 
-    val response400 = ResponseMessageWithModel(400, "Validation Error", "ValidationError")
-    val response403 = ResponseMessageWithModel(403, "Access not granted", "Error")
-    val response404 = ResponseMessageWithModel(404, "Not found", "Error")
-    val response500 = ResponseMessageWithModel(500, "Unknown error", "Error")
-    val response502 = ResponseMessageWithModel(502, "Remote error", "Error")
+    val response400 = ResponseMessage(400, "Validation Error", Some("ValidationError"))
+    val response403 = ResponseMessage(403, "Access not granted", Some("Error"))
+    val response404 = ResponseMessage(404, "Not found", Some("Error"))
+    val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
+    val response502 = ResponseMessage(502, "Remote error", Some("Error"))
 
     val getLearningpaths =
       (apiOperation[SearchResult]("getLearningpaths")
