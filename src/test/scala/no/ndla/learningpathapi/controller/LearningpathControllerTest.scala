@@ -119,7 +119,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
   }
 
-  test ("Tagt GET /licenses with creative-common sat to true only returns creative common licenses") {
+  test ("That GET /licenses with creative-common sat to true only returns creative common licenses") {
     when(mappingApiClient.getCreativeCommonLicenses).thenReturn(creativeCommonlicenses)
 
     get("/licenses", Map(
@@ -131,7 +131,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     }
   }
 
-  test ("Tagt GET /licenses with creative-common not sat returns all licenses") {
+  test ("That GET /licenses with creative-common not sat returns all licenses") {
     when(mappingApiClient.getLicenses).thenReturn(licenses)
 
     get("/licenses", Map()) {
