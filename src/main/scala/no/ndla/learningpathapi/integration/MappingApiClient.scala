@@ -33,6 +33,10 @@ trait MappingApiClient {
       getLicenseDefinitions().map(l => License(l.license, l.description, l.url))
     }
 
+    def getCreativeCommonLicenses : Seq[License] = {
+      getLicenses.filter(_.license.startsWith("by"))
+    }
+
     def get6391CodeFor6392Code(languageCode6392: String): Option[String] = getLanguageMapping().find(_._1 == languageCode6392).map(_._2)
 
     def languageCodeSupported6391(languageCode: String): Boolean = getLanguageMapping().exists(_._2 == languageCode)

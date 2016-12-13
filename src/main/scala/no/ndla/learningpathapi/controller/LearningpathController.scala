@@ -26,7 +26,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait LearningpathController {
 
@@ -73,7 +73,8 @@ trait LearningpathController {
         notes "Shows all valid licenses"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."))
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        queryParam[Option[Boolean]]("creative-common").description("Only list creative common licenses if sat to true. Default is false."))
         responseMessages(response403, response500))
 
     val getMyLearningpaths =
@@ -363,7 +364,10 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      mappingApiClient.getLicenses.map(x => License(x.license, x.description, x.url))
+      boolean("creative-common") match {
+        case true => mappingApiClient.getCreativeCommonLicenses.map(x => License(x.license, x.description, x.url))
+        case false => mappingApiClient.getLicenses.map(x => License(x.license, x.description, x.url))
+      }
     }
 
     post("/", operation(addNewLearningpath)) {
@@ -529,6 +533,19 @@ trait LearningpathController {
       }
     }
 
+    def boolean(paramName: String, defaultValueIfNotSet: Boolean = false)(implicit request: HttpServletRequest): Boolean = {
+      val paramValue = paramOrNone(paramName)
+      paramValue match {
+        case Some(value) => {
+          Try(value.toBoolean) match {
+            case Success(bool) => bool
+            case Failure(bool) => throw new ValidationException(errors = List(ValidationMessage(paramName, s"Invalid value for $paramName. Only boolean values are allowed.")))
+          }
+        }
+        case None => defaultValueIfNotSet
+      }
+
+    }
     def optLong(paramName: String)(implicit request: HttpServletRequest): Option[Long] = {
       params.get(paramName).filter(_.forall(_.isDigit)).map(_.toLong)
     }
