@@ -27,6 +27,8 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
   val copyright = Copyright(License("by-sa", None, None), List())
   val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""), copyright, None)
+  val creativeCommonlicenses = Seq(License("by-sa", None, None), License("by-nd", None, None), License("by-nc", None, None))
+  val licenses = Seq(License("by-sa", None, None), License("by-nd", None, None), License("by-nc", None, None), License("Copyright", None, None))
 
   lazy val controller = new LearningpathController
   addServlet(controller, "/*")
@@ -115,5 +117,27 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
       convertedBody.totalCount should be (-1)
     }
 
+  }
+
+  test ("That GET /licenses with creative-common sat to true only returns creative common licenses") {
+    when(mappingApiClient.getLicenses(Some("by"))).thenReturn(creativeCommonlicenses)
+
+    get("/licenses", Map(
+      "filter" -> "by"
+    )) {
+      status should equal (200)
+      val convertedBody = read[Seq[License]](body)
+      convertedBody should equal(creativeCommonlicenses)
+    }
+  }
+
+  test ("That GET /licenses with creative-common not sat returns all licenses") {
+    when(mappingApiClient.getLicenses(None)).thenReturn(licenses)
+
+    get("/licenses", Map()) {
+      status should equal (200)
+      val convertedBody = read[Seq[License]](body)
+      convertedBody should equal(licenses)
+    }
   }
 }

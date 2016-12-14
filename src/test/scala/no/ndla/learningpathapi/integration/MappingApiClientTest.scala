@@ -22,7 +22,8 @@ class MappingApiClientTest extends UnitSuite with TestEnvironment {
   var client = new MappingApiClient
   val sampleLicenses = Seq(LicenseDefinition("by", Some("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")),
     LicenseDefinition("by-sa", Some("Creative Commons Attribution-ShareAlike 2.0 Generic"), Some("https://creativecommons.org/licenses/by-sa/2.0/")),
-    LicenseDefinition("by-nc", Some("Creative Commons Attribution-NonCommercial 2.0 Generic"), Some("https://creativecommons.org/licenses/by-nc/2.0/")))
+    LicenseDefinition("by-nc", Some("Creative Commons Attribution-NonCommercial 2.0 Generic"), Some("https://creativecommons.org/licenses/by-nc/2.0/")),
+    LicenseDefinition("nlod", Some("Norsk lisens for offentlige data"), Some("http://data.norge.no/nlod/no/1.0")))
 
   val sampleMappings = Map(
     "nob" -> "nb",
@@ -52,6 +53,14 @@ class MappingApiClientTest extends UnitSuite with TestEnvironment {
     intercept[HttpRequestException] {
       client.getLicense("garbage")
     }
+  }
+
+  test("That getLicenses only returns licenses starting with by") {
+    val expectedResult = Seq(License("by", Some("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")),
+      License("by-sa", Some("Creative Commons Attribution-ShareAlike 2.0 Generic"), Some("https://creativecommons.org/licenses/by-sa/2.0/")),
+      License("by-nc", Some("Creative Commons Attribution-NonCommercial 2.0 Generic"), Some("https://creativecommons.org/licenses/by-nc/2.0/")))
+    when(ndlaClient.fetch[Seq[LicenseDefinition]](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[Seq[LicenseDefinition]]])).thenReturn(Success(sampleLicenses))
+    client.getLicenses(Some("by")) should equal(expectedResult)
   }
 
   test("That get6391CodeFor6392Code returns a language code if it exists") {
