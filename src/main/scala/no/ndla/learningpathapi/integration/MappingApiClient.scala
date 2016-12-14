@@ -32,7 +32,7 @@ trait MappingApiClient {
     def getLicenses(filter: Option[String]) : Seq[License] = {
       filter match {
         case Some(f) => getLicenseDefinitions().filter(_.license.startsWith(f)).map(l => License(l.license, l.description, l.url))
-        case None =>    getLicenseDefinitions().map(l => License(l.license, l.description, l.url))
+        case None => getLicenseDefinitions().map(l => License(l.license, l.description, l.url))
       }
     }
 
