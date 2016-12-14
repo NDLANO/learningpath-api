@@ -74,7 +74,7 @@ trait LearningpathController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
-        queryParam[Option[Boolean]]("creative-common").description("Only list creative common licenses if sat to true. Default is false."))
+        queryParam[Option[String]]("filter").description("A filter on the license keys. May be omitted"))
         responseMessages(response403, response500))
 
     val getMyLearningpaths =
@@ -364,10 +364,7 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      boolean("creative-common") match {
-        case true => mappingApiClient.getCreativeCommonLicenses.map(x => License(x.license, x.description, x.url))
-        case false => mappingApiClient.getLicenses.map(x => License(x.license, x.description, x.url))
-      }
+      mappingApiClient.getLicenses(paramOrNone("filter")).map(x => License(x.license, x.description, x.url))
     }
 
     post("/", operation(addNewLearningpath)) {
@@ -533,19 +530,6 @@ trait LearningpathController {
       }
     }
 
-    def boolean(paramName: String, defaultValueIfNotSet: Boolean = false)(implicit request: HttpServletRequest): Boolean = {
-      val paramValue = paramOrNone(paramName)
-      paramValue match {
-        case Some(value) => {
-          Try(value.toBoolean) match {
-            case Success(bool) => bool
-            case Failure(bool) => throw new ValidationException(errors = List(ValidationMessage(paramName, s"Invalid value for $paramName. Only boolean values are allowed.")))
-          }
-        }
-        case None => defaultValueIfNotSet
-      }
-
-    }
     def optLong(paramName: String)(implicit request: HttpServletRequest): Option[Long] = {
       params.get(paramName).filter(_.forall(_.isDigit)).map(_.toLong)
     }
