@@ -8,8 +8,6 @@
 
 package no.ndla.learningpathapi
 
-import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
-import io.searchbox.client.JestClient
 import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathController}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -17,7 +15,6 @@ import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
 import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator, LearningStepValidator, TitleValidator}
 import no.ndla.network.NdlaClient
-import org.elasticsearch.common.settings.Settings
 import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -36,7 +33,6 @@ object ComponentRegistry
   with NdlaClient
   with AuthClientComponent
   with ImageApiClientComponent
-  with MappingApiClient
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
@@ -83,7 +79,6 @@ object ComponentRegistry
   lazy val keywordsService = new KeywordsService
   lazy val migrationApiClient = new MigrationApiClient
   lazy val healthController = new HealthController
-  lazy val mappingApiClient = new MappingApiClient
   lazy val languageValidator = new LanguageValidator
   lazy val titleValidator = new TitleValidator
   lazy val learningPathValidator = new LearningPathValidator

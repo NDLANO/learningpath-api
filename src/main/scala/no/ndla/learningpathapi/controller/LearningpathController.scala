@@ -11,8 +11,13 @@ package no.ndla.learningpathapi.controller
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
+import org.json4s.native.Serialization.read
+import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.json.NativeJsonSupport
+import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import org.scalatra.{Ok, ScalatraServlet}
+import scala.util.Try
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.integration.MappingApiClient
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{AccessDeniedException, LearningPathStatus, OptimisticLockException, Sort, StepStatus, ValidationException}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
@@ -20,17 +25,12 @@ import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceCompo
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.network.ApplicationUrl
 import no.ndla.network.model.HttpRequestException
-import org.json4s.native.Serialization.read
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
-import org.scalatra.{Ok, ScalatraServlet}
-
-import scala.util.{Failure, Success, Try}
+import no.ndla.mapping
+import no.ndla.mapping.LicenseDefinition
 
 trait LearningpathController {
 
-  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with MappingApiClient with LanguageValidator =>
+  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with LanguageValidator =>
   val learningpathController: LearningpathController
 
   class LearningpathController(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging with CorrelationIdSupport {
@@ -364,7 +364,12 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      mappingApiClient.getLicenses(paramOrNone("filter")).map(x => License(x.license, x.description, x.url))
+      val licenses: Seq[LicenseDefinition] = paramOrNone("filter") match {
+        case None => mapping.License.getLicenses
+        case Some(filter) => mapping.License.getLicenses.filter(_.license.startsWith(filter))
+      }
+
+      licenses.map(x => License(x.license, Option(x.description), x.url))
     }
 
     post("/", operation(addNewLearningpath)) {

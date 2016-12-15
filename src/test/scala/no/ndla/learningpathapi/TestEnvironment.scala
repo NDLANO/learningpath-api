@@ -10,7 +10,6 @@ package no.ndla.learningpathapi
 
 import javax.sql.DataSource
 
-import com.sksamuel.elastic4s.ElasticClient
 import io.searchbox.client.JestClient
 import no.ndla.learningpathapi.controller.{HealthController, LearningpathController}
 import no.ndla.learningpathapi.integration._
@@ -20,7 +19,7 @@ import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, 
 import no.ndla.learningpathapi.validation._
 import no.ndla.network.NdlaClient
 import org.mockito.Mockito
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
   extends LearningpathController
@@ -46,7 +45,6 @@ trait TestEnvironment
   with LanguageValidator
   with LearningPathValidator
   with LearningStepValidator
-  with MappingApiClient
   with TitleValidator {
 
   val datasource = mock[DataSource]
@@ -69,7 +67,6 @@ trait TestEnvironment
   val languageValidator = mock[LanguageValidator]
   val learningpathController = mock[LearningpathController]
   val healthController = mock[HealthController]
-  val mappingApiClient = mock[MappingApiClient]
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
@@ -79,7 +76,7 @@ trait TestEnvironment
     Mockito.reset(
       datasource, searchIndexBuilderService, learningPathRepository, readService,
       updateService, searchService, searchIndexService, authClient, converterService, searchConverterService,
-      languageValidator, titleValidator, mappingApiClient, jestClient
+      languageValidator, titleValidator, jestClient
     )
   }
 }
