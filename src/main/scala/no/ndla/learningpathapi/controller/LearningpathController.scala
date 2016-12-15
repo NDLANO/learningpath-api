@@ -26,7 +26,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait LearningpathController {
 
@@ -73,7 +73,8 @@ trait LearningpathController {
         notes "Shows all valid licenses"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."))
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        queryParam[Option[String]]("filter").description("A filter on the license keys. May be omitted"))
         responseMessages(response403, response500))
 
     val getMyLearningpaths =
@@ -363,7 +364,7 @@ trait LearningpathController {
     }
 
     get("/licenses", operation(getLicenses)) {
-      mappingApiClient.getLicenses.map(x => License(x.license, x.description, x.url))
+      mappingApiClient.getLicenses(paramOrNone("filter")).map(x => License(x.license, x.description, x.url))
     }
 
     post("/", operation(addNewLearningpath)) {

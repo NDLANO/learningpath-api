@@ -29,8 +29,11 @@ trait MappingApiClient {
       getLicenseDefinitions().find(_.license == licenseName).map(l => License(l.license, l.description, l.url))
     }
 
-    def getLicenses : Seq[License] = {
-      getLicenseDefinitions().map(l => License(l.license, l.description, l.url))
+    def getLicenses(filter: Option[String]) : Seq[License] = {
+      filter match {
+        case Some(f) => getLicenseDefinitions().filter(_.license.startsWith(f)).map(l => License(l.license, l.description, l.url))
+        case None => getLicenseDefinitions().map(l => License(l.license, l.description, l.url))
+      }
     }
 
     def get6391CodeFor6392Code(languageCode6392: String): Option[String] = getLanguageMapping().find(_._1 == languageCode6392).map(_._2)
