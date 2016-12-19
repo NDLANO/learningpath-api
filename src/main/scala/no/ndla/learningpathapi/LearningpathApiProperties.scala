@@ -50,7 +50,6 @@ object LearningpathApiProperties extends LazyLogging {
   val ImageApiHost = "image-api"
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
-  val MappingHost = "mapping-api"
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
