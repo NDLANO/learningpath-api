@@ -89,8 +89,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       tags = List(LearningPathTags(Seq("disney", "kanfly"), Some("nb")))
     )
 
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(api.License("publicdomain", None, None)))
-
 
     val settings = Settings.settingsBuilder()
       .put("path.home", esDataDir)

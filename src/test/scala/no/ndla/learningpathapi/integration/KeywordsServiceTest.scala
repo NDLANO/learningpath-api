@@ -54,10 +54,6 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That forRequest returns list of tags for parseable response") {
     val resp = mock[HttpResponse[String]]
     when(resp.isError).thenReturn(false)
-    when(mappingApiClient.get6391CodeFor6392Code("nob")).thenReturn(Some("nb"))
-    when(mappingApiClient.get6391CodeFor6392Code("nno")).thenReturn(Some("nn"))
-    when(mappingApiClient.get6391CodeFor6392Code("eng")).thenReturn(Some("en"))
-    when(mappingApiClient.get6391CodeFor6392Code("language-neutral")).thenReturn(None)
 
     when(resp.body).thenReturn(parseableResponse)
     val tagsList = service.forRequest(mockRequestWithResponse(resp))
@@ -75,17 +71,14 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That getISO639 returns None for uparseable language string") {
-    when(mappingApiClient.get6391CodeFor6392Code("klingon")).thenReturn(None)
     service.getISO639("klingon") should be(None)
   }
 
   test("That getISO639 returns None for unknown language") {
-    when(mappingApiClient.get6391CodeFor6392Code("klingon")).thenReturn(None)
     service.getISO639("http://psi.oasis-open.org/iso/639/#klingon") should be(None)
   }
 
   test("That getISO639 returns correct language for known language") {
-    when(mappingApiClient.get6391CodeFor6392Code("eng")).thenReturn(Some("en"))
     service.getISO639("http://psi.oasis-open.org/iso/639/#eng") should be(Some("en"))
   }
 

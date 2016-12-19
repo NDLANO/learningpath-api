@@ -211,7 +211,6 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     validMock()
     val invalidLicense = "dummy license"
     val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
-    when(mappingApiClient.getLicense(invalidLicense)).thenReturn(None)
     val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(copyright = invalidCopyright))
 
     validationErrors.size should be (1)
