@@ -11,7 +11,6 @@ package no.ndla.learningpathapi.service
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.EmbedType
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 

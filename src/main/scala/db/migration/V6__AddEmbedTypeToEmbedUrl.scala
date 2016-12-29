@@ -37,8 +37,6 @@ class V6__AddEmbedTypeToEmbedUrl extends JdbcMigration {
 
     val embedUrl = json \\ "embedUrl"
     val oldEmbedUrl: Option[List[V6_OldEmbedUrl]] = embedUrl.extractOpt[List[V6_OldEmbedUrl]]
-    println(embedUrl)
-    println(oldEmbedUrl)
 
     oldEmbedUrl match {
       case Some(embed) => {
