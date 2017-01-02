@@ -1,11 +1,15 @@
+/*
+ * Part of NDLA learningpath_api.
+ * Copyright (C) 2016 NDLA
+ *
+ * See LICENSE
+ *
+ */
 package db.migration
 
 import no.ndla.learningpathapi.UnitSuite
 
-/**
-  * Created by chrpeter on 25/12/2016.
-  */
-class V6__AddEmbedTypeToEmbedUrlTest extends UnitSuite{
+class V6__AddEmbedTypeToEmbedUrlTest extends UnitSuite {
   val migration = new V6__AddEmbedTypeToEmbedUrl()
 
   test("That embedType is added to the embedurl object if exists") {
