@@ -38,13 +38,10 @@ class V6__AddEmbedTypeToEmbedUrl extends JdbcMigration {
     val embedUrl = json \\ "embedUrl"
     val oldEmbedUrl: Option[List[V6_OldEmbedUrl]] = embedUrl.extractOpt[List[V6_OldEmbedUrl]]
 
-    oldEmbedUrl match {
-      case Some(embed) => {
-        val newEmbedUrl = embed.map(oldEmbed => V6_EmbedUrl(oldEmbed.url, oldEmbed.language, "oembed"))
-        Some(learningStep.copy(document = compact(render(json.replace(List("embedUrl"), parse(write(newEmbedUrl)))))))
-      }
-      case None => None
-    }
+    oldEmbedUrl.flatMap(embed => {
+      val newEmbedUrl = embed.map(oldEmbed => V6_EmbedUrl(oldEmbed.url, oldEmbed.language, "oembed"))
+      Some(learningStep.copy(document = compact(render(json.replace(List("embedUrl"), parse(write(newEmbedUrl)))))))
+    })
   }
 
   def update(content: V6_DBContent)(implicit session: DBSession) = {

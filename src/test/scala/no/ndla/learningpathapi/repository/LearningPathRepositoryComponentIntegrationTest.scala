@@ -32,7 +32,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     None, None, None, None, 0,
     List(Title("UNIT-TEST", None)),
     List(Description("UNIT-TEST", None)),
-    List(EmbedUrl("http://www.vg.no", None, "oembed")),
+    List(EmbedUrl("http://www.vg.no", None, EmbedType.oembed)),
     StepType.TEXT, None, true, StepStatus.ACTIVE)
 
   override def beforeEach() = {

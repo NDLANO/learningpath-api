@@ -18,4 +18,13 @@ class V6__AddEmbedTypeToEmbedUrlTest extends UnitSuite{
     optConverted.get.document should equal(expectedAfter)
   }
 
+
+  test("That nothing changes if embedUrl does not exist") {
+    val before = """{"title":[{"title":"test","language":"nb"}]}""".stripMargin.replace("\n", "")
+    val learningStep = V6_DBContent(3, before)
+
+    val optConverted = migration.convertDocumentToNewFormat(learningStep)
+    optConverted.isDefined should be(false)
+  }
+
 }
