@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Sort}
 import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, TestEnvironment, UnitSuite}
+import no.ndla.mapping.License.getLicenses
 import org.json4s.native.Serialization._
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
@@ -27,8 +28,6 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
   val copyright = Copyright(License("by-sa", None, None), List())
   val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""), copyright, None)
-  val creativeCommonlicenses = Seq(License("by-sa", None, None), License("by-nd", None, None), License("by-nc", None, None))
-  val licenses = Seq(License("by-sa", None, None), License("by-nd", None, None), License("by-nc", None, None), License("Copyright", None, None))
 
   lazy val controller = new LearningpathController
   addServlet(controller, "/*")
@@ -120,24 +119,24 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   }
 
   test ("That GET /licenses with filter sat to by only returns creative common licenses") {
-    when(mappingApiClient.getLicenses(Some("by"))).thenReturn(creativeCommonlicenses)
+    val creativeCommonlicenses = getLicenses.filter(_.license.startsWith("by")).map(l => License(l.license, Option(l.description), l.url)).toSet
 
     get("/licenses", Map(
       "filter" -> "by"
     )) {
       status should equal (200)
-      val convertedBody = read[Seq[License]](body)
+      val convertedBody = read[Set[License]](body)
       convertedBody should equal(creativeCommonlicenses)
     }
   }
 
   test ("That GET /licenses with filter not specified returns all licenses") {
-    when(mappingApiClient.getLicenses(None)).thenReturn(licenses)
+    val allLicenses = getLicenses.map(l => License(l.license, Option(l.description), l.url)).toSet
 
     get("/licenses", Map()) {
       status should equal (200)
-      val convertedBody = read[Seq[License]](body)
-      convertedBody should equal(licenses)
+      val convertedBody = read[Set[License]](body)
+      convertedBody should equal(allLicenses)
     }
   }
 }
