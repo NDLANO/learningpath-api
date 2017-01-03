@@ -21,11 +21,12 @@ import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 
 import scala.reflect.io.Path
+import scala.util.Random
 
 
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
-  val esHttpPort = 29999
+  val esHttpPort = new Random(System.currentTimeMillis()).nextInt(30000 - 20000) + 20000
   val esDataDir = "esTestData"
   var esNode: Node = _
 
@@ -98,6 +99,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       .put("index.number_of_shards", "1")
       .put("index.number_of_replicas", "0")
       .put("http.port", esHttpPort)
+      .put("cluster.name", getClass.getName)
       .build()
 
     esNode = new NodeBuilder().settings(settings).node()
