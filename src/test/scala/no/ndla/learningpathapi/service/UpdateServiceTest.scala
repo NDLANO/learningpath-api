@@ -65,7 +65,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That addLearningPath inserts the given LearningPath") {
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     val saved = service.addLearningPath(NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
     assert(saved.id == PRIVATE_LEARNINGPATH.id.get)
@@ -84,7 +83,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPath updates the learningpath when the given user is the owner if the status is PRIVATE") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult(PRIVATE_LEARNINGPATH.id.get){
       service.updateLearningPath(PRIVATE_ID, UPDATED_PRIVATE_LEARNINGPATH, PRIVATE_OWNER).get.id
@@ -97,7 +95,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPath updates the learningpath when the given user is the owner if the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult(PUBLISHED_LEARNINGPATH.id.get){
       service.updateLearningPath(PUBLISHED_ID, UPDATED_PUBLISHED_LEARNINGPATH, PUBLISHED_OWNER).get.id
@@ -123,7 +120,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PRIVATE))
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("PRIVATE"){
       service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER).get.status
@@ -135,7 +131,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = domain.LearningPathStatus.DELETED))
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("DELETED"){
       service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.DELETED, PRIVATE_OWNER).get.status
@@ -146,7 +141,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is DELETED") {
     when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(Some(DELETED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(DELETED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PUBLISHED))
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     assertResult("PUBLISHED"){
       service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER).get.status
@@ -499,7 +493,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH_NO_STEPS))
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
     val expectedNewLearningPath = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(
@@ -522,7 +515,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH_NO_STEPS))
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     val titlesToOverride = List(api.Title("Overridden title", Some("nb")))
     val descriptionsToOverride = List(api.Description("Overridden description", Some("nb")))
@@ -566,7 +558,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
-    when(mappingApiClient.getLicense("publicdomain")).thenReturn(Some(License("publicdomain", Some("description"), Some("www.vg.no"))))
 
     service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
 

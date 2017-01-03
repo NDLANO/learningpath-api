@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi.service.search
 
-import no.ndla.learningpathapi.integration.{AuthClientComponent, ImageApiClientComponent, MappingApiClient}
+import no.ndla.learningpathapi.integration.{AuthClientComponent, ImageApiClientComponent}
 import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummary}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain._
@@ -18,7 +18,7 @@ import no.ndla.network.ApplicationUrl
 
 
 trait SearchConverterServiceComponent {
-  this: AuthClientComponent with ConverterServiceComponent with MappingApiClient with ImageApiClientComponent =>
+  this: AuthClientComponent with ConverterServiceComponent with ImageApiClientComponent =>
   val searchConverterService: SearchConverterService
 
   class SearchConverterService {

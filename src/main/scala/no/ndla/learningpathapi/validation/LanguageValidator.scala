@@ -8,20 +8,22 @@
 
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.integration.MappingApiClient
 import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain.ValidationException
+import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
 
 trait LanguageValidator {
-  this : MappingApiClient =>
   val languageValidator : LanguageValidator
 
   class LanguageValidator {
+    private def languageCodeSupported6391(languageCode: String): Boolean =
+      get6391CodeFor6392CodeMappings.exists(_._2 == languageCode)
+
     def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[ValidationMessage] = {
       languageCodeOpt match {
         case None => None
         case Some(languageCode) => {
-          languageCode.nonEmpty && mappingApiClient.languageCodeSupported6391(languageCode) match {
+          languageCode.nonEmpty && languageCodeSupported6391(languageCode) match {
             case true => None
             case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
           }

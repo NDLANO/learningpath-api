@@ -10,12 +10,12 @@ package no.ndla.learningpathapi.validation
 
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.integration.MappingApiClient
-import no.ndla.learningpathapi.model.api.{NewLearningPath, ValidationMessage}
+import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.mapping.License.getLicense
 
 trait LearningPathValidator {
-  this: LanguageValidator with MappingApiClient with TitleValidator =>
+  this: LanguageValidator with TitleValidator =>
   val learningPathValidator : LearningPathValidator
 
   class LearningPathValidator(titleRequired: Boolean = true, descriptionRequired: Boolean = true) {
@@ -90,8 +90,8 @@ trait LearningPathValidator {
     }
 
     def validateLicense(license: String): Seq[ValidationMessage] = {
-      mappingApiClient.getLicense(license) match {
-        case None => Seq(new ValidationMessage("license.license", s"${license} is not a valid license"))
+      getLicense(license) match {
+        case None => Seq(new ValidationMessage("license.license", s"$license is not a valid license"))
         case _ => Seq()
       }
     }

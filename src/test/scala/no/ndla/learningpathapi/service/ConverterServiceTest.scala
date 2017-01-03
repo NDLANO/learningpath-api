@@ -61,4 +61,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That asApiIntroduction returns an empty list if given a None") {
     service.asApiIntroduction(None) should equal(List())
   }
+
+  test("asApiLicense returns a License object for a given valid license") {
+    service.asApiLicense("by") should equal(License("by", Option("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")))
+  }
+
+  test("asApiLicense returns a default license object for an invalid license") {
+    service.asApiLicense("invalid") should equal(License("invalid", Option("Invalid license"), None))
+  }
 }

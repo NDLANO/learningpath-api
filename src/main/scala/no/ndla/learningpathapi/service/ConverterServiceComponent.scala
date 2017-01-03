@@ -11,11 +11,11 @@ package no.ndla.learningpathapi.service
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model._
 import no.ndla.network.ApplicationUrl
+import no.ndla.mapping.License.getLicense
 
 trait ConverterServiceComponent {
-  this: AuthClientComponent with ImageApiClientComponent with MappingApiClient =>
+  this: AuthClientComponent with ImageApiClientComponent =>
 
   val converterService: ConverterService
 
@@ -45,8 +45,8 @@ trait ConverterServiceComponent {
     }
 
     def asApiLicense(license: String): api.License =
-      mappingApiClient.getLicense(license) match {
-        case Some(l) => api.License(l.license, l.description, l.url)
+      getLicense(license) match {
+        case Some(l) => api.License(l.license, Option(l.description), l.url)
         case None => api.License(license, Some("Invalid license"), None)
       }
 
