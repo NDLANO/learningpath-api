@@ -22,7 +22,7 @@ trait ConverterServiceComponent {
 
   class ConverterService {
     def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
-      domain.EmbedUrl(embedUrl.url, embedUrl.language, EmbedType.valueOfOrDefault(embedUrl.embedType))
+      domain.EmbedUrl(embedUrl.url, embedUrl.language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def asDescription(description: api.Description): domain.Description = {

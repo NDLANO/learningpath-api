@@ -16,7 +16,8 @@ case class EmbedUrl(url:String, language:Option[String], embedType: EmbedType.Va
 
 object EmbedType extends Enumeration {
 
-  val oembed, lti = Value
+  val OEmbed = Value("oembed")
+  val LTI = Value("lti")
 
   def valueOf(s: String): Option[EmbedType.Value] = {
     EmbedType.values.find(_.toString == s)
@@ -25,11 +26,11 @@ object EmbedType extends Enumeration {
   def valueOfOrError(embedType: String): EmbedType.Value = {
     valueOf(embedType) match {
       case Some(s) => s
-      case None => throw new ValidationException(errors = List(ValidationMessage("status", s"'$embedType' is not a valid status.")))
+      case None => throw new ValidationException(errors = List(ValidationMessage("embedType", s"'$embedType' is not a valid embed type.")))
     }
   }
 
   def valueOfOrDefault(s: String): EmbedType.Value = {
-    valueOf(s).getOrElse(EmbedType.oembed)
+    valueOf(s).getOrElse(EmbedType.OEmbed)
   }
 }
