@@ -25,7 +25,7 @@ case class LearningPath(id: Option[Long],
                         isBasedOn: Option[Long],
                         title: Seq[Title],
                         description: Seq[Description],
-                        coverPhotoMetaUrl: Option[String],
+                        coverPhotoId: Option[String],
                         duration: Option[Int],
                         status: LearningPathStatus.Value,
                         verificationStatus: LearningPathVerificationStatus.Value,
@@ -129,7 +129,7 @@ object LearningPath extends SQLSyntaxSupport[LearningPath] {
   def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
     val meta = read[LearningPath](rs.string(lp.c("document")))
     LearningPath(
-      Some(rs.long(lp.c("id"))), Some(rs.int(lp.c("revision"))), rs.stringOpt(lp.c("external_id")), meta.isBasedOn, meta.title, meta.description, meta.coverPhotoMetaUrl, meta.duration,
+      Some(rs.long(lp.c("id"))), Some(rs.int(lp.c("revision"))), rs.stringOpt(lp.c("external_id")), meta.isBasedOn, meta.title, meta.description, meta.coverPhotoId, meta.duration,
       meta.status, meta.verificationStatus, meta.lastUpdated, meta.tags, meta.owner, meta.copyright)
   }
 

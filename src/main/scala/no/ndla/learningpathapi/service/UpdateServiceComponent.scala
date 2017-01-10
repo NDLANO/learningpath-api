@@ -14,7 +14,7 @@ import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, Learning
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
-
+import com.netaporter.uri.dsl._
 
 trait UpdateServiceComponent {
   this: LearningPathRepositoryComponent with ConverterServiceComponent with SearchIndexServiceComponent with Clock with LearningStepValidator with LearningPathValidator =>
@@ -30,7 +30,7 @@ trait UpdateServiceComponent {
           val title = mergeLanguageFields[Title](existing.title, newLearningPath.title.map(converterService.asTitle))
           val description = mergeLanguageFields(existing.description, newLearningPath.description.map(converterService.asDescription))
           val tags = if(newLearningPath.tags.nonEmpty) newLearningPath.tags.map(converterService.asLearningPathTags) else existing.tags
-          val coverPhotoMetaUrl = if(newLearningPath.coverPhotoMetaUrl.nonEmpty) newLearningPath.coverPhotoMetaUrl else existing.coverPhotoMetaUrl
+          val coverPhotoId = newLearningPath.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId)
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
           val copyright = newLearningPath.copyright.map(converterService.asCopyright).getOrElse(existing.copyright)
 
@@ -48,7 +48,7 @@ trait UpdateServiceComponent {
             copyright = copyright,
             learningsteps = existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
             tags = tags,
-            coverPhotoMetaUrl = coverPhotoMetaUrl,
+            coverPhotoId = coverPhotoId,
             duration = duration)
           learningPathValidator.validate(toInsert)
           Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
@@ -60,7 +60,7 @@ trait UpdateServiceComponent {
       val learningPath = domain.LearningPath(None, None, None, None,
         newLearningPath.title.map(converterService.asTitle),
         newLearningPath.description.map(converterService.asDescription),
-        newLearningPath.coverPhotoMetaUrl,
+        newLearningPath.coverPhotoMetaUrl.flatMap(extractImageId),
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
         clock.now(), newLearningPath.tags.map(converterService.asLearningPathTags), owner,
@@ -68,6 +68,16 @@ trait UpdateServiceComponent {
       learningPathValidator.validate(learningPath)
 
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
+    }
+
+    private def extractImageId(url: String): Option[String] = {
+      learningPathValidator.validateCoverPhoto(url) match {
+        case Some(err) => throw new ValidationException(errors=Seq(err))
+        case _ =>
+      }
+
+      val pattern = """.*/images/(\d+)""".r
+      pattern.findFirstMatchIn(url.path).map(_.group(1))
     }
 
     def mergeLanguageFields[A <: LanguageField](existing: Seq[A], updated: Seq[A]): Seq[A] = {
@@ -88,7 +98,7 @@ trait UpdateServiceComponent {
             revision = Some(learningPathToUpdate.revision),
             title = mergeLanguageFields(existing.title, learningPathToUpdate.title.map(converterService.asTitle)),
             description = mergeLanguageFields(existing.description, learningPathToUpdate.description.map(converterService.asDescription)),
-            coverPhotoMetaUrl = if(learningPathToUpdate.coverPhotoMetaUrl.isDefined) learningPathToUpdate.coverPhotoMetaUrl else existing.coverPhotoMetaUrl,
+            coverPhotoId = learningPathToUpdate.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId),
             duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
             tags = mergeLearningPathTags(existing.tags, learningPathToUpdate.tags.map(converterService.asLearningPathTags)),
             copyright = converterService.asCopyright(learningPathToUpdate.copyright),
