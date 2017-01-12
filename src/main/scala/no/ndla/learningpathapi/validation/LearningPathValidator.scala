@@ -66,7 +66,7 @@ trait LearningPathValidator {
         val host = parsedUrl.host
 
         val hostCorrect = host.getOrElse("").endsWith("ndla.no")
-        val pathCorrect = parsedUrl.path.startsWith("/images")
+        val pathCorrect = parsedUrl.path.startsWith("/image-api/v")
 
         hostCorrect && pathCorrect match {
           case true => None

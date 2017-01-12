@@ -33,7 +33,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
-    coverPhotoMetaUrl = Some(s"http://api.ndla.no/images/1"),
+    coverPhotoMetaUrl = Some(s"http://api.ndla.no/image-api/v1/images/1"),
     duration = Some(180),
     tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))),
     revision = None,
