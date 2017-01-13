@@ -11,17 +11,17 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.model.api.{Author, Copyright, LearningPath, License}
-import no.ndla.learningpathapi.model.domain.{Description, LearningStep, StepType}
+import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.ApplicationUrl
 import org.mockito.Mockito._
 
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
-  val clinton = Author("author", "Crooked Hillary")
-  val license = License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
-  val copyright = Copyright(license, List(clinton))
-  val apiLearningPath = LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), Author("", ""), copyright, true)
+  val clinton = api.Author("author", "Crooked Hillary")
+  val license = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
+  val copyright = api.Copyright(license, List(clinton))
+  val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), api.Author("", ""), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   var service: ConverterService = _
 
@@ -63,10 +63,20 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLicense returns a License object for a given valid license") {
-    service.asApiLicense("by") should equal(License("by", Option("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")))
+    service.asApiLicense("by") should equal(api.License("by", Option("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")))
   }
 
   test("asApiLicense returns a default license object for an invalid license") {
-    service.asApiLicense("invalid") should equal(License("invalid", Option("Invalid license"), None))
+    service.asApiLicense("invalid") should equal(api.License("invalid", Option("Invalid license"), None))
+  }
+
+  test("asEmbedUrl returns embedUrl if embedType is oembed") {
+    service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", Some("nb"), "oembed")) should equal(EmbedUrl("http://test.no/2/oembed/", Some("nb"), EmbedType.OEmbed))
+  }
+
+  test("asEmbedUrl throws error if an not allowed value for embedType is used") {
+    assertResult("Validation Error") {
+      intercept[ValidationException] { service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", Some("nb"), "test")) }.getMessage()
+    }
   }
 }
