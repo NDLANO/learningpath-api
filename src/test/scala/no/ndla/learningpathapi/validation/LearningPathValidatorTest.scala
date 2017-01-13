@@ -33,7 +33,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
-    coverPhotoMetaUrl = Some(s"${LearningpathApiProperties.Domain}/images/1"),
+    coverPhotoMetaUrl = Some(s"http://api.ndla.no/image-api/v1/images/1"),
     duration = Some(180),
     tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))),
     revision = None,
@@ -64,7 +64,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
 
   test("That validate returns an error when metaUrl is pointing to some another api on ndla") {
     validMock()
-    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some(s"${LearningpathApiProperties.Domain}/h5p/1")))
+    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some(s"http://api.ndla.no/h5p/1")))
     validationError.size should be (1)
     validationError.head.field should equal("coverPhotoMetaUrl")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
@@ -80,7 +80,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
 
   test("That validate returns an error when metaUrl is pointing to another Domain") {
     validMock()
-    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some("http://api.supertest.ndla.no/images/1")))
+    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some("http://api.vg.no/images/1")))
     validationError.size should be (1)
     validationError.head.field should equal("coverPhotoMetaUrl")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")

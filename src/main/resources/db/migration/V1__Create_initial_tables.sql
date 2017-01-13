@@ -6,7 +6,7 @@ CREATE TABLE learningpaths (
 
 CREATE TABLE learningsteps (
   id BIGSERIAL PRIMARY KEY,
-  learning_path_id BIGSERIAL REFERENCES learningpathapi.learningpaths(id) ON DELETE CASCADE,
+  learning_path_id BIGSERIAL REFERENCES learningpaths(id) ON DELETE CASCADE,
   external_id TEXT,
   document JSONB
 );

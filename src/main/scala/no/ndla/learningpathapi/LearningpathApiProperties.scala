@@ -10,44 +10,29 @@ package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.Language
-import scala.collection.mutable
-import scala.io.Source
+import no.ndla.network.secrets.PropertyKeys
+import no.ndla.network.secrets.Secrets.readSecrets
+
+import scala.util.Properties._
+import scala.util.{Failure, Success}
 object LearningpathApiProperties extends LazyLogging {
 
-  var LearningpathApiProps: mutable.Map[String, Option[String]] = mutable.HashMap()
+  val SecretsFile = "learningpath-api.secrets"
 
-  lazy val ApplicationPort = getInt("APPLICATION_PORT")
-  lazy val ContactEmail = get("CONTACT_EMAIL")
-  lazy val HostAddr = get("HOST_ADDR")
-  lazy val Domain = get("DOMAIN")
+  val ApplicationPort = 80
+  val ContactEmail = "christergundersen@ndla.no"
 
-  lazy val MetaUserName = get("DB_USER_NAME")
-  lazy val MetaPassword = get("DB_PASSWORD")
-  lazy val MetaResource = get("DB_RESOURCE")
-  lazy val MetaServer = get("DB_SERVER")
-  lazy val MetaPort = getInt("DB_PORT")
-  lazy val MetaSchema = get("DB_SCHEMA")
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
 
-  val SearchHost = "search-engine"
-  lazy val SearchServer = get("SEARCH_SERVER")
-  lazy val SearchRegion = get("SEARCH_REGION")
-  lazy val RunWithSignedSearchRequests = getBoolean("RUN_WITH_SIGNED_SEARCH_REQUESTS")
-  lazy val SearchPort = get("SEARCH_ENGINE_ENV_TCP_PORT")
-  lazy val SearchClusterName = get("SEARCH_ENGINE_ENV_CLUSTER_NAME")
-  lazy val SearchIndex = get("SEARCH_INDEX")
-  lazy val SearchDocument = get("SEARCH_DOCUMENT")
-  lazy val DefaultPageSize: Int = getInt("SEARCH_DEFAULT_PAGE_SIZE")
-  lazy val MaxPageSize: Int = getInt("SEARCH_MAX_PAGE_SIZE")
-  lazy val IndexBulkSize = getInt("INDEX_BULK_SIZE")
+  val SearchIndex = "learningpaths"
+  val SearchDocument = "learningpath"
+  val DefaultPageSize = 10
+  val MaxPageSize = 100
+  val IndexBulkSize = 1000
 
-  lazy val MigrationHost = get("MIGRATION_HOST")
-  lazy val MigrationUser = get("MIGRATION_USER")
-  lazy val MigrationPassword = get("MIGRATION_PASSWORD")
-
-  val AuthHost = "auth"
-  val ImageApiHost = "image-api"
+  val AuthHost = "auth.ndla-local"
+  val ImageApiHost = "image-api.ndla-local"
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
 
@@ -61,46 +46,40 @@ object LearningpathApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
-  def setProperties(properties: Map[String, Option[String]]) = {
-    properties.foreach(prop => LearningpathApiProps.put(prop._1, prop._2))
+  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
+
+  val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
+  val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
+  val MetaResource = prop(PropertyKeys.MetaResourceKey)
+  val MetaServer = prop(PropertyKeys.MetaServerKey)
+  val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
+  val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
+
+  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
+  val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
+  val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
+
+  val MigrationHost = prop("MIGRATION_HOST")
+  val MigrationUser = prop("MIGRATION_USER")
+  val MigrationPassword = prop("MIGRATION_PASSWORD")
+
+  lazy val secrets = readSecrets(SecretsFile) match {
+     case Success(values) => values
+     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+   }
+
+  def prop(key: String): String = {
+    propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
   }
 
-  def verify() = {
-    val missingProperties = LearningpathApiProps.filter(entry => entry._2.isEmpty).toList
-    if (missingProperties.nonEmpty) {
-      missingProperties.foreach(entry => logger.error("Missing required environment variable {}", entry._1))
-
-      logger.error("Shutting down.")
-      System.exit(1)
+  def propOrElse(key: String, default: => String): String = {
+    secrets.get(key).flatten match {
+      case Some(secret) => secret
+      case None =>
+        envOrNone(key) match {
+          case Some(env) => env
+          case None => default
+        }
     }
-  }
-
-  private def get(envKey: String): String = {
-    LearningpathApiProps.get(envKey).flatten match {
-      case Some(value) => value
-      case None => throw new NoSuchFieldError(s"Missing environment variable $envKey")
-    }
-  }
-
-  private def getInt(envKey: String): Integer = {
-    get(envKey).toInt
-  }
-
-  private def getBoolean(envKey: String): Boolean = {
-    get(envKey).toBoolean
-  }
-}
-
-object PropertiesLoader {
-  val EnvironmentFile = "/learningpath-api.env"
-
-  private def readPropertyFile(): Map[String, Option[String]] = {
-    val keys = Source.fromInputStream(getClass.getResourceAsStream(EnvironmentFile)).getLines().withFilter(line => line.matches("^\\w+$"))
-    keys.map(key => key -> scala.util.Properties.envOrNone(key)).toMap
-  }
-
-  def load() = {
-    LearningpathApiProperties.setProperties(readPropertyFile())
-    LearningpathApiProperties.verify()
   }
 }

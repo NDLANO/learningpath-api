@@ -519,7 +519,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     val titlesToOverride = List(api.Title("Overridden title", Some("nb")))
     val descriptionsToOverride = List(api.Description("Overridden description", Some("nb")))
     val tagsToOverride = List(api.LearningPathTags(Seq("Overridden tag"), Some("nb")))
-    val coverPhotoToOverride = Some(s"${LearningpathApiProperties.Domain}/images/someImage")
+    val coverPhotoToOverride = Some(s"http://api.ndla.no/images/someImage")
     val durationOverride = Some(100)
 
     service.newFromExisting(PUBLISHED_ID,

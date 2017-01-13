@@ -199,15 +199,15 @@ trait ImportServiceComponent {
         LearningPathVerificationStatus.CREATED_BY_NDLA,
         lastUpdated,
         tags,
-        getOwnerForEnvironment(LearningpathApiProperties.Domain),
+        getOwnerForEnvironment(LearningpathApiProperties.Environment),
         Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
         learningSteps)
     }
 
     def getOwnerForEnvironment(environment: String): String = {
       environment match {
-        case s if s.contains("api.ndla.no") => ChristerProd
-        case s if s.contains("api.staging.ndla.no") => ChristerStaging
+        case "prod" => ChristerProd
+        case "staging" => ChristerStaging
         case _ => ChristerTest
       }
     }
