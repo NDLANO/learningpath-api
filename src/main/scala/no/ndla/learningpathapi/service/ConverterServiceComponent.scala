@@ -13,6 +13,7 @@ import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.CoverPhoto
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.ExternalImageApiUrl
+import no.ndla.learningpathapi.model.domain.EmbedType
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 
@@ -23,7 +24,7 @@ trait ConverterServiceComponent {
 
   class ConverterService {
     def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
-      domain.EmbedUrl(embedUrl.url, embedUrl.language)
+      domain.EmbedUrl(embedUrl.url, embedUrl.language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def asDescription(description: api.Description): domain.Description = {
@@ -152,7 +153,7 @@ trait ConverterServiceComponent {
     }
 
     def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
-      api.EmbedUrl(embedUrl.url, embedUrl.language)
+      api.EmbedUrl(embedUrl.url, embedUrl.language, embedUrl.embedType.toString)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {

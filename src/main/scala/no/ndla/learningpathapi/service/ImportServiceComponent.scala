@@ -164,11 +164,11 @@ trait ImportServiceComponent {
     }
 
     def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
-      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, Some(url.language)))
+      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, Some(url.language), EmbedType.OEmbed))
       step.embedUrlToNdlaNo match {
         case None => translationUrls
         case Some(url) => {
-          Seq(EmbedUrl(url, Some(step.language))) ++ translationUrls
+          Seq(EmbedUrl(url, Some(step.language), EmbedType.OEmbed)) ++ translationUrls
         }
       }
     }
