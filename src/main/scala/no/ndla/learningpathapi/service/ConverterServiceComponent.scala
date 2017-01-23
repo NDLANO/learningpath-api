@@ -10,7 +10,9 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.model.api.CoverPhoto
 import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.LearningpathApiProperties.ExternalImageApiUrl
 import no.ndla.learningpathapi.model.domain.EmbedType
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
@@ -60,8 +62,9 @@ trait ConverterServiceComponent {
       api.Author("Forfatter", names.mkString(" "))
     }
 
-    def asCoverPhoto(metaUrl: String, imageMeta: Option[ImageMetaInformation]): Option[api.CoverPhoto] = {
-      imageMeta.map(image => api.CoverPhoto(image.imageUrl, metaUrl))
+    def asCoverPhoto(imageId: String): Option[CoverPhoto] = {
+      imageApiClient.imageMetaOnUrl(createUrlToImageApi(imageId))
+        .map(imageMeta => api.CoverPhoto(imageMeta.imageUrl, imageMeta.metaUrl))
     }
 
     def asCopyright(copyright: api.Copyright): domain.Copyright = {
@@ -81,7 +84,7 @@ trait ConverterServiceComponent {
         createUrlToLearningPath(lp),
         lp.learningsteps.map(ls => asApiLearningStepSummary(ls, lp)).toList.sortBy(_.seqNo),
         createUrlToLearningSteps(lp),
-        lp.coverPhotoMetaUrl.flatMap(metaUrl => asCoverPhoto(metaUrl, imageApiClient.imageMetaOnUrl(metaUrl))),
+        lp.coverPhotoId.flatMap(asCoverPhoto),
         lp.duration,
         lp.status.toString,
         lp.verificationStatus.toString,
@@ -105,7 +108,7 @@ trait ConverterServiceComponent {
         learningpath.description.map(asApiDescription),
         asApiIntroduction(learningpath.learningsteps.find(_.`type` == domain.StepType.INTRODUCTION)),
         createUrlToLearningPath(learningpath),
-        learningpath.coverPhotoMetaUrl.flatMap(metaUrl => asCoverPhoto(metaUrl, imageApiClient.imageMetaOnUrl(metaUrl)).map(_.url)),
+        learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
         learningpath.duration,
         learningpath.status.toString,
         learningpath.lastUpdated,
@@ -167,6 +170,10 @@ trait ConverterServiceComponent {
 
     def createUrlToLearningPath(lp: api.LearningPath): String = {
       s"${ApplicationUrl.get}${lp.id}"
+    }
+
+    def createUrlToImageApi(imageId: String): String = {
+      s"$ExternalImageApiUrl/$imageId"
     }
   }
 }

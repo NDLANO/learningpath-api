@@ -37,7 +37,6 @@ trait LearningPathValidator {
       titleValidator.validate(newLearningPath.title) ++
         validateDescription(newLearningPath.description) ++
         validateDuration(newLearningPath.duration).toList ++
-        validateCoverPhoto(newLearningPath.coverPhotoMetaUrl).toList ++
         validateTags(newLearningPath.tags) ++
         validateCopyright(newLearningPath.copyright)
     }
@@ -60,19 +59,17 @@ trait LearningPathValidator {
       }
     }
 
-    def validateCoverPhoto(coverPhotoMetaUrl: Option[String]): Option[ValidationMessage] = {
-      coverPhotoMetaUrl.flatMap(url => {
-        val parsedUrl = parse(url)
-        val host = parsedUrl.host
+    def validateCoverPhoto(coverPhotoMetaUrl: String): Option[ValidationMessage] = {
+      val parsedUrl = parse(coverPhotoMetaUrl)
+      val host = parsedUrl.host
 
-        val hostCorrect = host.getOrElse("").endsWith("ndla.no")
-        val pathCorrect = parsedUrl.path.startsWith("/image-api/v")
+      val hostCorrect = host.getOrElse("").endsWith("ndla.no")
+      val pathCorrect = parsedUrl.path.startsWith("/image-api/v")
 
-        hostCorrect && pathCorrect match {
-          case true => None
-          case false => Some(ValidationMessage("coverPhotoMetaUrl", INVALID_COVER_PHOTO))
-        }
-      })
+      hostCorrect && pathCorrect match {
+        case true => None
+        case false => Some(ValidationMessage("coverPhotoMetaUrl", INVALID_COVER_PHOTO))
+      }
     }
 
     def validateTags(tags: Seq[LearningPathTags]): Seq[ValidationMessage] = {

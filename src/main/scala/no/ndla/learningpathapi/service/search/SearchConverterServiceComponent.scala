@@ -104,7 +104,7 @@ trait SearchConverterServiceComponent {
         learningPath.id.get,
         asSearchableTitles(learningPath.title),
         asSearchableDescriptions(learningPath.description),
-        learningPath.coverPhotoMetaUrl.flatMap(meta => converterService.asCoverPhoto(meta, imageApiClient.imageMetaOnUrl(meta)).map(_.url)),
+        learningPath.coverPhotoId.flatMap(converterService.asCoverPhoto).map(_.url),
         learningPath.duration,
         learningPath.status.toString,
         learningPath.verificationStatus.toString,

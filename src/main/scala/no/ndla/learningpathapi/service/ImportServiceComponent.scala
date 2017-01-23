@@ -91,7 +91,7 @@ trait ImportServiceComponent {
           learningPathRepository.update(existingLearningPath.copy(
             title = learningPath.title,
             description = learningPath.description,
-            coverPhotoMetaUrl = learningPath.coverPhotoMetaUrl,
+            coverPhotoId = learningPath.coverPhotoId,
             duration = learningPath.duration,
             lastUpdated = learningPath.lastUpdated,
             tags = learningPath.tags,
@@ -193,7 +193,7 @@ trait ImportServiceComponent {
         None,
         titles,
         descriptions,
-        imageUrl.map(_.metaUrl),
+        imageUrl.map(_.id),
         duration,
         LearningPathStatus.PUBLISHED,
         LearningPathVerificationStatus.CREATED_BY_NDLA,

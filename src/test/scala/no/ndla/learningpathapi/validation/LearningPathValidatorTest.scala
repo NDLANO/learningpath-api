@@ -33,7 +33,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
     description = List(Description("Gyldig beskrivelse", Some("nb"))),
-    coverPhotoMetaUrl = Some(s"http://api.ndla.no/image-api/v1/images/1"),
+    coverPhotoId = Some(s"http://api.ndla.no/image-api/v1/images/1"),
     duration = Some(180),
     tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))),
     revision = None,
@@ -58,29 +58,29 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   test("That validate returns no error for no coverPhoto") {
     validMock()
     validator.validateLearningPath(ValidLearningPath.copy(
-      coverPhotoMetaUrl = None
+      coverPhotoId = None
     )) should be(List())
   }
 
-  test("That validate returns an error when metaUrl is pointing to some another api on ndla") {
+  test("That validateCoverPhoto returns an error when metaUrl is pointing to some another api on ndla") {
     validMock()
-    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some(s"http://api.ndla.no/h5p/1")))
+    val validationError = validator.validateCoverPhoto(s"http://api.ndla.no/h5p/1")
     validationError.size should be (1)
     validationError.head.field should equal("coverPhotoMetaUrl")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
   }
 
-  test("That validate returns an error when metaUrl is pointing to empty string") {
+  test("That validateCoverPhoto returns an error when metaUrl is pointing to empty string") {
     validMock()
-    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some("")))
+    val validationError = validator.validateCoverPhoto("")
     validationError.size should be (1)
     validationError.head.field should equal("coverPhotoMetaUrl")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")
   }
 
-  test("That validate returns an error when metaUrl is pointing to another Domain") {
+  test("That validateCoverPhoto returns an error when metaUrl is pointing to another Domain") {
     validMock()
-    val validationError = validator.validateLearningPath(ValidLearningPath.copy(coverPhotoMetaUrl = Some("http://api.vg.no/images/1")))
+    val validationError = validator.validateCoverPhoto("http://api.vg.no/images/1")
     validationError.size should be (1)
     validationError.head.field should equal("coverPhotoMetaUrl")
     validationError.head.message should equal("The url to the coverPhoto must point to an image in NDLA Image API.")

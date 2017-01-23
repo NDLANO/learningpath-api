@@ -15,12 +15,19 @@ import no.ndla.network.secrets.Secrets.readSecrets
 
 import scala.util.Properties._
 import scala.util.{Failure, Success}
+
 object LearningpathApiProperties extends LazyLogging {
 
   val SecretsFile = "learningpath-api.secrets"
 
   val ApplicationPort = 80
   val ContactEmail = "christergundersen@ndla.no"
+
+  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
+  val Domain = Map(
+    "local" -> "http://localhost",
+    "prod" -> "http://api.ndla.no"
+  ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
 
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
@@ -33,6 +40,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val AuthHost = "auth.ndla-local"
   val ImageApiHost = "image-api.ndla-local"
+  val ExternalImageApiUrl = s"$Domain/image-api/v1/images"
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
 
@@ -45,8 +53,6 @@ object LearningpathApiProperties extends LazyLogging {
 
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
-
-  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
 
   val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
   val MetaPassword = prop(PropertyKeys.MetaPasswordKey)

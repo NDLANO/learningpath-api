@@ -43,7 +43,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     revision = None, externalId = None, isBasedOn = None,
     title = List(),
     description = List(),
-    coverPhotoMetaUrl = None,
+    coverPhotoId = None,
     duration = Some(0),
     status = LearningPathStatus.PUBLISHED,
     verificationStatus = LearningPathVerificationStatus.EXTERNAL,
