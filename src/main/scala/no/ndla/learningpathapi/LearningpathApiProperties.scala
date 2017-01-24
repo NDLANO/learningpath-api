@@ -12,6 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.Language
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
+import no.ndla.network.Domains
 
 import scala.util.Properties._
 import scala.util.{Failure, Success}
@@ -24,10 +25,7 @@ object LearningpathApiProperties extends LazyLogging {
   val ContactEmail = "christergundersen@ndla.no"
 
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
-  val Domain = Map(
-    "local" -> "http://localhost",
-    "prod" -> "http://api.ndla.no"
-  ).getOrElse(Environment, s"http://api.$Environment.ndla.no")
+  val Domain = Domains.get(Environment)
 
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
