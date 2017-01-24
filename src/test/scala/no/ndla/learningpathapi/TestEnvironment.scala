@@ -15,7 +15,7 @@ import no.ndla.learningpathapi.controller.{HealthController, LearningpathControl
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
 import no.ndla.learningpathapi.validation._
 import no.ndla.network.NdlaClient
 import org.mockito.Mockito
@@ -29,7 +29,6 @@ trait TestEnvironment
   with SearchConverterServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
-  with SearchIndexBuilderServiceComponent
   with NdlaClient
   with AuthClientComponent
   with ImageApiClientComponent
@@ -48,7 +47,6 @@ trait TestEnvironment
   with TitleValidator {
 
   val datasource = mock[DataSource]
-  val searchIndexBuilderService = mock[SearchIndexBuilderService]
 
   val learningPathRepository = mock[LearningPathRepository]
   val readService = mock[ReadService]
@@ -70,11 +68,11 @@ trait TestEnvironment
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
-  val jestClient = mock[JestClient]
+  val jestClient = mock[NdlaJestClient]
 
   def resetMocks() = {
     Mockito.reset(
-      datasource, searchIndexBuilderService, learningPathRepository, readService,
+      datasource, learningPathRepository, readService,
       updateService, searchService, searchIndexService, authClient, converterService, searchConverterService,
       languageValidator, titleValidator, jestClient
     )

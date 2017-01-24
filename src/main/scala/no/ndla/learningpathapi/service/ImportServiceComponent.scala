@@ -48,18 +48,8 @@ trait ImportServiceComponent {
       for {
         metaData <- migrationApiClient.getLearningPath(nodeId)
         converted <- Try(upload(metaData))
-        indexed <- indexLearningPath(converted)
+        indexed <- searchIndexService.indexDocument(converted)
       } yield converterService.asApiLearningpathSummary(converted)
-    }
-
-    def indexLearningPath(learningPath: LearningPath): Try[Unit] = {
-      Try(searchIndexService.indexLearningPath(learningPath)) match {
-        case Success(_) => Success()
-        case Failure(f) => {
-          logger.warn(s"Could not add learningpath with id ${learningPath.id} to search index. Try recreating the index. The error was ${f.getMessage}")
-          Success()
-        }
-      }
     }
 
     def upload(mainImport: MainPackageImport): LearningPath = {

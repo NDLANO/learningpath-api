@@ -168,7 +168,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def minMaxId(implicit session: DBSession = ReadOnlyAutoSession): (Long, Long) = {
-        sql"select min(id) as mi, max(id) as ma from learningpaths".map(rs => {
+        sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from learningpaths".map(rs => {
           (rs.long("mi"), rs.long("ma"))
         }).single().apply() match {
           case Some(minmax) => minmax
