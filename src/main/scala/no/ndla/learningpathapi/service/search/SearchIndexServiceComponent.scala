@@ -23,13 +23,16 @@ import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.domain.Language._
-import no.ndla.learningpathapi.model.domain.LearningPath
+import no.ndla.learningpathapi.model.domain.{LearningPath, NdlaSearchException, ReindexResult}
+import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization._
 
+import scala.util.{Failure, Success, Try}
+
 
 trait SearchIndexServiceComponent {
-  this: ElasticClientComponent with SearchConverterServiceComponent =>
+  this: ElasticClientComponent with SearchConverterServiceComponent with LearningPathRepositoryComponent =>
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
@@ -47,7 +50,93 @@ trait SearchIndexServiceComponent {
 
     implicit val formats = org.json4s.DefaultFormats
 
-    def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Int = {
+    def indexDocuments: Try[ReindexResult] = {
+      synchronized {
+        val start = System.currentTimeMillis()
+        createIndex().flatMap(indexName => {
+          val operations = for {
+            numIndexed <- sendToElastic(indexName)
+            aliasTarget <- aliasTarget
+            updatedTarget <- updateAliasTarget(aliasTarget, indexName)
+            deleted <- removeIndex(aliasTarget)
+          } yield numIndexed
+
+          operations match {
+            case Failure(f) => {
+              removeIndex(Some(indexName))
+              Failure(f)
+            }
+            case Success(totalIndexed) => {
+              Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
+            }
+          }
+        })
+      }
+    }
+
+    def indexDocument(learningPath: LearningPath): Try[LearningPath] = {
+      for {
+        _ <- aliasTarget.map {
+          case Some(index) => Success(index)
+          case None => createIndex().map(newIndex => updateAliasTarget(None, newIndex))
+        }
+        indexed <- {
+          val indexRequest = new Index.Builder(write(searchConverterService.asSearchableLearningpath(learningPath)))
+            .index(LearningpathApiProperties.SearchIndex)
+            .`type`(LearningpathApiProperties.SearchDocument)
+            .id(learningPath.id.get.toString).build
+
+          jestClient.execute(indexRequest).map(_ => learningPath)
+        }
+      } yield indexed
+    }
+
+    def deleteDocument(learningPath: LearningPath): Try[_] = {
+      for {
+        _ <- searchIndexService.aliasTarget.map {
+          case Some(index) => Success(index)
+          case None => createIndex().map(newIndex => updateAliasTarget(None, newIndex))
+        }
+        deleted <- {
+          jestClient.execute(
+            new Delete.Builder(s"${learningPath.id.get}").index(LearningpathApiProperties.SearchIndex).`type`(LearningpathApiProperties.SearchDocument).build()
+          )
+        }
+      } yield deleted
+    }
+
+    def createIndex(): Try[String] = {
+      val indexName = LearningpathApiProperties.SearchIndex + "_" + getTimestamp
+      if (indexExists(indexName).getOrElse(false)) {
+        Success(indexName)
+      } else {
+        val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
+        createIndexResponse.map(_ => createMapping(indexName)).map(_ => indexName)
+      }
+    }
+
+    private def sendToElastic(indexName: String): Try[Int] = {
+      var numIndexed = 0
+      getRanges.map(ranges => {
+        ranges.foreach(range => {
+          val numberInBulk = searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2), indexName)
+          numberInBulk match {
+            case Success(num) => numIndexed += num
+            case Failure(f) => return Failure(f)
+          }
+        })
+        numIndexed
+      })
+    }
+
+    private def getRanges:Try[List[(Long,Long)]] = {
+      Try{
+        val (minId, maxId) = learningPathRepository.minMaxId
+        Seq.range(minId, maxId).grouped(LearningpathApiProperties.IndexBulkSize).map(group => (group.head, group.last + 1)).toList
+      }
+    }
+
+    private def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Try[Int] = {
       val bulkBuilder = new Bulk.Builder()
       learningPaths.foreach(lp => {
         val source = write(searchConverterService.asSearchableLearningpath(lp))
@@ -55,82 +144,50 @@ trait SearchIndexServiceComponent {
       })
 
       val response = jestClient.execute(bulkBuilder.build())
-      if (!response.isSucceeded) {
-        throw new ElasticsearchException(s"Unable to index documents to ${LearningpathApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
-      }
-      logger.info(s"Indexed ${learningPaths.size} documents")
-      learningPaths.size
-    }
-
-    def indexLearningPath(learningPath: LearningPath): Unit = {
-
-      aliasTarget.foreach(indexName => {
-        val source = write(searchConverterService.asSearchableLearningpath(learningPath))
-        val indexReq = new Index.Builder(source).index(indexName).`type`(LearningpathApiProperties.SearchDocument).id(s"${learningPath.id.get}").build()
-        val response = jestClient.execute(indexReq)
-        if (!response.isSucceeded) {
-          throw new ElasticsearchException(s"Unable to index document with id ${learningPath.id} to ${LearningpathApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
-        }
+      response.map(_ => {
+        logger.info(s"Indexed ${learningPaths.size} documents")
+        learningPaths.size
       })
     }
 
-    def deleteLearningPath(learningPath: LearningPath): Unit = {
-      aliasTarget.foreach(indexName => {
-        val deleteReq = new Delete.Builder(s"${learningPath.id.get}").index(indexName).`type`(LearningpathApiProperties.SearchDocument).build()
-        val response = jestClient.execute(deleteReq)
-        if (!response.isSucceeded) {
-          throw new ElasticsearchException(s"Unable to delete document with id ${learningPath.id} from ${LearningpathApiProperties.SearchIndex}. ErrorMessage: {}", response.getErrorMessage)
-        }
-      })
-    }
-
-    def createNewIndex(): String = {
-      val indexName = LearningpathApiProperties.SearchIndex + "_" + getTimestamp
-      if (!indexExists(indexName)) {
-        val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName).build())
-        createIndexResponse.isSucceeded match {
-          case false => throw new ElasticsearchException(s"Unable to create index $indexName. ErrorMessage: {}", createIndexResponse.getErrorMessage)
-          case true => createMapping(indexName)
-        }
-      }
-      indexName
-    }
-
-    def createMapping(indexName: String) = {
+    private def createMapping(indexName: String): Try[String] = {
       val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, LearningpathApiProperties.SearchDocument, buildMapping()).build())
-      if (!mappingResponse.isSucceeded) {
-        throw new ElasticsearchException(s"Unable to create mapping for index $indexName. ErrorMessage: {}", mappingResponse.getErrorMessage)
-      }
+      mappingResponse.map(_ => indexName)
     }
 
-    def removeIndex(indexName: String) = {
-      if (indexExists(indexName)) {
-        val response = jestClient.execute(new DeleteIndex.Builder(indexName).build())
-        if (!response.isSucceeded) {
-          throw new ElasticsearchException(s"Unable to delete index $indexName. ErrorMessage: {}", response.getErrorMessage)
-        }
-      } else {
-        throw new IllegalArgumentException(s"No such index: $indexName")
-      }
-    }
 
-    def aliasTarget: Option[String] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${LearningpathApiProperties.SearchIndex}").build()
-      val result = jestClient.execute(getAliasRequest)
-      result.isSucceeded match {
-        case false => None
-        case true => {
-          val aliasIterator = result.getJsonObject.entrySet().iterator()
-          aliasIterator.hasNext match {
-            case true => Some(aliasIterator.next().getKey)
-            case false => None
+    private def removeIndex(optIndexName: Option[String]): Try[_] = {
+      optIndexName match {
+        case None => Success()
+        case Some(indexName) => {
+          if (!indexExists(indexName).getOrElse(false)) {
+            Failure(new IllegalArgumentException(s"No such index: $indexName"))
+          } else {
+            jestClient.execute(new DeleteIndex.Builder(indexName).build())
           }
         }
       }
     }
 
-    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String) = {
-      if (indexExists(newIndexName)) {
+    private def aliasTarget: Try[Option[String]] = {
+      val getAliasRequest = new GetAliases.Builder().addIndex(s"${LearningpathApiProperties.SearchIndex}").build()
+      jestClient.execute(getAliasRequest) match {
+        case Success(result) => {
+          val aliasIterator = result.getJsonObject.entrySet().iterator()
+          aliasIterator.hasNext match {
+            case true => Success(Some(aliasIterator.next().getKey))
+            case false => Success(None)
+          }
+        }
+        case Failure(_: NdlaSearchException) => Success(None)
+        case Failure(t: Throwable) => Failure(t)
+      }
+    }
+
+    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
+      if (!indexExists(newIndexName).getOrElse(false)) {
+        Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
+      } else {
         val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, LearningpathApiProperties.SearchIndex).build()
         val modifyAliasRequest = oldIndexName match {
           case None => new ModifyAliases.Builder(addAliasDefinition).build()
@@ -141,17 +198,9 @@ trait SearchIndexServiceComponent {
           }
         }
 
-        val response = jestClient.execute(modifyAliasRequest)
-        if (!response.isSucceeded) {
-          logger.error(response.getErrorMessage)
-          throw new ElasticsearchException(s"Unable to modify alias ${LearningpathApiProperties.SearchIndex} -> $oldIndexName to ${LearningpathApiProperties.SearchIndex} -> $newIndexName. ErrorMessage: {}", response.getErrorMessage)
-        }
-      } else {
-        throw new IllegalArgumentException(s"No such index: $newIndexName")
+        jestClient.execute(modifyAliasRequest)
       }
     }
-
-
 
     private def buildMapping() = {
       mapping(LearningpathApiProperties.SearchDocument).fields(
@@ -213,8 +262,12 @@ trait SearchIndexServiceComponent {
       }
     }
 
-    def indexExists(indexName: String): Boolean = {
-      jestClient.execute(new IndicesExists.Builder(indexName).build()).isSucceeded
+    private def indexExists(indexName: String): Try[Boolean] = {
+      jestClient.execute(new IndicesExists.Builder(indexName).build()) match {
+        case Success(_) => Success(true)
+        case Failure(_: ElasticsearchException) => Success(false)
+        case Failure(t: Throwable) => Failure(t)
+      }
     }
 
     private def getTimestamp: String = {

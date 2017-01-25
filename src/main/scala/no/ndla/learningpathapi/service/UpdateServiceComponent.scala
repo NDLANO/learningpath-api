@@ -108,7 +108,7 @@ trait UpdateServiceComponent {
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
-            searchIndexService.indexLearningPath(updatedLearningPath)
+            searchIndexService.indexDocument(updatedLearningPath)
           }
 
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
@@ -130,9 +130,9 @@ trait UpdateServiceComponent {
               lastUpdated = clock.now()))
 
           if (updatedLearningPath.isPublished) {
-            searchIndexService.indexLearningPath(updatedLearningPath)
+            searchIndexService.indexDocument(updatedLearningPath)
           } else if (existing.isPublished) {
-            searchIndexService.deleteLearningPath(updatedLearningPath)
+            searchIndexService.deleteDocument(updatedLearningPath)
           }
 
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
@@ -169,7 +169,7 @@ trait UpdateServiceComponent {
               (insertedStep, updatedPath)
             }
             if (updatedPath.isPublished) {
-              searchIndexService.indexLearningPath(updatedPath)
+              searchIndexService.indexDocument(updatedPath)
             }
           Some(converterService.asApiLearningStep(insertedStep, updatedPath, Option(owner)))
           }
@@ -209,7 +209,7 @@ trait UpdateServiceComponent {
               }
 
               if (updatedPath.isPublished) {
-                searchIndexService.indexLearningPath(updatedPath)
+                searchIndexService.indexDocument(updatedPath)
               }
 
               Some(converterService.asApiLearningStep(updatedStep, updatedPath, Option(owner)))
@@ -248,7 +248,7 @@ trait UpdateServiceComponent {
               }
 
               if (updatedPath.isPublished) {
-                searchIndexService.indexLearningPath(updatedPath)
+                searchIndexService.indexDocument(updatedPath)
               }
 
               Some(converterService.asApiLearningStep(updatedStep, updatedPath, Option(owner)))

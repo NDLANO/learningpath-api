@@ -103,11 +103,9 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     esNode = new NodeBuilder().settings(settings).node()
     esNode.start()
 
-    val indexName = searchIndexService.createNewIndex()
-    searchIndexService.updateAliasTarget(None, indexName)
-    searchIndexService.indexLearningPath(thePenguin)
-    searchIndexService.indexLearningPath(batman)
-    searchIndexService.indexLearningPath(theDuck)
+    searchIndexService.indexDocument(thePenguin)
+    searchIndexService.indexDocument(batman)
+    searchIndexService.indexDocument(theDuck)
 
     blockUntil(() => searchService.countDocuments() == 3)
   }

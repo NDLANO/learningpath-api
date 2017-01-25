@@ -12,7 +12,7 @@ import no.ndla.learningpathapi.controller.{HealthController, InternController, L
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexBuilderServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
 import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator, LearningStepValidator, TitleValidator}
 import no.ndla.network.NdlaClient
 import org.postgresql.ds.PGPoolingDataSource
@@ -29,7 +29,6 @@ object ComponentRegistry
   with SearchConverterServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
-  with SearchIndexBuilderServiceComponent
   with NdlaClient
   with AuthClientComponent
   with ImageApiClientComponent
@@ -59,7 +58,6 @@ object ComponentRegistry
 
   ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
 
-  lazy val searchIndexBuilderService = new SearchIndexBuilderService
 
   lazy val learningPathRepository = new LearningPathRepository
   lazy val readService = new ReadService
