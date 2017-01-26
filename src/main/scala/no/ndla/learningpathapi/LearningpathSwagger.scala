@@ -11,7 +11,11 @@ package no.ndla.learningpathapi
 import org.scalatra.ScalatraServlet
 import org.scalatra.swagger.{ApiInfo, NativeSwaggerBase, Swagger}
 
-class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase
+class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase {
+  get("/") {
+    renderSwagger2(swagger.docs.toList)
+  }
+}
 
 object LearningpathApiInfo {
   val apiInfo = ApiInfo(
@@ -23,4 +27,4 @@ object LearningpathApiInfo {
     "http://www.gnu.org/licenses/gpl-3.0.en.html")
 }
 
-class LearningpathSwagger extends Swagger(Swagger.SpecVersion, "0.8", LearningpathApiInfo.apiInfo)
+class LearningpathSwagger extends Swagger("2.0", "0.8", LearningpathApiInfo.apiInfo)
