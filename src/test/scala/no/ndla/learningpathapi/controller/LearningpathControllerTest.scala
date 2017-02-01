@@ -13,7 +13,7 @@ import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Sort}
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Sort, ValidationException}
 import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.native.Serialization._
@@ -74,9 +74,10 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val language = "nb"
     val page = 22
     val pageSize = 111
+    val ids = "1,2"
 
     val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
-    when(searchService.matchingQuery(eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
     get("/", Map(
       "query" -> query,
@@ -84,7 +85,8 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
       "language" -> language,
       "sort" -> "-duration",
       "page-size" -> s"$pageSize",
-      "page" -> s"$page"
+      "page" -> s"$page",
+      "ids" -> s"$ids"
     )) {
       status should equal (200)
       val convertedBody = read[SearchResult](body)
@@ -99,8 +101,9 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val page = ""
     val pageSize = ""
     val duration = ""
+    val ids = "1,2"
 
-    when(searchService.all(eqTo(None), eqTo(Sort.ByTitleAsc), eqTo(None), eqTo(None), eqTo(None))).thenReturn(SearchResult(-1, 1, 1, List()))
+    when(searchService.all(eqTo(List(1,2)), eqTo(None), eqTo(Sort.ByTitleAsc), eqTo(None), eqTo(None), eqTo(None))).thenReturn(SearchResult(-1, 1, 1, List()))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
     get("/", Map(
@@ -109,7 +112,8 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
       "language" -> language,
       "sort" -> duration,
       "page-size" -> s"$pageSize",
-      "page" -> s"$page"
+      "page" -> s"$page",
+      "ids" -> s"$ids"
     )) {
       status should equal (200)
       val convertedBody = read[SearchResult](body)
@@ -138,5 +142,44 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
       val convertedBody = read[Set[License]](body)
       convertedBody should equal(allLicenses)
     }
+  }
+
+  test("That paramAsListOfLong returns empty list when empty param") {
+    import scala.collection.JavaConverters._
+    implicit val request = mock[HttpServletRequest]
+    val paramName = "test"
+    val parameterMap = Map("someOther" -> Array(""))
+
+    when(request.getParameterMap).thenReturn(parameterMap.asJava)
+    controller.paramAsListOfLong(paramName)(request) should equal (List())
+  }
+
+  test("That paramAsListOfLong returns List of longs for all ids specified in input") {
+    import scala.collection.JavaConverters._
+    implicit val request = mock[HttpServletRequest]
+    val expectedList = List(1,2,3,5,6,7,8)
+    val paramName = "test"
+    val parameterMap = Map(paramName -> Array(expectedList.mkString(" , ")))
+
+    when(request.getParameterMap).thenReturn(parameterMap.asJava)
+    controller.paramAsListOfLong(paramName)(request) should equal (expectedList)
+  }
+
+  test("That paramAsListOfLong returns validation error when list of ids contains a string") {
+    import scala.collection.JavaConverters._
+    implicit val request = mock[HttpServletRequest]
+    val paramName = "test"
+    val parameterMap = Map(paramName -> Array("1,2,abc,3"))
+
+    when(request.getParameterMap).thenReturn(parameterMap.asJava)
+
+    val validationException = intercept[ValidationException]{
+      controller.paramAsListOfLong(paramName)(request)
+    }
+
+    validationException.errors.size should be (1)
+    validationException.errors.head.field should equal (paramName)
+    validationException.errors.head.message should equal (s"Invalid value for $paramName. Only (list of) digits are allowed.")
+
   }
 }

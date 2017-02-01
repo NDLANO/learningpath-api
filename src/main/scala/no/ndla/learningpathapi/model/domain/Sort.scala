@@ -9,6 +9,8 @@
 package no.ndla.learningpathapi.model.domain
 
 object Sort extends Enumeration {
+  val ByIdDesc = Value("-id")
+  val ByIdAsc = Value("id")
   val ByRelevanceDesc = Value("-relevance")
   val ByRelevanceAsc = Value("relevance")
   val ByLastUpdatedDesc = Value("-lastUpdated")
