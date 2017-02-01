@@ -53,9 +53,10 @@ trait SearchServiceComponent extends LazyLogging {
       searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](jsonObject.toString))
     }
 
-    def all(taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def all(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       executeSearch(
         QueryBuilders.boolQuery(),
+        withIdIn,
         taggedWith,
         sort,
         language.getOrElse(LearningpathApiProperties.DefaultLanguage),
@@ -63,7 +64,7 @@ trait SearchServiceComponent extends LazyLogging {
         pageSize)
     }
 
-    def matchingQuery(query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def matchingQuery(withIdIn: List[Long], query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
       val titleSearch = QueryBuilders.matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
@@ -83,16 +84,21 @@ trait SearchServiceComponent extends LazyLogging {
             .should(QueryBuilders.nestedQuery("tags", tagSearch))
             .should(authorSearch))
 
-      executeSearch(fullQuery, taggedWith, sort, searchLanguage, page, pageSize)
+      executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
     }
 
-    def executeSearch(queryBuilder: BoolQueryBuilder, taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val filteredSearch = taggedWith match {
+    def executeSearch(queryBuilder: BoolQueryBuilder, withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+      val tagFilteredSearch = taggedWith match {
         case None => queryBuilder
         case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag)))
       }
 
-      val searchQuery = new SearchSourceBuilder().query(filteredSearch).sort(getSortDefinition(sort, language))
+      val idFilteredSearch = withIdIn match {
+        case head :: tail => tagFilteredSearch.filter(QueryBuilders.idsQuery(LearningpathApiProperties.SearchDocument).addIds(head.toString :: tail.map(_.toString):_*))
+        case Nil => tagFilteredSearch
+      }
+
+      val searchQuery = new SearchSourceBuilder().query(idFilteredSearch).sort(getSortDefinition(sort, language))
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val request = new Search.Builder(searchQuery.toString)
@@ -123,6 +129,8 @@ trait SearchServiceComponent extends LazyLogging {
         case (Sort.ByTitleDesc) => SortBuilders.fieldSort(s"titles.$language.raw").setNestedPath("titles").order(SortOrder.DESC).missing("_last")
         case (Sort.ByRelevanceAsc) => SortBuilders.fieldSort("_score").order(SortOrder.ASC)
         case (Sort.ByRelevanceDesc) => SortBuilders.fieldSort("_score").order(SortOrder.DESC)
+        case (Sort.ByIdAsc) => SortBuilders.fieldSort("id").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByIdDesc) => SortBuilders.fieldSort("id").order(SortOrder.DESC).missing("_last")
       }
     }
 

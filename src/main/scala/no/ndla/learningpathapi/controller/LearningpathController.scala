@@ -57,6 +57,7 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         queryParam[Option[String]]("query").description("Return only Learningpaths with content matching the specified query."),
         queryParam[Option[String]]("tag").description("Return only Learningpaths that are tagged with this exact tag."),
+        queryParam[Option[String]]("ids").description("Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,)."),
         queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description(s"The number of search hits to display for each page. Default is ${LearningpathApiProperties.DefaultPageSize}. Max page-size is ${LearningpathApiProperties.MaxPageSize}"),
@@ -64,7 +65,7 @@ trait LearningpathController {
           """The sorting used on results.
            Default is by -relevance (desc) when querying.
            When browsing, the default is title (asc).
-           The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title""".stripMargin))
+           The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title, id, -id""".stripMargin))
         responseMessages(response400, response500))
 
     val getLicenses =
@@ -292,15 +293,17 @@ trait LearningpathController {
     get("/", operation(getLearningpaths)) {
       val query = paramOrNone("query")
       val tag = paramOrNone("tag")
+      val idList = paramAsListOfLong("ids")
       val language = LanguageValidator.validate("language", paramOrNone("language"))
       val sort = paramOrNone("sort")
       val pageSize = paramOrNone("page-size").flatMap(ps => Try(ps.toInt).toOption)
       val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
-      logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}", query, language, tag, page, pageSize)
+      logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
 
       query match {
         case Some(q) => searchService.matchingQuery(
           query = q.toLowerCase.split(" ").map(_.trim),
+          withIdIn = idList,
           taggedWith = tag,
           language = language,
           sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
@@ -308,6 +311,7 @@ trait LearningpathController {
           pageSize = pageSize
         )
         case None => searchService.all(
+          withIdIn = idList,
           taggedWith = tag,
           sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
           language = language,
@@ -541,6 +545,20 @@ trait LearningpathController {
 
     def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] = {
       params.get(paramName).map(_.trim).filterNot(_.isEmpty())
+    }
+
+    def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {
+      params.get(paramName) match {
+        case None => List()
+        case Some(param) => {
+          val paramAsListOfStrings = param.split(",").toList.map(_.trim)
+          if (!paramAsListOfStrings.forall(entry => entry.forall(_.isDigit))) {
+            throw new ValidationException(errors = List(ValidationMessage(paramName, s"Invalid value for $paramName. Only (list of) digits are allowed.")))
+          }
+          paramAsListOfStrings.map(_.toLong)
+
+        }
+      }
     }
 
   }
