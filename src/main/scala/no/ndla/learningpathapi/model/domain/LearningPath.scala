@@ -42,10 +42,6 @@ case class LearningPath(id: Option[Long],
     status == LearningPathStatus.PUBLISHED
   }
 
-  def isNotListed: Boolean = {
-    status == LearningPathStatus.NOT_LISTED
-  }
-
   def canEdit(user: Option[String]): Boolean = {
     user match {
       case Some(user) => user == owner
@@ -90,7 +86,7 @@ case class LearningPath(id: Option[Long],
 }
 
 object LearningPathStatus extends Enumeration {
-  val PUBLISHED, PRIVATE, NOT_LISTED, DELETED = Value
+  val PUBLISHED, PRIVATE, DELETED = Value
 
   def valueOf(s:String): Option[LearningPathStatus.Value] = {
     LearningPathStatus.values.find(_.toString == s.toUpperCase)
