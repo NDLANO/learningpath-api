@@ -27,7 +27,7 @@ case class LearningPath(@(ApiModelProperty@field)(description = "The unique id o
                         @(ApiModelProperty@field)(description = "The full url to where the learningsteps can be found") learningstepUrl: String,
                         @(ApiModelProperty@field)(description = "Information about where the cover photo can be found") coverPhoto: Option[CoverPhoto],
                         @(ApiModelProperty@field)(description = "The duration of the learningpath in minutes") duration: Option[Int],
-                        @(ApiModelProperty@field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE,NOT_LISTED") status: String,
+                        @(ApiModelProperty@field)(description = "The publishing status of the learningpath", allowableValues = "PUBLISHED,PRIVATE") status: String,
                         @(ApiModelProperty@field)(description = "Verification status", allowableValues = "CREATED_BY_NDLA,VERIFIED_BY_NDLA,EXTERNAL") verificationStatus: String,
                         @(ApiModelProperty@field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
                         @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: Seq[LearningPathTags],
