@@ -20,10 +20,10 @@ class UrlValidator() {
   }
 
   private def nonEmptyText(fieldPath: String, text: String): Seq[ValidationMessage] = {
-    text.isEmpty match {
-      case true => List(ValidationMessage(fieldPath, "Required field is empty."))
-      case false => List()
+    if (text.isEmpty) {
+      return List(ValidationMessage(fieldPath, "Required field is empty."))
     }
+    List()
   }
 
   private def noHtmlInText(fieldPath: String, text: String): Seq[ValidationMessage] = {
@@ -34,9 +34,9 @@ class UrlValidator() {
   }
 
   private def startsWithHttps(fieldPath: String, text: String): Seq[ValidationMessage] = {
-    text.startsWith("https") match {
-      case true => List()
-      case false => List(ValidationMessage(fieldPath, "Illegal Url. All Urls must start with https."))
+    if (!text.startsWith("https")) {
+      return List(ValidationMessage(fieldPath, "Illegal Url. All Urls must start with https."))
     }
+    List()
   }
 }
