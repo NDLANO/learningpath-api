@@ -14,11 +14,12 @@ import no.ndla.learningpathapi.integration.JestClientFactory
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 
-
+@IntegrationTest
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val esPort = 9200
@@ -126,7 +127,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by title ascending") {
     val searchResult = searchService.all(List(), None, Sort.ByTitleAsc, Some("nb"), None, None)
-    println(s"res: ${searchResult}")
     searchResult.totalCount should be(3)
     searchResult.results.head.id should be(BatmanId)
   }
@@ -218,7 +218,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching and ordering by relevance is returning Donald before Batman and the penguin when searching for duck, bat and bird") {
     val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggermus", "fugl"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    println()
     searchResult.totalCount should be(3)
     searchResult.results.toList(0).id should be(DonaldId)
     searchResult.results.toList(1).id should be(BatmanId)
