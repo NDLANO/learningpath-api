@@ -211,25 +211,25 @@ trait SearchIndexServiceComponent {
         languageSupportedField("descriptions"),
         textField("coverPhotoUrl") index "not_analyzed",
         intField("duration"),
-        keywordField("status") index "not_analyzed",
-        keywordField("verificationStatus") index "not_analyzed",
+        textField("status") index "not_analyzed",
+        textField("verificationStatus") index "not_analyzed",
         dateField("lastUpdated"),
         languageSupportedField("tags", keepRaw = true),
         textField("author"),
         nestedField("learningsteps").as(
-          keywordField("stepType") index "not_analyzed",
+          textField("stepType") index "not_analyzed",
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
         ),
         objectField("copyright").as(
           objectField("license").as(
-            keywordField("license") index "not_analyzed",
-            keywordField("description") index "not_analyzed",
-            keywordField("url") index "not_analyzed"
+            textField("license") index "not_analyzed",
+            textField("description") index "not_analyzed",
+            textField("url") index "not_analyzed"
           ),
           nestedField("contributors").as(
-            keywordField("type") index "not_analyzed",
-            keywordField("name") index "not_analyzed"
+            textField("type") index "not_analyzed",
+            textField("name") index "not_analyzed"
           )
         ),
         booleanField("isBasedOn") index "not_analyzed"
@@ -239,15 +239,15 @@ trait SearchIndexServiceComponent {
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
       if (keepRaw) {
         new NestedFieldDefinition(fieldName).as(
-          keywordField(NORWEGIAN_BOKMAL) analyzer langToAnalyzer(NORWEGIAN_BOKMAL) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(NORWEGIAN_NYNORSK) analyzer langToAnalyzer(NORWEGIAN_NYNORSK) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(ENGLISH) analyzer langToAnalyzer(ENGLISH) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(FRENCH) analyzer langToAnalyzer(FRENCH) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(GERMAN) analyzer langToAnalyzer(GERMAN) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(SPANISH) analyzer langToAnalyzer(SPANISH) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(SAMI) analyzer langToAnalyzer(SAMI) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(CHINESE) analyzer langToAnalyzer(CHINESE) fields (textField("raw").fielddata(true) index "not_analyzed"),
-          textField(UNKNOWN) analyzer langToAnalyzer(UNKNOWN) fields (textField("raw").fielddata(true) index "not_analyzed")
+          textField(NORWEGIAN_BOKMAL) analyzer langToAnalyzer(NORWEGIAN_BOKMAL) fields (keywordField("raw") index "not_analyzed"),
+          textField(NORWEGIAN_NYNORSK) analyzer langToAnalyzer(NORWEGIAN_NYNORSK) fields (keywordField("raw") index "not_analyzed"),
+          textField(ENGLISH) analyzer langToAnalyzer(ENGLISH) fields (keywordField("raw") index "not_analyzed"),
+          textField(FRENCH) analyzer langToAnalyzer(FRENCH) fields (keywordField("raw") index "not_analyzed"),
+          textField(GERMAN) analyzer langToAnalyzer(GERMAN) fields (keywordField("raw") index "not_analyzed"),
+          textField(SPANISH) analyzer langToAnalyzer(SPANISH) fields (keywordField("raw") index "not_analyzed"),
+          textField(SAMI) analyzer langToAnalyzer(SAMI) fields (keywordField("raw") index "not_analyzed"),
+          textField(CHINESE) analyzer langToAnalyzer(CHINESE) fields (keywordField("raw") index "not_analyzed"),
+          textField(UNKNOWN) analyzer langToAnalyzer(UNKNOWN) fields (keywordField("raw") index "not_analyzed")
         )
       } else {
         new NestedFieldDefinition(fieldName).as(

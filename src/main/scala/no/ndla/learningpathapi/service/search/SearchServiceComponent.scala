@@ -85,8 +85,6 @@ trait SearchServiceComponent extends LazyLogging {
             .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.None))
             .should(authorSearch))
 
-      println(s"fullQuery ${fullQuery}")
-
       executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
     }
 
@@ -110,14 +108,8 @@ trait SearchServiceComponent extends LazyLogging {
         .setParameter("from", startAt)
 
       jestClient.execute(request.build()) match {
-        case Success(response) => {
-          println(s"success ${response}")
-          SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
-        }
-        case Failure(f) => {
-          println(s"failure ${f}")
-          errorHandler(Failure(f))
-        }
+        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case Failure(f) => errorHandler(Failure(f))
       }
     }
 

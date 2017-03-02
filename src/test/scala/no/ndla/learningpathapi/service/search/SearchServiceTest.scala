@@ -93,7 +93,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   override def afterAll() = {
-//    searchIndexService.delete(Some(LearningpathApiProperties.SearchIndex))
+    searchIndexService.delete(Some(LearningpathApiProperties.SearchIndex))
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {
@@ -183,60 +183,61 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult.totalCount should be(1)
     searchResult.results.head.id should be(BatmanId)
   }
-//
-//  test("That search combined with filter by id only returns documents matching the query with one of the given ids") {
-//    val searchResult = searchService.matchingQuery(List(3), Seq("morsom"), None, None, Sort.ByTitleAsc, None, None)
-//    searchResult.totalCount should be (1)
-//    searchResult.results.head.id should be (DonaldId)
-//  }
-//
-//  test("That searching only returns documents matching the query in the specified language") {
-//    val searchResult = searchService.matchingQuery(List(), Seq("guy"), None, Some("en"), Sort.ByTitleAsc, None, None)
-//    searchResult.totalCount should be(1)
-//    searchResult.results.head.id should be(BatmanId)
-//  }
-//
-//  test("That filtering on tag only returns documents where the tag is present") {
-//    val searchResult = searchService.all(List(), Some("superhelt"), Sort.ByTitleAsc, Some("nb"), None, None)
-//    searchResult.totalCount should be(2)
-//    searchResult.results.head.id should be(BatmanId)
-//    searchResult.results.last.id should be(PenguinId)
-//  }
-//
-//  test("That filtering on tag combined with search only returns documents where the tag is present and the search matches the query") {
-//    val searchResult = searchService.matchingQuery(List(), Seq("heltene"), Some("kanfly"), Some("nb"), Sort.ByTitleAsc, None, None)
-//    searchResult.totalCount should be(1)
-//    searchResult.results.head.id should be(BatmanId)
-//  }
-//
-//  test("That searching and ordering by relevance is returning Donald before Batman when searching for tough weirdos") {
-//    val searchResult = searchService.matchingQuery(List(), Seq("tøff", "rar"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-//    searchResult.totalCount should be(2)
-//    searchResult.results.head.id should be(DonaldId)
-//    searchResult.results.last.id should be(BatmanId)
-//  }
-//
-//  test("That searching and ordering by relevance is returning Donald before Batman and the penguin when searching for duck, bat and bird") {
-//    val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggermus", "fugl"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-//    searchResult.totalCount should be(3)
-//    searchResult.results.toList(0).id should be(DonaldId)
-//    searchResult.results.toList(1).id should be(BatmanId)
-//    searchResult.results.toList(2).id should be(PenguinId)
-//  }
-//
-//  test("That searching and ordering by relevance is not returning Penguin when searching for duck, bat and bird, but filtering on kanfly") {
-//    val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggermus", "fugl"), Some("kanfly"), Some("nb"), Sort.ByRelevanceDesc, None, None)
-//    searchResult.totalCount should be(2)
-//    searchResult.results.head.id should be(DonaldId)
-//    searchResult.results.last.id should be(BatmanId)
-//  }
-//
-//  test("That a search for flaggremsu returns both Donald and Batman even if it is misspelled") {
-//    val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggremsu"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-//    searchResult.totalCount should be(2)
-//    searchResult.results.head.id should be(DonaldId)
-//    searchResult.results.last.id should be(BatmanId)
-//  }
+
+  test("That search combined with filter by id only returns documents matching the query with one of the given ids") {
+    val searchResult = searchService.matchingQuery(List(3), Seq("morsom"), None, None, Sort.ByTitleAsc, None, None)
+    searchResult.totalCount should be (1)
+    searchResult.results.head.id should be (DonaldId)
+  }
+
+  test("That searching only returns documents matching the query in the specified language") {
+    val searchResult = searchService.matchingQuery(List(), Seq("guy"), None, Some("en"), Sort.ByTitleAsc, None, None)
+    searchResult.totalCount should be(1)
+    searchResult.results.head.id should be(BatmanId)
+  }
+
+  test("That filtering on tag only returns documents where the tag is present") {
+    val searchResult = searchService.all(List(), Some("superhelt"), Sort.ByTitleAsc, Some("nb"), None, None)
+    searchResult.totalCount should be(2)
+    searchResult.results.head.id should be(BatmanId)
+    searchResult.results.last.id should be(PenguinId)
+  }
+
+  test("That filtering on tag combined with search only returns documents where the tag is present and the search matches the query") {
+    val searchResult = searchService.matchingQuery(List(), Seq("heltene"), Some("kanfly"), Some("nb"), Sort.ByTitleAsc, None, None)
+    searchResult.totalCount should be(1)
+    searchResult.results.head.id should be(BatmanId)
+  }
+
+  test("That searching and ordering by relevance is returning Donald before Batman when searching for tough weirdos") {
+    val searchResult = searchService.matchingQuery(List(), Seq("tøff", "rar"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
+    searchResult.totalCount should be(2)
+    searchResult.results.head.id should be(DonaldId)
+    searchResult.results.last.id should be(BatmanId)
+  }
+
+  test("That searching and ordering by relevance is returning Donald before Batman and the penguin when searching for duck, bat and bird") {
+    val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggermus", "fugl"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
+    println()
+    searchResult.totalCount should be(3)
+    searchResult.results.toList(0).id should be(DonaldId)
+    searchResult.results.toList(1).id should be(BatmanId)
+    searchResult.results.toList(2).id should be(PenguinId)
+  }
+
+  test("That searching and ordering by relevance is not returning Penguin when searching for duck, bat and bird, but filtering on kanfly") {
+    val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggermus", "fugl"), Some("kanfly"), Some("nb"), Sort.ByRelevanceDesc, None, None)
+    searchResult.totalCount should be(2)
+    searchResult.results.head.id should be(DonaldId)
+    searchResult.results.last.id should be(BatmanId)
+  }
+
+  test("That a search for flaggremsu returns both Donald and Batman even if it is misspelled") {
+    val searchResult = searchService.matchingQuery(List(), Seq("and", "flaggremsu"), None, Some("nb"), Sort.ByRelevanceDesc, None, None)
+    searchResult.totalCount should be(2)
+    searchResult.results.head.id should be(DonaldId)
+    searchResult.results.last.id should be(BatmanId)
+  }
 
   def blockUntil(predicate: () => Boolean) = {
     var backoff = 0
