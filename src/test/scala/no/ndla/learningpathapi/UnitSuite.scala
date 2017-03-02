@@ -30,6 +30,7 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   setEnv("MIGRATION_HOST", "migration-api")
   setEnv("MIGRATION_USER", "username")
   setEnv("MIGRATION_PASSWORD", "password")
+  setEnv("SEARCH_INDEX_NAME", "learning-integration-test-index")
 
   def setEnv(key: String, value: String) = {
     val field = System.getenv().getClass.getDeclaredField("m")

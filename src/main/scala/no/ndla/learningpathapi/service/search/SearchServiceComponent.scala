@@ -17,6 +17,7 @@ import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.{NdlaSearchException, Sort}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
@@ -77,12 +78,14 @@ trait SearchServiceComponent extends LazyLogging {
       val fullQuery = QueryBuilders.boolQuery()
         .must(
           QueryBuilders.boolQuery()
-            .should(QueryBuilders.nestedQuery("titles", titleSearch))
-            .should(QueryBuilders.nestedQuery("descriptions", descSearch))
-            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch))
-            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch))
-            .should(QueryBuilders.nestedQuery("tags", tagSearch))
+            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.None))
+            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.None))
+            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.None))
+            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.None))
+            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.None))
             .should(authorSearch))
+
+      println(s"fullQuery ${fullQuery}")
 
       executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
     }
@@ -90,7 +93,7 @@ trait SearchServiceComponent extends LazyLogging {
     def executeSearch(queryBuilder: BoolQueryBuilder, withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val tagFilteredSearch = taggedWith match {
         case None => queryBuilder
-        case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag)))
+        case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag), ScoreMode.None))
       }
 
       val idFilteredSearch = withIdIn match {
@@ -107,8 +110,14 @@ trait SearchServiceComponent extends LazyLogging {
         .setParameter("from", startAt)
 
       jestClient.execute(request.build()) match {
-        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
-        case Failure(f) => errorHandler(Failure(f))
+        case Success(response) => {
+          println(s"success ${response}")
+          SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        }
+        case Failure(f) => {
+          println(s"failure ${f}")
+          errorHandler(Failure(f))
+        }
       }
     }
 

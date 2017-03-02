@@ -30,7 +30,7 @@ object LearningpathApiProperties extends LazyLogging {
   val MetaInitialConnections = 3
   val MetaMaxConnections = 20
 
-  val SearchIndex = "learningpaths"
+  val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "learningpaths")
   val SearchDocument = "learningpath"
   val DefaultPageSize = 10
   val MaxPageSize = 100

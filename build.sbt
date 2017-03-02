@@ -1,13 +1,15 @@
 import java.util.Properties
 
-val Scalaversion = "2.11.8"
+val Scalaversion = "2.12.1"
 val Scalatraversion = "2.5.0"
+val ScalaLoggingVersion = "3.5.0"
+val Log4JVersion = "2.7"
 val Jettyversion = "9.2.10.v20150310"
-val AwsSdkversion = "1.10.26"
-val ScalaTestVersion = "2.2.6"
+val AwsSdkversion = "1.11.46"
+val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
-val ScalaLoggingVersion = "3.1.0"
-val Log4JVersion = "2.6"
+val Elastic4sVersion = "5.2.8"
+val ElasticsearchVersion = "5.1.1"
 
 val appProperties = settingKey[Properties]("The application properties")
 
@@ -34,10 +36,10 @@ lazy val learningpath_api = (project in file(".")).
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.7",
-      "ndla" %% "mapping" % "0.2",
+      "ndla" %% "network" % "0.16",
+      "ndla" %% "mapping" % "0.4",
       "joda-time" % "joda-time" % "2.8.2",
-      "org.specs2" %% "specs2-core" % "2.4.14" % "test",
+      "org.specs2" %% "specs2-core" % "3.8.8-20170222075022-d6a08b0" % "test",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
@@ -46,23 +48,24 @@ lazy val learningpath_api = (project in file(".")).
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s"   %% "json4s-native" % "3.5.0",
       "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
-      "org.scalikejdbc" %% "scalikejdbc" % "2.2.8",
+      "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
       "org.apache.logging.log4j" % "log4j-api" % Log4JVersion,
       "org.apache.logging.log4j" % "log4j-core" % Log4JVersion,
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % Log4JVersion,
       "mysql" % "mysql-connector-java" % "5.1.36",
-      "org.scalaj" %% "scalaj-http" % "1.1.5",
-      "io.searchbox" % "jest" % "2.0.0",
-      "org.elasticsearch" % "elasticsearch" % "2.3.3",
-      "com.sksamuel.elastic4s" %% "elastic4s-core" % "2.3.0",
-      "org.elasticsearch" % "elasticsearch" % "2.3.3" % "test",
-      "org.apache.lucene" % "lucene-test-framework" % "5.5.0" % "test",
-      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.14",
-      "com.netaporter" %% "scala-uri" % "0.4.12",
+      "org.scalaj" %% "scalaj-http" % "2.3.0",
+      "io.searchbox" % "jest" % "2.0.4",
+      "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
+      "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
+      "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
+      "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion % "test",
+      "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
+      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16",
+      "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.jsoup" % "jsoup" % "1.7.3",
-      "org.scalatest" % "scalatest_2.11" % ScalaTestVersion % "test",
+      "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "com.h2database"  %  "h2" % "1.4.191",
       "org.flywaydb" % "flyway-core" % "4.0")

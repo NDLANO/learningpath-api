@@ -11,10 +11,9 @@ package no.ndla.learningpathapi.service.search
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.analyzers._
-import com.sksamuel.elastic4s.mappings.FieldType._
-import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.mappings.{MappingContentBuilder, NestedFieldDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Bulk, Delete, Index}
 import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
@@ -58,12 +57,12 @@ trait SearchIndexServiceComponent {
             numIndexed <- sendToElastic(indexName)
             aliasTarget <- aliasTarget
             updatedTarget <- updateAliasTarget(aliasTarget, indexName)
-            deleted <- removeIndex(aliasTarget)
+            deleted <- delete(aliasTarget)
           } yield numIndexed
 
           operations match {
             case Failure(f) => {
-              removeIndex(Some(indexName))
+              delete(Some(indexName))
               Failure(f)
             }
             case Success(totalIndexed) => {
@@ -106,7 +105,10 @@ trait SearchIndexServiceComponent {
     }
 
     def createIndex(): Try[String] = {
-      val indexName = LearningpathApiProperties.SearchIndex + "_" + getTimestamp
+      createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
+    }
+
+    def createIndexWithName(indexName: String): Try[String] = {
       if (indexExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
@@ -156,7 +158,7 @@ trait SearchIndexServiceComponent {
     }
 
 
-    private def removeIndex(optIndexName: Option[String]): Try[_] = {
+    def delete(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
         case None => Success()
         case Some(indexName) => {
@@ -203,61 +205,61 @@ trait SearchIndexServiceComponent {
     }
 
     private def buildMapping() = {
-      mapping(LearningpathApiProperties.SearchDocument).fields(
-        "id" typed IntegerType,
+      MappingContentBuilder.buildWithName(mapping(LearningpathApiProperties.SearchDocument).fields(
+        intField("id"),
         languageSupportedField("titles", keepRaw = true),
         languageSupportedField("descriptions"),
-        "coverPhotoUrl" typed StringType index "not_analyzed",
-        "duration" typed IntegerType,
-        "status" typed StringType index "not_analyzed",
-        "verificationStatus" typed StringType index "not_analyzed",
-        "lastUpdated" typed DateType,
+        textField("coverPhotoUrl") index "not_analyzed",
+        intField("duration"),
+        keywordField("status") index "not_analyzed",
+        keywordField("verificationStatus") index "not_analyzed",
+        dateField("lastUpdated"),
         languageSupportedField("tags", keepRaw = true),
-        "author" typed StringType,
-        "learningsteps" typed NestedType as(
-          "stepType" typed StringType index "not_analyzed",
+        textField("author"),
+        nestedField("learningsteps").as(
+          keywordField("stepType") index "not_analyzed",
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
+        ),
+        objectField("copyright").as(
+          objectField("license").as(
+            keywordField("license") index "not_analyzed",
+            keywordField("description") index "not_analyzed",
+            keywordField("url") index "not_analyzed"
           ),
-        "copyright" typed ObjectType as(
-          "license" typed ObjectType as(
-              "license" typed StringType index "not_analyzed",
-              "description" typed StringType index "not_analyzed",
-              "url" typed StringType index "not_analyzed"
-            ),
-          "contributors" typed NestedType as(
-            "type" typed StringType index "not_analyzed",
-            "name" typed StringType index "not_analyzed"
-            )
-          ),
-        "isBasedOn" typed BooleanType index "not_analyzed"
-      ).buildWithName.string()
+          nestedField("contributors").as(
+            keywordField("type") index "not_analyzed",
+            keywordField("name") index "not_analyzed"
+          )
+        ),
+        booleanField("isBasedOn") index "not_analyzed"
+      ), LearningpathApiProperties.SearchDocument).string()
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
       if (keepRaw) {
         new NestedFieldDefinition(fieldName).as(
-          NORWEGIAN_BOKMAL typed StringType analyzer langToAnalyzer(NORWEGIAN_BOKMAL) fields ("raw" typed StringType index "not_analyzed"),
-          NORWEGIAN_NYNORSK typed StringType analyzer langToAnalyzer(NORWEGIAN_NYNORSK) fields ("raw" typed StringType index "not_analyzed"),
-          ENGLISH typed StringType analyzer langToAnalyzer(ENGLISH) fields ("raw" typed StringType index "not_analyzed"),
-          FRENCH typed StringType analyzer langToAnalyzer(FRENCH) fields ("raw" typed StringType index "not_analyzed"),
-          GERMAN typed StringType analyzer langToAnalyzer(GERMAN) fields ("raw" typed StringType index "not_analyzed"),
-          SPANISH typed StringType analyzer langToAnalyzer(SPANISH) fields ("raw" typed StringType index "not_analyzed"),
-          SAMI typed StringType analyzer langToAnalyzer(SAMI) fields ("raw" typed StringType index "not_analyzed"),
-          CHINESE typed StringType analyzer langToAnalyzer(CHINESE) fields ("raw" typed StringType index "not_analyzed"),
-          UNKNOWN typed StringType analyzer langToAnalyzer(UNKNOWN) fields ("raw" typed StringType index "not_analyzed")
+          keywordField(NORWEGIAN_BOKMAL) analyzer langToAnalyzer(NORWEGIAN_BOKMAL) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(NORWEGIAN_NYNORSK) analyzer langToAnalyzer(NORWEGIAN_NYNORSK) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(ENGLISH) analyzer langToAnalyzer(ENGLISH) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(FRENCH) analyzer langToAnalyzer(FRENCH) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(GERMAN) analyzer langToAnalyzer(GERMAN) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(SPANISH) analyzer langToAnalyzer(SPANISH) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(SAMI) analyzer langToAnalyzer(SAMI) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(CHINESE) analyzer langToAnalyzer(CHINESE) fields (textField("raw").fielddata(true) index "not_analyzed"),
+          textField(UNKNOWN) analyzer langToAnalyzer(UNKNOWN) fields (textField("raw").fielddata(true) index "not_analyzed")
         )
       } else {
         new NestedFieldDefinition(fieldName).as(
-          NORWEGIAN_BOKMAL typed StringType analyzer langToAnalyzer(NORWEGIAN_BOKMAL),
-          NORWEGIAN_NYNORSK typed StringType analyzer langToAnalyzer(NORWEGIAN_NYNORSK),
-          ENGLISH typed StringType analyzer langToAnalyzer(ENGLISH),
-          FRENCH typed StringType analyzer langToAnalyzer(FRENCH),
-          GERMAN typed StringType analyzer langToAnalyzer(GERMAN),
-          SPANISH typed StringType analyzer langToAnalyzer(SPANISH),
-          SAMI typed StringType analyzer langToAnalyzer(SAMI),
-          CHINESE typed StringType analyzer langToAnalyzer(CHINESE),
-          UNKNOWN typed StringType analyzer langToAnalyzer(UNKNOWN)
+          textField(NORWEGIAN_BOKMAL) analyzer langToAnalyzer(NORWEGIAN_BOKMAL),
+          textField(NORWEGIAN_NYNORSK) analyzer langToAnalyzer(NORWEGIAN_NYNORSK),
+          textField(ENGLISH) analyzer langToAnalyzer(ENGLISH),
+          textField(FRENCH) analyzer langToAnalyzer(FRENCH),
+          textField(GERMAN) analyzer langToAnalyzer(GERMAN),
+          textField(SPANISH) analyzer langToAnalyzer(SPANISH),
+          textField(SAMI) analyzer langToAnalyzer(SAMI),
+          textField(CHINESE) analyzer langToAnalyzer(CHINESE),
+          textField(UNKNOWN) analyzer langToAnalyzer(UNKNOWN)
         )
       }
     }
