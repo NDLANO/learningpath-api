@@ -78,11 +78,11 @@ trait SearchServiceComponent extends LazyLogging {
       val fullQuery = QueryBuilders.boolQuery()
         .must(
           QueryBuilders.boolQuery()
-            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.None))
-            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.None))
-            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.None))
-            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.None))
-            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.None))
+            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg))
             .should(authorSearch))
 
       executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
