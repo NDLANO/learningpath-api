@@ -88,6 +88,12 @@ def itFilter(name: String): Boolean = name endsWith "IntegrationTest"
 def unitFilter(name: String): Boolean = (name endsWith "Test") && !itFilter(name)
 testOptions in Test := Seq(Tests.Filter(unitFilter))
 testOptions in ITest := Seq(Tests.Filter(itFilter))
+// Don't run Integration tests with annotation IntegrationTest in default run on Travis as there is no elasticsearch localhost:9200 there yet.
+// NB this line will unfortunalty override runs on your local commandline so that
+// sbt "test-only -- -n no.ndla.tag.IntegrationTest"
+// will not run unless this line gets commented out or you remove the tag over the test class
+// This should be solved better!
+testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker <<= (docker dependsOn assembly)
