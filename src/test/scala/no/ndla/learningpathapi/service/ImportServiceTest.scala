@@ -68,7 +68,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     ))
 
     embedUrls.size should be(3)
-    embedUrls.map(_.url).mkString(",") should equal("http://ndla.no/1,http://ndla.no/2,http://ndla.no/3")
+    embedUrls.map(_.url).mkString(",") should equal("https://ndla.no/1,https://ndla.no/2,https://ndla.no/3")
     embedUrls.map(_.language.get).mkString(",") should equal("nb,nn,en")
   }
 
@@ -79,7 +79,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     ))
 
     embedUrls.size should be(2)
-    embedUrls.map(_.url).mkString(",") should equal("http://ndla.no/2,http://ndla.no/3")
+    embedUrls.map(_.url).mkString(",") should equal("https://ndla.no/2,https://ndla.no/3")
     embedUrls.map(_.language.get).mkString(",") should equal("nn,en")
   }
 
