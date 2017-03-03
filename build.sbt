@@ -39,7 +39,6 @@ lazy val learningpath_api = (project in file(".")).
       "ndla" %% "network" % "0.16",
       "ndla" %% "mapping" % "0.4",
       "joda-time" % "joda-time" % "2.8.2",
-      "org.specs2" %% "specs2-core" % "3.8.8-20170222075022-d6a08b0" % "test",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
