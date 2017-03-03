@@ -56,13 +56,13 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   test("That Step.embedUrlToNdlaNo converts red.ndla.no to ndla.no") {
     val redUrl = Some("http://red.ndla.no/node/145805")
-    val expectedUrl = Some("http://ndla.no/node/145805")
+    val expectedUrl = Some("https://ndla.no/node/145805")
 
     testStep.copy(embedUrl = redUrl).embedUrlToNdlaNo should equal(expectedUrl)
   }
 
   test("That Step.embedUrlToNdlaNo returns other than red.ndla.no as is") {
-    val urlToCnn, expectedUrl = Some("http://www.cnn.com/")
+    val (urlToCnn, expectedUrl) = (Some("http://www.cnn.com/"), Some("https://www.cnn.com/"))
     testStep.copy(embedUrl = urlToCnn).embedUrlToNdlaNo should equal(expectedUrl)
   }
 
