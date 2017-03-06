@@ -14,23 +14,17 @@ import no.ndla.learningpathapi.integration.JestClientFactory
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
-import org.elasticsearch.common.settings.Settings
-import org.elasticsearch.node.{Node, NodeBuilder}
+import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 
-import scala.reflect.io.Path
-import scala.util.Random
-
-
+@IntegrationTest
 class SearchServiceTest extends UnitSuite with TestEnvironment {
 
-  val esHttpPort = new Random(System.currentTimeMillis()).nextInt(30000 - 20000) + 20000
-  val esDataDir = "esTestData"
-  var esNode: Node = _
+  val esPort = 9200
 
-  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esHttpPort")
+  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService: SearchConverterService = new SearchConverterService
   override val searchIndexService: SearchIndexService = new SearchIndexService
   override val searchService: SearchService = new SearchService
@@ -57,7 +51,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val DonaldId = 3
 
   override def beforeAll() = {
-    Path(esDataDir).deleteRecursively()
+    searchIndexService.createIndexWithName(LearningpathApiProperties.SearchIndex)
+
     doReturn(api.Author("Forfatter", "En eier")).when(converterService).asAuthor(any[NdlaUserName])
 
     val today = new DateTime().toDate
@@ -91,18 +86,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       tags = List(LearningPathTags(Seq("disney", "kanfly"), Some("nb")))
     )
 
-
-    val settings = Settings.settingsBuilder()
-      .put("path.home", esDataDir)
-      .put("index.number_of_shards", "1")
-      .put("index.number_of_replicas", "0")
-      .put("http.port", esHttpPort)
-      .put("cluster.name", getClass.getName)
-      .build()
-
-    esNode = new NodeBuilder().settings(settings).node()
-    esNode.start()
-
     searchIndexService.indexDocument(thePenguin)
     searchIndexService.indexDocument(batman)
     searchIndexService.indexDocument(theDuck)
@@ -111,8 +94,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   override def afterAll() = {
-    esNode.close()
-    Path(esDataDir).deleteRecursively()
+    searchIndexService.delete(Some(LearningpathApiProperties.SearchIndex))
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {
@@ -139,6 +121,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   test("That all learningpaths are returned ordered by title descending") {
     val searchResult = searchService.all(List(), None, Sort.ByTitleDesc, Some("nb"), None, None)
     searchResult.totalCount should be(3)
+
     searchResult.results.head.id should be(PenguinId)
   }
 

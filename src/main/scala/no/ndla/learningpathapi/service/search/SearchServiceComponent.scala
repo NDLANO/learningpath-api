@@ -17,6 +17,7 @@ import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
 import no.ndla.learningpathapi.model.domain.{NdlaSearchException, Sort}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
@@ -77,11 +78,11 @@ trait SearchServiceComponent extends LazyLogging {
       val fullQuery = QueryBuilders.boolQuery()
         .must(
           QueryBuilders.boolQuery()
-            .should(QueryBuilders.nestedQuery("titles", titleSearch))
-            .should(QueryBuilders.nestedQuery("descriptions", descSearch))
-            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch))
-            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch))
-            .should(QueryBuilders.nestedQuery("tags", tagSearch))
+            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg))
             .should(authorSearch))
 
       executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
@@ -90,7 +91,7 @@ trait SearchServiceComponent extends LazyLogging {
     def executeSearch(queryBuilder: BoolQueryBuilder, withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val tagFilteredSearch = taggedWith match {
         case None => queryBuilder
-        case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag)))
+        case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag), ScoreMode.None))
       }
 
       val idFilteredSearch = withIdIn match {
