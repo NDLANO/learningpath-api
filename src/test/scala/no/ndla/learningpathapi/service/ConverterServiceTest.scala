@@ -21,7 +21,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
   val license = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
   val copyright = api.Copyright(license, List(clinton))
-  val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), api.Author("", ""), copyright, true)
+  val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   var service: ConverterService = _
 

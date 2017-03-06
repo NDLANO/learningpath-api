@@ -18,7 +18,7 @@ import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 
 trait ConverterServiceComponent {
-  this: AuthClientComponent with ImageApiClientComponent =>
+  this: ImageApiClientComponent =>
 
   val converterService: ConverterService
 
@@ -90,7 +90,6 @@ trait ConverterServiceComponent {
         lp.verificationStatus.toString,
         lp.lastUpdated,
         lp.tags.map(asApiLearningPathTags),
-        asAuthor(authClient.getUserName(lp.owner)),
         asApiCopyright(lp.copyright),
         lp.canEdit(user))
     }
@@ -113,7 +112,6 @@ trait ConverterServiceComponent {
         learningpath.status.toString,
         learningpath.lastUpdated,
         learningpath.tags.map(asApiLearningPathTags),
-        asAuthor(authClient.getUserName(learningpath.owner)),
         asApiCopyright(learningpath.copyright),
         learningpath.isBasedOn)
     }

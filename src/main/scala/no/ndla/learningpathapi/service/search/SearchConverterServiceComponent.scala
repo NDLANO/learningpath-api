@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi.service.search
 
-import no.ndla.learningpathapi.integration.{AuthClientComponent, ImageApiClientComponent}
+import no.ndla.learningpathapi.integration.ImageApiClientComponent
 import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummary}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain._
@@ -18,7 +18,7 @@ import no.ndla.network.ApplicationUrl
 
 
 trait SearchConverterServiceComponent {
-  this: AuthClientComponent with ConverterServiceComponent with ImageApiClientComponent =>
+  this: ConverterServiceComponent with ImageApiClientComponent =>
   val searchConverterService: SearchConverterService
 
   class SearchConverterService {
@@ -92,7 +92,6 @@ trait SearchConverterServiceComponent {
         searchableLearningPath.status,
         searchableLearningPath.lastUpdated,
         asApiLearningPathTag(searchableLearningPath.tags),
-        asAuthor(searchableLearningPath.author),
         searchableLearningPath.copyright,
         searchableLearningPath.isBasedOn
       )
@@ -110,7 +109,6 @@ trait SearchConverterServiceComponent {
         learningPath.verificationStatus.toString,
         learningPath.lastUpdated,
         asSearchableTags(learningPath.tags),
-        getAuthor(learningPath.owner),
         learningPath.learningsteps.map(asSearchableLearningStep).toList,
         converterService.asApiCopyright(learningPath.copyright),
         learningPath.isBasedOn
@@ -164,10 +162,6 @@ trait SearchConverterServiceComponent {
         learningStep.`type`.toString,
         asSearchableTitles(learningStep.title),
         asSearchableDescriptions(learningStep.description))
-    }
-
-    def getAuthor(owner: String): String = {
-      converterService.asAuthor(authClient.getUserName(owner)).name
     }
 
     def asAuthor(author: String): Author = {

@@ -16,6 +16,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 import org.scalatra.{Ok, ScalatraServlet}
+
 import scala.util.Try
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api._
@@ -23,7 +24,7 @@ import no.ndla.learningpathapi.model.domain.{AccessDeniedException, LearningPath
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.network.ApplicationUrl
+import no.ndla.network.{ApplicationUrl, AuthUser}
 import no.ndla.network.model.HttpRequestException
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
@@ -66,7 +67,8 @@ trait LearningpathController {
            Default is by -relevance (desc) when querying.
            When browsing, the default is title (asc).
            The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title, id, -id""".stripMargin))
-        responseMessages(response400, response500))
+        responseMessages(response400, response500)
+        authorizations "oauth2")
 
     val getLicenses =
       (apiOperation[List[License]]("getLicenses")
@@ -76,7 +78,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         queryParam[Option[String]]("filter").description("A filter on the license keys. May be omitted"))
-        responseMessages(response403, response500))
+        responseMessages(response403, response500)
+        authorizations "oauth2")
 
     val getMyLearningpaths =
       (apiOperation[List[LearningPathSummary]]("getMyLearningpaths")
@@ -85,7 +88,8 @@ trait LearningpathController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."))
-        responseMessages(response403, response500))
+        responseMessages(response403, response500)
+        authorizations "oauth2")
 
     val getLearningpath =
       (apiOperation[LearningPath]("getLearningpath")
@@ -95,7 +99,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val getLearningpathStatus =
       (apiOperation[LearningPathStatus]("getLearningpathStatus")
@@ -105,7 +110,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val getLearningStepStatus =
       (apiOperation[LearningStepStatus]("getLearningStepStatus")
@@ -116,7 +122,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val getLearningsteps =
       (apiOperation[List[LearningStepSummary]]("getLearningsteps")
@@ -126,7 +133,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val getLearningStepsInTrash =
       (apiOperation[List[LearningStepSummary]]("getLearningStepsInTrash")
@@ -136,7 +144,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val getLearningstep =
       (apiOperation[LearningStep]("getLearningstep")
@@ -147,7 +156,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."))
-        responseMessages(response403, response404, response500, response502))
+        responseMessages(response403, response404, response500, response502)
+        authorizations "oauth2")
 
     val addNewLearningpath =
       (apiOperation[LearningPath]("addLearningpath")
@@ -157,7 +167,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         bodyParam[NewLearningPath])
-        responseMessages(response400, response403, response404, response500))
+        responseMessages(response400, response403, response404, response500)
+        authorizations "oauth2")
 
     val copyLearningpath =
       (apiOperation[LearningPath]("copyLearningpath")
@@ -168,7 +179,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath to copy."),
         bodyParam[NewCopyLearningPath])
-        responseMessages(response400, response403, response404, response500))
+        responseMessages(response400, response403, response404, response500)
+        authorizations "oauth2")
 
     val addNewLearningStep =
       (apiOperation[LearningStep]("addLearningStep")
@@ -179,7 +191,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         bodyParam[NewLearningStep])
-        responseMessages(response400, response403, response404, response500, response502))
+        responseMessages(response400, response403, response404, response500, response502)
+        authorizations "oauth2")
 
     val updateLearningPath =
       (apiOperation[LearningPath]("updateLearningPath")
@@ -190,7 +203,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         bodyParam[UpdatedLearningPath])
-        responseMessages(response400, response403, response404, response500))
+        responseMessages(response400, response403, response404, response500)
+        authorizations "oauth2")
 
     val updateLearningStep =
       (apiOperation[LearningStep]("updateLearningStep")
@@ -202,7 +216,8 @@ trait LearningpathController {
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."),
         bodyParam[UpdatedLearningStep])
-        responseMessages(response400, response403, response404, response500, response502))
+        responseMessages(response400, response403, response404, response500, response502)
+        authorizations "oauth2")
 
     val updateLearningstepSeqNo =
       (apiOperation[LearningStepSeqNo]("updatetLearningstepSeqNo")
@@ -214,7 +229,8 @@ trait LearningpathController {
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."),
         bodyParam[LearningStepSeqNo])
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val updateLearningPathStatus =
       (apiOperation[LearningPathStatus]("updateLearningPathStatus")
@@ -225,7 +241,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         bodyParam[LearningPathStatus])
-        responseMessages(response400, response403, response404, response500))
+        responseMessages(response400, response403, response404, response500)
+        authorizations "oauth2")
 
     val updateLearningStepStatus =
       (apiOperation[LearningStep]("updateLearningStepStatus")
@@ -237,7 +254,8 @@ trait LearningpathController {
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."),
         bodyParam[LearningStepStatus])
-        responseMessages(response400, response403, response404, response500))
+        responseMessages(response400, response403, response404, response500)
+        authorizations "oauth2")
 
     val deleteLearningPath =
       (apiOperation[LearningPath]("deleteLearningPath")
@@ -247,7 +265,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val deleteLearningStep =
       (apiOperation[Void]("deleteLearningStep")
@@ -258,7 +277,8 @@ trait LearningpathController {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."))
-        responseMessages(response403, response404, response500))
+        responseMessages(response403, response404, response500)
+        authorizations "oauth2")
 
     val getTags =
       (apiOperation[List[LearningPathTags]]("getTags")
@@ -267,15 +287,18 @@ trait LearningpathController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."))
-        responseMessages response500)
+        responseMessages response500
+        authorizations "oauth2")
 
     before() {
       contentType = formats("json")
       ApplicationUrl.set(request)
+      AuthUser.set(request)
     }
 
     after() {
       ApplicationUrl.clear()
+      AuthUser.clear()
     }
 
     error {
@@ -322,49 +345,49 @@ trait LearningpathController {
 
 
     get("/:path_id/?", operation(getLearningpath)) {
-      readService.withId(long("path_id"), optionalUsernameFromHeader) match {
+      readService.withId(long("path_id"), AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
     }
 
     get("/:path_id/status/?", operation(getLearningpathStatus)) {
-      readService.statusFor(long("path_id"), optionalUsernameFromHeader) match {
+      readService.statusFor(long("path_id"), AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
     }
 
     get("/:path_id/learningsteps/?", operation(getLearningsteps)) {
-      readService.learningstepsForWithStatus(long("path_id"), StepStatus.ACTIVE, optionalUsernameFromHeader) match {
+      readService.learningstepsForWithStatus(long("path_id"), StepStatus.ACTIVE, AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
     }
 
     get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-      readService.learningstepFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
+      readService.learningstepFor(long("path_id"), long("step_id"), AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
     }
 
     get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
-      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(usernameFromHeader)) match {
+      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(requireUser)) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
     }
 
     get("/:path_id/learningsteps/:step_id/status/?", operation(getLearningStepStatus)) {
-      readService.learningStepStatusFor(long("path_id"), long("step_id"), optionalUsernameFromHeader) match {
+      readService.learningStepStatusFor(long("path_id"), long("step_id"), AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
     }
 
     get("/mine/?", operation(getMyLearningpaths)) {
-      readService.withOwner(owner = usernameFromHeader)
+      readService.withOwner(owner = requireUser)
     }
 
     get("/licenses", operation(getLicenses)) {
@@ -378,7 +401,7 @@ trait LearningpathController {
 
     post("/", operation(addNewLearningpath)) {
       val newLearningPath = extract[NewLearningPath](request.body)
-      val learningPath = updateService.addLearningPath(newLearningPath, usernameFromHeader)
+      val learningPath = updateService.addLearningPath(newLearningPath, requireUser)
       logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
       halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
     }
@@ -386,7 +409,7 @@ trait LearningpathController {
     post("/:path_id/copy", operation(copyLearningpath)) {
       val newLearningPath = extract[NewCopyLearningPath](request.body)
       val pathId = long("path_id")
-      updateService.newFromExisting(pathId, newLearningPath, usernameFromHeader) match {
+      updateService.newFromExisting(pathId, newLearningPath, requireUser) match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
         case Some(learningPath) => {
           logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
@@ -396,7 +419,7 @@ trait LearningpathController {
     }
 
     patch("/:path_id/?", operation(updateLearningPath)) {
-      val updatedLearningPath = updateService.updateLearningPath(long("path_id"), extract[UpdatedLearningPath](request.body), usernameFromHeader)
+      val updatedLearningPath = updateService.updateLearningPath(long("path_id"), extract[UpdatedLearningPath](request.body), requireUser)
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
@@ -408,7 +431,7 @@ trait LearningpathController {
 
     post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
       val newLearningStep = extract[NewLearningStep](request.body)
-      val createdLearningStep = updateService.addLearningStep(long("path_id"), newLearningStep, usernameFromHeader)
+      val createdLearningStep = updateService.addLearningStep(long("path_id"), newLearningStep, requireUser)
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {
@@ -422,7 +445,7 @@ trait LearningpathController {
       val updatedLearningStep = extract[UpdatedLearningStep](request.body)
       val createdLearningStep = updateService.updateLearningStep(long("path_id"), long("step_id"),
         updatedLearningStep,
-        usernameFromHeader)
+        requireUser)
 
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
@@ -435,7 +458,7 @@ trait LearningpathController {
 
     put("/:path_id/learningsteps/:step_id/seqNo/?", operation(updateLearningstepSeqNo)) {
       val newSeqNo = extract[LearningStepSeqNo](request.body)
-      updateService.updateSeqNo(long("path_id"), long("step_id"), newSeqNo.seqNo, usernameFromHeader) match {
+      updateService.updateSeqNo(long("path_id"), long("step_id"), newSeqNo.seqNo, requireUser) match {
         case Some(seqNo) => seqNo
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
@@ -445,7 +468,7 @@ trait LearningpathController {
       val learningStepStatus = extract[LearningStepStatus](request.body)
       val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
 
-      val updatedStep = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), stepStatus, usernameFromHeader)
+      val updatedStep = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), stepStatus, requireUser)
       updatedStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {
@@ -462,7 +485,7 @@ trait LearningpathController {
       val updatedLearningPath: Option[LearningPath] = updateService.updateLearningPathStatus(
         long("path_id"),
         pathStatus,
-        usernameFromHeader)
+        requireUser)
 
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
@@ -474,7 +497,7 @@ trait LearningpathController {
     }
 
     delete("/:path_id/?", operation(deleteLearningPath)) {
-      val deleted = updateService.updateLearningPathStatus(long("path_id"), LearningPathStatus.DELETED, usernameFromHeader)
+      val deleted = updateService.updateLearningPathStatus(long("path_id"), LearningPathStatus.DELETED, requireUser)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
@@ -485,7 +508,7 @@ trait LearningpathController {
     }
 
     delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-      val deleted = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), StepStatus.DELETED, usernameFromHeader)
+      val deleted = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), StepStatus.DELETED, requireUser)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {
@@ -510,15 +533,14 @@ trait LearningpathController {
       }
     }
 
-    def optionalUsernameFromHeader(implicit request: HttpServletRequest): Option[String] = {
-      request.header(LearningpathApiProperties.UsernameHeader) match {
-        case Some(h) => Some(h.replace("ndla-", ""))
-        case None => None
+    def requireUser(implicit request: HttpServletRequest): String = {
+      AuthUser.get match {
+        case Some(user) => user
+        case None => {
+          logger.warn(s"Request made to ${request.getRequestURI} without authorization")
+          throw new AccessDeniedException("You do not have access to the requested resource.")
+        }
       }
-    }
-
-    def usernameFromHeader(implicit request: HttpServletRequest): String = {
-      requireHeader(LearningpathApiProperties.UsernameHeader).get.replace("ndla-", "")
     }
 
     def requireHeader(headerName: String)(implicit request: HttpServletRequest): Option[String] = {

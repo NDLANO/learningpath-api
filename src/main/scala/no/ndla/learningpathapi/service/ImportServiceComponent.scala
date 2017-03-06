@@ -22,9 +22,9 @@ trait ImportServiceComponent {
   this: LearningPathRepositoryComponent with KeywordsServiceComponent with ImageApiClientComponent with MigrationApiClient with SearchIndexServiceComponent with ConverterServiceComponent =>
   val importService: ImportService
 
-  val ChristerTest = "410714a7-c09d-4e9a-9595-e7f13e19c463"
-  val ChristerStaging = "2dd7a2cd-b71b-4ea1-b9a3-efa4c49613ab"
-  val ChristerProd = "unknown"
+  val ChristerTest = "7kL_SFmhmHxCTgpyHeUu5tB4"
+  val ChristerStaging = "7kL_SFmhmHxCTgpyHeUu5tB4"
+  val ChristerProd = "7kL_SFmhmHxCTgpyHeUu5tB4"
 
   class ImportService {
 
