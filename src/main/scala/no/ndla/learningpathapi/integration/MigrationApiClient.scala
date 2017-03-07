@@ -15,6 +15,7 @@ import no.ndla.network.NdlaClient
 
 import scala.util.Try
 import scalaj.http.Http
+import com.netaporter.uri.dsl._
 
 trait MigrationApiClient {
   this: NdlaClient =>
@@ -40,22 +41,15 @@ trait MigrationApiClient {
 case class MainPackageImport(mainPackage: Package, translations: Seq[Package])
 case class Node(nid: Long, tnid: Long, language: String, title: String, packageId: Long, imageNid: Option[Int], description: String)
 case class Step(packageId: Long, pageId: Long, pos: Int, title: String, stepType: Long, pageAuthor: Long, embedUrl: Option[String], description: Option[String], license: Option[String], language: String) {
-  def embedUrlToNdlaNo:Option[String] = {
-    embedUrl match {
-      case None => None
-      case Some(url) => {
-        val parsedUri = com.netaporter.uri.Uri.parse(url)
-        parsedUri.host match {
-          case None => None
-          case Some(host) => {
-            host match {
-              case h if h == "red.ndla.no" => Some(s"http://ndla.no${parsedUri.path}")
-              case default => Some(url)
-            }
-          }
-        }
+  def embedUrlToNdlaNo: Option[String] = {
+    embedUrl.flatMap(url => url.host.map(host => {
+      if (host == "red.ndla.no") {
+        s"https://ndla.no${url.path}"
+      } else {
+        url.copy(scheme=Some("https"))
       }
-    }
+    }))
+
   }
 }
 case class Package(nid: Long,
