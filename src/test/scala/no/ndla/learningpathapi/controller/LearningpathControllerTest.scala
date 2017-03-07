@@ -27,7 +27,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   implicit val swagger = new LearningpathSwagger
 
   val copyright = Copyright(License("by-sa", None, None), List())
-  val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""), copyright, None)
+  val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), copyright, None)
 
   lazy val controller = new LearningpathController
   addServlet(controller, "/*")
@@ -49,22 +49,6 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     )
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] { controller.requireHeader("username") }.getMessage
-    }
-  }
-
-  test("That usernameFromHeader replaces ndla- in the header value") {
-    implicit val request:HttpServletRequest = mock[HttpServletRequest]
-    when(request.getHeader(LearningpathApiProperties.UsernameHeader)).thenReturn("ndla-123-123-123")
-    assertResult("123-123-123") {
-      controller.usernameFromHeader
-    }
-  }
-
-  test("That usernameFromHeader does not replace anything else than ndla-") {
-    implicit val request:HttpServletRequest = mock[HttpServletRequest]
-    when(request.getHeader(LearningpathApiProperties.UsernameHeader)).thenReturn("someotherword-123-123-123")
-    assertResult("someotherword-123-123-123") {
-      controller.usernameFromHeader
     }
   }
 

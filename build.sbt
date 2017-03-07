@@ -1,7 +1,7 @@
 import java.util.Properties
 
 val Scalaversion = "2.12.1"
-val Scalatraversion = "2.5.0"
+val Scalatraversion = "2.5.1-NDLA-3"
 val ScalaLoggingVersion = "3.5.0"
 val Log4JVersion = "2.7"
 val Jettyversion = "9.2.10.v20150310"
@@ -95,7 +95,7 @@ testOptions in ITest := Seq(Tests.Filter(itFilter))
 testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
-docker <<= (docker dependsOn assembly)
+docker := (docker dependsOn assembly).value
 
 dockerfile in docker := {
   val artifact = (assemblyOutputPath in assembly).value

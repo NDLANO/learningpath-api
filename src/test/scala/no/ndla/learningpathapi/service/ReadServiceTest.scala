@@ -40,8 +40,6 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   override def beforeEach() = {
     service = new ReadService
     resetMocks()
-
-    when(authClient.getUserName(any[String])).thenReturn(NdlaUserName(Some("fornavn"), Some("mellomnavn"), Some("Etternavn")))
   }
 
   test("That withId returns None when id does not exist") {

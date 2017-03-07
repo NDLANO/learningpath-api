@@ -30,7 +30,6 @@ object ComponentRegistry
   with SearchServiceComponent
   with SearchIndexServiceComponent
   with NdlaClient
-  with AuthClientComponent
   with ImageApiClientComponent
   with ConverterServiceComponent
   with ElasticClientComponent
@@ -65,7 +64,6 @@ object ComponentRegistry
   lazy val searchConverterService = new SearchConverterService
   lazy val searchService = new SearchService
   lazy val searchIndexService = new SearchIndexService
-  lazy val authClient = new AuthClient
   lazy val converterService = new ConverterService
   lazy val clock = new SystemClock
   lazy val learningpathController = new LearningpathController

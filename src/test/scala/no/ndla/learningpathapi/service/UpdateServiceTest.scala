@@ -59,8 +59,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   override def beforeEach() = {
     service = new UpdateService
     resetMocks()
-
-    when(authClient.getUserName(any[String])).thenReturn(NdlaUserName(Some("fornavn"), Some("mellomnavn"), Some("Etternavn")))
   }
 
   test("That addLearningPath inserts the given LearningPath") {
