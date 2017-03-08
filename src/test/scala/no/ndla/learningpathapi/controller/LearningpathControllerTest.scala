@@ -26,7 +26,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   implicit val formats = org.json4s.DefaultFormats
   implicit val swagger = new LearningpathSwagger
 
-  val copyright = Copyright(License("by-sa", None, None), List())
+  val copyright = Copyright(Some(License("by-sa", None, None)), List())
   val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), Author("", ""), copyright, None)
 
   lazy val controller = new LearningpathController

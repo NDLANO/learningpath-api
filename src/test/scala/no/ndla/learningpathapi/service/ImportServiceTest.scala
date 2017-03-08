@@ -98,7 +98,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
     val sanders = Author("author", "Crazy Bernie")
     val license = "publicdomain"
-    val copyright = Copyright(license, List(sanders))
+    val copyright = Copyright(Some(license), List(sanders))
     val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())

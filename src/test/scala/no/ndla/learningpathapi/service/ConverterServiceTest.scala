@@ -20,7 +20,7 @@ import org.mockito.Mockito._
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
   val license = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
-  val copyright = api.Copyright(license, List(clinton))
+  val copyright = api.Copyright(Some(license), List(clinton))
   val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), api.Author("", ""), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   var service: ConverterService = _
@@ -63,11 +63,11 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLicense returns a License object for a given valid license") {
-    service.asApiLicense("by") should equal(api.License("by", Option("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/")))
+    service.asApiLicense(Some("by")) should equal(Some(api.License("by", Option("Creative Commons Attribution 2.0 Generic"), Some("https://creativecommons.org/licenses/by/2.0/"))))
   }
 
   test("asApiLicense returns a default license object for an invalid license") {
-    service.asApiLicense("invalid") should equal(api.License("invalid", Option("Invalid license"), None))
+    service.asApiLicense(Some("invalid")) should equal(Some(api.License("invalid", Option("Invalid license"), None)))
   }
 
   test("asEmbedUrl returns embedUrl if embedType is oembed") {

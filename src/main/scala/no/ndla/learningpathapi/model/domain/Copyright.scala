@@ -8,4 +8,4 @@
 
 package no.ndla.learningpathapi.model.domain
 
-case class Copyright(license: String, contributors: Seq[Author])
+case class Copyright(license: Option[String], contributors: Seq[Author])

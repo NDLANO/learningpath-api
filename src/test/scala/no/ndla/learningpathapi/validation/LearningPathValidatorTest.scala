@@ -28,7 +28,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
 
   val trump = Author("author", "Donald Drumpf")
   val license = "publicdomain"
-  val copyright = Copyright(license, List(trump))
+  val copyright = Copyright(Some(license), List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -210,7 +210,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   test("That validate returns error when copyright.license is invalid") {
     validMock()
     val invalidLicense = "dummy license"
-    val invalidCopyright = ValidLearningPath.copyright.copy(license = invalidLicense)
+    val invalidCopyright = ValidLearningPath.copyright.copy(license = Some(invalidLicense))
     val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(copyright = invalidCopyright))
 
     validationErrors.size should be (1)

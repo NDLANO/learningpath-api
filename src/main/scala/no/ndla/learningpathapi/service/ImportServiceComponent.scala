@@ -190,7 +190,7 @@ trait ImportServiceComponent {
         lastUpdated,
         tags,
         getOwnerForEnvironment(LearningpathApiProperties.Environment),
-        Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
+        Copyright(Some("by-sa"), Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
         learningSteps)
     }
 
