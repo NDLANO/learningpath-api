@@ -47,11 +47,12 @@ trait ConverterServiceComponent {
       api.Copyright(asApiLicense(copyright.license), copyright.contributors.map(asApiAuthor))
     }
 
-    def asApiLicense(license: String): api.License =
-      getLicense(license) match {
-        case Some(l) => api.License(l.license, Option(l.description), l.url)
-        case None => api.License(license, Some("Invalid license"), None)
+    def asApiLicense(license: Option[String]): Option[api.License] = {
+      license.flatMap(getLicense) match {
+        case Some(l) => Some(api.License(l.license, Option(l.description), l.url))
+        case None => Some(api.License(license.getOrElse(""), Some("Invalid license"), None))
       }
+    }
 
     def asApiAuthor(author: domain.Author): api.Author = {
       api.Author(author.`type`, author.name)
@@ -68,7 +69,7 @@ trait ConverterServiceComponent {
     }
 
     def asCopyright(copyright: api.Copyright): domain.Copyright = {
-      domain.Copyright(copyright.license.license, copyright.contributors.map(asAuthor))
+      domain.Copyright(copyright.license.map(l => l.license), copyright.contributors.map(asAuthor))
     }
 
     def asAuthor(author: api.Author): domain.Author = {
@@ -128,7 +129,7 @@ trait ConverterServiceComponent {
         ls.embedUrl.map(asApiEmbedUrl),
         ls.showTitle,
         ls.`type`.toString,
-        ls.license.map(asApiLicense),
+        asApiLicense(ls.license),
         createUrlToLearningStep(ls, lp),
         lp.canEdit(user),
         ls.status.toString)

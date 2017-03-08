@@ -39,10 +39,10 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
   val rubio = Author("author", "Little Marco")
   val license = "publicdomain"
-  val copyright = Copyright(license, List(rubio))
+  val copyright = Copyright(Some(license), List(rubio))
   val apiRubio = api.Author("author", "Little Marco")
   val apiLicense = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
-  val apiCopyright = api.Copyright(apiLicense, List(apiRubio))
+  val apiCopyright = api.Copyright(Some(apiLicense), List(apiRubio))
 
   val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, List())

@@ -31,7 +31,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val paul = Author("author", "Truly Weird Rand Paul")
   val license = "publicdomain"
-  val copyright = Copyright(license, List(paul))
+  val copyright = Copyright(Some(license), List(paul))
   val DefaultLearningPath = LearningPath(
     id = None,
     revision = None, externalId = None, isBasedOn = None,

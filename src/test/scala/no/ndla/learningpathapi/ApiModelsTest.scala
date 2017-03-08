@@ -14,8 +14,8 @@ import no.ndla.learningpathapi.model.api.{Author, LearningPath, License, Copyrig
 
 class ApiModelsTest extends UnitSuite {
   val bush = Author("author", "Low Energy’ Jeb")
-  val license = License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
-  val copyright = Copyright(license, List(bush))
+  val license = License("pubslicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
+  val copyright = Copyright(Some(license), List(bush))
   val testLearningPath = LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PUBLIC", "", new Date(),List(), Author("Forfatter", "Ukjent"), copyright, true)
 
   test("That LearningPath.isPrivate returns true for a private learningpath") {
