@@ -80,16 +80,16 @@ trait LearningPathValidator {
     }
 
     def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
-      val licenseMessage = validateLicense(copyright.license)
+      val licenseMessage = copyright.license.flatMap(validateLicense)
       val contributorsMessages = copyright.contributors.flatMap(validateAuthor)
 
-      licenseMessage ++ contributorsMessages
+      contributorsMessages ++ licenseMessage
     }
 
-    def validateLicense(license: Option[String]): Seq[ValidationMessage] = {
-      license.flatMap(getLicense) match {
-        case None => Seq(new ValidationMessage("license.license", s"$license is not a valid license"))
-        case _ => Seq()
+    def validateLicense(license: String): Option[ValidationMessage] = {
+      getLicense(license) match {
+        case None => Some(new ValidationMessage("license.license", s"$license is not a valid license"))
+        case _ => None
       }
     }
 
