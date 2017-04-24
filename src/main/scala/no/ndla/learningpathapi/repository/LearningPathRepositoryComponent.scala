@@ -60,7 +60,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def getIdFromExternalId(externalId: String)(implicit session: DBSession = AutoSession): Option[Long] = {
-      sql"select id from learningpaths where external_id = $externalId".map(rs => rs.long("id")).single().apply()
+      sql"select id from learningpaths where external_id = ${externalId}".map(rs => rs.long("id")).single().apply()
     }
 
     def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {
