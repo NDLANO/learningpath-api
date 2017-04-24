@@ -8,23 +8,21 @@
 
 package no.ndla.learningpathapi.controller
 
-import no.ndla.learningpathapi.ComponentRegistry
+import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.Error
-import no.ndla.learningpathapi.service.ImportServiceComponent
+import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.service.{ImportServiceComponent, ReadServiceComponent}
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-import no.ndla.network.{ApplicationUrl, CorrelationID}
+import no.ndla.network.ApplicationUrl
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
-import org.scalatra.{InternalServerError, Ok, ScalatraServlet}
-import no.ndla.learningpathapi.LearningpathApiProperties.{CorrelationIdHeader, CorrelationIdKey}
-import org.apache.logging.log4j.ThreadContext
+import org.scalatra.{InternalServerError, NotFound, Ok, ScalatraServlet}
 
 import scala.util.{Failure, Success}
-import com.typesafe.scalalogging.LazyLogging
 
 
 trait InternController {
-  this: ImportServiceComponent with SearchIndexServiceComponent =>
+  this: ImportServiceComponent with SearchIndexServiceComponent with LearningPathRepositoryComponent =>
   val internController: InternController
 
   class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
@@ -45,6 +43,14 @@ trait InternController {
         val error = Error(Error.GENERIC, t.getMessage)
         logger.error(error.toString, t)
         halt(status = 500, body = error)
+      }
+    }
+
+    get("/externalidtonewid/:external_id") {
+      val externalId = params("external_id")
+      learningPathRepository.getIdFromExternalId(externalId) match {
+        case Some(id) => id
+        case None => NotFound()
       }
     }
 
@@ -87,6 +93,6 @@ trait InternController {
         }
       }
     }
-  }
 
+  }
 }
