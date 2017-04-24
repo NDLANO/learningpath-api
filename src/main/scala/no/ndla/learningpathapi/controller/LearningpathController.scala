@@ -393,7 +393,7 @@ trait LearningpathController {
     get("/licenses", operation(getLicenses)) {
       val licenses: Seq[LicenseDefinition] = paramOrNone("filter") match {
         case None => mapping.License.getLicenses
-        case Some(filter) => mapping.License.getLicenses.filter(_.license.startsWith(filter))
+        case Some(filter) => mapping.License.getLicenses.filter(_.license.contains(filter))
       }
 
       licenses.map(x => License(x.license, Option(x.description), x.url))
