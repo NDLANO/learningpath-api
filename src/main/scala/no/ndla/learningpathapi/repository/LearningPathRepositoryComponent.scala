@@ -59,6 +59,10 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningPathsWhere(sqls"lp.document->>'owner' = $owner AND lp.document->>'status' <> ${LearningPathStatus.DELETED.toString}")
     }
 
+    def getIdFromExternalId(externalId: String)(implicit session: DBSession = AutoSession): Option[Long] = {
+      sql"select id from learningpaths where external_id = ${externalId}".map(rs => rs.long("id")).single().apply()
+    }
+
     def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {
       val ls = LearningStep.syntax("ls")
       sql"select ${ls.result.*} from ${LearningStep.as(ls)} where ${ls.learningPathId} = $learningPathId".map(LearningStep(ls.resultName)).list().apply()
