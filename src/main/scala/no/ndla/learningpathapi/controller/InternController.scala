@@ -46,7 +46,7 @@ trait InternController {
       }
     }
 
-    get("/externalidtonewid/:external_id") {
+    get("/id/:external_id") {
       val externalId = params("external_id")
       learningPathRepository.getIdFromExternalId(externalId) match {
         case Some(id) => id
