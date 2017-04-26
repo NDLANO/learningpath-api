@@ -12,7 +12,7 @@ Returns a list of licenses with the possibility of filtering on the license key.
 #### Other
 Is currently only used by [learningpath-frontend](https://learningpath-frontend.staging.api.ndla.no).
 
-##### Api access
+#### Api access
 To interact with the api, you need valid security credentials; see [Access Tokens usage](https://github.com/NDLANO/auth/blob/master/README.md).
 
 To write data to the api, you need write role access. This is only accessible in learningpath-frontend today.
