@@ -3,32 +3,31 @@
 
 API for learningpaths from NDLA.
 
-# Usage
+## Usage
 Creates, updates and returns a Learningpath. Implements elastic search for search within the learningpath database.
 
 #### Licenses
 Returns a list of licenses with the possibility of filtering on the license key.
 
-#### Other
-Is currently only used by [learningpath-frontend](https://learningpath-frontend.staging.api.ndla.no).
-
 #### Api access
 To interact with the api, you need valid security credentials; see [Access Tokens usage](https://github.com/NDLANO/auth/blob/master/README.md).
 
-To write data to the api, you need write role access. This is only accessible in learningpath-frontend today.
+To write data to the api, you need write role access. This is only accessible in [learningpath-frontend](https://learningpath-frontend.staging.api.ndla.no) today.
 
-# Building and distribution
+For a more detailed documentation of the API, please refer to the [API documentation](https://staging.api.ndla.no).
 
-## Compile
+## Developer documentation
+
+### Compile
     sbt compile
 
-## Run tests
+### Run tests
     sbt test
 
-## Run integration tests
+### Run integration tests
     sbt it:test
 
-### IntegrationTest Tag and sbt run problems
+#### IntegrationTest Tag and sbt run problems
 Tests that need a running elasticsearch outside of component, e.g. in your local docker are marked with selfdefined java
 annotation test tag  ```IntegrationTag``` in ```/ndla/article-api/src/test/java/no/ndla/tag/IntegrationTest.java```.
 
