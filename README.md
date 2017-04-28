@@ -4,7 +4,7 @@
 API for learningpaths from NDLA.
 
 ## Usage
-Creates, updates and returns a Learningpath. Implements elastic search for search within the learningpath database.
+Creates, updates, deletes and returns a Learningpath. Implements elastic search for search within the learningpath database.
 
 #### Licenses
 Returns a list of licenses with the possibility of filtering on the license key.
