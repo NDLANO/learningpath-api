@@ -1,10 +1,8 @@
 # Learningpath API
  [![Build Status](https://travis-ci.org/NDLANO/learningpath-api.svg?branch=master)](https://travis-ci.org/NDLANO/learningpath-api)
 
-API for learningpaths from NDLA.
-
 ## Usage
-Creates, updates, deletes and returns a Learningpath. Implements elastic search for search within the learningpath database.
+Creates, updates, deletes and returns a Learningpath. Implements Elasticsearch for search within the learningpath database.
 
 #### Licenses
 Returns a list of licenses with the possibility of filtering on the license key.
@@ -14,18 +12,18 @@ To interact with the api, you need valid security credentials; see [Access Token
 
 To write data to the api, you need write role access. This is only accessible in [learningpath-frontend](https://learningpath-frontend.staging.api.ndla.no) today.
 
-For a more detailed documentation of the API, please refer to the [API documentation](https://staging.api.ndla.no).
+For a more detailed documentation of the API, please refer to the [API documentation](https://api.ndla.no) (Staging: [API documentation](https://staging.api.ndla.no)).
 
 ## Developer documentation
 
-### Compile
-    sbt compile
 
-### Run tests
-    sbt test
+**Compile:** sbt compile
 
-### Run integration tests
-    sbt it:test
+**Run tests:** sbt test
+
+**Run integration tests:** sbt it:test
+
+**Create Docker Image:** ./build.sh
 
 #### IntegrationTest Tag and sbt run problems
 Tests that need a running elasticsearch outside of component, e.g. in your local docker are marked with selfdefined java
@@ -35,10 +33,6 @@ As of now we have no running elasticserach or tunnel to one on Travis and need t
 
 Therefore we have the
  ```testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")``` in ```build.sbt```
-
-This, it seems, will unfortunalty override runs on your local commandline so that ```sbt "test-only -- -n no.ndla.tag.IntegrationTest"```
- will not run unless this line gets commented out or you comment out the ```@IntegrationTest``` annotation in ```SearchServiceTest.scala```
- This should be solved better!
 
     sbt "test-only -- -n no.ndla.tag.IntegrationTest"
 
