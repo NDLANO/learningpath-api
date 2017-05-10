@@ -68,12 +68,12 @@ trait SearchServiceComponent extends LazyLogging {
     def matchingQuery(withIdIn: List[Long], query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val titleSearch = QueryBuilders.matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val descSearch = QueryBuilders.matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val stepTitleSearch = QueryBuilders.matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val stepDescSearch = QueryBuilders.matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val tagSearch = QueryBuilders.matchQuery(s"tags.$searchLanguage", query.mkString(" ")).fuzziness("AUTO")
-      val authorSearch = QueryBuilders.matchQuery("author", query.mkString(" ")).fuzziness("AUTO")
+      val titleSearch = QueryBuilders.matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("0")
+      val descSearch = QueryBuilders.matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).fuzziness("0")
+      val stepTitleSearch = QueryBuilders.matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).fuzziness("0")
+      val stepDescSearch = QueryBuilders.matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).fuzziness("0")
+      val tagSearch = QueryBuilders.matchQuery(s"tags.$searchLanguage", query.mkString(" ")).fuzziness("0")
+      val authorSearch = QueryBuilders.matchQuery("author", query.mkString(" ")).fuzziness("0")
 
       val fullQuery = QueryBuilders.boolQuery()
         .must(
