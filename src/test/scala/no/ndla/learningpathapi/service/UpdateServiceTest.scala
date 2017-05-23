@@ -118,6 +118,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PRIVATE))
+    when(learningPathRepository.learningPathsWithIsBasedOn(PUBLISHED_ID)).thenReturn(List())
 
     assertResult("PRIVATE"){
       service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER).get.status
@@ -145,6 +146,20 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
+  }
+
+  test("That updateLearningPathStatus updates is based on when a PUBLISHED path is DELETED") {
+    when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.DELETED))
+    when(learningPathRepository.learningPathsWithIsBasedOn(PUBLISHED_ID)).thenReturn(List(DELETED_LEARNINGPATH.copy(isBasedOn = Some(4)), DELETED_LEARNINGPATH.copy(isBasedOn = Some(4))))
+
+    assertResult("DELETED"){
+      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER).get.status
+    }
+
+    verify(learningPathRepository, times(3)).update(any[domain.LearningPath])
+    verify(learningPathRepository, times(2)).learningPathsWithIsBasedOn(any[Long])
+    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
@@ -625,7 +640,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     val existing = Seq(desc1, desc2, desc3)
     val updated = Seq(oppdatertDesc2)
-
     service.mergeLanguageFields(existing, updated) should equal (Seq(desc1, desc3, oppdatertDesc2))
   }
 

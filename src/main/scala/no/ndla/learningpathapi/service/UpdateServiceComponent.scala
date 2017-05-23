@@ -135,8 +135,24 @@ trait UpdateServiceComponent {
             searchIndexService.deleteDocument(updatedLearningPath)
           }
 
+          deleteIsBasedOnReference(learningPathId, updatedLearningPath, existing)
+
+
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
         }
+      }
+    }
+
+    private def deleteIsBasedOnReference(learningPathId: Long, updatedLearningPath: domain.LearningPath, existing: domain.LearningPath) = {
+      if (existing.isPublished && (updatedLearningPath.isPrivate || updatedLearningPath.isDeleted)) {
+        learningPathRepository.learningPathsWithIsBasedOn(learningPathId).foreach(lp => {
+          learningPathRepository.update(
+            lp.copy(
+              lastUpdated = clock.now(),
+              isBasedOn = None
+            )
+          )
+        })
       }
     }
 
