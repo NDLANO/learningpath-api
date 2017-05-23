@@ -63,7 +63,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       sql"select id from learningpaths where external_id = ${externalId}".map(rs => rs.long("id")).single().apply()
     }
 
-    def learningPathsWithIsBasedOn(isBasedOnId: Long)(implicit session: DBSession = AutoSession): Seq[LearningPath] = {
+    def learningPathsWithIsBasedOn(isBasedOnId: Long): Seq[LearningPath] = {
       learningPathsWhere(sqls"lp.isBasedOn = $isBasedOnId")
     }
 
