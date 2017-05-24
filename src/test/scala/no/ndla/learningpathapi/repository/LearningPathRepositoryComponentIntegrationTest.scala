@@ -118,25 +118,20 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
     val copiedLearningPath1 = repository.insert(learningPath1.copy(
       id = None,
-      revision = None,
-      externalId = None,
       isBasedOn = learningPath1.id
     ))
     val copiedLearningPath2 = repository.insert(learningPath1.copy(
       id = None,
-      revision = None,
-      externalId = None,
       isBasedOn = learningPath1.id
     ))
 
     val learningPaths = repository.learningPathsWithIsBasedOn(learningPath1.id.get)
 
-    println(learningPaths)
 
-    learningPaths should contain (copiedLearningPath1)
-    learningPaths should contain (copiedLearningPath2)
-    learningPaths should not contain (learningPath1)
-    learningPaths should not contain (learningPath2)
+    learningPaths.map(_.id) should contain (copiedLearningPath1.id)
+    learningPaths.map(_.id) should contain (copiedLearningPath2.id)
+    learningPaths.map(_.id) should not contain (learningPath1.id)
+    learningPaths.map(_.id) should not contain (learningPath2.id)
     learningPaths should have length(2)
 
     repository.delete(learningPath1.id.get)
