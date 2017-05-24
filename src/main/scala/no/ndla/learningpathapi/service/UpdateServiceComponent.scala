@@ -142,7 +142,7 @@ trait UpdateServiceComponent {
             searchIndexService.indexDocument(updatedLearningPath)
           } else if (existing.isPublished) {
             searchIndexService.deleteDocument(updatedLearningPath)
-            deleteIsBasedOnReference(learningPathId, updatedLearningPath)
+            deleteIsBasedOnReference(updatedLearningPath)
           }
 
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
@@ -150,17 +150,15 @@ trait UpdateServiceComponent {
       }
     }
 
-    private def deleteIsBasedOnReference(learningPathId: Long, updatedLearningPath: domain.LearningPath) = {
-      if (updatedLearningPath.isPrivate || updatedLearningPath.isDeleted) {
-        learningPathRepository.learningPathsWithIsBasedOn(learningPathId).foreach(lp => {
-          learningPathRepository.update(
-            lp.copy(
-              lastUpdated = clock.now(),
-              isBasedOn = None
-            )
+    private def deleteIsBasedOnReference(updatedLearningPath: domain.LearningPath) = {
+      learningPathRepository.learningPathsWithIsBasedOn(updatedLearningPath.id.get).foreach(lp => {
+        learningPathRepository.update(
+          lp.copy(
+            lastUpdated = clock.now(),
+            isBasedOn = None
           )
-        })
-      }
+        )
+      })
     }
 
     def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
