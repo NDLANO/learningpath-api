@@ -64,7 +64,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def learningPathsWithIsBasedOn(isBasedOnId: Long): Seq[LearningPath] = {
-      learningPathsWhere(sqls"lp.document->>'isBasedOn' = $isBasedOnId")
+      learningPathsWhere(sqls"lp.document->>'isBasedOn' = ${isBasedOnId.toString()}")
     }
 
     def learningStepsFor(learningPathId: Long)(implicit session: DBSession = ReadOnlyAutoSession): Seq[LearningStep] = {
