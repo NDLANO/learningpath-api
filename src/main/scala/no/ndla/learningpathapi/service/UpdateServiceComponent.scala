@@ -33,12 +33,14 @@ trait UpdateServiceComponent {
           val coverPhotoId = newLearningPath.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId)
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
           val copyright = newLearningPath.copyright.map(converterService.asCopyright).getOrElse(existing.copyright)
+          if (existing.isPrivate) {
 
+          }
           val toInsert = existing.copy(
             id = None,
             revision = None,
             externalId = None,
-            isBasedOn = existing.id,
+            isBasedOn = isBasedOnId(existing),
             title = title,
             description = description,
             status = LearningPathStatus.PRIVATE,
@@ -53,6 +55,13 @@ trait UpdateServiceComponent {
           learningPathValidator.validate(toInsert)
           Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
         }
+      }
+    }
+
+    private def isBasedOnId (existing: domain.LearningPath): Option[Long] = {
+      existing.isPrivate match {
+        case true => None
+        case false => existing.id
       }
     }
 

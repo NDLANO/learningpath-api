@@ -47,6 +47,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, List())
   val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PRIVATE_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, List())
   val DELETED_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.DELETED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), apiCopyright)
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List(), apiCopyright)
@@ -61,7 +62,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     resetMocks()
   }
 
-  /*test("That addLearningPath inserts the given LearningPath") {
+  test("That addLearningPath inserts the given LearningPath") {
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
     val saved = service.addLearningPath(NEW_PRIVATE_LEARNINGPATH, PRIVATE_OWNER)
@@ -146,7 +147,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
   verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
-  } */
+  }
 
   test("That updateLearningPathStatus updates isBasedOn when a PUBLISHED path is DELETED") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
@@ -162,7 +163,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
   }
 
-  /* test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
+  test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] { service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PRIVATE_OWNER) }.getMessage
@@ -508,6 +509,53 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
 
     service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
+
+    val expectedNewLearningPath = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(
+      id = None,
+      revision = None,
+      externalId = None,
+      isBasedOn = Some(PUBLISHED_ID),
+      status = domain.LearningPathStatus.PRIVATE,
+      verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+      owner = PRIVATE_OWNER,
+      lastUpdated = now
+    )
+
+    verify(learningPathRepository, times(1)).insert(eqTo(expectedNewLearningPath))
+  }
+
+  test ("That isBasedOn is not sat if the existing learningpath is PRIVATE") {
+    val now = new Date()
+    when(clock.now()).thenReturn(now)
+    when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH_NO_STEPS))
+    when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH_NO_STEPS)
+
+
+    service.newFromExisting(PRIVATE_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
+
+    val expectedNewLearningPath = PRIVATE_LEARNINGPATH_NO_STEPS.copy(
+      id = None,
+      revision = None,
+      externalId = None,
+      isBasedOn = None,
+      status = domain.LearningPathStatus.PRIVATE,
+      verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+      owner = PRIVATE_OWNER,
+      lastUpdated = now
+    )
+
+    verify(learningPathRepository, times(1)).insert(eqTo(expectedNewLearningPath))
+  }
+
+  test ("That isBasedOn is sat if the existing learningpath is PUBLISHED") {
+    val now = new Date()
+    when(clock.now()).thenReturn(now)
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH_NO_STEPS))
+    when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
+
+
+    service.newFromExisting(PUBLISHED_ID, NEW_COPIED_LEARNINGPATH, PRIVATE_OWNER)
+
     val expectedNewLearningPath = PUBLISHED_LEARNINGPATH_NO_STEPS.copy(
       id = None,
       revision = None,
@@ -642,5 +690,4 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     val updated = Seq(oppdatertDesc2)
     service.mergeLanguageFields(existing, updated) should equal (Seq(desc1, desc3, oppdatertDesc2))
   }
-*/
 }
