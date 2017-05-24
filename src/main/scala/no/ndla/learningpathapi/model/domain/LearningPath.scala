@@ -42,10 +42,6 @@ case class LearningPath(id: Option[Long],
     status == LearningPathStatus.PUBLISHED
   }
 
-  def isDeleted: Boolean = {
-    status == LearningPathStatus.DELETED
-  }
-
   def canEdit(user: Option[String]): Boolean = {
     user match {
       case Some(user) => user == owner
