@@ -58,7 +58,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
 
   override def beforeEach() = {
-    service = new UpdateService()
+    service = new UpdateService
     resetMocks()
   }
 
