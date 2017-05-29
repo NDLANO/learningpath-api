@@ -290,6 +290,16 @@ trait LearningpathController {
         responseMessages response500
         authorizations "oauth2")
 
+    val getContributors =
+      (apiOperation[List[String]]("getContributors")
+        summary "Retrieves a list of all previously used contributors in learningpaths"
+        notes "Retrieves a list of all previously used contributors in learningpaths"
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
+        headerParam[Option[String]]("app-key").description("Your app-key."))
+        responseMessages response500
+        authorizations "oauth2")
+
     before() {
       contentType = formats("json")
       ApplicationUrl.set(request)
@@ -520,6 +530,10 @@ trait LearningpathController {
 
     get("/tags/?", operation(getTags)) {
       readService.tags
+    }
+
+    get("/contributors", operation(getContributors)) {
+      readService.contributors
     }
 
     def extract[T](json: String)(implicit mf: scala.reflect.Manifest[T]): T = {

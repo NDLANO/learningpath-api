@@ -147,6 +147,47 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     repository.delete(publicPath2.id.get)
   }
 
+
+  test("That allPublishedContributors returns only published tags") {
+    val publicPath = repository.insert(DefaultLearningPath.copy(
+      status = LearningPathStatus.PUBLISHED,
+      copyright = Copyright("by", List(Author("forfatter", "Seblastian Jalla"), Author("forfatter", "Christian Petrius"), Author("forfatter", "Jens Petrius")))
+    ))
+
+    val privatePath = repository.insert(DefaultLearningPath.copy(
+      copyright = Copyright("by", List(Author("forfatter", "Test testesen")))
+    ))
+
+    val publicContributors = repository.allPublishedContributors
+    publicContributors should contain ("Seblastian Jalla")
+    publicContributors should contain ("Christian Petrius")
+    publicContributors should contain ("Jens Petrius")
+    publicContributors should not contain ("Test testesen")
+
+    repository.delete(publicPath.id.get)
+    repository.delete(privatePath.id.get)
+  }
+
+  test("That allPublishedContributors removes duplicates") {
+    val publicPath1 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
+      copyright = Copyright("by", List(Author("forfatter", "Seblastian Jalla"), Author("forfatter", "Christian Petrius"), Author("forfatter", "Jens Petrius")))
+    ))
+    val publicPath2 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
+      copyright = Copyright("by", List(Author("forfatter", "Seblastian Jalla"), Author("forfatter", "Test testesen")))
+    ))
+
+    val publicContributors = repository.allPublishedContributors
+    publicContributors should contain ("Seblastian Jalla")
+    publicContributors should contain ("Christian Petrius")
+    publicContributors should contain ("Jens Petrius")
+    publicContributors should contain ("Test testesen")
+
+    publicContributors.count(_ == "Seblastian Jalla") should be (1)
+
+    repository.delete(publicPath1.id.get)
+    repository.delete(publicPath2.id.get)
+  }
+
   test("That only learningsteps with status ACTIVE are returned together with a learningpath") {
     val learningPath = repository.insert(DefaultLearningPath)
     val activeStep1 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
