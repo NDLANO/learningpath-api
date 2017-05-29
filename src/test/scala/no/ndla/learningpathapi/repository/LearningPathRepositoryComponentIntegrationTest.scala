@@ -151,7 +151,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   test("That allPublishedContributors returns only published tags") {
     val publicPath = repository.insert(DefaultLearningPath.copy(
       status = LearningPathStatus.PUBLISHED,
-      copyright = Copyright("by", List(Author("forfatter", "Seblastian Jalla"), Author("forfatter", "Christian Petrius"), Author("forfatter", "Jens Petrius")))
+      copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Christian Bond"), Author("forfatter", "Jens Petrius")))
     ))
 
     val privatePath = repository.insert(DefaultLearningPath.copy(
@@ -159,8 +159,8 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     ))
 
     val publicContributors = repository.allPublishedContributors
-    publicContributors should contain ("Seblastian Jalla")
-    publicContributors should contain ("Christian Petrius")
+    publicContributors should contain ("James Bond")
+    publicContributors should contain ("Christian Bond")
     publicContributors should contain ("Jens Petrius")
     publicContributors should not contain ("Test testesen")
 
@@ -170,19 +170,19 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
   test("That allPublishedContributors removes duplicates") {
     val publicPath1 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
-      copyright = Copyright("by", List(Author("forfatter", "Seblastian Jalla"), Author("forfatter", "Christian Petrius"), Author("forfatter", "Jens Petrius")))
+      copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Christian Bond"), Author("forfatter", "Jens Petrius")))
     ))
     val publicPath2 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
-      copyright = Copyright("by", List(Author("forfatter", "Seblastian Jalla"), Author("forfatter", "Test testesen")))
+      copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Test testesen")))
     ))
 
     val publicContributors = repository.allPublishedContributors
-    publicContributors should contain ("Seblastian Jalla")
-    publicContributors should contain ("Christian Petrius")
+    publicContributors should contain ("James Bond")
+    publicContributors should contain ("Christian Bond")
     publicContributors should contain ("Jens Petrius")
     publicContributors should contain ("Test testesen")
 
-    publicContributors.count(_ == "Seblastian Jalla") should be (1)
+    publicContributors.count(_ == "James Bond") should be (1)
 
     repository.delete(publicPath1.id.get)
     repository.delete(publicPath2.id.get)
