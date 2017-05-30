@@ -191,14 +191,14 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map(entry => LearningPathTags(entry._2.flatMap(_.tags).distinct.sorted, entry._1)).toList
     }
 
-    def allPublishedContributors(implicit session: DBSession = ReadOnlyAutoSession): List[String] = {
+    def allPublishedContributors(implicit session: DBSession = ReadOnlyAutoSession): List[Author] = {
       val allCopyrights = sql"""select document->>'copyright' from learningpaths where document->>'status' = ${LearningPathStatus.PUBLISHED.toString}""".map(rs => {
         rs.string(1)
       }).list().apply()
 
       allCopyrights.map(copyright => {
         parse(copyright).extract[Copyright]
-      }).flatMap(_.contributors).map(_.name).distinct.sorted
+      }).flatMap(_.contributors).distinct.sortBy(_.name)
     }
 
 

@@ -25,8 +25,8 @@ trait ReadServiceComponent {
       learningPathRepository.allPublishedTags.map(tags => LearningPathTags(tags.tags, tags.language))
     }
 
-    def contributors: List[String] = {
-      learningPathRepository.allPublishedContributors
+    def contributors: List[Author] = {
+      learningPathRepository.allPublishedContributors.map(author => Author(author.`type`, author.name))
     }
 
     def withOwner(owner: String): List[LearningPathSummary] = {

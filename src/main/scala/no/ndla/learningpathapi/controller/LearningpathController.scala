@@ -291,7 +291,7 @@ trait LearningpathController {
         authorizations "oauth2")
 
     val getContributors =
-      (apiOperation[List[String]]("getContributors")
+      (apiOperation[List[Author]]("getContributors")
         summary "Retrieves a list of all previously used contributors in learningpaths"
         notes "Retrieves a list of all previously used contributors in learningpaths"
         parameters(
