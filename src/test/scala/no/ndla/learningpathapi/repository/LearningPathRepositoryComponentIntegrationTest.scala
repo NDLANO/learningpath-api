@@ -112,6 +112,35 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     repository.delete(learningPath.id.get)
   }
 
+  test("That learningPathsWithIsBasedOn returns all learningpaths that has one is based on id") {
+    val learningPath1 = repository.insert(DefaultLearningPath)
+    val learningPath2 = repository.insert(DefaultLearningPath)
+
+    val copiedLearningPath1 = repository.insert(learningPath1.copy(
+      id = None,
+      isBasedOn = learningPath1.id
+    ))
+    val copiedLearningPath2 = repository.insert(learningPath1.copy(
+      id = None,
+      isBasedOn = learningPath1.id
+    ))
+
+    val learningPaths = repository.learningPathsWithIsBasedOn(learningPath1.id.get)
+
+
+    learningPaths.map(_.id) should contain (copiedLearningPath1.id)
+    learningPaths.map(_.id) should contain (copiedLearningPath2.id)
+    learningPaths.map(_.id) should not contain (learningPath1.id)
+    learningPaths.map(_.id) should not contain (learningPath2.id)
+    learningPaths should have length(2)
+
+    repository.delete(learningPath1.id.get)
+    repository.delete(learningPath2.id.get)
+    repository.delete(copiedLearningPath1.id.get)
+    repository.delete(copiedLearningPath2.id.get)
+
+  }
+
   test("That allPublishedTags returns only published tags") {
     val publicPath = repository.insert(DefaultLearningPath.copy(
       status = LearningPathStatus.PUBLISHED,

@@ -33,12 +33,11 @@ trait UpdateServiceComponent {
           val coverPhotoId = newLearningPath.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId)
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
           val copyright = newLearningPath.copyright.map(converterService.asCopyright).getOrElse(existing.copyright)
-
           val toInsert = existing.copy(
             id = None,
             revision = None,
             externalId = None,
-            isBasedOn = existing.id,
+            isBasedOn = if (existing.isPrivate) None else existing.id,
             title = title,
             description = description,
             status = LearningPathStatus.PRIVATE,
@@ -133,11 +132,23 @@ trait UpdateServiceComponent {
             searchIndexService.indexDocument(updatedLearningPath)
           } else if (existing.isPublished) {
             searchIndexService.deleteDocument(updatedLearningPath)
+            deleteIsBasedOnReference(updatedLearningPath)
           }
 
           Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
         }
       }
+    }
+
+    private def deleteIsBasedOnReference(updatedLearningPath: domain.LearningPath) = {
+      learningPathRepository.learningPathsWithIsBasedOn(updatedLearningPath.id.get).foreach(lp => {
+        learningPathRepository.update(
+          lp.copy(
+            lastUpdated = clock.now(),
+            isBasedOn = None
+          )
+        )
+      })
     }
 
     def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStep, owner: String): Option[LearningStep] = {
