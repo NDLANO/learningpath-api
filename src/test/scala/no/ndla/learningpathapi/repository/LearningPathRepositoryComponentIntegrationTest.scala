@@ -176,6 +176,47 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     repository.delete(publicPath2.id.get)
   }
 
+
+  test("That allPublishedContributors returns only published contributors") {
+    val publicPath = repository.insert(DefaultLearningPath.copy(
+      status = LearningPathStatus.PUBLISHED,
+      copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Christian Bond"), Author("forfatter", "Jens Petrius")))
+    ))
+
+    val privatePath = repository.insert(DefaultLearningPath.copy(
+      copyright = Copyright("by", List(Author("forfatter", "Test testesen")))
+    ))
+
+    val publicContributors = repository.allPublishedContributors
+    publicContributors should contain (Author("forfatter", "James Bond"))
+    publicContributors should contain (Author("forfatter","Christian Bond"))
+    publicContributors should contain (Author("forfatter","Jens Petrius"))
+    publicContributors should not contain (Author("forfatter","Test testesen"))
+
+    repository.delete(publicPath.id.get)
+    repository.delete(privatePath.id.get)
+  }
+
+  test("That allPublishedContributors removes duplicates") {
+    val publicPath1 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
+      copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Christian Bond"), Author("forfatter", "Jens Petrius")))
+    ))
+    val publicPath2 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
+      copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Test testesen")))
+    ))
+
+    val publicContributors = repository.allPublishedContributors
+    publicContributors should contain (Author("forfatter","James Bond"))
+    publicContributors should contain (Author("forfatter","Christian Bond"))
+    publicContributors should contain (Author("forfatter","Jens Petrius"))
+    publicContributors should contain (Author("forfatter","Test testesen"))
+
+    publicContributors.count(_.name == "James Bond") should be (1)
+
+    repository.delete(publicPath1.id.get)
+    repository.delete(publicPath2.id.get)
+  }
+
   test("That only learningsteps with status ACTIVE are returned together with a learningpath") {
     val learningPath = repository.insert(DefaultLearningPath)
     val activeStep1 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
