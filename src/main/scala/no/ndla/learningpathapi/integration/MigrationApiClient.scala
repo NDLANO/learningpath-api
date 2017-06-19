@@ -26,14 +26,14 @@ trait MigrationApiClient {
     private val LearningPathEndpoint = s"$LearningPathsEndpoint/:node_id"
 
     def getAllLearningPathIds: Try[Seq[String]] = {
-      ndlaClient.fetch[Seq[String]](Http(LearningPathsEndpoint),
-        Some(LearningpathApiProperties.MigrationUser), Some(LearningpathApiProperties.MigrationPassword))
+      ndlaClient.fetchWithBasicAuth[Seq[String]](Http(LearningPathsEndpoint),
+        LearningpathApiProperties.MigrationUser, LearningpathApiProperties.MigrationPassword)
     }
 
     def getLearningPath(nodeId: String): Try[MainPackageImport] = {
-      ndlaClient.fetch[MainPackageImport](
+      ndlaClient.fetchWithBasicAuth[MainPackageImport](
         Http(LearningPathEndpoint.replace(":node_id", nodeId)),
-        Some(LearningpathApiProperties.MigrationUser), Some(LearningpathApiProperties.MigrationPassword))
+        LearningpathApiProperties.MigrationUser, LearningpathApiProperties.MigrationPassword)
     }
   }
 }
