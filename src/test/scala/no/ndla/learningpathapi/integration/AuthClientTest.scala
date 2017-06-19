@@ -22,12 +22,12 @@ class AuthClientTest extends UnitSuite with UnitTestEnvironment {
   override val authClient = new AuthClient
 
   test("That username is returned when fetching") {
-    when(ndlaClient.fetch[NdlaUserName](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[NdlaUserName]])).thenReturn(Success(NdlaUsername))
+    when(ndlaClient.fetch[NdlaUserName](any[HttpRequest])(any[Manifest[NdlaUserName]])).thenReturn(Success(NdlaUsername))
     authClient.getUserName("abc") should equal(NdlaUsername)
   }
 
   test("That unknown user us returned if any failure occurs") {
-    when(ndlaClient.fetch[NdlaUserName](any[HttpRequest], any[Option[String]], any[Option[String]])(any[Manifest[NdlaUserName]])).thenReturn(Failure(new Exception("An error")))
+    when(ndlaClient.fetch[NdlaUserName](any[HttpRequest])(any[Manifest[NdlaUserName]])).thenReturn(Failure(new Exception("An error")))
     authClient.getUserName("abc") should equal(authClient.unknownUser)
   }
 }
