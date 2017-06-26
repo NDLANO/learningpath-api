@@ -11,11 +11,14 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
+import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.model.api.CoverPhoto
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.ApplicationUrl
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
@@ -79,4 +82,17 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       intercept[ValidationException] { service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", Some("nb"), "test")) }.getMessage()
     }
   }
+
+  test("asCoverPhoto converts an image id to CoverPhoto") {
+    val imageMeta = ImageMetaInformation("1",
+      "http://image-api.ndla-local/image-api/v1/images/1",
+      "http://image-api.ndla-local/image-api/raw/1.jpg",
+      1024, "something")
+    val expectedResult = CoverPhoto("http://proxy.ndla-local/image-api/raw/1.jpg", "http://proxy.ndla-local/image-api/v1/images/1")
+    when(imageApiClient.imageMetaOnUrl(any[String])).thenReturn(Some(imageMeta))
+    val Some(result) = service.asCoverPhoto("1")
+
+    result should equal(expectedResult)
+  }
+
 }

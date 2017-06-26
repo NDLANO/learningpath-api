@@ -67,7 +67,8 @@ trait ConverterServiceComponent {
       imageApiClient.imageMetaOnUrl(createUrlToImageApi(imageId))
         .map(imageMeta => {
           val imageUrl = s"$Domain${imageMeta.imageUrl.path}"
-          api.CoverPhoto(imageUrl, imageMeta.metaUrl)
+          val metaUrl = s"$Domain${imageMeta.metaUrl.path}"
+          api.CoverPhoto(imageUrl, metaUrl)
         })
     }
 
