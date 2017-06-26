@@ -12,10 +12,11 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.CoverPhoto
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.LearningpathApiProperties.ExternalImageApiUrl
+import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
 import no.ndla.learningpathapi.model.domain.EmbedType
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
+import com.netaporter.uri.dsl._
 
 trait ConverterServiceComponent {
   this: ImageApiClientComponent =>
@@ -64,7 +65,11 @@ trait ConverterServiceComponent {
 
     def asCoverPhoto(imageId: String): Option[CoverPhoto] = {
       imageApiClient.imageMetaOnUrl(createUrlToImageApi(imageId))
-        .map(imageMeta => api.CoverPhoto(imageMeta.imageUrl, imageMeta.metaUrl))
+        .map(imageMeta => {
+          val imageUrl = s"$Domain${imageMeta.imageUrl.path}"
+          val metaUrl = s"$Domain${imageMeta.metaUrl.path}"
+          api.CoverPhoto(imageUrl, metaUrl)
+        })
     }
 
     def asCopyright(copyright: api.Copyright): domain.Copyright = {
@@ -171,7 +176,7 @@ trait ConverterServiceComponent {
     }
 
     def createUrlToImageApi(imageId: String): String = {
-      s"$ExternalImageApiUrl/$imageId"
+      s"http://$InternalImageApiUrl/$imageId"
     }
   }
 }
