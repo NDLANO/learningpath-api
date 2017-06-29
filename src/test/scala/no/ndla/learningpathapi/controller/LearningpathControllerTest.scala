@@ -106,6 +106,23 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
   }
 
+  test("That POST /search will send all query-params to the search service") {
+    val query = "hoppetau"
+    val tag = "lek"
+    val language = "nb"
+    val page = 22
+    val pageSize = 111
+
+    val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
+    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
+      status should equal (200)
+      val convertedBody = read[SearchResult](body)
+      convertedBody.results.head.title.head.title should equal ("Tittel")
+    }
+  }
+
   test ("That GET /licenses with filter sat to by only returns creative common licenses") {
     val creativeCommonlicenses = getLicenses.filter(_.license.startsWith("by")).map(l => License(l.license, Option(l.description), l.url)).toSet
 
