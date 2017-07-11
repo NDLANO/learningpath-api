@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi
 
-import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathController}
+import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -21,6 +21,7 @@ import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
   extends LearningpathController
+  with LearningpathControllerV2
   with InternController
   with HealthController
   with LearningPathRepositoryComponent
@@ -67,6 +68,7 @@ object ComponentRegistry
   lazy val converterService = new ConverterService
   lazy val clock = new SystemClock
   lazy val learningpathController = new LearningpathController
+  lazy val learningpathControllerV2 = new LearningpathControllerV2
   lazy val internController = new InternController
   lazy val resourcesApp = new ResourcesApp
   lazy val ndlaClient = new NdlaClient
