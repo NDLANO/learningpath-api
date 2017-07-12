@@ -14,8 +14,8 @@ import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
-import no.ndla.learningpathapi.model.domain.{NdlaSearchException, Sort}
+import no.ndla.learningpathapi.model.api.{LearningPathSummary}
+import no.ndla.learningpathapi.model.domain.{NdlaSearchException, SearchResult, Sort}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
@@ -108,7 +108,7 @@ trait SearchServiceComponent extends LazyLogging {
         .setParameter("from", startAt)
 
       jestClient.execute(request.build()) match {
-        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, language, response)
         case Failure(f) => errorHandler(Failure(f))
       }
     }

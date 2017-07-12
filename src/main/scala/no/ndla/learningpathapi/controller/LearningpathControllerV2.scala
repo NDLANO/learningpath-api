@@ -21,7 +21,7 @@ import scala.util.Try
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{AccessDeniedException, LearningPathStatus, OptimisticLockException, Sort, StepStatus, ValidationException}
-import no.ndla.learningpathapi.service.search.SearchServiceComponent
+import no.ndla.learningpathapi.service.search.{SearchServiceComponent}
 import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.network.{ApplicationUrl, AuthUser}
@@ -323,17 +323,8 @@ trait LearningpathControllerV2 {
       }
     }
 
-    get("/", operation(getLearningpaths)) {
-      val query = paramOrNone("query")
-      val tag = paramOrNone("tag")
-      val idList = paramAsListOfLong("ids")
-      val language = LanguageValidator.validate("language", paramOrNone("language"))
-      val sort = paramOrNone("sort")
-      val pageSize = paramOrNone("page-size").flatMap(ps => Try(ps.toInt).toOption)
-      val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
-      logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
-
-      query match {
+    def search(query: Option[String], language: Option[String], tag: Option[String], idList: List[Long], sort: Option[String], pageSize: Option[Int], page: Option[Int]): SearchResultV2 = {
+      val searchResult = query match {
         case Some(q) => searchService.matchingQuery(
           query = q.toLowerCase.split(" ").map(_.trim),
           withIdIn = idList,
@@ -351,6 +342,28 @@ trait LearningpathControllerV2 {
           page = page,
           pageSize = pageSize)
       }
+
+      val hitResult = searchService.getHits(searchResult.response)
+      SearchResultV2(
+        searchResult.totalCount,
+        searchResult.page,
+        searchResult.pageSize,
+        searchResult.language,
+        hitResult
+      )
+    }
+
+    get("/", operation(getLearningpaths)) {
+      val query = paramOrNone("query")
+      val tag = paramOrNone("tag")
+      val idList = paramAsListOfLong("ids")
+      val language = LanguageValidator.validate("language", paramOrNone("language"))
+      val sort = paramOrNone("sort")
+      val pageSize = paramOrNone("page-size").flatMap(ps => Try(ps.toInt).toOption)
+      val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
+      logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
+
+      search(query, language, tag, idList, sort, pageSize, page)
     }
 
 

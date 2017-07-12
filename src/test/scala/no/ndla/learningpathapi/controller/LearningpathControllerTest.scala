@@ -12,9 +12,9 @@ package no.ndla.learningpathapi.controller
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
-import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Sort, ValidationException}
-import no.ndla.learningpathapi.{LearningpathApiProperties, LearningpathSwagger, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, SearchResult, Sort, ValidationException}
+import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.native.Serialization._
 import org.mockito.Matchers.{eq => eqTo, _}
@@ -26,8 +26,8 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   implicit val formats = org.json4s.DefaultFormats
   implicit val swagger = new LearningpathSwagger
 
-  val copyright = Copyright(License("by-sa", None, None), List())
-  val DefaultLearningPathSummary = LearningPathSummary(1, List(Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), copyright, None)
+  val copyright = api.Copyright(api.License("by-sa", None, None), List())
+  val DefaultLearningPathSummary = api.LearningPathSummary(1, List(api.Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), copyright, None)
 
   lazy val controller = new LearningpathController
   addServlet(controller, "/*")
@@ -60,9 +60,13 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val pageSize = 111
     val ids = "1,2"
 
-    val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
-    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+    val searchResult = mock[io.searchbox.core.SearchResult]
+    val result = SearchResult(1, 1,1, "nb", searchResult)
+
+    when(searchService.matchingQuery(List(1, 2), Seq(query), Some(tag), Some(language), Sort.ByDurationDesc, Some(page), Some(pageSize))).thenReturn(result)
+    when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
     get("/", Map(
       "query" -> query,
       "tag" -> tag,
@@ -73,21 +77,24 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
       "ids" -> s"$ids"
     )) {
       status should equal (200)
-      val convertedBody = read[SearchResult](body)
+      val convertedBody = read[api.SearchResult](body)
       convertedBody.results.head.title.head.title should equal ("Tittel")
     }
   }
 
-  test("That GET / will handle all empty query-params as missing query params") {
+ test("That GET / will handle all empty query-params as missing query params") {
     val query = ""
     val tag = ""
-    val language = ""
+    val language = "nb"
     val page = ""
     val pageSize = ""
     val duration = ""
     val ids = "1,2"
 
-    when(searchService.all(eqTo(List(1,2)), eqTo(None), eqTo(Sort.ByTitleAsc), eqTo(None), eqTo(None), eqTo(None))).thenReturn(SearchResult(-1, 1, 1, List()))
+    val searchResult = mock[io.searchbox.core.SearchResult]
+    val result = SearchResult(-1, 1,1, "nb", searchResult)
+    when(searchService.all(any[List[Long]], any[Option[String]], any[Sort.Value], any[Option[String]], any[Option[Int]], any[Option[Int]])).thenReturn(result)
+    when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
     get("/", Map(
@@ -100,7 +107,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
       "ids" -> s"$ids"
     )) {
       status should equal (200)
-      val convertedBody = read[SearchResult](body)
+      val convertedBody = read[api.SearchResult](body)
       convertedBody.totalCount should be (-1)
     }
 
@@ -124,23 +131,23 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   }
 
   test ("That GET /licenses with filter sat to by only returns creative common licenses") {
-    val creativeCommonlicenses = getLicenses.filter(_.license.startsWith("by")).map(l => License(l.license, Option(l.description), l.url)).toSet
+    val creativeCommonlicenses = getLicenses.filter(_.license.startsWith("by")).map(l => api.License(l.license, Option(l.description), l.url)).toSet
 
     get("/licenses", Map(
       "filter" -> "by"
     )) {
       status should equal (200)
-      val convertedBody = read[Set[License]](body)
+      val convertedBody = read[Set[api.License]](body)
       convertedBody should equal(creativeCommonlicenses)
     }
   }
 
   test ("That GET /licenses with filter not specified returns all licenses") {
-    val allLicenses = getLicenses.map(l => License(l.license, Option(l.description), l.url)).toSet
+    val allLicenses = getLicenses.map(l => api.License(l.license, Option(l.description), l.url)).toSet
 
     get("/licenses", Map()) {
       status should equal (200)
-      val convertedBody = read[Set[License]](body)
+      val convertedBody = read[Set[api.License]](body)
       convertedBody should equal(allLicenses)
     }
   }

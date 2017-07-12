@@ -354,6 +354,15 @@ trait LearningpathController {
           page = page,
           pageSize = pageSize)
       }
+
+      val hitResult = searchService.getHits(searchResult.response)
+
+      SearchResult(
+        searchResult.totalCount,
+        searchResult.page,
+        searchResult.pageSize,
+        hitResult
+      )
     }
 
     get("/", operation(getLearningpaths)) {
