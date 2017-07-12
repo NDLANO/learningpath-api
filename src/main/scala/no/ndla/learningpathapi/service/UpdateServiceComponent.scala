@@ -79,7 +79,7 @@ trait UpdateServiceComponent {
       pattern.findFirstMatchIn(url.path).map(_.group(1))
     }
 
-    def mergeLanguageFields[A <: LanguageField](existing: Seq[A], updated: Seq[A]): Seq[A] = {
+    def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
       val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
       (toKeep ++ updated).filterNot(_.value.isEmpty)
     }

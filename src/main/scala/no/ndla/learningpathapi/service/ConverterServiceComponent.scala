@@ -10,10 +10,10 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
-import no.ndla.learningpathapi.model.api.CoverPhoto
+import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2, Title}
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
-import no.ndla.learningpathapi.model.domain.EmbedType
+import no.ndla.learningpathapi.model.domain.{EmbedType, Language, LanguageField}
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 import com.netaporter.uri.dsl._
@@ -99,6 +99,50 @@ trait ConverterServiceComponent {
         lp.canEdit(user))
     }
 
+    def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
+      val supportedLanguages = getSupportedLanguages(lp)
+      val searchLanguage = if (language == Language.AllLanguages) Language.DefaultLanguage else language
+
+      if (!supportedLanguages.contains(searchLanguage)) {
+        return None
+      }
+
+      val title =         setByLanguage(lp.title, searchLanguage)
+      val description =   setByLanguage(lp.description, searchLanguage)
+      val learningSteps = lp.learningsteps.flatMap(ls => asApiLearningStepSummaryV2(ls, lp, language)).toList.sortBy(_.seqNo)
+      val tags =          setByLanguage(lp.tags, searchLanguage)
+
+      if (title.isDefined || description.isDefined || learningSteps.nonEmpty || tags.isDefined) {
+        val titleString = title.getOrElse("")
+        val descriptionString = description.getOrElse("")
+        val learningStepsSeq = if (learningSteps.nonEmpty) learningSteps else Seq.empty[LearningStepSummaryV2]
+        val tagsSeq = tags.getOrElse(Seq.empty[String])
+
+        Some(api.LearningPathV2(
+          lp.id.get,
+          lp.revision.get,
+          lp.isBasedOn,
+          titleString,
+          searchLanguage,
+          descriptionString,
+          createUrlToLearningPath(lp),
+          learningStepsSeq,
+          createUrlToLearningSteps(lp),
+          lp.coverPhotoId.flatMap(asCoverPhoto),
+          lp.duration,
+          lp.status.toString,
+          lp.verificationStatus.toString,
+          lp.lastUpdated,
+          tagsSeq,
+          asApiCopyright(lp.copyright),
+          lp.canEdit(user),
+          supportedLanguages
+        ))
+      } else {
+        None
+      }
+    }
+
     def asApiIntroduction(introStepOpt: Option[domain.LearningStep]): Seq[api.Introduction] = {
       introStepOpt match {
         case None => List()
@@ -147,6 +191,18 @@ trait ConverterServiceComponent {
       )
     }
 
+    def asApiLearningStepSummaryV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String): Option[api.LearningStepSummaryV2] = {
+      setByLanguage(ls.title, language).map(title =>
+        api.LearningStepSummaryV2(
+          ls.id.get,
+          ls.seqNo,
+          title,
+          ls.`type`.toString,
+          createUrlToLearningStep(ls, lp)
+        )
+      )
+    }
+
     def asApiTitle(title: domain.Title): api.Title = {
       api.Title(title.title, title.language)
     }
@@ -177,6 +233,51 @@ trait ConverterServiceComponent {
 
     def createUrlToImageApi(imageId: String): String = {
       s"http://$InternalImageApiUrl/$imageId"
+    }
+
+    private def getLanguages[T <: Any](sequence: Seq[LanguageField[T]]): Seq[String] = {
+      sequence.map(_.language.getOrElse(Language.NoLanguage)).filterNot(l => l == Language.NoLanguage)
+    }
+
+    private def getSupportedLanguages(domainLearningpath: domain.LearningPath): Seq[String] = {
+      val languages =
+        getLanguages(domainLearningpath.title) ++
+        getLanguages(domainLearningpath.description) ++
+        getLanguages(domainLearningpath.tags) ++
+        domainLearningpath.learningsteps.flatMap(findSupportedLanguages)
+
+      languages.distinct
+    }
+
+    private def findSupportedLanguages(domainLearningStep: domain.LearningStep): Seq[String] = {
+      val languages =
+        getLanguages(domainLearningStep.title) ++
+        getLanguages(domainLearningStep.description) ++
+        getLanguages(domainLearningStep.embedUrl)
+
+      languages.distinct
+    }
+
+    private def findByLanguage[T <: Any](sequence: Seq[LanguageField[T]], lang: String): Option[LanguageField[T]] = {
+      sequence.find(_.language.getOrElse("") == lang)
+    }
+
+    private def findValueByLanguage[T <: Any](sequence: Seq[LanguageField[T]], lang: String): Option[T] = {
+      findByLanguage[T](sequence, lang).map(_.value)
+    }
+
+    private def getByLanguageOrHead[T <: Any](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
+      findValueByLanguage(sequence, language) match {
+        case Some(e) => Some(e)
+        case None => sequence.headOption.map(lf => lf.value)
+      }
+    }
+
+    private def setByLanguage[T <: Any](seq: Seq[LanguageField[T]], language: String) = {
+      if (language == Language.AllLanguages)
+        getByLanguageOrHead[T](seq, language)
+      else
+        findValueByLanguage[T](seq, language)
     }
   }
 }

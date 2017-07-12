@@ -18,4 +18,8 @@ object Language {
   val SAMI = "se"
   val SPANISH = "es"
   val UNKNOWN = "unknown"
+
+  val DefaultLanguage = NORWEGIAN_BOKMAL
+  val NoLanguage = ""
+  val AllLanguages = "all"
 }

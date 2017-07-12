@@ -20,9 +20,9 @@ import org.scalatra.{Ok, ScalatraServlet}
 import scala.util.Try
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{AccessDeniedException, LearningPathStatus, OptimisticLockException, Sort, StepStatus, ValidationException}
-import no.ndla.learningpathapi.service.search.{SearchServiceComponent}
-import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, Language, LearningPathStatus, OptimisticLockException, Sort, StepStatus, ValidationException}
+import no.ndla.learningpathapi.service.search.SearchServiceComponent
+import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.network.{ApplicationUrl, AuthUser}
 import no.ndla.network.model.HttpRequestException
@@ -31,7 +31,7 @@ import no.ndla.mapping.LicenseDefinition
 
 trait LearningpathControllerV2 {
 
-  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with LanguageValidator =>
+  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with LanguageValidator with ConverterServiceComponent =>
   val learningpathControllerV2: LearningpathControllerV2
 
   class LearningpathControllerV2(implicit val swagger: Swagger) extends ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging with CorrelationIdSupport {
@@ -368,7 +368,9 @@ trait LearningpathControllerV2 {
 
 
     get("/:path_id/?", operation(getLearningpath)) {
-      readService.withId(long("path_id"), AuthUser.get) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.withIdV2(long("path_id"), language, AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
@@ -594,6 +596,10 @@ trait LearningpathControllerV2 {
 
     def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] = {
       params.get(paramName).map(_.trim).filterNot(_.isEmpty())
+    }
+
+    def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String = {
+      paramOrNone(paramName).getOrElse(default)
     }
 
     def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {

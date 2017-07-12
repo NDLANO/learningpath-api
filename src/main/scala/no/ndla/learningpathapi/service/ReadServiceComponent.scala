@@ -37,6 +37,10 @@ trait ReadServiceComponent {
       withIdAndAccessGranted(learningPathId, user).map(lp => converterService.asApiLearningpath(lp, user))
     }
 
+    def withIdV2(learningPathId: Long, language: String, user: Option[String] = None): Option[LearningPathV2] = {
+      withIdAndAccessGranted(learningPathId, user).flatMap(lp => converterService.asApiLearningpathV2(lp, language, user))
+    }
+
     def statusFor(learningPathId: Long, user: Option[String] = None): Option[LearningPathStatus] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
