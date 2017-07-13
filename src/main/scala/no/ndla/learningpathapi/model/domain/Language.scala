@@ -48,12 +48,20 @@ object Language {
     languages.distinct
   }
 
+  def getSearchLanguage(languageParam: String, supportedLanguages: Seq[String]): String = {
+    val l = if (languageParam == AllLanguages) DefaultLanguage else languageParam
+    if (supportedLanguages.contains(l))
+      l
+    else
+      supportedLanguages.head
+  }
+
   def findByLanguage[T <: Any](sequence: Seq[LanguageField[T]], lang: String): Option[LanguageField[T]] = {
     sequence.find(_.language.getOrElse("") == lang)
   }
 
   def findValueByLanguage[T <: Any](sequence: Seq[LanguageField[T]], lang: String): Option[T] = {
-    findByLanguage[T](sequence, lang).map(_.value)
+    findByLanguage(sequence, lang).map(_.value)
   }
 
   def getByLanguageOrHead[T <: Any](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
@@ -61,13 +69,6 @@ object Language {
       case Some(e) => Some(e)
       case None => sequence.headOption.map(lf => lf.value)
     }
-  }
-
-  def setByLanguage[T <: Any](seq: Seq[LanguageField[T]], language: String) = {
-    if (language == Language.AllLanguages)
-      getByLanguageOrHead[T](seq, Language.DefaultLanguage)
-    else
-      findValueByLanguage[T](seq, language)
   }
 }
 

@@ -102,46 +102,41 @@ trait ConverterServiceComponent {
 
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
-      // val searchLanguage = if (language == Language.AllLanguages) Language.DefaultLanguage else language
-
-      if (language != AllLanguages && !supportedLanguages.contains(language)) {
+      if (supportedLanguages.isEmpty) {
         return None
       }
 
-      val title =         setByLanguage(lp.title, language)
-      val description =   setByLanguage(lp.description, language)
-      val learningSteps = lp.learningsteps.flatMap(ls => asApiLearningStepSummaryV2(ls, lp, language)).toList.sortBy(_.seqNo)
-      val tags =          setByLanguage(lp.tags, language)
+      val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
-      if (title.isDefined || description.isDefined || learningSteps.nonEmpty || tags.isDefined) {
-        val titleString = title.getOrElse("")
-        val descriptionString = description.getOrElse("")
-        val learningStepsSeq = if (learningSteps.nonEmpty) learningSteps else Seq.empty[LearningStepSummaryV2]
-        val tagsSeq = tags.getOrElse(Seq.empty[String])
-
-        Some(api.LearningPathV2(
-          lp.id.get,
-          lp.revision.get,
-          lp.isBasedOn,
-          titleString,
-          if (language == AllLanguages) "" else language,
-          descriptionString,
-          createUrlToLearningPath(lp),
-          learningStepsSeq,
-          createUrlToLearningSteps(lp),
-          lp.coverPhotoId.flatMap(asCoverPhoto),
-          lp.duration,
-          lp.status.toString,
-          lp.verificationStatus.toString,
-          lp.lastUpdated,
-          tagsSeq,
-          asApiCopyright(lp.copyright),
-          lp.canEdit(user),
-          supportedLanguages
-        ))
-      } else {
-        None
+      val title =         findValueByLanguage(lp.title, searchLanguage).getOrElse("")
+      val description =   findValueByLanguage(lp.description, searchLanguage).getOrElse("")
+      val tags =          findValueByLanguage(lp.tags, searchLanguage).getOrElse(Seq.empty[String])
+      val learningSteps = {
+        val lS = lp.learningsteps.flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage)).toList.sortBy(_.seqNo)
+        if (lS.nonEmpty) lS
+        else Seq.empty[LearningStepSummaryV2]
       }
+
+      Some(api.LearningPathV2(
+        lp.id.get,
+        lp.revision.get,
+        lp.isBasedOn,
+        title,
+        searchLanguage,
+        description,
+        createUrlToLearningPath(lp),
+        learningSteps,
+        createUrlToLearningSteps(lp),
+        lp.coverPhotoId.flatMap(asCoverPhoto),
+        lp.duration,
+        lp.status.toString,
+        lp.verificationStatus.toString,
+        lp.lastUpdated,
+        tags,
+        asApiCopyright(lp.copyright),
+        lp.canEdit(user),
+        supportedLanguages
+      ))
     }
 
     def asApiIntroduction(introStepOpt: Option[domain.LearningStep]): Seq[api.Introduction] = {
@@ -184,50 +179,35 @@ trait ConverterServiceComponent {
 
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
-      //val searchLanguage = if (language == Language.AllLanguages) Language.DefaultLanguage else language
-
-      if (language != AllLanguages && !supportedLanguages.contains(language)) {
+      if (supportedLanguages.isEmpty) {
         return None
       }
 
-      val title = setByLanguage(ls.title, language)
-      val description = setByLanguage(ls.description, language)
-      val embedUrl = (
-        if (language == AllLanguages) {
-          findByLanguage(ls.embedUrl, DefaultLanguage) match {
-            case Some(e) => Some(e)
-            case None => ls.embedUrl.headOption.map(lf => lf.value)
-          }
-        }
-        else {
-          findByLanguage(ls.embedUrl, language)
-        }).asInstanceOf[Option[domain.EmbedUrl]]
-        .map(asApiEmbedUrlV2)
+      val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
-      if (title.isDefined || description.isDefined || embedUrl.isDefined) {
-        val titleString = title.getOrElse("")
-        val descriptionString = description.getOrElse("")
-        val embedUrlObj = embedUrl.getOrElse(api.EmbedUrlV2("", ""))
+      val title =       findValueByLanguage(ls.title, searchLanguage).getOrElse("")
+      val description = findValueByLanguage(ls.description, searchLanguage).getOrElse("")
+      val embedUrl =    findByLanguage(ls.embedUrl, searchLanguage)
+                          .asInstanceOf[Option[domain.EmbedUrl]]
+                          .map(asApiEmbedUrlV2)
+                          .getOrElse(api.EmbedUrlV2("", ""))
 
-        Some(api.LearningStepV2(
-          ls.id.get,
-          ls.revision.get,
-          ls.seqNo,
-          titleString,
-          if (language == AllLanguages) "" else language,
-          descriptionString,
-          embedUrlObj,
-          ls.showTitle,
-          ls.`type`.toString,
-          ls.license.map(asApiLicense),
-          createUrlToLearningStep(ls, lp),
-          lp.canEdit(user),
-          ls.status.toString,
-          supportedLanguages
-        ))
-      } else {
-        None
-      }
+      Some(api.LearningStepV2(
+        ls.id.get,
+        ls.revision.get,
+        ls.seqNo,
+        title,
+        searchLanguage,
+        description,
+        embedUrl,
+        ls.showTitle,
+        ls.`type`.toString,
+        ls.license.map(asApiLicense),
+        createUrlToLearningStep(ls, lp),
+        lp.canEdit(user),
+        ls.status.toString,
+        supportedLanguages
+      ))
     }
 
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): api.LearningStepSummary = {
@@ -241,7 +221,7 @@ trait ConverterServiceComponent {
     }
 
     def asApiLearningStepSummaryV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String): Option[api.LearningStepSummaryV2] = {
-      setByLanguage(ls.title, language).map(title =>
+      findValueByLanguage(ls.title, language).map(title =>
         api.LearningStepSummaryV2(
           ls.id.get,
           ls.seqNo,
