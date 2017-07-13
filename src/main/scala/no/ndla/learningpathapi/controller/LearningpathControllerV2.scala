@@ -391,7 +391,9 @@ trait LearningpathControllerV2 {
     }
 
     get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-      readService.learningstepFor(long("path_id"), long("step_id"), AuthUser.get) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.learningstepV2For(long("path_id"), long("step_id"), language, AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
