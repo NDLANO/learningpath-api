@@ -65,25 +65,25 @@ trait SearchServiceComponent extends LazyLogging {
         pageSize)
     }
 
-    def matchingQuery(withIdIn: List[Long], query: Iterable[String], taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def matchingQuery(withIdIn: List[Long], query: String, taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
       val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
 
-      val titleSearch = QueryBuilders.matchQuery(s"titles.$searchLanguage", query.mkString(" ")).fuzziness("0")
-      val descSearch = QueryBuilders.matchQuery(s"descriptions.$searchLanguage", query.mkString(" ")).fuzziness("0")
-      val stepTitleSearch = QueryBuilders.matchQuery(s"learningsteps.titles.$searchLanguage", query.mkString(" ")).fuzziness("0")
-      val stepDescSearch = QueryBuilders.matchQuery(s"learningsteps.descriptions.$searchLanguage", query.mkString(" ")).fuzziness("0")
-      val tagSearch = QueryBuilders.matchQuery(s"tags.$searchLanguage", query.mkString(" ")).fuzziness("0")
-      val authorSearch = QueryBuilders.matchQuery("author", query.mkString(" ")).fuzziness("0")
+      val titleSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"titles.$searchLanguage")
+      val descSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"descriptions.$searchLanguage")
+      val stepTitleSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"learningsteps.titles.$searchLanguage")
+      val stepDescSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"learningsteps.descriptions.$searchLanguage")
+      val tagSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"tags.$searchLanguage")
+      val authorSearch = QueryBuilders.simpleQueryStringQuery(query).field("author")
 
       val fullQuery = QueryBuilders.boolQuery()
         .must(
           QueryBuilders.boolQuery()
-            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))
-            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg))
-            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.Avg))
-            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.Avg))
-            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg))
-            .should(authorSearch))
+            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg)).boost(2)
+            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg)).boost(2)
+            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.Avg)).boost(1)
+            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.Avg)).boost(1)
+            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg)).boost(2)
+            .should(authorSearch).boost(1))
 
       executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
     }

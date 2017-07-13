@@ -338,7 +338,7 @@ trait LearningpathController {
     private def search(query: Option[String], tag: Option[String], idList: List[Long], language: Option[String], sort: Option[String], pageSize: Option[Int], page: Option[Int]) = {
       query match {
         case Some(q) => searchService.matchingQuery(
-          query = q.toLowerCase.split(" ").map(_.trim),
+          query = q,
           withIdIn = idList,
           taggedWith = tag,
           language = language,
