@@ -61,7 +61,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val ids = "1,2"
 
     val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
-    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
     get("/", Map(
       "query" -> query,
@@ -114,7 +114,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val pageSize = 111
 
     val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
-    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(Seq(query)), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
       status should equal (200)
