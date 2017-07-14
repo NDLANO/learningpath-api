@@ -546,7 +546,17 @@ trait LearningpathControllerV2 {
     }
 
     get("/tags/?", operation(getTags)) {
-      readService.tags
+      val language = paramOrDefault("language", Language.AllLanguages)
+      val allTags = readService.tags
+
+      if (language == Language.AllLanguages) {
+        allTags
+      }
+      else {
+        val supportedLanguages = allTags.flatMap(_.language).distinct
+        val searchLanguage = Language.getSearchLanguage(language, supportedLanguages)
+        allTags.filter(_.language.getOrElse("") == searchLanguage)
+      }
     }
 
     get("/contributors", operation(getContributors)) {
