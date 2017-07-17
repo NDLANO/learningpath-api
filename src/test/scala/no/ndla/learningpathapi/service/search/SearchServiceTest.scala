@@ -264,6 +264,15 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     hits.last.id should be(BatmanId)
   }
 
+  test("That a search for flaggremsu returns both Donald and Batman even if it is misspelled") {
+    val searchResult = searchService.matchingQuery(List(), "and flaggremsu", None, Some("nb"), Sort.ByRelevanceDesc, None, None)
+    val hits = searchService.getHits(searchResult.response)
+
+    searchResult.totalCount should be(2)
+    hits.head.id should be(DonaldId)
+    hits.last.id should be(BatmanId)
+  }
+
   test("That a search for flaggremsu returns Donald but not Batman if it is misspelled") {
     val searchResult = searchService.matchingQuery(List(), "and flaggremsu", None, Some("nb"), Sort.ByRelevanceDesc, None, None)
     val hits = searchService.getHits(searchResult.response)
@@ -289,15 +298,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     hits3.head.id should be(PenguinId)
     hits3(1).id should be(DonaldId)
     hits3.last.id should be(BatmanId)
-}
-
-  test("That a search for flaggremsu returns both Donald and Batman even if it is misspelled") {
-    val searchResult = searchService.matchingQuery(List(), "and flaggremsu", None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    val hits = searchService.getHits(searchResult.response)
-
-    searchResult.totalCount should be(2)
-    hits.head.id should be(DonaldId)
-    hits.last.id should be(BatmanId)
   }
 
   def blockUntil(predicate: () => Boolean) = {

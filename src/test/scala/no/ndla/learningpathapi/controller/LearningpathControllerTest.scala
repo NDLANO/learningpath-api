@@ -63,7 +63,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val searchResult = mock[io.searchbox.core.SearchResult]
     val result = SearchResult(1, 1,1, "nb", searchResult)
 
-    when(searchService.matchingQuery(List(1, 2), Seq(query), Some(tag), Some(language), Sort.ByDurationDesc, Some(page), Some(pageSize))).thenReturn(result)
+    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
     when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
@@ -82,10 +82,10 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     }
   }
 
- test("That GET / will handle all empty query-params as missing query params") {
+  test("That GET / will handle all empty query-params as missing query params") {
     val query = ""
     val tag = ""
-    val language = "nb"
+    val language = ""
     val page = ""
     val pageSize = ""
     val duration = ""
@@ -93,6 +93,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
     val searchResult = mock[io.searchbox.core.SearchResult]
     val result = SearchResult(-1, 1,1, "nb", searchResult)
+
     when(searchService.all(any[List[Long]], any[Option[String]], any[Sort.Value], any[Option[String]], any[Option[Int]], any[Option[Int]])).thenReturn(result)
     when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
@@ -120,12 +121,16 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
     val page = 22
     val pageSize = 111
 
-    val searchResult = SearchResult(1, page, pageSize, Seq(DefaultLearningPathSummary))
-    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(searchResult)
+    val searchResult = mock[io.searchbox.core.SearchResult]
+    val result = SearchResult(1, page, pageSize, language, searchResult)
+
+    when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
+    when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
       status should equal (200)
-      val convertedBody = read[SearchResult](body)
+      val convertedBody = read[api.SearchResult](body)
       convertedBody.results.head.title.head.title should equal ("Tittel")
     }
   }

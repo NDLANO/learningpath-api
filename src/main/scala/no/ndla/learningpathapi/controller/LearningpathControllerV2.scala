@@ -337,7 +337,7 @@ trait LearningpathControllerV2 {
           page = page,
           pageSize = pageSize
         )
-        case None => searchService.all(
+        case None => searchService.allV2(
           withIdIn = idList,
           taggedWith = tag,
           sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
@@ -346,7 +346,8 @@ trait LearningpathControllerV2 {
           pageSize = pageSize)
       }
 
-      val hitResult = searchService.getHits(searchResult.response)
+      val hitResult = searchService.getHitsV2(searchResult.response, language.getOrElse(Language.DefaultLanguage))
+      
       SearchResultV2(
         searchResult.totalCount,
         searchResult.page,
