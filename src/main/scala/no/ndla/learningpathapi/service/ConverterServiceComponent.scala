@@ -13,7 +13,7 @@ import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2, Title}
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
-import no.ndla.learningpathapi.model.domain.{EmbedType, LanguageField}
+import no.ndla.learningpathapi.model.domain.{EmbedType, Language, LanguageField}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
@@ -230,6 +230,26 @@ trait ConverterServiceComponent {
           createUrlToLearningStep(ls, lp)
         )
       )
+    }
+
+    def asApiLearningPathTagsSummary(allTags: List[api.LearningPathTags], language: String): Option[api.LearningPathTagsSummary] = {
+      val supportedLanguages = allTags.flatMap(_.language).distinct
+
+      if (language != Language.AllLanguages && !supportedLanguages.contains(language)) {
+        return None
+      }
+
+      val searchLanguage = Language.getSearchLanguage(language, supportedLanguages)
+      val tags = allTags
+        .filter(_.language.getOrElse("") == searchLanguage)
+        .flatMap(_.tags)
+
+      Some(api.LearningPathTagsSummary(
+        searchLanguage,
+        supportedLanguages,
+        tags
+      ))
+
     }
 
     def asApiTitle(title: domain.Title): api.Title = {

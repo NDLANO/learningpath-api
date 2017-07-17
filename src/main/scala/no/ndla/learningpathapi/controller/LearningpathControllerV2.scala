@@ -98,7 +98,8 @@ trait LearningpathControllerV2 {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."))
+        pathParam[String]("path_id").description("The id of the learningpath."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
@@ -155,7 +156,8 @@ trait LearningpathControllerV2 {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."))
+        pathParam[String]("step_id").description("The id of the learningstep."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
         responseMessages(response403, response404, response500, response502)
         authorizations "oauth2")
 
@@ -286,7 +288,8 @@ trait LearningpathControllerV2 {
         notes "Retrieves a list of all previously used tags in learningpaths"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."))
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
         responseMessages response500
         authorizations "oauth2")
 
@@ -549,13 +552,9 @@ trait LearningpathControllerV2 {
       val language = paramOrDefault("language", Language.AllLanguages)
       val allTags = readService.tags
 
-      if (language == Language.AllLanguages) {
-        allTags
-      }
-      else {
-        val supportedLanguages = allTags.flatMap(_.language).distinct
-        val searchLanguage = Language.getSearchLanguage(language, supportedLanguages)
-        allTags.filter(_.language.getOrElse("") == searchLanguage)
+      converterService.asApiLearningPathTagsSummary(allTags, language) match {
+        case Some(s) => s
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Tags with language '$language' not found"))
       }
     }
 
