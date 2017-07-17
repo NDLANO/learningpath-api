@@ -329,7 +329,7 @@ trait LearningpathControllerV2 {
     def search(query: Option[String], language: Option[String], tag: Option[String], idList: List[Long], sort: Option[String], pageSize: Option[Int], page: Option[Int]): SearchResultV2 = {
       val searchResult = query match {
         case Some(q) => searchService.matchingQuery(
-          query = q.toLowerCase.split(" ").map(_.trim),
+          query = q,
           withIdIn = idList,
           taggedWith = tag,
           language = language,
