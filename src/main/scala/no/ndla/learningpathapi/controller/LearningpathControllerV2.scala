@@ -418,7 +418,8 @@ trait LearningpathControllerV2 {
     }
 
     get("/mine/?", operation(getMyLearningpaths)) {
-      readService.withOwner(owner = requireUser)
+      val language = paramOrDefault("language", Language.AllLanguages)
+      readService.withOwnerV2(owner = requireUser, language)
     }
 
     get("/licenses", operation(getLicenses)) {

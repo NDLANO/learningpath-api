@@ -161,6 +161,42 @@ trait ConverterServiceComponent {
         learningpath.isBasedOn)
     }
 
+    def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
+      supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
+    }
+
+    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath, language: String): Option[api.LearningPathSummaryV2] = {
+      val supportedLanguages = findSupportedLanguages(learningpath)
+      if (languageIsNotSupported(supportedLanguages, language)) {
+        return None
+      }
+
+      val searchLanguage = getSearchLanguage(language, supportedLanguages)
+
+
+      val title =          findValueByLanguage(learningpath.title, searchLanguage).getOrElse("")
+      val description =    findValueByLanguage(learningpath.description, searchLanguage).getOrElse("")
+      val tags =           findValueByLanguage(learningpath.tags, searchLanguage).getOrElse(Seq.empty[String])
+
+      Some(
+        api.LearningPathSummaryV2(
+          learningpath.id.get,
+          title,
+          description,
+          "",
+          createUrlToLearningPath(learningpath),
+          learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
+          learningpath.duration,
+          learningpath.status.toString,
+          learningpath.lastUpdated.toString,
+          tags,
+          asApiCopyright(learningpath.copyright),
+          supportedLanguages,
+          learningpath.isBasedOn
+        )
+      )
+    }
+
     def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
       api.LearningStep(
         ls.id.get,

@@ -33,6 +33,10 @@ trait ReadServiceComponent {
       learningPathRepository.withOwner(owner).map(converterService.asApiLearningpathSummary)
     }
 
+    def withOwnerV2(owner: String, language: String): List[LearningPathSummaryV2] = {
+      learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
+    }
+
     def withId(learningPathId: Long, user: Option[String] = None): Option[LearningPath] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => converterService.asApiLearningpath(lp, user))
     }
