@@ -404,7 +404,9 @@ trait LearningpathControllerV2 {
     }
 
     get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
-      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(requireUser)) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.DELETED, Some(requireUser), language) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }

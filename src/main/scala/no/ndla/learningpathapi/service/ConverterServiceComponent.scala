@@ -13,7 +13,7 @@ import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2, Title}
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
-import no.ndla.learningpathapi.model.domain.{EmbedType, Language, LanguageField}
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
@@ -173,17 +173,22 @@ trait ConverterServiceComponent {
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
-
       val title =          findValueByLanguage(learningpath.title, searchLanguage).getOrElse("")
       val description =    findValueByLanguage(learningpath.description, searchLanguage).getOrElse("")
       val tags =           findValueByLanguage(learningpath.tags, searchLanguage).getOrElse(Seq.empty[String])
+
+      val introduction = learningpath.learningsteps
+        .flatMap(_.description)
+        .find(_.language.getOrElse("") == searchLanguage)
+        .getOrElse(Description("", None))
+        .description
 
       Some(
         api.LearningPathSummaryV2(
           learningpath.id.get,
           title,
           description,
-          "",
+          introduction,
           createUrlToLearningPath(learningpath),
           learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
           learningpath.duration,
