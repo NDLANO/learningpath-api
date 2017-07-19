@@ -64,13 +64,9 @@ trait ReadServiceComponent {
       }
     }
 
-    def learningstepsForWithStatusV2(learningPathId: Long, status: StepStatus.Value, user: Option[String] = None, language: String): Option[Seq[LearningStepSummaryV2]] = {
+    def learningstepsForWithStatusV2(learningPathId: Long, status: StepStatus.Value, user: Option[String] = None, language: String): Option[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) => Some(
-          learningPathRepository.learningStepsFor(lp.id.get)
-            .filter(_.status == status)
-            .flatMap(ls => converterService.asApiLearningStepSummaryV2(ls, lp, language)).sortBy(_.seqNo))
-
+        case Some(lp) => Some(converterService.asLearningStepContainerSummary(status, lp, language))
         case None => None
       }
     }

@@ -10,17 +10,18 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
-import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2, Title}
+import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2}
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.domain.Language._
+import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 import com.netaporter.uri.dsl._
 
 trait ConverterServiceComponent {
-  this: ImageApiClientComponent =>
+  this: ImageApiClientComponent with LearningPathRepositoryComponent =>
 
   val converterService: ConverterService
 
@@ -270,6 +271,22 @@ trait ConverterServiceComponent {
           ls.`type`.toString,
           createUrlToLearningStep(ls, lp)
         )
+      )
+    }
+
+    def asLearningStepContainerSummary(status: StepStatus.Value, learningPath: domain.LearningPath, language: String): api.LearningStepContainerSummary = {
+      val learningSteps = learningPathRepository.learningStepsFor(learningPath.id.get).filter(_.status == status)
+      val supportedLanguages = learningSteps.flatMap(_.title).flatMap(_.language)
+
+      val searchLanguage =
+        if (supportedLanguages.contains(language) || language == AllLanguages)
+          getSearchLanguage(language, supportedLanguages)
+        else language
+
+      api.LearningStepContainerSummary(
+        searchLanguage,
+        learningSteps.flatMap(ls => converterService.asApiLearningStepSummaryV2(ls, learningPath, searchLanguage)).sortBy(_.seqNo),
+        supportedLanguages
       )
     }
 
