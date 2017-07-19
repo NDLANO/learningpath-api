@@ -336,7 +336,7 @@ trait LearningpathController {
     }
 
     private def search(query: Option[String], tag: Option[String], idList: List[Long], language: Option[String], sort: Option[String], pageSize: Option[Int], page: Option[Int]) = {
-      query match {
+      val searchResult = query match {
         case Some(q) => searchService.matchingQuery(
           query = q,
           withIdIn = idList,
