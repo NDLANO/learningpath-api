@@ -276,7 +276,7 @@ trait ConverterServiceComponent {
 
     def asLearningStepContainerSummary(status: StepStatus.Value, learningPath: domain.LearningPath, language: String): api.LearningStepContainerSummary = {
       val learningSteps = learningPathRepository.learningStepsFor(learningPath.id.get).filter(_.status == status)
-      val supportedLanguages = learningSteps.flatMap(_.title).flatMap(_.language)
+      val supportedLanguages = learningSteps.flatMap(_.title).flatMap(_.language).distinct
 
       val searchLanguage =
         if (supportedLanguages.contains(language) || language == AllLanguages)
