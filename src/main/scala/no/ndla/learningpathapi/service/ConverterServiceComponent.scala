@@ -10,18 +10,20 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
-import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2}
+import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.validation.LanguageValidator
+
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 import com.netaporter.uri.dsl._
 
 trait ConverterServiceComponent {
-  this: ImageApiClientComponent with LearningPathRepositoryComponent =>
+  this: ImageApiClientComponent with LearningPathRepositoryComponent with LanguageValidator =>
 
   val converterService: ConverterService
 
@@ -103,20 +105,15 @@ trait ConverterServiceComponent {
 
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
-      if (supportedLanguages.isEmpty) {
-        return None
-      }
+      if (supportedLanguages.isEmpty) return None
+
+      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
-
       val title =         findValueByLanguage(lp.title, searchLanguage).getOrElse("")
       val description =   findValueByLanguage(lp.description, searchLanguage).getOrElse("")
       val tags =          findValueByLanguage(lp.tags, searchLanguage).getOrElse(Seq.empty[String])
-      val learningSteps = {
-        val lS = lp.learningsteps.flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage)).toList.sortBy(_.seqNo)
-        if (lS.nonEmpty) lS
-        else Seq.empty[LearningStepSummaryV2]
-      }
+      val learningSteps = lp.learningsteps.flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage)).toList.sortBy(_.seqNo)
 
       Some(api.LearningPathV2(
         lp.id.get,
@@ -162,18 +159,13 @@ trait ConverterServiceComponent {
         learningpath.isBasedOn)
     }
 
-    def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
-      supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
-    }
-
     def asApiLearningpathSummaryV2(learningpath: domain.LearningPath, language: String): Option[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
-      if (languageIsNotSupported(supportedLanguages, language)) {
+
+      if (supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages))
         return None
-      }
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
-
       val title =          findValueByLanguage(learningpath.title, searchLanguage).getOrElse("")
       val description =    findValueByLanguage(learningpath.description, searchLanguage).getOrElse("")
       val tags =           findValueByLanguage(learningpath.tags, searchLanguage).getOrElse(Seq.empty[String])
@@ -221,12 +213,10 @@ trait ConverterServiceComponent {
 
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
-      if (supportedLanguages.isEmpty) {
-        return None
-      }
+      if (supportedLanguages.isEmpty) return None
+      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
-
       val title =       findValueByLanguage(ls.title, searchLanguage).getOrElse("")
       val description = findValueByLanguage(ls.description, searchLanguage).getOrElse("")
       val embedUrl =    findByLanguage(ls.embedUrl, searchLanguage)
@@ -277,6 +267,7 @@ trait ConverterServiceComponent {
     def asLearningStepContainerSummary(status: StepStatus.Value, learningPath: domain.LearningPath, language: String): api.LearningStepContainerSummary = {
       val learningSteps = learningPathRepository.learningStepsFor(learningPath.id.get).filter(_.status == status)
       val supportedLanguages = learningSteps.flatMap(_.title).flatMap(_.language).distinct
+      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
 
       val searchLanguage =
         if (supportedLanguages.contains(language) || language == AllLanguages)
@@ -292,10 +283,8 @@ trait ConverterServiceComponent {
 
     def asApiLearningPathTagsSummary(allTags: List[api.LearningPathTags], language: String): Option[api.LearningPathTagsSummary] = {
       val supportedLanguages = allTags.flatMap(_.language).distinct
-
-      if (language != Language.AllLanguages && !supportedLanguages.contains(language)) {
-        return None
-      }
+      if (supportedLanguages.isEmpty) return None
+      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
 
       val searchLanguage = Language.getSearchLanguage(language, supportedLanguages)
       val tags = allTags

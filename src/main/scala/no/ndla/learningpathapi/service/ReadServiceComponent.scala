@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.StepStatus
+import no.ndla.learningpathapi.model.domain.{StepStatus, ValidationException}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 
@@ -34,7 +34,11 @@ trait ReadServiceComponent {
     }
 
     def withOwnerV2(owner: String, language: String): List[LearningPathSummaryV2] = {
-      learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
+      val learningPathSummaries = learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
+      if (learningPathSummaries.isEmpty) {
+        val validationMessage = ValidationMessage("language", s"Language '$language' is not a supported value.")
+        throw new ValidationException(errors = validationMessage :: Nil)
+      } else learningPathSummaries
     }
 
     def withId(learningPathId: Long, user: Option[String] = None): Option[LearningPath] = {
