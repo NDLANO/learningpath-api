@@ -350,14 +350,14 @@ trait LearningpathControllerV2 {
 
       readService.withIdV2(long("path_id"), language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
       }
     }
 
     get("/:path_id/status/?", operation(getLearningpathStatus)) {
       readService.statusFor(long("path_id"), AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
       }
     }
 
@@ -366,7 +366,7 @@ trait LearningpathControllerV2 {
 
       readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.ACTIVE, AuthUser.get, language) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
       }
     }
 
@@ -375,7 +375,7 @@ trait LearningpathControllerV2 {
 
       readService.learningstepV2For(long("path_id"), long("step_id"), language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")} and language $language"))
       }
     }
 
@@ -397,7 +397,13 @@ trait LearningpathControllerV2 {
 
     get("/mine/?", operation(getMyLearningpaths)) {
       val language = paramOrDefault("language", Language.AllLanguages)
-      readService.withOwnerV2(owner = requireUser, language)
+      val myLearningpaths = readService.withOwnerV2(owner = requireUser, language)
+
+      if (myLearningpaths.isEmpty) {
+        halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with language $language not found"))
+      } else {
+        myLearningpaths
+      }
     }
 
     get("/licenses", operation(getLicenses)) {

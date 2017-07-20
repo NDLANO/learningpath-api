@@ -83,10 +83,6 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     service.asApiLearningpathV2(domainLearningPath, Language.DefaultLanguage, Some("me")) should equal(expected)
   }
 
-  test("asApiLearningV2 return error when language is not supported") {
-    an [ValidationException] should be thrownBy service.asApiLearningpathV2(domainLearningPath, "somethingVeryRandom", Some("me"))
-  }
-
   test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
     val expected = Some(api.LearningPathSummaryV2(
       1,
@@ -109,10 +105,6 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       None
     ))
     service.asApiLearningpathSummaryV2(domainLearningPath, Language.DefaultLanguage) should equal(expected)
-  }
-
-  test("asApiLearningStepV2 return error when language is not supported") {
-    an [ValidationException] should be thrownBy service.asApiLearningStepV2(domainLearningStep2, domainLearningPath, "somethingVeryRandom", Some("me"))
   }
 
   test("asApiLearningStepV2 converts domain learningstep to api LearningStepV2") {
@@ -154,10 +146,6 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   test("asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
     val expected = Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
     service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage) should equal(expected)
-  }
-
-  test("asApiLearningPathTagsSummary return error when language is not supported") {
-    an [ValidationException] should be thrownBy service.asApiLearningPathTagsSummary(apiTags, "somerandomLanguage")
   }
 
   test("That createUrlToLearningPath does not include private in path for private learningpath") {

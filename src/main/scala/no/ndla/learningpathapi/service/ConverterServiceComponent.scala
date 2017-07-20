@@ -105,8 +105,8 @@ trait ConverterServiceComponent {
 
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
-      if (supportedLanguages.isEmpty) return None
-      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
       val title =         findValueByLanguage(lp.title, searchLanguage).getOrElse("")
@@ -158,11 +158,14 @@ trait ConverterServiceComponent {
         learningpath.isBasedOn)
     }
 
+    def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
+      supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
+    }
+
     def asApiLearningpathSummaryV2(learningpath: domain.LearningPath, language: String): Option[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 
-      if (supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages))
-        return None
+      if (languageIsNotSupported(supportedLanguages, language)) return None
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
       val title =          findValueByLanguage(learningpath.title, searchLanguage).getOrElse("")
@@ -212,8 +215,8 @@ trait ConverterServiceComponent {
 
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
-      if (supportedLanguages.isEmpty) return None
-      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
       val title =       findValueByLanguage(ls.title, searchLanguage).getOrElse("")
@@ -262,27 +265,28 @@ trait ConverterServiceComponent {
       )
     }
 
-    def asLearningStepContainerSummary(status: StepStatus.Value, learningPath: domain.LearningPath, language: String): api.LearningStepContainerSummary = {
+    def asLearningStepContainerSummary(status: StepStatus.Value, learningPath: domain.LearningPath, language: String): Option[api.LearningStepContainerSummary] = {
       val learningSteps = learningPathRepository.learningStepsFor(learningPath.id.get).filter(_.status == status)
       val supportedLanguages = learningSteps.flatMap(_.title).flatMap(_.language).distinct
-      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
 
       val searchLanguage =
         if (supportedLanguages.contains(language) || language == AllLanguages)
           getSearchLanguage(language, supportedLanguages)
         else language
 
-      api.LearningStepContainerSummary(
+      Some(api.LearningStepContainerSummary(
         searchLanguage,
         learningSteps.flatMap(ls => converterService.asApiLearningStepSummaryV2(ls, learningPath, searchLanguage)).sortBy(_.seqNo),
         supportedLanguages
-      )
+      ))
     }
 
     def asApiLearningPathTagsSummary(allTags: List[api.LearningPathTags], language: String): Option[api.LearningPathTagsSummary] = {
       val supportedLanguages = allTags.flatMap(_.language).distinct
-      if (supportedLanguages.isEmpty) return None
-      LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
 
       val searchLanguage = Language.getSearchLanguage(language, supportedLanguages)
       val tags = allTags

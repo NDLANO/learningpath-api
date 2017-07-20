@@ -34,11 +34,7 @@ trait ReadServiceComponent {
     }
 
     def withOwnerV2(owner: String, language: String): List[LearningPathSummaryV2] = {
-      val learningPathSummaries = learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
-      if (learningPathSummaries.isEmpty) {
-        val validationMessage = ValidationMessage("language", s"Language '$language' is not a supported value.")
-        throw new ValidationException(errors = validationMessage :: Nil)
-      } else learningPathSummaries
+      learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
     }
 
     def withId(learningPathId: Long, user: Option[String] = None): Option[LearningPath] = {
@@ -70,7 +66,7 @@ trait ReadServiceComponent {
 
     def learningstepsForWithStatusV2(learningPathId: Long, status: StepStatus.Value, user: Option[String] = None, language: String): Option[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) => Some(converterService.asLearningStepContainerSummary(status, lp, language))
+        case Some(lp) => converterService.asLearningStepContainerSummary(status, lp, language)
         case None => None
       }
     }
