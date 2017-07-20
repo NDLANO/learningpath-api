@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.StepStatus
+import no.ndla.learningpathapi.model.domain.{StepStatus, ValidationException}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 
@@ -33,8 +33,16 @@ trait ReadServiceComponent {
       learningPathRepository.withOwner(owner).map(converterService.asApiLearningpathSummary)
     }
 
+    def withOwnerV2(owner: String, language: String): List[LearningPathSummaryV2] = {
+      learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
+    }
+
     def withId(learningPathId: Long, user: Option[String] = None): Option[LearningPath] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => converterService.asApiLearningpath(lp, user))
+    }
+
+    def withIdV2(learningPathId: Long, language: String, user: Option[String] = None): Option[LearningPathV2] = {
+      withIdAndAccessGranted(learningPathId, user).flatMap(lp => converterService.asApiLearningpathV2(lp, language, user))
     }
 
     def statusFor(learningPathId: Long, user: Option[String] = None): Option[LearningPathStatus] = {
@@ -56,9 +64,25 @@ trait ReadServiceComponent {
       }
     }
 
+    def learningstepsForWithStatusV2(learningPathId: Long, status: StepStatus.Value, user: Option[String] = None, language: String): Option[LearningStepContainerSummary] = {
+      withIdAndAccessGranted(learningPathId, user) match {
+        case Some(lp) => converterService.asLearningStepContainerSummary(status, lp, language)
+        case None => None
+      }
+    }
+
     def learningstepFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) => learningPathRepository.learningStepWithId(learningPathId, learningstepId).map(ls => converterService.asApiLearningStep(ls, lp, user))
+        case None => None
+      }
+    }
+
+    def learningstepV2For(learningPathId: Long, learningstepId: Long, language: String, user: Option[String] = None): Option[LearningStepV2] = {
+      withIdAndAccessGranted(learningPathId, user) match {
+        case Some(lp) =>
+          learningPathRepository.learningStepWithId(learningPathId, learningstepId)
+            .flatMap(ls => converterService.asApiLearningStepV2(ls, lp, language, user))
         case None => None
       }
     }

@@ -10,8 +10,8 @@ package no.ndla.learningpathapi.model.domain
 
 import no.ndla.learningpathapi.model.api.ValidationMessage
 
-case class EmbedUrl(url:String, language:Option[String], embedType: EmbedType.Value) extends LanguageField {
-  override def value = url
+case class EmbedUrl(url:String, language:Option[String], embedType: EmbedType.Value) extends LanguageField[String] {
+  override def value: String = url
 }
 
 object EmbedType extends Enumeration {

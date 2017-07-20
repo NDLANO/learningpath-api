@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi.model.domain
 
-trait LanguageField {
-  def value: String
+trait LanguageField[T] {
+  def value: T
   def language: Option[String]
 }

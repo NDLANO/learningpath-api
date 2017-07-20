@@ -8,12 +8,12 @@
 
 package no.ndla.learningpathapi.model.search
 
-case class SearchableTags (nb: Seq[String],
-                           nn: Seq[String],
-                           en: Seq[String],
-                           fr: Seq[String],
-                           de: Seq[String],
-                           es: Seq[String],
-                           se: Seq[String],
-                           zh: Seq[String],
-                           unknown: Seq[String])
+case class SearchableTags (nb: Option[Seq[String]],
+                           nn: Option[Seq[String]],
+                           en: Option[Seq[String]],
+                           fr: Option[Seq[String]],
+                           de: Option[Seq[String]],
+                           es: Option[Seq[String]],
+                           se: Option[Seq[String]],
+                           zh: Option[Seq[String]],
+                           unknown: Option[Seq[String]])

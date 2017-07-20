@@ -10,16 +10,20 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api
-import no.ndla.learningpathapi.model.api.CoverPhoto
+import no.ndla.learningpathapi.model.api.{CoverPhoto, LearningStepSummaryV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
-import no.ndla.learningpathapi.model.domain.EmbedType
+import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.Language._
+import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.validation.LanguageValidator
+
 import no.ndla.network.ApplicationUrl
 import no.ndla.mapping.License.getLicense
 import com.netaporter.uri.dsl._
 
 trait ConverterServiceComponent {
-  this: ImageApiClientComponent =>
+  this: ImageApiClientComponent with LearningPathRepositoryComponent with LanguageValidator =>
 
   val converterService: ConverterService
 
@@ -99,6 +103,39 @@ trait ConverterServiceComponent {
         lp.canEdit(user))
     }
 
+    def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
+      val supportedLanguages = findSupportedLanguages(lp)
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
+
+      val searchLanguage = getSearchLanguage(language, supportedLanguages)
+      val title =         findValueByLanguage(lp.title, searchLanguage).getOrElse("")
+      val description =   findValueByLanguage(lp.description, searchLanguage).getOrElse("")
+      val tags =          findValueByLanguage(lp.tags, searchLanguage).getOrElse(Seq.empty[String])
+      val learningSteps = lp.learningsteps.flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage)).toList.sortBy(_.seqNo)
+
+      Some(api.LearningPathV2(
+        lp.id.get,
+        lp.revision.get,
+        lp.isBasedOn,
+        title,
+        searchLanguage,
+        description,
+        createUrlToLearningPath(lp),
+        learningSteps,
+        createUrlToLearningSteps(lp),
+        lp.coverPhotoId.flatMap(asCoverPhoto),
+        lp.duration,
+        lp.status.toString,
+        lp.verificationStatus.toString,
+        lp.lastUpdated,
+        tags,
+        asApiCopyright(lp.copyright),
+        lp.canEdit(user),
+        supportedLanguages
+      ))
+    }
+
     def asApiIntroduction(introStepOpt: Option[domain.LearningStep]): Seq[api.Introduction] = {
       introStepOpt match {
         case None => List()
@@ -121,6 +158,45 @@ trait ConverterServiceComponent {
         learningpath.isBasedOn)
     }
 
+    def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
+      supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
+    }
+
+    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath, language: String): Option[api.LearningPathSummaryV2] = {
+      val supportedLanguages = findSupportedLanguages(learningpath)
+
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
+      val searchLanguage = getSearchLanguage(language, supportedLanguages)
+      val title =          findValueByLanguage(learningpath.title, searchLanguage).getOrElse("")
+      val description =    findValueByLanguage(learningpath.description, searchLanguage).getOrElse("")
+      val tags =           findValueByLanguage(learningpath.tags, searchLanguage).getOrElse(Seq.empty[String])
+
+      val introduction = learningpath.learningsteps
+        .flatMap(_.description)
+        .find(_.language.getOrElse("") == searchLanguage)
+        .getOrElse(Description("", None))
+        .description
+
+      Some(
+        api.LearningPathSummaryV2(
+          learningpath.id.get,
+          title,
+          description,
+          introduction,
+          createUrlToLearningPath(learningpath),
+          learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
+          learningpath.duration,
+          learningpath.status.toString,
+          learningpath.lastUpdated.toString,
+          tags,
+          asApiCopyright(learningpath.copyright),
+          supportedLanguages,
+          learningpath.isBasedOn
+        )
+      )
+    }
+
     def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
       api.LearningStep(
         ls.id.get,
@@ -137,6 +213,36 @@ trait ConverterServiceComponent {
         ls.status.toString)
     }
 
+    def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
+      val supportedLanguages = findSupportedLanguages(ls)
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
+
+      val searchLanguage = getSearchLanguage(language, supportedLanguages)
+      val title =       findValueByLanguage(ls.title, searchLanguage).getOrElse("")
+      val description = findValueByLanguage(ls.description, searchLanguage)
+      val embedUrl =    findByLanguage(ls.embedUrl, searchLanguage)
+                          .asInstanceOf[Option[domain.EmbedUrl]]
+                          .map(asApiEmbedUrlV2)
+
+      Some(api.LearningStepV2(
+        ls.id.get,
+        ls.revision.get,
+        ls.seqNo,
+        title,
+        searchLanguage,
+        description,
+        embedUrl,
+        ls.showTitle,
+        ls.`type`.toString,
+        ls.license.map(asApiLicense),
+        createUrlToLearningStep(ls, lp),
+        lp.canEdit(user),
+        ls.status.toString,
+        supportedLanguages
+      ))
+    }
+
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): api.LearningStepSummary = {
       api.LearningStepSummary(
         ls.id.get,
@@ -145,6 +251,54 @@ trait ConverterServiceComponent {
         ls.`type`.toString,
         createUrlToLearningStep(ls, lp)
       )
+    }
+
+    def asApiLearningStepSummaryV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String): Option[api.LearningStepSummaryV2] = {
+      findValueByLanguage(ls.title, language).map(title =>
+        api.LearningStepSummaryV2(
+          ls.id.get,
+          ls.seqNo,
+          title,
+          ls.`type`.toString,
+          createUrlToLearningStep(ls, lp)
+        )
+      )
+    }
+
+    def asLearningStepContainerSummary(status: StepStatus.Value, learningPath: domain.LearningPath, language: String): Option[api.LearningStepContainerSummary] = {
+      val learningSteps = learningPathRepository.learningStepsFor(learningPath.id.get).filter(_.status == status)
+      val supportedLanguages = learningSteps.flatMap(_.title).flatMap(_.language).distinct
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
+
+      val searchLanguage =
+        if (supportedLanguages.contains(language) || language == AllLanguages)
+          getSearchLanguage(language, supportedLanguages)
+        else language
+
+      Some(api.LearningStepContainerSummary(
+        searchLanguage,
+        learningSteps.flatMap(ls => converterService.asApiLearningStepSummaryV2(ls, learningPath, searchLanguage)).sortBy(_.seqNo),
+        supportedLanguages
+      ))
+    }
+
+    def asApiLearningPathTagsSummary(allTags: List[api.LearningPathTags], language: String): Option[api.LearningPathTagsSummary] = {
+      val supportedLanguages = allTags.flatMap(_.language).distinct
+      if (languageIsNotSupported(supportedLanguages, language)) return None
+
+
+      val searchLanguage = Language.getSearchLanguage(language, supportedLanguages)
+      val tags = allTags
+        .filter(_.language.getOrElse("") == searchLanguage)
+        .flatMap(_.tags)
+
+      Some(api.LearningPathTagsSummary(
+        searchLanguage,
+        supportedLanguages,
+        tags
+      ))
+
     }
 
     def asApiTitle(title: domain.Title): api.Title = {
@@ -157,6 +311,10 @@ trait ConverterServiceComponent {
 
     def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
       api.EmbedUrl(embedUrl.url, embedUrl.language, embedUrl.embedType.toString)
+    }
+
+    def asApiEmbedUrlV2(embedUrl: domain.EmbedUrl): api.EmbedUrlV2 = {
+      api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {

@@ -8,15 +8,16 @@
 
 package no.ndla.learningpathapi.service.search
 
-import com.google.gson.JsonObject
+import com.google.gson.{JsonElement, JsonObject}
 import com.typesafe.scalalogging.LazyLogging
 import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.api.{LearningPathSummary, SearchResult}
-import no.ndla.learningpathapi.model.domain.{NdlaSearchException, Sort}
+import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummary, LearningPathSummaryV2, License}
+import no.ndla.learningpathapi.model.domain.{NdlaSearchException, SearchResult, Sort}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import no.ndla.network.ApplicationUrl
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
@@ -49,14 +50,102 @@ trait SearchServiceComponent extends LazyLogging {
       }
     }
 
+    def getHitsV2(response: JestSearchResult, language: String): Seq[LearningPathSummaryV2] = {
+      var resultList = Seq[LearningPathSummaryV2]()
+      response.getTotal match {
+        case count: Integer if count > 0 => {
+          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
+          val iterator = resultArray.iterator()
+          while (iterator.hasNext) {
+            resultList = resultList :+ hitAsLearningPathSummaryV2(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject], language)
+          }
+          resultList
+        }
+        case _ => Seq()
+      }
+    }
+
     def hitAsLearningPathSummary(jsonObject: JsonObject): LearningPathSummary = {
       implicit val formats = org.json4s.DefaultFormats
       searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](jsonObject.toString))
     }
 
+    def hitAsLearningPathSummaryV2(hit: JsonObject, language: String): LearningPathSummaryV2 = {
+      implicit val formats = org.json4s.DefaultFormats
+
+      import scala.collection.JavaConversions._
+
+      val supportedLanguages =
+        hit.get("titles").getAsJsonObject.entrySet().to[Seq].map(entry => entry.getKey) ++
+          hit.get("descriptions").getAsJsonObject.entrySet().to[Seq].map(entry => entry.getKey) ++
+          hit.get("tags").getAsJsonObject.entrySet().to[Seq].map(entry => entry.getKey)
+
+      val title = findValueWithPathAndLanguage(hit, "titles", language)
+
+      val description = findValueWithPathAndLanguage(hit, "descriptions", language)
+
+      val introduction = hit.get("learningsteps").getAsJsonArray
+        .find(entry => entry.getAsJsonObject.get("stepType").getAsString == "INTRODUCTION")
+        .map(_.getAsJsonObject)
+        .map(x => x.getAsJsonObject("descriptions"))
+        .flatMap(y => y.entrySet().to[Seq].find(entry => entry.getKey == language)) match {
+        case Some(element) => element.getValue.getAsString
+        case None => ""
+      }
+
+      val tags = hit.get("tags").getAsJsonObject.entrySet().to[Seq].find(entry => entry.getKey == language) match {
+        case Some(element) => element.getValue.getAsJsonArray.map(value => value.getAsString).toSeq
+        case None => Seq.empty
+      }
+
+      val copyright = readToApiCopyright(read[Copyright](hit.get("copyright").toString))
+
+      LearningPathSummaryV2(
+        hit.get("id").getAsLong,
+        title,
+        description,
+        introduction,
+        ApplicationUrl.get + hit.get("id").getAsString,
+        getOrNone(hit, "coverPhotoUrl").map(_.getAsString),
+        getOrNone(hit, "duration").map(_.getAsInt),
+        hit.get("status").getAsString,
+        hit.get("lastUpdated").getAsString,
+        tags,
+        copyright,
+        supportedLanguages.distinct,
+        getOrNone(hit, "isBasedOn").map(_.getAsLong)
+      )
+    }
+
     def all(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
       executeSearch(
         QueryBuilders.boolQuery(),
+        withIdIn,
+        taggedWith,
+        sort,
+        language.getOrElse(LearningpathApiProperties.DefaultLanguage),
+        page,
+        pageSize)
+    }
+
+    def allV2(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+
+      val fullQuery = language match {
+        case None => QueryBuilders.boolQuery()
+        case Some(language) => {
+          val titleSearch = QueryBuilders.existsQuery(s"titles.${language}")
+          val descSearch = QueryBuilders.existsQuery(s"descriptions.${language}")
+          val tagSearch = QueryBuilders.existsQuery(s"tags.${language}")
+
+          QueryBuilders.boolQuery()
+            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg))
+            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg))
+        }
+      }
+
+      executeSearch(
+        fullQuery,
         withIdIn,
         taggedWith,
         sort,
@@ -108,7 +197,7 @@ trait SearchServiceComponent extends LazyLogging {
         .setParameter("from", startAt)
 
       jestClient.execute(request.build()) match {
-        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, getHits(response))
+        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, language, response)
         case Failure(f) => errorHandler(Failure(f))
       }
     }
@@ -179,6 +268,29 @@ trait SearchServiceComponent extends LazyLogging {
       f onSuccess {
         case Success(reindexResult) => logger.info(s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
         case Failure(ex) => logger.warn(ex.getMessage, ex)
+      }
+    }
+
+    def getOrNone(hit: JsonObject, fieldPath: String): Option[JsonElement] = {
+      Option(hit.get(fieldPath))
+    }
+
+    def readToApiCopyright(copyright: Copyright): Copyright = {
+      Copyright(
+        License(
+          copyright.license.license,
+          copyright.license.description,
+          copyright.license.url
+        ),
+        copyright.contributors)
+    }
+
+    def findValueWithPathAndLanguage(hit: JsonObject, fieldPath: String, language: String): String = {
+      import scala.collection.JavaConversions._
+
+      hit.get(fieldPath).getAsJsonObject.entrySet().to[Seq]find(entry => entry.getKey == language) match {
+        case Some(element) => element.getValue.getAsString
+        case None => ""
       }
     }
   }

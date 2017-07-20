@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.validation
 import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain.ValidationException
 import no.ndla.mapping.ISO639.get6391CodeFor6392CodeMappings
+import no.ndla.learningpathapi.model.domain.Language
 
 trait LanguageValidator {
   val languageValidator : LanguageValidator
@@ -37,6 +38,13 @@ trait LanguageValidator {
       languageValidator.validate(fieldPath, languageCodeOpt) match {
         case Some(validationMessage) => throw new ValidationException(errors = validationMessage :: Nil)
         case None => languageCodeOpt
+      }
+    }
+
+    def checkIfLanguageIsSupported(supportedLanguages: Seq[String], language: String) = {
+      if (!supportedLanguages.contains(language) && language != Language.AllLanguages) {
+        val validationMessage = ValidationMessage("language", s"Language '$language' is not a supported value.")
+        throw new ValidationException(errors = validationMessage :: Nil)
       }
     }
   }

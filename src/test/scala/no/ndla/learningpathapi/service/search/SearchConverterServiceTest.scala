@@ -128,15 +128,15 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
       LearningPathTags(Seq("Lasdf adf"), None)
     ))
 
-    searchableTags.nb should equal (Seq("Tag1", "Tag2"))
-    searchableTags.nn should equal (Seq("Tagg1", "Tagg2"))
-    searchableTags.es should equal (Seq("Los Taggos1", "Los Taggos2"))
-    searchableTags.unknown should equal (Seq("Lasdf adf"))
-    searchableTags.de should equal(Seq())
-    searchableTags.en should equal(Seq())
-    searchableTags.fr should equal(Seq())
-    searchableTags.se should equal(Seq())
-    searchableTags.zh should equal(Seq())
+    searchableTags.nb should equal (Some(Seq("Tag1", "Tag2")))
+    searchableTags.nn should equal (Some(Seq("Tagg1", "Tagg2")))
+    searchableTags.es should equal (Some(Seq("Los Taggos1", "Los Taggos2")))
+    searchableTags.unknown should equal (Some(Seq("Lasdf adf")))
+    searchableTags.de should equal(None)
+    searchableTags.en should equal(None)
+    searchableTags.fr should equal(None)
+    searchableTags.se should equal(None)
+    searchableTags.zh should equal(None)
   }
 
   test("That asApiIntroduction returns the step as an introduction in all available languages") {

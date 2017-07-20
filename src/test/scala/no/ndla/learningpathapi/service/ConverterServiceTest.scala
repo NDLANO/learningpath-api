@@ -17,6 +17,7 @@ import no.ndla.learningpathapi.model.api.CoverPhoto
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.ApplicationUrl
+import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
@@ -26,10 +27,125 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val copyright = api.Copyright(license, List(clinton))
   val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
+  val domainLearningStep2 = LearningStep(Some(1), Some(1), None, None, 1, List(Title("tittel", Some("nb"))), List(Description("deskripsjon", Some("nb"))), List(), StepType.INTRODUCTION, None)
+  val apiTags = List(api.LearningPathTags(Seq("tag"), Some(Language.DefaultLanguage)))
+
+  val randomDate = DateTime.now().toDate
   var service: ConverterService = _
+  val domainLearningPath = LearningPath(
+    Some(1),
+    Some(1),
+    None,
+    None,
+    List(Title("tittel", Some(Language.DefaultLanguage))),
+    List(Description("deskripsjon", Some(Language.DefaultLanguage))),
+    None,
+    Some(60),
+    LearningPathStatus.PRIVATE,
+    LearningPathVerificationStatus.CREATED_BY_NDLA,
+    randomDate,
+    List(LearningPathTags(List("tag"),Some((Language.DefaultLanguage)))),
+    "me",
+    Copyright("by", List.empty),
+    List.empty
+  )
 
   override def beforeEach() = {
     service = new ConverterService
+  }
+
+  test("asApiLearningpathV2 converts domain to api LearningPathV2") {
+    val expected = Some(api.LearningPathV2(
+      1,
+      1,
+      None,
+      "tittel",
+      Language.DefaultLanguage,
+      "deskripsjon",
+      "null1",
+      List.empty,
+      "null1/learningsteps",
+      None,
+      Some(60),
+      LearningPathStatus.PRIVATE.toString,
+      LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
+      randomDate,
+      List("tag"),
+      api.Copyright(
+        api.License(
+          "by",
+          Some("Creative Commons Attribution 2.0 Generic"),
+          Some("https://creativecommons.org/licenses/by/2.0/")),
+        List.empty),
+      true,
+      List(Language.DefaultLanguage)
+    ))
+    service.asApiLearningpathV2(domainLearningPath, Language.DefaultLanguage, Some("me")) should equal(expected)
+  }
+
+  test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
+    val expected = Some(api.LearningPathSummaryV2(
+      1,
+      "tittel",
+      "deskripsjon",
+      "",
+      "null1",
+      None,
+      Some(60),
+      LearningPathStatus.PRIVATE.toString,
+      randomDate.toString,
+      List("tag"),
+      api.Copyright(
+        api.License(
+          "by",
+          Some("Creative Commons Attribution 2.0 Generic"),
+          Some("https://creativecommons.org/licenses/by/2.0/")),
+        List.empty),
+      List(Language.DefaultLanguage),
+      None
+    ))
+    service.asApiLearningpathSummaryV2(domainLearningPath, Language.DefaultLanguage) should equal(expected)
+  }
+
+  test("asApiLearningStepV2 converts domain learningstep to api LearningStepV2") {
+    val learningstep = Some(api.LearningStepV2(
+      1,
+      1,
+      1,
+      "tittel",
+      "nb",
+      Some("deskripsjon"),
+      None,
+      false,
+      "INTRODUCTION",
+      None,
+      "null1/learningsteps/1",
+      true,
+      "ACTIVE",
+      List("nb")
+    ))
+    service.asApiLearningStepV2(domainLearningStep2, domainLearningPath, Language.DefaultLanguage, Some("me")) should equal(learningstep)
+  }
+
+  test("asApiLearningStepSummaryV2 converts domain learningstep to LearningStepSummaryV2") {
+    val expected = Some(api.LearningStepSummaryV2(
+      1,
+      1,
+      "tittel",
+      "INTRODUCTION",
+      "null1/learningsteps/1"
+    ))
+
+    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, Language.DefaultLanguage) should equal(expected)
+  }
+
+  test("asApiLearningStepSummaryV2 returns None when not supported language is given") {
+    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, "somerandomlanguage") should be(None)
+  }
+
+  test("asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
+    val expected = Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
+    service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage) should equal(expected)
   }
 
   test("That createUrlToLearningPath does not include private in path for private learningpath") {

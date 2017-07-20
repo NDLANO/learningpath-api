@@ -18,20 +18,20 @@ import org.scalatra.{Ok, ScalatraServlet}
 import scala.util.Try
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api._
-import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Sort, StepStatus}
+import no.ndla.learningpathapi.model.domain.{Language, LearningPathStatus, Sort, StepStatus}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
-import no.ndla.learningpathapi.service.{ReadServiceComponent, UpdateServiceComponent}
+import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.network.{AuthUser}
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
 
-trait LearningpathController {
+trait LearningpathControllerV2 {
 
-  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with LanguageValidator =>
-  val learningpathController: LearningpathController
+  this: ReadServiceComponent with UpdateServiceComponent with SearchServiceComponent with LanguageValidator with ConverterServiceComponent =>
+  val learningpathControllerV2: LearningpathControllerV2
 
-  class LearningpathController(implicit val swagger: Swagger) extends NdlaController with ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging with CorrelationIdSupport {
+  class LearningpathControllerV2(implicit val swagger: Swagger) extends NdlaController with ScalatraServlet with NativeJsonSupport with SwaggerSupport with LazyLogging with CorrelationIdSupport {
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
     protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
@@ -67,18 +67,6 @@ trait LearningpathController {
         responseMessages(response400, response500)
         authorizations "oauth2")
 
-    val getLearningpathsPost =
-      (apiOperation[List[SearchResult]]("searchArticles")
-        summary "Show all articles"
-        notes "Shows all articles. You can search it too."
-        parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
-        headerParam[Option[String]]("app-key").description("Your app-key"),
-        bodyParam[SearchParams]
-      )
-        authorizations "oauth2"
-        responseMessages(response400, response500))
-
     val getLicenses =
       (apiOperation[List[License]]("getLicenses")
         summary "Show all valid licenses"
@@ -107,7 +95,8 @@ trait LearningpathController {
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."))
+        pathParam[String]("path_id").description("The id of the learningpath."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
@@ -164,7 +153,8 @@ trait LearningpathController {
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."))
+        pathParam[String]("step_id").description("The id of the learningstep."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
         responseMessages(response403, response404, response500, response502)
         authorizations "oauth2")
 
@@ -295,7 +285,8 @@ trait LearningpathController {
         notes "Retrieves a list of all previously used tags in learningpaths"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."))
+        headerParam[Option[String]]("app-key").description("Your app-key."),
+        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
         responseMessages response500
         authorizations "oauth2")
 
@@ -309,8 +300,7 @@ trait LearningpathController {
         responseMessages response500
         authorizations "oauth2")
 
-
-    private def search(query: Option[String], tag: Option[String], idList: List[Long], language: Option[String], sort: Option[String], pageSize: Option[Int], page: Option[Int]) = {
+    def search(query: Option[String], language: Option[String], tag: Option[String], idList: List[Long], sort: Option[String], pageSize: Option[Int], page: Option[Int]): SearchResultV2 = {
       val searchResult = query match {
         case Some(q) => searchService.matchingQuery(
           query = q,
@@ -321,7 +311,7 @@ trait LearningpathController {
           page = page,
           pageSize = pageSize
         )
-        case None => searchService.all(
+        case None => searchService.allV2(
           withIdIn = idList,
           taggedWith = tag,
           sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
@@ -330,12 +320,13 @@ trait LearningpathController {
           pageSize = pageSize)
       }
 
-      val hitResult = searchService.getHits(searchResult.response)
-
-      SearchResult(
+      val hitResult = searchService.getHitsV2(searchResult.response, language.getOrElse(Language.DefaultLanguage))
+      
+      SearchResultV2(
         searchResult.totalCount,
         searchResult.page,
         searchResult.pageSize,
+        searchResult.language,
         hitResult
       )
     }
@@ -350,55 +341,48 @@ trait LearningpathController {
       val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
       logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
 
-      search(query, tag, idList, language, sort, pageSize, page)
-    }
-
-    post("/search/", operation(getLearningpathsPost)) {
-      val searchParams = extract[SearchParams](request.body)
-
-      val query = searchParams.query
-      val tag = searchParams.tag
-      val idList = searchParams.ids
-      val language = LanguageValidator.validate("language", searchParams.language)
-      val sort = searchParams.sort
-      val pageSize = searchParams.pageSize
-      val page = searchParams.page
-      logger.info("POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
-
-      search(query, tag, idList, language, sort, pageSize, page)
+      search(query, language, tag, idList, sort, pageSize, page)
     }
 
 
     get("/:path_id/?", operation(getLearningpath)) {
-      readService.withId(long("path_id"), AuthUser.get) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.withIdV2(long("path_id"), language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
       }
     }
 
     get("/:path_id/status/?", operation(getLearningpathStatus)) {
       readService.statusFor(long("path_id"), AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
       }
     }
 
     get("/:path_id/learningsteps/?", operation(getLearningsteps)) {
-      readService.learningstepsForWithStatus(long("path_id"), StepStatus.ACTIVE, AuthUser.get) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.ACTIVE, AuthUser.get, language) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
       }
     }
 
     get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-      readService.learningstepFor(long("path_id"), long("step_id"), AuthUser.get) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.learningstepV2For(long("path_id"), long("step_id"), language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")} and language $language"))
       }
     }
 
     get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
-      readService.learningstepsForWithStatus(long("path_id"), StepStatus.DELETED, Some(requireUser)) match {
+      val language = paramOrDefault("language", Language.AllLanguages)
+
+      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.DELETED, Some(requireUser), language) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
@@ -412,7 +396,14 @@ trait LearningpathController {
     }
 
     get("/mine/?", operation(getMyLearningpaths)) {
-      readService.withOwner(owner = requireUser)
+      val language = paramOrDefault("language", Language.AllLanguages)
+      val myLearningpaths = readService.withOwnerV2(owner = requireUser, language)
+
+      if (myLearningpaths.isEmpty) {
+        halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with language $language not found"))
+      } else {
+        myLearningpaths
+      }
     }
 
     get("/licenses", operation(getLicenses)) {
@@ -544,7 +535,13 @@ trait LearningpathController {
     }
 
     get("/tags/?", operation(getTags)) {
-      readService.tags
+      val language = paramOrDefault("language", Language.AllLanguages)
+      val allTags = readService.tags
+
+      converterService.asApiLearningPathTagsSummary(allTags, language) match {
+        case Some(s) => s
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Tags with language '$language' not found"))
+      }
     }
 
     get("/contributors", operation(getContributors)) {

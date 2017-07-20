@@ -50,15 +50,15 @@ trait SearchConverterServiceComponent {
     }
 
     def asApiLearningPathTag(tags: SearchableTags): Seq[api.LearningPathTags] = {
-      Seq(api.LearningPathTags(tags.zh, Some(Language.CHINESE)),
-        api.LearningPathTags(tags.en, Some(Language.ENGLISH)),
-        api.LearningPathTags(tags.fr, Some(Language.FRENCH)),
-        api.LearningPathTags(tags.de, Some(Language.GERMAN)),
-        api.LearningPathTags(tags.nb, Some(Language.NORWEGIAN_BOKMAL)),
-        api.LearningPathTags(tags.nn, Some(Language.NORWEGIAN_NYNORSK)),
-        api.LearningPathTags(tags.se, Some(Language.SAMI)),
-        api.LearningPathTags(tags.es, Some(Language.SPANISH)),
-        api.LearningPathTags(tags.unknown, Some(Language.UNKNOWN))).filterNot(_.tags.isEmpty)
+      Seq(api.LearningPathTags(tags.zh.getOrElse(Seq.empty), Some(Language.CHINESE)),
+        api.LearningPathTags(tags.en.getOrElse(Seq.empty), Some(Language.ENGLISH)),
+        api.LearningPathTags(tags.fr.getOrElse(Seq.empty), Some(Language.FRENCH)),
+        api.LearningPathTags(tags.de.getOrElse(Seq.empty), Some(Language.GERMAN)),
+        api.LearningPathTags(tags.nb.getOrElse(Seq.empty), Some(Language.NORWEGIAN_BOKMAL)),
+        api.LearningPathTags(tags.nn.getOrElse(Seq.empty), Some(Language.NORWEGIAN_NYNORSK)),
+        api.LearningPathTags(tags.se.getOrElse(Seq.empty), Some(Language.SAMI)),
+        api.LearningPathTags(tags.es.getOrElse(Seq.empty), Some(Language.SPANISH)),
+        api.LearningPathTags(tags.unknown.getOrElse(Seq.empty), Some(Language.UNKNOWN))).filterNot(_.tags.isEmpty)
     }
 
     def asApiIntroduction(learningStep: Option[SearchableLearningStep]): List[Introduction] = {
@@ -117,15 +117,15 @@ trait SearchConverterServiceComponent {
 
     def asSearchableTags(tags: Seq[LearningPathTags]): SearchableTags = {
       SearchableTags(
-        nb = tags.find(_.language.contains("nb")).map(_.tags).getOrElse(Seq()),
-        nn = tags.find(_.language.contains("nn")).map(_.tags).getOrElse(Seq()),
-        en = tags.find(_.language.contains("en")).map(_.tags).getOrElse(Seq()),
-        fr = tags.find(_.language.contains("fr")).map(_.tags).getOrElse(Seq()),
-        de = tags.find(_.language.contains("de")).map(_.tags).getOrElse(Seq()),
-        es = tags.find(_.language.contains("es")).map(_.tags).getOrElse(Seq()),
-        se = tags.find(_.language.contains("se")).map(_.tags).getOrElse(Seq()),
-        zh = tags.find(_.language.contains("zh")).map(_.tags).getOrElse(Seq()),
-        unknown = tags.find(_.language.isEmpty).map(_.tags).getOrElse(Seq())
+        nb = tags.find(_.language.contains("nb")).map(_.tags),
+        nn = tags.find(_.language.contains("nn")).map(_.tags),
+        en = tags.find(_.language.contains("en")).map(_.tags),
+        fr = tags.find(_.language.contains("fr")).map(_.tags),
+        de = tags.find(_.language.contains("de")).map(_.tags),
+        es = tags.find(_.language.contains("es")).map(_.tags),
+        se = tags.find(_.language.contains("se")).map(_.tags),
+        zh = tags.find(_.language.contains("zh")).map(_.tags),
+        unknown = tags.find(_.language.isEmpty).map(_.tags)
       )
     }
 
