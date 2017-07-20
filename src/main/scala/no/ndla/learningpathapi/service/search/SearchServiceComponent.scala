@@ -132,10 +132,10 @@ trait SearchServiceComponent extends LazyLogging {
 
       val fullQuery = language match {
         case None => QueryBuilders.boolQuery()
-        case Some(_) => {
-          val titleSearch = QueryBuilders.existsQuery(s"titles.${language.getOrElse("")}")
-          val descSearch = QueryBuilders.existsQuery(s"descriptions.${language.getOrElse("")}")
-          val tagSearch = QueryBuilders.existsQuery(s"tags.${language.getOrElse("")}")
+        case Some(language) => {
+          val titleSearch = QueryBuilders.existsQuery(s"titles.${language}")
+          val descSearch = QueryBuilders.existsQuery(s"descriptions.${language}")
+          val tagSearch = QueryBuilders.existsQuery(s"tags.${language}")
 
           QueryBuilders.boolQuery()
             .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))

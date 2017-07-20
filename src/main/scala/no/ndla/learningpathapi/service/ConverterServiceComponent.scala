@@ -106,7 +106,6 @@ trait ConverterServiceComponent {
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
       if (supportedLanguages.isEmpty) return None
-
       LanguageValidator.checkIfLanguageIsSupported(supportedLanguages, language)
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
@@ -218,11 +217,10 @@ trait ConverterServiceComponent {
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
       val title =       findValueByLanguage(ls.title, searchLanguage).getOrElse("")
-      val description = findValueByLanguage(ls.description, searchLanguage).getOrElse("")
+      val description = findValueByLanguage(ls.description, searchLanguage)
       val embedUrl =    findByLanguage(ls.embedUrl, searchLanguage)
                           .asInstanceOf[Option[domain.EmbedUrl]]
                           .map(asApiEmbedUrlV2)
-                          .getOrElse(api.EmbedUrlV2("", ""))
 
       Some(api.LearningStepV2(
         ls.id.get,
