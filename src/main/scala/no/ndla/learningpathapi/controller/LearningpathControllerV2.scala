@@ -416,8 +416,8 @@ trait LearningpathControllerV2 {
     }
 
     post("/", operation(addNewLearningpath)) {
-      val newLearningPath = extract[NewLearningPath](request.body)
-      val learningPath = updateService.addLearningPath(newLearningPath, requireUser)
+      val newLearningPath = extract[NewLearningPathV2](request.body)
+      val learningPath = updateService.addLearningPathV2(newLearningPath, requireUser)
       logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
       halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
     }

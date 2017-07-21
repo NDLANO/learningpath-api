@@ -69,6 +69,26 @@ trait UpdateServiceComponent {
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
 
+    def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): LearningPath = {
+      val domainTags =
+        if (newLearningPath.tags.isEmpty) Seq.empty
+        else Seq(domain.LearningPathTags(newLearningPath.tags, Some(newLearningPath.language)))
+
+      val learningPath = domain.LearningPath(None, None, None, None,
+        Seq(domain.Title(newLearningPath.title, Some(newLearningPath.language))),
+        Seq(domain.Description(newLearningPath.description, Some(newLearningPath.language))),
+        newLearningPath.coverPhotoMetaUrl.flatMap(extractImageId),
+        newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
+        LearningPathVerificationStatus.EXTERNAL,
+        clock.now(),
+        domainTags,
+        owner,
+        converterService.asCopyright(newLearningPath.copyright), List())
+      learningPathValidator.validate(learningPath)
+
+      converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
+    }
+
     private def extractImageId(url: String): Option[String] = {
       learningPathValidator.validateCoverPhoto(url) match {
         case Some(err) => throw new ValidationException(errors=Seq(err))
