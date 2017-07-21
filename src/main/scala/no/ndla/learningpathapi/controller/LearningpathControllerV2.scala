@@ -446,7 +446,7 @@ trait LearningpathControllerV2 {
     }
 
     post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
-      val newLearningStep = extract[NewLearningStep](request.body)
+      val newLearningStep = extract[NewLearningStepV2](request.body)
       val createdLearningStep = updateService.addLearningStep(long("path_id"), newLearningStep, requireUser)
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))

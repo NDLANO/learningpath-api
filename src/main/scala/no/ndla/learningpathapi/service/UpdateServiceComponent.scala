@@ -242,6 +242,43 @@ trait UpdateServiceComponent {
       }
     }
 
+    def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStepV2, owner: String): Option[LearningStep] = {
+      optimisticLockRetries(10) {
+        withIdAndAccessGranted(learningPathId, owner) match {
+          case None => None
+          case Some(learningPath) => {
+            val newSeqNo = learningPath.learningsteps.isEmpty match {
+              case true => 0
+              case false => learningPath.learningsteps.map(_.seqNo).max + 1
+            }
+
+            val newStep = domain.LearningStep(None, None, None, learningPath.id, newSeqNo,
+              Seq(domain.Title(newLearningStep.title, Some(newLearningStep.language))),
+              Seq(domain.Description(newLearningStep.description, Some(newLearningStep.language))),
+              newLearningStep.embedUrl.map(embed => domain.EmbedUrl(embed.url, Some(newLearningStep.language), EmbedType.valueOfOrError(embed.embedType))),
+              StepType.valueOfOrError(newLearningStep.`type`),
+              newLearningStep.license,
+              newLearningStep.showTitle)
+            learningStepValidator.validate(newStep)
+
+
+            val (insertedStep, updatedPath) = inTransaction { implicit session =>
+              val insertedStep = learningPathRepository.insertLearningStep(newStep)
+              val updatedPath = learningPathRepository.update(learningPath.copy(
+                learningsteps = learningPath.learningsteps :+ insertedStep,
+                lastUpdated = clock.now()))
+
+              (insertedStep, updatedPath)
+            }
+            if (updatedPath.isPublished) {
+              searchIndexService.indexDocument(updatedPath)
+            }
+            Some(converterService.asApiLearningStep(insertedStep, updatedPath, Option(owner)))
+          }
+        }
+      }
+    }
+
 
     def updateLearningStep(learningPathId: Long, learningStepId: Long, learningStepToUpdate: UpdatedLearningStep, owner: String): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, owner) match {
