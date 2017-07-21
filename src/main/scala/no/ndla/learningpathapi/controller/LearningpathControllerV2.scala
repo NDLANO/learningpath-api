@@ -423,7 +423,7 @@ trait LearningpathControllerV2 {
     }
 
     post("/:path_id/copy", operation(copyLearningpath)) {
-      val newLearningPath = extract[NewCopyLearningPath](request.body)
+      val newLearningPath = extract[NewCopyLearningPathV2](request.body)
       val pathId = long("path_id")
       updateService.newFromExisting(pathId, newLearningPath, requireUser) match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))

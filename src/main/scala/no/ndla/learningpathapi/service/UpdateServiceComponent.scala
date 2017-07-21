@@ -55,6 +55,40 @@ trait UpdateServiceComponent {
       }
     }
 
+    def newFromExisting(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPath] = {
+      learningPathRepository.withId(id) match {
+        case None => None
+        case Some(existing) => {
+          existing.verifyOwnerOrPublic(Some(owner))
+
+          val title = mergeLanguageFields[Title](existing.title, Seq(domain.Title(newLearningPath.title, Some(newLearningPath.language))))
+          val description = mergeLanguageFields(existing.description, Seq(domain.Description(newLearningPath.description, Some(newLearningPath.language))))
+          val tags = if(newLearningPath.tags.nonEmpty) Seq(domain.LearningPathTags(newLearningPath.tags, Some(newLearningPath.language))) else existing.tags
+          val coverPhotoId = newLearningPath.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId)
+          val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
+          val copyright = newLearningPath.copyright.map(converterService.asCopyright).getOrElse(existing.copyright)
+          val toInsert = existing.copy(
+            id = None,
+            revision = None,
+            externalId = None,
+            isBasedOn = if (existing.isPrivate) None else existing.id,
+            title = title,
+            description = description,
+            status = LearningPathStatus.PRIVATE,
+            verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+            lastUpdated = clock.now(),
+            owner = owner,
+            copyright = copyright,
+            learningsteps = existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
+            tags = tags,
+            coverPhotoId = coverPhotoId,
+            duration = duration)
+          learningPathValidator.validate(toInsert)
+          Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
+        }
+      }
+    }
+
     def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
       val learningPath = domain.LearningPath(None, None, None, None,
         newLearningPath.title.map(converterService.asTitle),
