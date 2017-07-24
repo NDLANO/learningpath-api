@@ -169,6 +169,33 @@ trait UpdateServiceComponent {
       }
     }
 
+    def updateLearningPathV2(id: Long, learningPathToUpdate: UpdatedLearningPathV2, owner: String): Option[LearningPathV2] = {
+      val language = Some(learningPathToUpdate.language)
+
+      withIdAndAccessGranted(id, owner) match {
+        case None => None
+        case Some(existing) => {
+          val toUpdate = existing.copy(
+            revision = Some(learningPathToUpdate.revision),
+            title = mergeLanguageFields(existing.title, Seq(domain.Title(learningPathToUpdate.title, language))),
+            description = mergeLanguageFields(existing.description, Seq(domain.Description(learningPathToUpdate.description, language))),
+            coverPhotoId = learningPathToUpdate.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId),
+            duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
+            tags = mergeLearningPathTags(existing.tags, Seq(domain.LearningPathTags(learningPathToUpdate.tags, language))),
+            copyright = converterService.asCopyright(learningPathToUpdate.copyright),
+            lastUpdated = clock.now())
+          learningPathValidator.validate(toUpdate)
+
+          val updatedLearningPath = learningPathRepository.update(toUpdate)
+          if (updatedLearningPath.isPublished) {
+            searchIndexService.indexDocument(updatedLearningPath)
+          }
+
+          converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, Option(owner))
+        }
+      }
+    }
+
     def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus.Value, owner: String): Option[LearningPath] = {
       withIdAndAccessGranted(learningPathId, owner, includeDeleted = true) match {
         case None => None

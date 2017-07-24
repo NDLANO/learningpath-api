@@ -435,7 +435,7 @@ trait LearningpathControllerV2 {
     }
 
     patch("/:path_id/?", operation(updateLearningPath)) {
-      val updatedLearningPath = updateService.updateLearningPath(long("path_id"), extract[UpdatedLearningPath](request.body), requireUser)
+      val updatedLearningPath = updateService.updateLearningPathV2(long("path_id"), extract[UpdatedLearningPathV2](request.body), requireUser)
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
