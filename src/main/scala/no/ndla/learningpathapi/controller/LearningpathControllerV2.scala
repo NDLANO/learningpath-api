@@ -47,7 +47,7 @@ trait LearningpathControllerV2 {
     val response502 = ResponseMessage(502, "Remote error", Some("Error"))
 
     val getLearningpaths =
-      (apiOperation[SearchResult]("getLearningpaths")
+      (apiOperation[SearchResultV2]("getLearningpaths")
         summary "Show public learningpaths"
         notes "Show public learningpaths."
         parameters(
@@ -56,7 +56,7 @@ trait LearningpathControllerV2 {
         queryParam[Option[String]]("query").description("Return only Learningpaths with content matching the specified query."),
         queryParam[Option[String]]("tag").description("Return only Learningpaths that are tagged with this exact tag."),
         queryParam[Option[String]]("ids").description("Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,)."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."),
+        queryParam[Option[String]]("language").description("The chosen language. Default is 'nb'"),
         queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
         queryParam[Option[Int]]("page-size").description(s"The number of search hits to display for each page. Default is ${LearningpathApiProperties.DefaultPageSize}. Max page-size is ${LearningpathApiProperties.MaxPageSize}"),
         queryParam[Option[String]]("sort").description(
@@ -79,7 +79,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val getMyLearningpaths =
-      (apiOperation[List[LearningPathSummary]]("getMyLearningpaths")
+      (apiOperation[List[LearningPathSummaryV2]]("getMyLearningpaths")
         summary "Show your learningpaths"
         notes "Shows your learningpaths."
         parameters(
@@ -89,14 +89,14 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val getLearningpath =
-      (apiOperation[LearningPath]("getLearningpath")
+      (apiOperation[LearningPathV2]("getLearningpath")
         summary "Show details about the specified learningpath"
         notes "Shows all information about the specified learningpath."
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
+        queryParam[Option[String]]("language").description("The chosen language of learningpath. Default is 'nb'"))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
@@ -124,7 +124,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val getLearningsteps =
-      (apiOperation[List[LearningStepSummary]]("getLearningsteps")
+      (apiOperation[List[LearningStepSummaryV2]]("getLearningsteps")
         summary "Show all learningsteps for given learningpath id"
         notes "Show all learningsteps for given learningpath id"
         parameters(
@@ -135,7 +135,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val getLearningStepsInTrash =
-      (apiOperation[List[LearningStepSummary]]("getLearningStepsInTrash")
+      (apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
         summary "Show all learningsteps for the given learningpath that are marked as deleted"
         notes "Show all learningsteps for the given learningpath that are marked as deleted"
         parameters(
@@ -146,7 +146,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val getLearningstep =
-      (apiOperation[LearningStep]("getLearningstep")
+      (apiOperation[LearningStepV2]("getLearningstep")
         summary "Show the given learningstep for the given learningpath"
         notes "Show the given learningstep for the given learningpath"
         parameters(
@@ -154,59 +154,59 @@ trait LearningpathControllerV2 {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
+        queryParam[Option[String]]("language").description("The chosen language of learningstep. Default is 'nb'"))
         responseMessages(response403, response404, response500, response502)
         authorizations "oauth2")
 
     val addNewLearningpath =
-      (apiOperation[LearningPath]("addLearningpath")
+      (apiOperation[LearningPathV2]("addLearningpath")
         summary "Adds the given learningpath"
         notes "Adds the given learningpath"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
-        bodyParam[NewLearningPath])
+        bodyParam[NewLearningPathV2])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
     val copyLearningpath =
-      (apiOperation[LearningPath]("copyLearningpath")
+      (apiOperation[LearningPathV2]("copyLearningpath")
         summary "Copies the given learningpath"
         notes "Copies the given learningpath, with the option to override some fields"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath to copy."),
-        bodyParam[NewCopyLearningPath])
+        bodyParam[NewCopyLearningPathV2])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
     val addNewLearningStep =
-      (apiOperation[LearningStep]("addLearningStep")
+      (apiOperation[LearningStepV2]("addLearningStep")
         summary "Adds the given LearningStep"
         notes "Adds the given LearningStep"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
-        bodyParam[NewLearningStep])
+        bodyParam[NewLearningStepV2])
         responseMessages(response400, response403, response404, response500, response502)
         authorizations "oauth2")
 
     val updateLearningPath =
-      (apiOperation[LearningPath]("updateLearningPath")
+      (apiOperation[LearningPathV2]("updateLearningPath")
         summary "Update the given learningpath"
         notes "Updates the given learningPath"
         parameters(
         headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
-        bodyParam[UpdatedLearningPath])
+        bodyParam[UpdatedLearningPathV2])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
     val updateLearningStep =
-      (apiOperation[LearningStep]("updateLearningStep")
+      (apiOperation[LearningStepV2]("updateLearningStep")
         summary "Updates the given learningStep"
         notes "Update the given learningStep"
         parameters(
@@ -214,7 +214,7 @@ trait LearningpathControllerV2 {
         headerParam[Option[String]]("app-key").description("Your app-key."),
         pathParam[String]("path_id").description("The id of the learningpath."),
         pathParam[String]("step_id").description("The id of the learningstep."),
-        bodyParam[UpdatedLearningStep])
+        bodyParam[UpdatedLearningStepV2])
         responseMessages(response400, response403, response404, response500, response502)
         authorizations "oauth2")
 
