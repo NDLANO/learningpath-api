@@ -67,6 +67,18 @@ trait LearningpathControllerV2 {
         responseMessages(response400, response500)
         authorizations "oauth2")
 
+    val getLearningpathsPost =
+      (apiOperation[List[SearchResult]]("searchArticles")
+        summary "Show all articles"
+        notes "Shows all articles. You can search it too."
+        parameters(
+        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
+        headerParam[Option[String]]("app-key").description("Your app-key"),
+        bodyParam[SearchParams]
+      )
+        authorizations "oauth2"
+        responseMessages(response400, response500))
+
     val getLicenses =
       (apiOperation[List[License]]("getLicenses")
         summary "Show all valid licenses"
@@ -340,6 +352,21 @@ trait LearningpathControllerV2 {
       val pageSize = paramOrNone("page-size").flatMap(ps => Try(ps.toInt).toOption)
       val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
       logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
+
+      search(query, language, tag, idList, sort, pageSize, page)
+    }
+
+    post("/search/", operation(getLearningpathsPost)) {
+      val searchParams = extract[SearchParams](request.body)
+
+      val query = searchParams.query
+      val tag = searchParams.tag
+      val idList = searchParams.ids
+      val language = LanguageValidator.validate("language", searchParams.language)
+      val sort = searchParams.sort
+      val pageSize = searchParams.pageSize
+      val page = searchParams.page
+      logger.info("POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
 
       search(query, language, tag, idList, sort, pageSize, page)
     }

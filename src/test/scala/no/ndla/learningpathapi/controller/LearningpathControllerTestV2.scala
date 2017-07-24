@@ -114,7 +114,7 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
 
   }
 
-  /*test("That POST /search will send all query-params to the search service") {
+  test("That POST /search will send all query-params to the search service") {
     val query = "hoppetau"
     val tag = "lek"
     val language = "nb"
@@ -129,12 +129,11 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
 
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
-      println("body", body)
       status should equal (200)
       val convertedBody = read[api.SearchResultV2](body)
       convertedBody.results.head.title should equal ("Tittel")
     }
-  }*/
+  }
 
   test ("That GET /licenses with filter sat to by only returns creative common licenses") {
     val creativeCommonlicenses = getLicenses.filter(_.license.startsWith("by")).map(l => api.License(l.license, Option(l.description), l.url)).toSet
