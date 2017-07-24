@@ -171,18 +171,32 @@ trait UpdateServiceComponent {
 
     def updateLearningPathV2(id: Long, learningPathToUpdate: UpdatedLearningPathV2, owner: String): Option[LearningPathV2] = {
       val language = Some(learningPathToUpdate.language)
+      val titles = learningPathToUpdate.title match {
+        case None => Seq.empty
+        case Some(value) => Seq(domain.Title(value, language))
+      }
+
+      val descriptions = learningPathToUpdate.description match {
+        case None => Seq.empty
+        case Some(value) => Seq(domain.Description(value, language))
+      }
+
+      val tags = learningPathToUpdate.tags match {
+        case None => Seq.empty
+        case Some(value) => Seq(domain.LearningPathTags(value, language))
+      }
 
       withIdAndAccessGranted(id, owner) match {
         case None => None
         case Some(existing) => {
           val toUpdate = existing.copy(
             revision = Some(learningPathToUpdate.revision),
-            title = mergeLanguageFields(existing.title, Seq(domain.Title(learningPathToUpdate.title, language))),
-            description = mergeLanguageFields(existing.description, Seq(domain.Description(learningPathToUpdate.description, language))),
+            title = mergeLanguageFields(existing.title, titles),
+            description = mergeLanguageFields(existing.description, descriptions),
             coverPhotoId = learningPathToUpdate.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId),
             duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
-            tags = mergeLearningPathTags(existing.tags, Seq(domain.LearningPathTags(learningPathToUpdate.tags, language))),
-            copyright = converterService.asCopyright(learningPathToUpdate.copyright),
+            tags = mergeLearningPathTags(existing.tags, tags),
+            copyright = if (learningPathToUpdate.copyright.isDefined) converterService.asCopyright(learningPathToUpdate.copyright.get) else existing.copyright,
             lastUpdated = clock.now())
           learningPathValidator.validate(toUpdate)
 

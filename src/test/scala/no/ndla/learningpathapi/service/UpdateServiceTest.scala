@@ -57,9 +57,9 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val NEW_COPIED_LEARNINGPATH = NewCopyLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), None)
 
   val UPDATED_PRIVATE_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
-  val UPDATED_PRIVATE_LEARNINGPATHV2 = UpdatedLearningPathV2(1, "", "nb", "", None, Some(1), List(), apiCopyright)
+  val UPDATED_PRIVATE_LEARNINGPATHV2 = UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright))
   val UPDATED_PUBLISHED_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
-  val UPDATED_PUBLISHED_LEARNINGPATHV2 = UpdatedLearningPathV2(1, "", "nb", "", None, Some(1), List(), apiCopyright)
+  val UPDATED_PUBLISHED_LEARNINGPATHV2 = UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright))
 
 
   override def beforeEach() = {
