@@ -269,11 +269,23 @@ trait UpdateServiceComponent {
       }
     }
 
-    def addLearningStep(learningPathId: Long, newLearningStep: NewLearningStepV2, owner: String): Option[LearningStep] = {
+    def addLearningStepV2(learningPathId: Long, newLearningStep: NewLearningStepV2, owner: String): Option[LearningStepV2] = {
       optimisticLockRetries(10) {
         withIdAndAccessGranted(learningPathId, owner) match {
           case None => None
           case Some(learningPath) => {
+            val language = Some(newLearningStep.language)
+
+            val description = newLearningStep.description match {
+              case None => Seq.empty
+              case Some(value) => Seq(domain.Description(value, language))
+            }
+
+            val embedUrl = newLearningStep.embedUrl match {
+              case None => Seq.empty
+              case Some(value) => Seq(domain.EmbedUrl(value.url, language, EmbedType.valueOfOrError(value.embedType)))
+            }
+
             val newSeqNo = learningPath.learningsteps.isEmpty match {
               case true => 0
               case false => learningPath.learningsteps.map(_.seqNo).max + 1
@@ -281,13 +293,12 @@ trait UpdateServiceComponent {
 
             val newStep = domain.LearningStep(None, None, None, learningPath.id, newSeqNo,
               Seq(domain.Title(newLearningStep.title, Some(newLearningStep.language))),
-              Seq(domain.Description(newLearningStep.description, Some(newLearningStep.language))),
-              newLearningStep.embedUrl.map(embed => domain.EmbedUrl(embed.url, Some(newLearningStep.language), EmbedType.valueOfOrError(embed.embedType))),
+              description,
+              embedUrl,
               StepType.valueOfOrError(newLearningStep.`type`),
               newLearningStep.license,
               newLearningStep.showTitle)
             learningStepValidator.validate(newStep)
-
 
             val (insertedStep, updatedPath) = inTransaction { implicit session =>
               val insertedStep = learningPathRepository.insertLearningStep(newStep)
@@ -300,7 +311,7 @@ trait UpdateServiceComponent {
             if (updatedPath.isPublished) {
               searchIndexService.indexDocument(updatedPath)
             }
-            Some(converterService.asApiLearningStep(insertedStep, updatedPath, Option(owner)))
+            converterService.asApiLearningStepV2(insertedStep, updatedPath, newLearningStep.language, Option(owner))
           }
         }
       }
