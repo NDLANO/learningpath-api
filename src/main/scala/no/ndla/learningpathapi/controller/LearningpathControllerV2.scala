@@ -458,8 +458,8 @@ trait LearningpathControllerV2 {
     }
 
     patch("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
-      val updatedLearningStep = extract[UpdatedLearningStep](request.body)
-      val createdLearningStep = updateService.updateLearningStep(long("path_id"), long("step_id"),
+      val updatedLearningStep = extract[UpdatedLearningStepV2](request.body)
+      val createdLearningStep = updateService.updateLearningStepV2(long("path_id"), long("step_id"),
         updatedLearningStep,
         requireUser)
 

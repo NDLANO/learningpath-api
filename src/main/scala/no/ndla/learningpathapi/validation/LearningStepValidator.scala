@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.validation
 
 
-import no.ndla.learningpathapi.model.api.{ValidationMessage}
+import no.ndla.learningpathapi.model.api.{EmbedUrlV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 
 trait LearningStepValidator {
@@ -37,7 +37,6 @@ trait LearningStepValidator {
         validateLicense(newLearningStep.license).toList ++
         validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep).toList
     }
-
 
     def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
       descriptions.isEmpty match {

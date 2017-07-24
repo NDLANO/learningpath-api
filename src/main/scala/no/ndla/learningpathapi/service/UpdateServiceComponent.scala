@@ -306,7 +306,6 @@ trait UpdateServiceComponent {
       }
     }
 
-
     def updateLearningStep(learningPathId: Long, learningStepId: Long, learningStepToUpdate: UpdatedLearningStep, owner: String): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, owner) match {
         case None => None
@@ -342,6 +341,60 @@ trait UpdateServiceComponent {
               }
 
               Some(converterService.asApiLearningStep(updatedStep, updatedPath, Option(owner)))
+            }
+          }
+        }
+      }
+    }
+
+    def updateLearningStepV2(learningPathId: Long, learningStepId: Long, learningStepToUpdate: UpdatedLearningStepV2, owner: String): Option[LearningStepV2] = {
+      withIdAndAccessGranted(learningPathId, owner) match {
+        case None => None
+        case Some(learningPath) => {
+          learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
+            case None => None
+            case Some(existing) => {
+              val language = Some(learningStepToUpdate.language)
+
+              val titles = learningStepToUpdate.title match {
+                case None => Seq.empty
+                case Some(value) => mergeLanguageFields(existing.title, Seq(domain.Title(value, language)))
+              }
+
+              val descriptions = learningStepToUpdate.description match {
+                case None => Seq.empty
+                case Some(value) => mergeLanguageFields(existing.description, Seq(domain.Description(value, language)))
+              }
+
+              val embedUrls = learningStepToUpdate.embedUrl match {
+                case None => Seq.empty
+                case Some(value) => mergeLanguageFields(existing.embedUrl, Seq(domain.EmbedUrl(value.url, language, EmbedType.valueOfOrError(value.embedType))))
+              }
+
+              val toUpdate = existing.copy(
+                revision = Some(learningStepToUpdate.revision),
+                title = titles,
+                description = descriptions,
+                embedUrl = embedUrls,
+                showTitle = learningStepToUpdate.showTitle.getOrElse(existing.showTitle),
+                `type` = learningStepToUpdate.`type`.map(domain.StepType.valueOfOrError).getOrElse(existing.`type`),
+                license = learningStepToUpdate.license
+              )
+              learningStepValidator.validate(toUpdate)
+              val (updatedStep, updatedPath) = inTransaction { implicit session =>
+                val updatedStep = learningPathRepository.updateLearningStep(toUpdate)
+                val updatedPath = learningPathRepository.update(learningPath.copy(
+                  learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
+                  lastUpdated = clock.now()))
+
+                (updatedStep, updatedPath)
+              }
+
+              if (updatedPath.isPublished) {
+                searchIndexService.indexDocument(updatedPath)
+              }
+
+              converterService.asApiLearningStepV2(updatedStep, updatedPath, learningStepToUpdate.language, Option(owner))
             }
           }
         }
