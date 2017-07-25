@@ -11,7 +11,7 @@ package no.ndla.learningpathapi
 import javax.sql.DataSource
 
 import io.searchbox.client.JestClient
-import no.ndla.learningpathapi.controller.{HealthController, LearningpathController}
+import no.ndla.learningpathapi.controller.{HealthController, LearningpathController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -23,6 +23,7 @@ import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
   extends LearningpathController
+  with LearningpathControllerV2
   with LearningPathRepositoryComponent
   with ReadServiceComponent
   with UpdateServiceComponent
@@ -62,6 +63,7 @@ trait TestEnvironment
   val importService = mock[ImportService]
   val languageValidator = mock[LanguageValidator]
   val learningpathController = mock[LearningpathController]
+  val learningpathControllerV2 = mock[LearningpathControllerV2]
   val healthController = mock[HealthController]
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
