@@ -55,7 +55,7 @@ trait UpdateServiceComponent {
       }
     }
 
-    def newFromExisting(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPath] = {
+    def newFromExisting(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPathV2] = {
       learningPathRepository.withId(id) match {
         case None => None
         case Some(existing) => {
@@ -84,7 +84,7 @@ trait UpdateServiceComponent {
             coverPhotoId = coverPhotoId,
             duration = duration)
           learningPathValidator.validate(toInsert)
-          Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
+          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, Some(owner))
         }
       }
     }
