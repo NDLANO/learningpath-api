@@ -103,7 +103,7 @@ trait UpdateServiceComponent {
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
     }
 
-    def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): LearningPath = {
+    def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): Option[LearningPathV2] = {
       val domainTags =
         if (newLearningPath.tags.isEmpty) Seq.empty
         else Seq(domain.LearningPathTags(newLearningPath.tags, Some(newLearningPath.language)))
@@ -120,7 +120,7 @@ trait UpdateServiceComponent {
         converterService.asCopyright(newLearningPath.copyright), List())
       learningPathValidator.validate(learningPath)
 
-      converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
+      converterService.asApiLearningpathV2(learningPathRepository.insert(learningPath), newLearningPath.language, Option(owner))
     }
 
     private def extractImageId(url: String): Option[String] = {

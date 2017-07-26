@@ -444,9 +444,13 @@ trait LearningpathControllerV2 {
 
     post("/", operation(addNewLearningpath)) {
       val newLearningPath = extract[NewLearningPathV2](request.body)
-      val learningPath = updateService.addLearningPathV2(newLearningPath, requireUser)
-      logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
-      halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+      updateService.addLearningPathV2(newLearningPath, requireUser) match {
+        case None => halt(status = 404, body = Error(Error.GENERIC, s"The chosen language is not supported"))
+        case Some(learningPath) => {
+          logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
+          halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+        }
+      }
     }
 
     post("/:path_id/copy", operation(copyLearningpath)) {
