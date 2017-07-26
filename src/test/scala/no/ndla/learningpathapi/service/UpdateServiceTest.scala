@@ -81,7 +81,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH)
 
     val saved = service.addLearningPathV2(NEW_PRIVATE_LEARNINGPATHV2, PRIVATE_OWNER)
-    assert(saved.id == PRIVATE_LEARNINGPATH.id.get)
+    assert(saved.get.id == PRIVATE_LEARNINGPATH.id.get)
 
     verify(learningPathRepository, times(1)).insert(any[domain.LearningPath])
     verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
