@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.validation
 
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.{NewCopyLearningPathV2, ValidationMessage}
+import no.ndla.learningpathapi.model.api.{ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.mapping.License.getLicense
 
@@ -22,9 +22,6 @@ trait LearningPathValidator {
 
     val MISSING_DESCRIPTION = "At least one description is required."
     val INVALID_COVER_PHOTO = "The url to the coverPhoto must point to an image in NDLA Image API."
-    val MISSING_LANGUAGE = "Language must be specified if title is given."
-    val MISSING_TITLE = "Missing title. Title is required"
-    val MISSING_TITLE_AND_LANGUAGE = "Both title and language is required."
 
     val noHtmlTextValidator = new TextValidator(allowHtml = false)
     val durationValidator = new DurationValidator
@@ -34,17 +31,6 @@ trait LearningPathValidator {
         case head :: tail => throw new ValidationException(errors = head :: tail)
         case _ => newLearningPath
       }
-    }
-
-    def validateTitle(lp: NewCopyLearningPathV2): NewCopyLearningPathV2 = {
-      val validationMessage = (lp.title.isEmpty, lp.language.isEmpty) match {
-        case (false, false) => List()
-        case (false, true) => List(ValidationMessage("language", MISSING_LANGUAGE))
-        case (true, false) => List(ValidationMessage("title", MISSING_TITLE))
-        case (true, true) => List(ValidationMessage("title and language", MISSING_TITLE_AND_LANGUAGE))
-      }
-      if (validationMessage.isEmpty) return lp
-      else throw new ValidationException(errors = validationMessage)
     }
 
     def validateLearningPath(newLearningPath: LearningPath) : Seq[ValidationMessage] = {

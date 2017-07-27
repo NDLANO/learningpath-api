@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.{NewCopyLearningPathV2, ValidationMessage}
+import no.ndla.learningpathapi.model.api.{ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.Clock
 import org.mockito.Mockito._
@@ -29,7 +29,6 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   val trump = Author("author", "Donald Drumpf")
   val license = "publicdomain"
   val copyright = Copyright(license, List(trump))
-  val newCopyLearningPathV2 = NewCopyLearningPathV2(None, None, None, None, None, None, None)
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -50,33 +49,6 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
     when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
-  }
-
-  test("That validateTitle throws ValidationException if neither language and title is given") {
-    val exception = intercept[ValidationException] {
-      validator.validateTitle(newCopyLearningPathV2)
-    }
-    exception.errors.length should be (1)
-    exception.errors.head.field should equal ("title and language")
-    exception.errors.head.message should equal ("Both title and language is required.")
-  }
-
-  test("That validateTitle throws ValidationException if title is given and not language") {
-    val exception = intercept[ValidationException] {
-      validator.validateTitle(newCopyLearningPathV2.copy(title = Some("Tittel")))
-    }
-    exception.errors.length should be (1)
-    exception.errors.head.field should equal ("language")
-    exception.errors.head.message should equal ("Language must be specified if title is given.")
-  }
-
-  test("That validateTitle throws ValidationException if langauge is given and not title") {
-    val exception = intercept[ValidationException] {
-      validator.validateTitle(newCopyLearningPathV2.copy(language = Some("nb")))
-    }
-    exception.errors.length should be (1)
-    exception.errors.head.field should equal ("title")
-    exception.errors.head.message should equal ("Missing title. Title is required")
   }
 
   test("That valid learningpath returns no errors") {

@@ -60,13 +60,8 @@ trait UpdateServiceComponent {
         case None => None
         case Some(existing) => {
           existing.verifyOwnerOrPublic(Some(owner))
-          learningPathValidator.validateTitle(newLearningPath)
-
-          val language = newLearningPath.language
-          val oldTitle = newLearningPath.title match {
-            case None => Seq.empty
-            case Some(value) => Seq(domain.Title(value, language))
-          }
+          val language = Some(newLearningPath.language)
+          val oldTitle = Seq(domain.Title(newLearningPath.title, language))
 
           val oldDescription = newLearningPath.description match {
             case None => Seq.empty
@@ -101,7 +96,7 @@ trait UpdateServiceComponent {
             coverPhotoId = coverPhotoId,
             duration = duration)
           learningPathValidator.validate(toInsert)
-          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language.get, Some(owner))
+          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, Some(owner))
         }
       }
     }
