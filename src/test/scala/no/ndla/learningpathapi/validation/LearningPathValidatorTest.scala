@@ -29,6 +29,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   val trump = Author("author", "Donald Drumpf")
   val license = "publicdomain"
   val copyright = Copyright(license, List(trump))
+  val newCopyLearningPathV2 = NewCopyLearningPathV2(None, None, None, None, None, None, None)
   val ValidLearningPath = LearningPath(
     id = None,
     title = List(Title("Gyldig tittel", Some("nb"))),
@@ -52,9 +53,8 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   }
 
   test("That validateTitle throws ValidationException if neither language and title is given") {
-    val newCopyLP = NewCopyLearningPathV2(None, None, None, None, None, None, None)
     val exception = intercept[ValidationException] {
-      validator.validateTitle(newCopyLP)
+      validator.validateTitle(newCopyLearningPathV2)
     }
     exception.errors.length should be (1)
     exception.errors.head.field should equal ("title and language")
@@ -62,9 +62,8 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   }
 
   test("That validateTitle throws ValidationException if title is given and not language") {
-    val newCopyLP = NewCopyLearningPathV2(Some("Tittel"), None, None, None, None, None, None)
     val exception = intercept[ValidationException] {
-      validator.validateTitle(newCopyLP)
+      validator.validateTitle(newCopyLearningPathV2.copy(title = Some("Tittel")))
     }
     exception.errors.length should be (1)
     exception.errors.head.field should equal ("language")
@@ -72,9 +71,8 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   }
 
   test("That validateTitle throws ValidationException if langauge is given and not title") {
-    val newCopyLP = NewCopyLearningPathV2(None, None, Some("nb"), None, None, None, None)
     val exception = intercept[ValidationException] {
-      validator.validateTitle(newCopyLP)
+      validator.validateTitle(newCopyLearningPathV2.copy(language = Some("nb")))
     }
     exception.errors.length should be (1)
     exception.errors.head.field should equal ("title")
