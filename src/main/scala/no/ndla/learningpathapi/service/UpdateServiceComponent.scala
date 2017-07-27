@@ -55,15 +55,32 @@ trait UpdateServiceComponent {
       }
     }
 
-    def newFromExisting(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPathV2] = {
+    def newFromExistingV2(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPathV2] = {
       learningPathRepository.withId(id) match {
         case None => None
         case Some(existing) => {
           existing.verifyOwnerOrPublic(Some(owner))
+          learningPathValidator.validateTitle(newLearningPath)
 
-          val title = mergeLanguageFields[Title](existing.title, Seq(domain.Title(newLearningPath.title, Some(newLearningPath.language))))
-          val description = mergeLanguageFields(existing.description, Seq(domain.Description(newLearningPath.description, Some(newLearningPath.language))))
-          val tags = if(newLearningPath.tags.nonEmpty) Seq(domain.LearningPathTags(newLearningPath.tags, Some(newLearningPath.language))) else existing.tags
+          val language = newLearningPath.language
+          val oldTitle = newLearningPath.title match {
+            case None => Seq.empty
+            case Some(value) => Seq(domain.Title(value, language))
+          }
+
+          val oldDescription = newLearningPath.description match {
+            case None => Seq.empty
+            case Some(value) => Seq(domain.Description(value, language))
+          }
+
+          val oldTags = newLearningPath.tags match {
+            case None => Seq.empty
+            case Some(value) => Seq(domain.LearningPathTags(value, language))
+          }
+
+          val title = mergeLanguageFields[Title](existing.title, oldTitle)
+          val description = mergeLanguageFields(existing.description, oldDescription)
+          val tags = mergeLearningPathTags(existing.tags, oldTags)
           val coverPhotoId = newLearningPath.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId)
           val duration = if(newLearningPath.duration.nonEmpty) newLearningPath.duration else existing.duration
           val copyright = newLearningPath.copyright.map(converterService.asCopyright).getOrElse(existing.copyright)
@@ -84,7 +101,7 @@ trait UpdateServiceComponent {
             coverPhotoId = coverPhotoId,
             duration = duration)
           learningPathValidator.validate(toInsert)
-          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, Some(owner))
+          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language.get, Some(owner))
         }
       }
     }

@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.api.{NewCopyLearningPathV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.Clock
 import org.mockito.Mockito._
@@ -50,6 +50,37 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
     when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
   }
+
+  test("That validateTitle throws ValidationException if neither language and title is given") {
+    val newCopyLP = NewCopyLearningPathV2(None, None, None, None, None, None, None)
+    val exception = intercept[ValidationException] {
+      validator.validateTitle(newCopyLP)
+    }
+    exception.errors.length should be (1)
+    exception.errors.head.field should equal ("title and language")
+    exception.errors.head.message should equal ("Both title and language is required.")
+  }
+
+  test("That validateTitle throws ValidationException if title is given and not language") {
+    val newCopyLP = NewCopyLearningPathV2(Some("Tittel"), None, None, None, None, None, None)
+    val exception = intercept[ValidationException] {
+      validator.validateTitle(newCopyLP)
+    }
+    exception.errors.length should be (1)
+    exception.errors.head.field should equal ("language")
+    exception.errors.head.message should equal ("Language must be specified if title is given.")
+  }
+
+  test("That validateTitle throws ValidationException if langauge is given and not title") {
+    val newCopyLP = NewCopyLearningPathV2(None, None, Some("nb"), None, None, None, None)
+    val exception = intercept[ValidationException] {
+      validator.validateTitle(newCopyLP)
+    }
+    exception.errors.length should be (1)
+    exception.errors.head.field should equal ("title")
+    exception.errors.head.message should equal ("Missing title. Title is required")
+  }
+
   test("That valid learningpath returns no errors") {
     validMock()
     validator.validateLearningPath(ValidLearningPath) should equal (List())
