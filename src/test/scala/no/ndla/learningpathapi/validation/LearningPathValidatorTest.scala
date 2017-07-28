@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.api.{ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.Clock
 import org.mockito.Mockito._
@@ -50,6 +50,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
     when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
   }
+
   test("That valid learningpath returns no errors") {
     validMock()
     validator.validateLearningPath(ValidLearningPath) should equal (List())

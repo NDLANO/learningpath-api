@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.validation
 
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.ValidationMessage
+import no.ndla.learningpathapi.model.api.{ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.mapping.License.getLicense
 
