@@ -204,7 +204,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       "http://image-api.ndla-local/image-api/v1/images/1",
       "http://image-api.ndla-local/image-api/raw/1.jpg",
       1024, "something")
-    val expectedResult = CoverPhoto("http://proxy.ndla-local/image-api/raw/1.jpg", "http://proxy.ndla-local/image-api/v1/images/1")
+    val expectedResult = CoverPhoto("http://api-gateway.ndla-local/image-api/raw/1.jpg", "http://api-gateway.ndla-local/image-api/v1/images/1")
     when(imageApiClient.imageMetaOnUrl(any[String])).thenReturn(Some(imageMeta))
     val Some(result) = service.asCoverPhoto("1")
 
