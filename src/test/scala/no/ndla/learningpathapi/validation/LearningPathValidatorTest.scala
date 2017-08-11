@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.{ValidationMessage}
+import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.Clock
 import org.mockito.Mockito._
@@ -31,11 +31,11 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   val copyright = Copyright(license, List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
-    title = List(Title("Gyldig tittel", Some("nb"))),
-    description = List(Description("Gyldig beskrivelse", Some("nb"))),
+    title = List(Title("Gyldig tittel", "nb")),
+    description = List(Description("Gyldig beskrivelse", "nb")),
     coverPhotoId = Some(s"http://api.ndla.no/image-api/v1/images/1"),
     duration = Some(180),
-    tags = List(LearningPathTags(Seq("Gyldig tag"), Some("nb"))),
+    tags = List(LearningPathTags(Seq("Gyldig tag"), "nb")),
     revision = None,
     externalId = None,
     isBasedOn = None,
@@ -46,9 +46,9 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
     copyright = copyright)
 
   private def validMock() = {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
-    when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("tags.language", "nb")).thenReturn(None)
   }
 
   test("That valid learningpath returns no errors") {
@@ -103,43 +103,43 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
 
   test("That validate returns error message when description contains html") {
     validMock()
-    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", Some("nb")))))
+    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", "nb"))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("description.description")
   }
   test("That validate returns error when description has an illegal language") {
-    when(languageValidator.validate("description.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("description.language", "Error")))
+    when(languageValidator.validate("description.language", "bergensk")).thenReturn(Some(ValidationMessage("description.language", "Error")))
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
-    when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("tags.language", "nb")).thenReturn(None)
 
-    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(Description("Gyldig beskrivelse", Some("bergensk")))))
+    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(Description("Gyldig beskrivelse", "bergensk"))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("description.language")
   }
 
   test("That validate returns error message when description contains html even if description is not required") {
     validMock()
-    val validationErrors = new LearningPathValidator(descriptionRequired = false).validateLearningPath(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", Some("nb")))))
+    val validationErrors = new LearningPathValidator(descriptionRequired = false).validateLearningPath(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", "nb"))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("description.description")
   }
 
   test("That validate returns error when description has an illegal language even if description is not required") {
-    when(languageValidator.validate("description.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("description.language", "Error")))
+    when(languageValidator.validate("description.language", "bergensk")).thenReturn(Some(ValidationMessage("description.language", "Error")))
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
-    when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("tags.language", "nb")).thenReturn(None)
 
-    val validationErrors = new LearningPathValidator(descriptionRequired = false).validateLearningPath(ValidLearningPath.copy(description = List(Description("Gyldig beskrivelse", Some("bergensk")))))
+    val validationErrors = new LearningPathValidator(descriptionRequired = false).validateLearningPath(ValidLearningPath.copy(description = List(Description("Gyldig beskrivelse", "bergensk"))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("description.language")
   }
 
   test("That DescriptionValidator validates both description text and language") {
-    when(languageValidator.validate("description.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("description.language", "Error")))
+    when(languageValidator.validate("description.language", "bergensk")).thenReturn(Some(ValidationMessage("description.language", "Error")))
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
-    when(languageValidator.validate("tags.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("tags.language", "nb")).thenReturn(None)
 
-    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", Some("bergensk")))))
+    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(Description("<h1>Ugyldig</h1>", "bergensk"))))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("description.description")
     validationErrors.last.field should equal("description.language")
@@ -148,9 +148,9 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   test("That validate returns error for all invalid descriptions") {
     validMock()
     val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(description = List(
-      Description("Gyldig", Some("nb")),
-      Description("<h1>Ugyldig</h1>", Some("nb")),
-      Description("<h2>Også ugyldig</h2>", Some("nb"))
+      Description("Gyldig", "nb"),
+      Description("<h1>Ugyldig</h1>", "nb"),
+      Description("<h2>Også ugyldig</h2>", "nb")
     )))
 
     validationErrors.size should be (2)
@@ -172,27 +172,27 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
 
   test("That validate returns error when tag contains html") {
     validMock()
-    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), Some("nb")))))
+    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), "nb"))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("tags.tags")
   }
 
   test("That validate returns error when tag language is invalid") {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
-    when(languageValidator.validate("tags.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("tags.language", "Error")))
+    when(languageValidator.validate("tags.language", "bergensk")).thenReturn(Some(ValidationMessage("tags.language", "Error")))
 
-    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("Gyldig"), Some("bergensk")))))
+    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("Gyldig"), "bergensk"))))
     validationErrors.size should be (1)
     validationErrors.head.field should equal("tags.language")
   }
 
   test("That returns error for both tag text and tag language") {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningPath.title)).thenReturn(List())
-    when(languageValidator.validate("tags.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("tags.language", "Error")))
+    when(languageValidator.validate("tags.language", "bergensk")).thenReturn(Some(ValidationMessage("tags.language", "Error")))
 
-    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), Some("bergensk")))))
+    val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(LearningPathTags(Seq("<strong>ugyldig</strong>"), "bergensk"))))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("tags.tags")
     validationErrors.last.field should equal("tags.language")
@@ -201,7 +201,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   test("That validate returns error for all invalid tags") {
     validMock()
     val validationErrors = validator.validateLearningPath(ValidLearningPath.copy(tags = List(
-      LearningPathTags(Seq("<strong>ugyldig</strong>", "<li>også ugyldig</li>"), Some("nb"))
+      LearningPathTags(Seq("<strong>ugyldig</strong>", "<li>også ugyldig</li>"), "nb")
     )))
     validationErrors.size should be (2)
     validationErrors.head.field should equal("tags.tags")

@@ -60,17 +60,16 @@ trait UpdateServiceComponent {
         case None => None
         case Some(existing) => {
           existing.verifyOwnerOrPublic(Some(owner))
-          val language = Some(newLearningPath.language)
-          val oldTitle = Seq(domain.Title(newLearningPath.title, language))
+          val oldTitle = Seq(domain.Title(newLearningPath.title, newLearningPath.language))
 
           val oldDescription = newLearningPath.description match {
             case None => Seq.empty
-            case Some(value) => Seq(domain.Description(value, language))
+            case Some(value) => Seq(domain.Description(value, newLearningPath.language))
           }
 
           val oldTags = newLearningPath.tags match {
             case None => Seq.empty
-            case Some(value) => Seq(domain.LearningPathTags(value, language))
+            case Some(value) => Seq(domain.LearningPathTags(value, newLearningPath.language))
           }
 
           val title = mergeLanguageFields[Title](existing.title, oldTitle)
@@ -118,11 +117,11 @@ trait UpdateServiceComponent {
     def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): Option[LearningPathV2] = {
       val domainTags =
         if (newLearningPath.tags.isEmpty) Seq.empty
-        else Seq(domain.LearningPathTags(newLearningPath.tags, Some(newLearningPath.language)))
+        else Seq(domain.LearningPathTags(newLearningPath.tags, newLearningPath.language))
 
       val learningPath = domain.LearningPath(None, None, None, None,
-        Seq(domain.Title(newLearningPath.title, Some(newLearningPath.language))),
-        Seq(domain.Description(newLearningPath.description, Some(newLearningPath.language))),
+        Seq(domain.Title(newLearningPath.title, newLearningPath.language)),
+        Seq(domain.Description(newLearningPath.description, newLearningPath.language)),
         newLearningPath.coverPhotoMetaUrl.flatMap(extractImageId),
         newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
         LearningPathVerificationStatus.EXTERNAL,
@@ -182,20 +181,19 @@ trait UpdateServiceComponent {
     }
 
     def updateLearningPathV2(id: Long, learningPathToUpdate: UpdatedLearningPathV2, owner: String): Option[LearningPathV2] = {
-      val language = Some(learningPathToUpdate.language)
       val titles = learningPathToUpdate.title match {
         case None => Seq.empty
-        case Some(value) => Seq(domain.Title(value, language))
+        case Some(value) => Seq(domain.Title(value, learningPathToUpdate.language))
       }
 
       val descriptions = learningPathToUpdate.description match {
         case None => Seq.empty
-        case Some(value) => Seq(domain.Description(value, language))
+        case Some(value) => Seq(domain.Description(value, learningPathToUpdate.language))
       }
 
       val tags = learningPathToUpdate.tags match {
         case None => Seq.empty
-        case Some(value) => Seq(domain.LearningPathTags(value, language))
+        case Some(value) => Seq(domain.LearningPathTags(value, learningPathToUpdate.language))
       }
 
       withIdAndAccessGranted(id, owner) match {
@@ -300,16 +298,14 @@ trait UpdateServiceComponent {
         withIdAndAccessGranted(learningPathId, owner) match {
           case None => None
           case Some(learningPath) => {
-            val language = Some(newLearningStep.language)
-
             val description = newLearningStep.description match {
               case None => Seq.empty
-              case Some(value) => Seq(domain.Description(value, language))
+              case Some(value) => Seq(domain.Description(value, newLearningStep.language))
             }
 
             val embedUrl = newLearningStep.embedUrl match {
               case None => Seq.empty
-              case Some(value) => Seq(domain.EmbedUrl(value.url, language, EmbedType.valueOfOrError(value.embedType)))
+              case Some(value) => Seq(domain.EmbedUrl(value.url, newLearningStep.language, EmbedType.valueOfOrError(value.embedType)))
             }
 
             val newSeqNo = learningPath.learningsteps.isEmpty match {
@@ -318,7 +314,7 @@ trait UpdateServiceComponent {
             }
 
             val newStep = domain.LearningStep(None, None, None, learningPath.id, newSeqNo,
-              Seq(domain.Title(newLearningStep.title, Some(newLearningStep.language))),
+              Seq(domain.Title(newLearningStep.title, newLearningStep.language)),
               description,
               embedUrl,
               StepType.valueOfOrError(newLearningStep.`type`),
@@ -391,21 +387,19 @@ trait UpdateServiceComponent {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
             case Some(existing) => {
-              val language = Some(learningStepToUpdate.language)
-
               val titles = learningStepToUpdate.title match {
                 case None => Seq.empty
-                case Some(value) => mergeLanguageFields(existing.title, Seq(domain.Title(value, language)))
+                case Some(value) => mergeLanguageFields(existing.title, Seq(domain.Title(value, learningStepToUpdate.language)))
               }
 
               val descriptions = learningStepToUpdate.description match {
                 case None => Seq.empty
-                case Some(value) => mergeLanguageFields(existing.description, Seq(domain.Description(value, language)))
+                case Some(value) => mergeLanguageFields(existing.description, Seq(domain.Description(value, learningStepToUpdate.language)))
               }
 
               val embedUrls = learningStepToUpdate.embedUrl match {
                 case None => Seq.empty
-                case Some(value) => mergeLanguageFields(existing.embedUrl, Seq(domain.EmbedUrl(value.url, language, EmbedType.valueOfOrError(value.embedType))))
+                case Some(value) => mergeLanguageFields(existing.embedUrl, Seq(domain.EmbedUrl(value.url, learningStepToUpdate.language, EmbedType.valueOfOrError(value.embedType))))
               }
 
               val toUpdate = existing.copy(

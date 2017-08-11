@@ -27,16 +27,16 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PUBLISHED_OWNER = "eier1"
   val PRIVATE_OWNER = "eier2"
 
-  val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(domain.Title("Tittel", Some("nb"))), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
+  val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
   val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
   val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
   val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
   val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
   val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
 
-  val NEW_STEP = NewLearningStep(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), List(), true, "TEXT", None)
+  val NEW_STEP = NewLearningStep(List(api.Title("Tittel", "nb")), List(api.Description("Beskrivelse", "nb")), List(), true, "TEXT", None)
   val NEW_STEPV2 = NewLearningStepV2("Tittel", Some("Beskrivelse"), "nb", Some(api.EmbedUrlV2("", "oembed")), true, "TEXT", None)
-  val UPDATED_STEP = UpdatedLearningStep(1, List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), List(), Some(false), None, None)
+  val UPDATED_STEP = UpdatedLearningStep(1, List(api.Title("Tittel", "nb")), List(api.Description("Beskrivelse", "nb")), List(), Some(false), None, None)
   val UPDATED_STEPV2 = UpdatedLearningStepV2(1, Option("Tittel"), "nb", Some("Beskrivelse"), None, Some(false), None, None)
 
   val rubio = Author("author", "Little Marco")
@@ -46,15 +46,15 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val apiLicense = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
   val apiCopyright = api.Copyright(apiLicense, List(apiRubio))
 
-  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, List())
-  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val PRIVATE_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, List())
-  val DELETED_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", Some("nb"))), List(Description("Beskrivelse", Some("nb"))), None, Some(1), domain.LearningPathStatus.DELETED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
-  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), apiCopyright)
+  val PUBLISHED_LEARNINGPATH = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", "nb")), List(Description("Beskrivelse", "nb")), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PUBLISHED_ID), Some(1), Some("1"), None, List(Title("Tittel", "nb")), List(Description("Beskrivelse", "nb")), None, Some(1), domain.LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright, List())
+  val PRIVATE_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", "nb")), List(Description("Beskrivelse", "nb")), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val PRIVATE_LEARNINGPATH_NO_STEPS = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", "nb")), List(Description("Beskrivelse", "nb")), None, Some(1), domain.LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, List())
+  val DELETED_LEARNINGPATH = domain.LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", "nb")), List(Description("Beskrivelse", "nb")), None, Some(1), domain.LearningPathStatus.DELETED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright, STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
+  val NEW_PRIVATE_LEARNINGPATH = NewLearningPath(List(api.Title("Tittel", "nb")), List(api.Description("Beskrivelse", "nb")), None, Some(1), List(), apiCopyright)
   val NEW_PRIVATE_LEARNINGPATHV2 = NewLearningPathV2("Tittel", "Beskrivelse", None, Some(1), List(), "nb", apiCopyright)
   val NEW_PUBLISHED_LEARNINGPATH = NewLearningPath(List(), List(), None, Some(1), List(), apiCopyright)
-  val NEW_COPIED_LEARNINGPATH = NewCopyLearningPath(List(api.Title("Tittel", Some("nb"))), List(api.Description("Beskrivelse", Some("nb"))), None, Some(1), List(), None)
+  val NEW_COPIED_LEARNINGPATH = NewCopyLearningPath(List(api.Title("Tittel", "nb")), List(api.Description("Beskrivelse", "nb")), None, Some(1), List(), None)
 
   val UPDATED_PRIVATE_LEARNINGPATH = UpdatedLearningPath(1, List(), List(), None, Some(1), List(), apiCopyright)
   val UPDATED_PRIVATE_LEARNINGPATHV2 = UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright))
@@ -699,9 +699,9 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH_NO_STEPS))
     when(learningPathRepository.insert(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH_NO_STEPS)
 
-    val titlesToOverride = List(api.Title("Overridden title", Some("nb")))
-    val descriptionsToOverride = List(api.Description("Overridden description", Some("nb")))
-    val tagsToOverride = List(api.LearningPathTags(Seq("Overridden tag"), Some("nb")))
+    val titlesToOverride = List(api.Title("Overridden title", "nb"))
+    val descriptionsToOverride = List(api.Description("Overridden description", "nb"))
+    val tagsToOverride = List(api.LearningPathTags(Seq("Overridden tag"), "nb"))
     val coverPhotoId = "9876"
     val coverPhotoToOverride = Some(s"http://api.ndla.no/images/$coverPhotoId")
     val durationOverride = Some(100)
@@ -762,15 +762,15 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That mergeLanguageFields returns original list when updated is empty") {
-    val existing = Seq(Title("Tittel 1", Some("nb")), Title("Tittel 2", Some("nn")), Title("Tittel 3", None))
+    val existing = Seq(Title("Tittel 1", "nb"), Title("Tittel 2", "nn"), Title("Tittel 3", "unknown"))
     service.mergeLanguageFields(existing, Seq()) should equal (existing)
   }
 
   test("That mergeLanguageFields updated the english title only when specified") {
-    val tittel1 = Title("Tittel 1", Some("nb"))
-    val tittel2 = Title("Tittel 2", Some("nn"))
-    val tittel3 = Title("Tittel 3", Some("en"))
-    val oppdatertTittel3 = Title("Title 3 in english", Some("en"))
+    val tittel1 = Title("Tittel 1", "nb")
+    val tittel2 = Title("Tittel 2", "nn")
+    val tittel3 = Title("Tittel 3", "en")
+    val oppdatertTittel3 = Title("Title 3 in english", "en")
 
     val existing = Seq(tittel1, tittel2, tittel3)
     val updated = Seq(oppdatertTittel3)
@@ -779,10 +779,10 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That mergeLanguageFields removes a title that is empty") {
-    val tittel1 = Title("Tittel 1", Some("nb"))
-    val tittel2 = Title("Tittel 2", Some("nn"))
-    val tittel3 = Title("Tittel 3", Some("en"))
-    val tittelToRemove = Title("", Some("nn"))
+    val tittel1 = Title("Tittel 1", "nb")
+    val tittel2 = Title("Tittel 2", "nn")
+    val tittel3 = Title("Tittel 3", "en")
+    val tittelToRemove = Title("", "nn")
 
     val existing = Seq(tittel1, tittel2, tittel3)
     val updated = Seq(tittelToRemove)
@@ -791,10 +791,10 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That mergeLanguageFields updates the title with no language specified") {
-    val tittel1 = Title("Tittel 1", Some("nb"))
-    val tittel2 = Title("Tittel 2", None)
-    val tittel3 = Title("Tittel 3", Some("en"))
-    val oppdatertTittel2 = Title("Tittel 2 er oppdatert", None)
+    val tittel1 = Title("Tittel 1", "nb")
+    val tittel2 = Title("Tittel 2", "unknown")
+    val tittel3 = Title("Tittel 3", "en")
+    val oppdatertTittel2 = Title("Tittel 2 er oppdatert", "unknown")
 
     val existing = Seq(tittel1, tittel2, tittel3)
     val updated = Seq(oppdatertTittel2)
@@ -803,10 +803,10 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That mergeLanguageFields also updates the correct description") {
-    val desc1 = Description("Beskrivelse 1", Some("nb"))
-    val desc2 = Description("Beskrivelse 2", None)
-    val desc3 = Description("Beskrivelse 3", Some("en"))
-    val oppdatertDesc2 = Description("Beskrivelse 2 er oppdatert", None)
+    val desc1 = Description("Beskrivelse 1", "nb")
+    val desc2 = Description("Beskrivelse 2", "unknown")
+    val desc3 = Description("Beskrivelse 3", "en")
+    val oppdatertDesc2 = Description("Beskrivelse 2 er oppdatert", "unknown")
 
     val existing = Seq(desc1, desc2, desc3)
     val updated = Seq(oppdatertDesc2)

@@ -34,15 +34,15 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
     val titleList = service.asApiTitle(searchableTitle)
     titleList.size should be (9)
-    titleList.find(_.language.contains("nb")).map(_.title) should equal(Some("Bokmål"))
-    titleList.find(_.language.contains("nn")).map(_.title) should equal(Some("Nynorsk"))
-    titleList.find(_.language.contains("en")).map(_.title) should equal(Some("Engelsk"))
-    titleList.find(_.language.contains("fr")).map(_.title) should equal(Some("Fransk"))
-    titleList.find(_.language.contains("de")).map(_.title) should equal(Some("Tysk"))
-    titleList.find(_.language.contains("es")).map(_.title) should equal(Some("Spansk"))
-    titleList.find(_.language.contains("se")).map(_.title) should equal(Some("Samisk"))
-    titleList.find(_.language.contains("zh")).map(_.title) should equal(Some("Kinesisk"))
-    titleList.find(_.language.isEmpty).map(_.title) should equal(Some("Ukjent"))
+    titleList.find(_.language == "nb").map(_.title) should equal(Some("Bokmål"))
+    titleList.find(_.language == "nn").map(_.title) should equal(Some("Nynorsk"))
+    titleList.find(_.language == "en").map(_.title) should equal(Some("Engelsk"))
+    titleList.find(_.language == "fr").map(_.title) should equal(Some("Fransk"))
+    titleList.find(_.language == "de").map(_.title) should equal(Some("Tysk"))
+    titleList.find(_.language == "es").map(_.title) should equal(Some("Spansk"))
+    titleList.find(_.language == "se").map(_.title) should equal(Some("Samisk"))
+    titleList.find(_.language == "zh").map(_.title) should equal(Some("Kinesisk"))
+    titleList.find(_.language == "unknown").map(_.title) should equal(Some("Ukjent"))
 
   }
 
@@ -51,13 +51,13 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
     val titleList = service.asApiTitle(searchableTitle)
     titleList.size should be (1)
     titleList.head.title should equal("Tittel")
-    titleList.head.language should contain ("nb")
+    titleList.head.language should equal ("nb")
   }
 
   test("That asSearchableTitles converts language to correct place") {
     val searchableTitles = service.asSearchableTitles(List(
-      Title("Tittel", Some("nb")),
-      Title("Title", Some("en"))))
+      Title("Tittel", "nb"),
+      Title("Title", "en")))
 
     searchableTitles.nb should equal(Some("Tittel"))
     searchableTitles.en should equal(Some("Title"))
@@ -84,15 +84,15 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
     val descriptionList = service.asApiDescription(searchableDescriptions)
     descriptionList.size should be (9)
-    descriptionList.find(_.language.contains("nb")).map(_.description) should equal(Some("Bokmål"))
-    descriptionList.find(_.language.contains("nn")).map(_.description) should equal(Some("Nynorsk"))
-    descriptionList.find(_.language.contains("en")).map(_.description) should equal(Some("Engelsk"))
-    descriptionList.find(_.language.contains("fr")).map(_.description) should equal(Some("Fransk"))
-    descriptionList.find(_.language.contains("de")).map(_.description) should equal(Some("Tysk"))
-    descriptionList.find(_.language.contains("es")).map(_.description) should equal(Some("Spansk"))
-    descriptionList.find(_.language.contains("se")).map(_.description) should equal(Some("Samisk"))
-    descriptionList.find(_.language.contains("zh")).map(_.description) should equal(Some("Kinesisk"))
-    descriptionList.find(_.language.isEmpty).map(_.description) should equal(Some("Ukjent"))
+    descriptionList.find(_.language == "nb").map(_.description) should equal(Some("Bokmål"))
+    descriptionList.find(_.language == "nn").map(_.description) should equal(Some("Nynorsk"))
+    descriptionList.find(_.language == "en").map(_.description) should equal(Some("Engelsk"))
+    descriptionList.find(_.language == "fr").map(_.description) should equal(Some("Fransk"))
+    descriptionList.find(_.language == "de").map(_.description) should equal(Some("Tysk"))
+    descriptionList.find(_.language == "es").map(_.description) should equal(Some("Spansk"))
+    descriptionList.find(_.language == "se").map(_.description) should equal(Some("Samisk"))
+    descriptionList.find(_.language == "zh").map(_.description) should equal(Some("Kinesisk"))
+    descriptionList.find(_.language == "unknown").map(_.description) should equal(Some("Ukjent"))
 
   }
 
@@ -101,13 +101,13 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
     val descriptionList = service.asApiDescription(searchableDescriptions)
     descriptionList.size should be (1)
     descriptionList.head.description should equal("Beskrivelse")
-    descriptionList.head.language should contain ("nb")
+    descriptionList.head.language should equal ("nb")
   }
 
   test("That asSearchableDescriptions converts language to correct place") {
     val searchableDescriptions = service.asSearchableDescriptions(List(
-      Description("Beskrivelse", Some("nb")),
-      Description("Description", Some("en"))))
+      Description("Beskrivelse", "nb"),
+      Description("Description", "en")))
 
     searchableDescriptions.nb should equal(Some("Beskrivelse"))
     searchableDescriptions.en should equal(Some("Description"))
@@ -122,10 +122,10 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
   test("That tags converts to correct place") {
     val searchableTags = service.asSearchableTags(List(
-      LearningPathTags(Seq("Tag1", "Tag2"), Some("nb")),
-      LearningPathTags(Seq("Tagg1", "Tagg2"), Some("nn")),
-      LearningPathTags(Seq("Los Taggos1", "Los Taggos2"), Some("es")),
-      LearningPathTags(Seq("Lasdf adf"), None)
+      LearningPathTags(Seq("Tag1", "Tag2"), "nb"),
+      LearningPathTags(Seq("Tagg1", "Tagg2"), "nn"),
+      LearningPathTags(Seq("Los Taggos1", "Los Taggos2"), "es"),
+      LearningPathTags(Seq("Lasdf adf"), "unknown")
     ))
 
     searchableTags.nb should equal (Some(Seq("Tag1", "Tag2")))
@@ -149,9 +149,9 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
     val apiIntroductions = service.asApiIntroduction(Some(learningStep))
     apiIntroductions.size should be (3)
-    apiIntroductions.find(_.language.contains("nb")).map(_.introduction) should be (Some("Bokmål"))
-    apiIntroductions.find(_.language.contains("nn")).map(_.introduction) should be (Some("Nynorsk"))
-    apiIntroductions.find(_.language.contains("en")).map(_.introduction) should be (Some("English"))
+    apiIntroductions.find(_.language == "nb").map(_.introduction) should be (Some("Bokmål"))
+    apiIntroductions.find(_.language == "nn").map(_.introduction) should be (Some("Nynorsk"))
+    apiIntroductions.find(_.language == "en").map(_.introduction) should be (Some("English"))
   }
 
   test("That asApiIntroduction returns no introduction if no descriptions are available") {

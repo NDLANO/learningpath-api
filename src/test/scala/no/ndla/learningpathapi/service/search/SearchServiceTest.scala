@@ -61,29 +61,29 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
     val thePenguin = DefaultLearningPath.copy(
       id = Some(PenguinId),
-      title = List(Title("Pingvinen er en kjeltring", Some("nb"))),
-      description = List(Description("Dette handler om fugler", Some("nb"))),
+      title = List(Title("Pingvinen er en kjeltring", "nb")),
+      description = List(Description("Dette handler om fugler", "nb")),
       duration = Some(1),
       lastUpdated = yesterday,
-      tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), Some("nb")))
+      tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), "nb"))
     )
 
     val batman = DefaultLearningPath.copy(
       id = Some(BatmanId),
-      title = List(Title("Batman er en tøff og morsom helt", Some("nb")), Title("Batman is a tough guy", Some("en"))),
-      description = List(Description("Dette handler om flaggermus, som kan ligne litt på en fugl", Some("nb"))),
+      title = List(Title("Batman er en tøff og morsom helt", "nb"), Title("Batman is a tough guy", "en")),
+      description = List(Description("Dette handler om flaggermus, som kan ligne litt på en fugl", "nb")),
       duration = Some(2),
       lastUpdated = today,
-      tags = List(LearningPathTags(Seq("superhelt", "kanfly"), Some("nb")))
+      tags = List(LearningPathTags(Seq("superhelt", "kanfly"), "nb"))
     )
 
     val theDuck = DefaultLearningPath.copy(
       id = Some(DonaldId),
-      title = List(Title("Donald er en tøff, rar og morsom and", Some("nb")), Title("Donald is a weird duck", Some("nb"))),
-      description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", Some("nb"))),
+      title = List(Title("Donald er en tøff, rar og morsom and", "nb"), Title("Donald is a weird duck", "nb")),
+      description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", "nb")),
       duration = Some(3),
       lastUpdated = tomorrow,
-      tags = List(LearningPathTags(Seq("disney", "kanfly"), Some("nb")))
+      tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb"))
     )
 
     searchIndexService.indexDocument(thePenguin)

@@ -27,7 +27,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
   implicit val swagger = new LearningpathSwagger
 
   val copyright = api.Copyright(api.License("by-sa", None, None), List())
-  val DefaultLearningPathSummary = api.LearningPathSummary(1, List(api.Title("Tittel", Some("nb"))), List(), List(), "", None, None, "", new Date(), List(), copyright, None)
+  val DefaultLearningPathSummary = api.LearningPathSummary(1, List(api.Title("Tittel", "nb")), List(), List(), "", None, None, "", new Date(), List(), copyright, None)
 
   lazy val controller = new LearningpathController
   addServlet(controller, "/*")
@@ -65,7 +65,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
     when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
     when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
-    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[String])).thenReturn(None)
 
     get("/", Map(
       "query" -> query,
@@ -96,7 +96,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
     when(searchService.all(any[List[Long]], any[Option[String]], any[Sort.Value], any[Option[String]], any[Option[Int]], any[Option[Int]])).thenReturn(result)
     when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
-    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[String])).thenReturn(None)
 
     get("/", Map(
       "query" -> query,
@@ -126,7 +126,7 @@ class LearningpathControllerTest extends UnitSuite with TestEnvironment with Sca
 
     when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
     when(searchService.getHits(searchResult)).thenReturn(Seq(DefaultLearningPathSummary))
-    when(languageValidator.validate(any[String], any[Option[String]])).thenReturn(None)
+    when(languageValidator.validate(any[String], any[String])).thenReturn(None)
 
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
       status should equal (200)

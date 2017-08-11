@@ -15,7 +15,7 @@ import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
 import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummary, LearningPathSummaryV2, License}
-import no.ndla.learningpathapi.model.domain.{NdlaSearchException, SearchResult, Sort}
+import no.ndla.learningpathapi.model.domain.{LanguageField, NdlaSearchException, SearchResult, Sort}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
 import org.apache.lucene.search.join.ScoreMode
@@ -70,51 +70,9 @@ trait SearchServiceComponent extends LazyLogging {
       searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](jsonObject.toString))
     }
 
-    def hitAsLearningPathSummaryV2(hit: JsonObject, language: String): LearningPathSummaryV2 = {
+    def hitAsLearningPathSummaryV2(jsonObject: JsonObject, language: String): LearningPathSummaryV2 = {
       implicit val formats = org.json4s.DefaultFormats
-
-      import scala.collection.JavaConversions._
-
-      val supportedLanguages =
-        hit.get("titles").getAsJsonObject.entrySet().to[Seq].map(entry => entry.getKey) ++
-          hit.get("descriptions").getAsJsonObject.entrySet().to[Seq].map(entry => entry.getKey) ++
-          hit.get("tags").getAsJsonObject.entrySet().to[Seq].map(entry => entry.getKey)
-
-      val title = findValueWithPathAndLanguage(hit, "titles", language)
-
-      val description = findValueWithPathAndLanguage(hit, "descriptions", language)
-
-      val introduction = hit.get("learningsteps").getAsJsonArray
-        .find(entry => entry.getAsJsonObject.get("stepType").getAsString == "INTRODUCTION")
-        .map(_.getAsJsonObject)
-        .map(x => x.getAsJsonObject("descriptions"))
-        .flatMap(y => y.entrySet().to[Seq].find(entry => entry.getKey == language)) match {
-        case Some(element) => element.getValue.getAsString
-        case None => ""
-      }
-
-      val tags = hit.get("tags").getAsJsonObject.entrySet().to[Seq].find(entry => entry.getKey == language) match {
-        case Some(element) => element.getValue.getAsJsonArray.map(value => value.getAsString).toSeq
-        case None => Seq.empty
-      }
-
-      val copyright = readToApiCopyright(read[Copyright](hit.get("copyright").toString))
-
-      LearningPathSummaryV2(
-        hit.get("id").getAsLong,
-        title,
-        description,
-        introduction,
-        ApplicationUrl.get + hit.get("id").getAsString,
-        getOrNone(hit, "coverPhotoUrl").map(_.getAsString),
-        getOrNone(hit, "duration").map(_.getAsInt),
-        hit.get("status").getAsString,
-        hit.get("lastUpdated").getAsString,
-        tags,
-        copyright,
-        supportedLanguages.distinct,
-        getOrNone(hit, "isBasedOn").map(_.getAsLong)
-      )
+      searchConverterService.asApiLearningPathSummaryV2(read[SearchableLearningPath](jsonObject.toString), language)
     }
 
     def all(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
@@ -133,13 +91,11 @@ trait SearchServiceComponent extends LazyLogging {
       val fullQuery = language match {
         case None => QueryBuilders.boolQuery()
         case Some(language) => {
-          val titleSearch = QueryBuilders.existsQuery(s"titles.${language}")
-          val descSearch = QueryBuilders.existsQuery(s"descriptions.${language}")
-          val tagSearch = QueryBuilders.existsQuery(s"tags.${language}")
+          val titleSearch = QueryBuilders.existsQuery(s"titles.$language")
+          val descSearch = QueryBuilders.existsQuery(s"descriptions.$language")
 
           QueryBuilders.boolQuery()
             .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))
-            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg))
             .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg))
         }
       }

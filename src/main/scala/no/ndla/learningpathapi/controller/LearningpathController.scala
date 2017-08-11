@@ -344,7 +344,7 @@ trait LearningpathController {
       val query = paramOrNone("query")
       val tag = paramOrNone("tag")
       val idList = paramAsListOfLong("ids")
-      val language = LanguageValidator.validate("language", paramOrNone("language"))
+      val language = paramOrNone("language")
       val sort = paramOrNone("sort")
       val pageSize = paramOrNone("page-size").flatMap(ps => Try(ps.toInt).toOption)
       val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
@@ -359,7 +359,7 @@ trait LearningpathController {
       val query = searchParams.query
       val tag = searchParams.tag
       val idList = searchParams.ids
-      val language = LanguageValidator.validate("language", searchParams.language)
+      val language = searchParams.language
       val sort = searchParams.sort
       val pageSize = searchParams.pageSize
       val page = searchParams.page
