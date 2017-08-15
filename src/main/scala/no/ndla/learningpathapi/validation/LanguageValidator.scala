@@ -20,24 +20,19 @@ trait LanguageValidator {
     private def languageCodeSupported6391(languageCode: String): Boolean =
       get6391CodeFor6392CodeMappings.exists(_._2 == languageCode)
 
-    def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[ValidationMessage] = {
-      languageCodeOpt match {
-        case None => None
-        case Some(languageCode) => {
-          languageCode.nonEmpty && languageCodeSupported6391(languageCode) match {
-            case true => None
-            case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
-          }
-        }
+    def validate(fieldPath: String, languageCode: String): Option[ValidationMessage] = {
+      languageCode.nonEmpty && languageCodeSupported6391(languageCode) match {
+        case true => None
+        case false => Some(ValidationMessage(fieldPath, s"Language '$languageCode' is not a supported value."))
       }
     }
   }
 
   object LanguageValidator {
-    def validate(fieldPath: String, languageCodeOpt: Option[String]): Option[String] = {
-      languageValidator.validate(fieldPath, languageCodeOpt) match {
+    def validate(fieldPath: String, languageCode: String): String = {
+      languageValidator.validate(fieldPath, languageCode) match {
         case Some(validationMessage) => throw new ValidationException(errors = validationMessage :: Nil)
-        case None => languageCodeOpt
+        case None => languageCode
       }
     }
 

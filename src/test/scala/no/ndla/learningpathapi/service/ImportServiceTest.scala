@@ -36,7 +36,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     descriptions.size should be(2)
     descriptions.map(_.description).mkString(",") should equal("Beskrivelse1,Beskrivelse2")
-    descriptions.map(_.language.get).mkString(",") should equal("nb,nn")
+    descriptions.map(_.language).mkString(",") should equal("nb,nn")
   }
 
   test("That descriptionsAsList returns origin-step description and all translations") {
@@ -47,7 +47,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     descriptions.size should be(3)
     descriptions.map(_.description).mkString(",") should equal("Beskrivelse1,Beskrivelse2,Beskrivelse3")
-    descriptions.map(_.language.get).mkString(",") should equal("nb,nn,en")
+    descriptions.map(_.language).mkString(",") should equal("nb,nn,en")
   }
 
   test("That descriptionsAsList returns translations when origin-step description is None") {
@@ -58,7 +58,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     descriptions.size should be(2)
     descriptions.map(_.description).mkString(",") should equal("Beskrivelse2,Beskrivelse3")
-    descriptions.map(_.language.get).mkString(",") should equal("nn,en")
+    descriptions.map(_.language).mkString(",") should equal("nn,en")
   }
 
   test("That embedUrlsAsList returns origin-step embedUrl and all translations") {
@@ -69,7 +69,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     embedUrls.size should be(3)
     embedUrls.map(_.url).mkString(",") should equal("https://ndla.no/1,https://ndla.no/2,https://ndla.no/3")
-    embedUrls.map(_.language.get).mkString(",") should equal("nb,nn,en")
+    embedUrls.map(_.language).mkString(",") should equal("nb,nn,en")
   }
 
   test("That embedUrlsAsList returns translations when origin-step description is None") {
@@ -80,7 +80,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     embedUrls.size should be(2)
     embedUrls.map(_.url).mkString(",") should equal("https://ndla.no/2,https://ndla.no/3")
-    embedUrls.map(_.language.get).mkString(",") should equal("nn,en")
+    embedUrls.map(_.language).mkString(",") should equal("nn,en")
   }
 
   test("That importNode inserts for a new node") {

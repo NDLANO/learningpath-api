@@ -10,9 +10,10 @@ package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
 import org.json4s.native.Serialization._
+
 import scala.util.matching.Regex
 import scalaj.http.{Http, HttpRequest}
-import no.ndla.learningpathapi.model.domain.LearningPathTags
+import no.ndla.learningpathapi.model.domain.{Language, LearningPathTags}
 import no.ndla.mapping.ISO639.get6391CodeFor6392Code
 
 trait KeywordsServiceComponent extends LazyLogging {
@@ -44,7 +45,7 @@ trait KeywordsServiceComponent extends LazyLogging {
               .flatMap(_.toIterable)
               .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
               .groupBy(_._1).map(entry => (entry._1, entry._2.map(_._2)))
-              .map(entr => LearningPathTags(entr._2, entr._1)).toList
+              .map(entr => LearningPathTags(entr._2, Language.languageOrUnknown(entr._1))).toList
           } catch {
             case e: Exception => {
               logger.error(s"Could not extract tags for request = ${request.url}. Error was ${e.getMessage}")

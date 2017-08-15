@@ -27,8 +27,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val copyright = api.Copyright(license, List(clinton))
   val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), copyright, true)
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
-  val domainLearningStep2 = LearningStep(Some(1), Some(1), None, None, 1, List(Title("tittel", Some("nb"))), List(Description("deskripsjon", Some("nb"))), List(), StepType.INTRODUCTION, None)
-  val apiTags = List(api.LearningPathTags(Seq("tag"), Some(Language.DefaultLanguage)))
+  val domainLearningStep2 = LearningStep(Some(1), Some(1), None, None, 1, List(Title("tittel", "nb")), List(Description("deskripsjon", "nb")), List(), StepType.INTRODUCTION, None)
+  val apiTags = List(api.LearningPathTags(Seq("tag"), Language.DefaultLanguage))
 
   val randomDate = DateTime.now().toDate
   var service: ConverterService = _
@@ -37,14 +37,14 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     Some(1),
     None,
     None,
-    List(Title("tittel", Some(Language.DefaultLanguage))),
-    List(Description("deskripsjon", Some(Language.DefaultLanguage))),
+    List(Title("tittel", Language.DefaultLanguage)),
+    List(Description("deskripsjon", Language.DefaultLanguage)),
     None,
     Some(60),
     LearningPathStatus.PRIVATE,
     LearningPathVerificationStatus.CREATED_BY_NDLA,
     randomDate,
-    List(LearningPathTags(List("tag"),Some((Language.DefaultLanguage)))),
+    List(LearningPathTags(List("tag"),Language.DefaultLanguage)),
     "me",
     Copyright("by", List.empty),
     List.empty
@@ -59,9 +59,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       1,
       1,
       None,
-      "tittel",
-      Language.DefaultLanguage,
-      "deskripsjon",
+      api.Title("tittel", Language.DefaultLanguage),
+      api.Description("deskripsjon", Language.DefaultLanguage),
       "null1",
       List.empty,
       "null1/learningsteps",
@@ -70,14 +69,14 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       LearningPathStatus.PRIVATE.toString,
       LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
       randomDate,
-      List("tag"),
+      api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
       api.Copyright(
         api.License(
           "by",
           Some("Creative Commons Attribution 2.0 Generic"),
           Some("https://creativecommons.org/licenses/by/2.0/")),
         List.empty),
-      true,
+      canEdit = true,
       List(Language.DefaultLanguage)
     ))
     service.asApiLearningpathV2(domainLearningPath, Language.DefaultLanguage, Some("me")) should equal(expected)
@@ -86,15 +85,15 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
     val expected = Some(api.LearningPathSummaryV2(
       1,
-      "tittel",
-      "deskripsjon",
-      "",
+      api.Title("tittel", Language.DefaultLanguage),
+      api.Description("deskripsjon", Language.DefaultLanguage),
+      api.Introduction("", Language.DefaultLanguage),
       "null1",
       None,
       Some(60),
       LearningPathStatus.PRIVATE.toString,
-      randomDate.toString,
-      List("tag"),
+      randomDate,
+      api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
       api.Copyright(
         api.License(
           "by",
@@ -112,17 +111,16 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       1,
       1,
       1,
-      "tittel",
-      "nb",
-      Some("deskripsjon"),
+      api.Title("tittel", Language.DefaultLanguage),
+      Some(api.Description("deskripsjon", Language.DefaultLanguage)),
       None,
-      false,
+      showTitle = false,
       "INTRODUCTION",
       None,
       "null1/learningsteps/1",
-      true,
+      canEdit = true,
       "ACTIVE",
-      List("nb")
+      Seq(Language.DefaultLanguage)
     ))
     service.asApiLearningStepV2(domainLearningStep2, domainLearningPath, Language.DefaultLanguage, Some("me")) should equal(learningstep)
   }
@@ -131,7 +129,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     val expected = Some(api.LearningStepSummaryV2(
       1,
       1,
-      "tittel",
+      api.Title("tittel", Language.DefaultLanguage),
       "INTRODUCTION",
       "null1/learningsteps/1"
     ))
@@ -139,8 +137,16 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, Language.DefaultLanguage) should equal(expected)
   }
 
-  test("asApiLearningStepSummaryV2 returns None when not supported language is given") {
-    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, "somerandomlanguage") should be(None)
+  test("asApiLearningStepSummaryV2 returns what we have when not supported language is given") {
+    val expected = Some(api.LearningStepSummaryV2(
+      1,
+      1,
+      api.Title("tittel", Language.DefaultLanguage),
+      "INTRODUCTION",
+      "null1/learningsteps/1"
+    ))
+
+    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, "somerandomlanguage") should equal(expected)
   }
 
   test("asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
@@ -160,10 +166,10 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That asApiIntroduction returns an introduction for a given step") {
-    val introductions = service.asApiIntroduction(Some(domainLearningStep.copy(description = List(
-      Description("Introduksjon på bokmål", Some("nb")),
-      Description("Introduksjon på nynorsk", Some("nn")),
-      Description("Introduction in english", Some("en"))
+    val introductions = service.getApiIntroduction(Seq(domainLearningStep.copy(description = Seq(
+      Description("Introduksjon på bokmål", "nb"),
+      Description("Introduksjon på nynorsk", "nn"),
+      Description("Introduction in english", "en")
     ))))
 
     introductions.size should be (3)
@@ -173,12 +179,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That asApiIntroduction returns empty list if no descriptions are available") {
-    val introductions = service.asApiIntroduction(Some(domainLearningStep))
+    val introductions = service.getApiIntroduction(Seq(domainLearningStep))
     introductions.size should be (0)
   }
 
   test("That asApiIntroduction returns an empty list if given a None") {
-    service.asApiIntroduction(None) should equal(List())
+    service.getApiIntroduction(Seq()) should equal(Seq())
   }
 
   test("asApiLicense returns a License object for a given valid license") {
@@ -190,12 +196,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asEmbedUrl returns embedUrl if embedType is oembed") {
-    service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", Some("nb"), "oembed")) should equal(EmbedUrl("http://test.no/2/oembed/", Some("nb"), EmbedType.OEmbed))
+    service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", "nb", "oembed")) should equal(EmbedUrl("http://test.no/2/oembed/", "nb", EmbedType.OEmbed))
   }
 
   test("asEmbedUrl throws error if an not allowed value for embedType is used") {
     assertResult("Validation Error") {
-      intercept[ValidationException] { service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", Some("nb"), "test")) }.getMessage()
+      intercept[ValidationException] { service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", "nb", "test")) }.getMessage()
     }
   }
 

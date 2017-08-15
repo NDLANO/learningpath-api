@@ -22,17 +22,17 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   val copyright = Copyright(license, List(clinton))
   val DefaultLearningPath = LearningPath(
     None, None, None, None,
-    List(Title("UNIT-TEST-1", None)),
-    List(Description("UNIT-TEST", None)), None, None,
+    List(Title("UNIT-TEST-1", "unknown")),
+    List(Description("UNIT-TEST", "unknown")), None, None,
     LearningPathStatus.PRIVATE,
     LearningPathVerificationStatus.EXTERNAL,
     new Date(), List(), "UNIT-TEST", copyright)
 
   val DefaultLearningStep = LearningStep(
     None, None, None, None, 0,
-    List(Title("UNIT-TEST", None)),
-    List(Description("UNIT-TEST", None)),
-    List(EmbedUrl("http://www.vg.no", None, EmbedType.OEmbed)),
+    List(Title("UNIT-TEST", "unknown")),
+    List(Description("UNIT-TEST", "unknown")),
+    List(EmbedUrl("http://www.vg.no", "unknown", EmbedType.OEmbed)),
     StepType.TEXT, None, true, StepStatus.ACTIVE)
 
   override def beforeEach() = {
@@ -48,10 +48,10 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   test("That insert, fetch and delete works happy-day") {
     inTransaction { implicit session =>
       val inserted = repository.insert(DefaultLearningPath)
-      inserted.id.isDefined should be (right = true)
+      inserted.id.isDefined should be (true)
 
       val fetched = repository.withId(inserted.id.get)
-      fetched.isDefined should be (right = true)
+      fetched.isDefined should be (true)
       fetched.get.id.get should equal (inserted.id.get)
 
       repository.delete(inserted.id.get)
@@ -77,9 +77,9 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
   test("That updating several times is not throwing optimistic locking exception") {
     val inserted = repository.insert(DefaultLearningPath)
-    val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", None))))
-    val secondUpdate = repository.update(firstUpdate.copy(title = List(Title("Second change", None))))
-    val thirdUpdate = repository.update(secondUpdate.copy(title = List(Title("Third change", None))))
+    val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", "unknown"))))
+    val secondUpdate = repository.update(firstUpdate.copy(title = List(Title("Second change", "unknown"))))
+    val thirdUpdate = repository.update(secondUpdate.copy(title = List(Title("Third change", "unknown"))))
 
     inserted.revision should equal (Some(1))
     firstUpdate.revision should equal (Some(2))
@@ -91,10 +91,10 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
   test("That trying to update a learningPath with old revision number throws optimistic locking exception") {
     val inserted = repository.insert(DefaultLearningPath)
-    val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", None))))
+    val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", "unknown"))))
 
     assertResult(s"Conflicting revision is detected for learningPath with id = ${inserted.id} and revision = ${inserted.revision}") {
-      intercept[OptimisticLockException] { repository.update(inserted.copy(title = List(Title("Second change, but with old revision", None)))) }.getMessage
+      intercept[OptimisticLockException] { repository.update(inserted.copy(title = List(Title("Second change, but with old revision", "unknown")))) }.getMessage
     }
 
     repository.delete(inserted.id.get)
@@ -103,10 +103,10 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   test("That trying to update a learningStep with old revision throws optimistic locking exception") {
     val learningPath = repository.insert(DefaultLearningPath)
     val insertedStep = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
-    val firstUpdate = repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", None))))
+    val firstUpdate = repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", "unknown"))))
 
     assertResult(s"Conflicting revision is detected for learningStep with id = ${insertedStep.id} and revision = ${insertedStep.revision}") {
-      intercept[OptimisticLockException] { repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", None)))) }.getMessage
+      intercept[OptimisticLockException] { repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", "unknown")))) }.getMessage
     }
 
     repository.delete(learningPath.id.get)
@@ -145,30 +145,30 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     val publicPath = repository.insert(DefaultLearningPath.copy(
       status = LearningPathStatus.PUBLISHED,
       tags = List(
-        LearningPathTags(Seq("aaa"), Some("nb")),
-        LearningPathTags(Seq("bbb"), Some("nn")),
-        LearningPathTags(Seq("ccc"), Some("en")))))
+        LearningPathTags(Seq("aaa"), "nb"),
+        LearningPathTags(Seq("bbb"), "nn"),
+        LearningPathTags(Seq("ccc"), "en"))))
 
     val privatePath = repository.insert(DefaultLearningPath.copy(
-      tags = List(LearningPathTags(Seq("ddd"), Some("nb")))))
+      tags = List(LearningPathTags(Seq("ddd"), "nb"))))
 
     val publicTags = repository.allPublishedTags
-    publicTags should contain (LearningPathTags(Seq("aaa"), Some("nb")))
-    publicTags should contain (LearningPathTags(Seq("bbb"), Some("nn")))
-    publicTags should contain (LearningPathTags(Seq("ccc"), Some("en")))
-    publicTags should not contain (LearningPathTags(Seq("ddd"), Some("nb")))
+    publicTags should contain (LearningPathTags(Seq("aaa"), "nb"))
+    publicTags should contain (LearningPathTags(Seq("bbb"), "nn"))
+    publicTags should contain (LearningPathTags(Seq("ccc"), "en"))
+    publicTags should not contain LearningPathTags(Seq("ddd"), "nb")
 
     repository.delete(publicPath.id.get)
     repository.delete(privatePath.id.get)
   }
 
   test("That allPublishedTags removes duplicates") {
-    val publicPath1 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED, tags = List(LearningPathTags(Seq("aaa"), Some("nb")), LearningPathTags(Seq("aaa"), Some("nn")))))
-    val publicPath2 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED, tags = List(LearningPathTags(Seq("aaa", "bbb"), Some("nb")))))
+    val publicPath1 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED, tags = List(LearningPathTags(Seq("aaa"), "nb"), LearningPathTags(Seq("aaa"), "nn"))))
+    val publicPath2 = repository.insert(DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED, tags = List(LearningPathTags(Seq("aaa", "bbb"), "nb"))))
 
     val publicTags = repository.allPublishedTags
-    publicTags should contain (LearningPathTags(Seq("aaa", "bbb"), Some("nb")))
-    publicTags should contain (LearningPathTags(Seq("aaa"), Some("nn")))
+    publicTags should contain (LearningPathTags(Seq("aaa", "bbb"), "nb"))
+    publicTags should contain (LearningPathTags(Seq("aaa"), "nn"))
 
     publicTags.find(_.language.contains("nb")).map(_.tags.count(_ == "aaa")).getOrElse(0) should be (1)
 

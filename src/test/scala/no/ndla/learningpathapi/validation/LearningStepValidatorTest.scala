@@ -19,9 +19,9 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
 
   val license = "publicdomain"
   val ValidLearningStep = LearningStep(id = None, revision = None, externalId = None, learningPathId = None, seqNo = 0,
-    title = List(Title("Gyldig tittel", Some("nb"))),
-    description = List(Description("<strong>Gyldig description</strong>", Some("nb"))),
-    embedUrl = List(EmbedUrl("https://www.ndla.no/123", Some("nb"), EmbedType.OEmbed)),
+    title = List(Title("Gyldig tittel", "nb")),
+    description = List(Description("<strong>Gyldig description</strong>", "nb")),
+    embedUrl = List(EmbedUrl("https://www.ndla.no/123", "nb", EmbedType.OEmbed)),
     `type` = StepType.TEXT,
     license = Some(license),
     showTitle = true,
@@ -33,9 +33,9 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
     resetMocks()
   }
   private def validMock() = {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
-    when(languageValidator.validate("embedUrl.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("embedUrl.language", "nb")).thenReturn(None)
   }
 
   test("That a valid learningstep does not give an error") {
@@ -45,25 +45,25 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
 
   test("That validate returns error message when description contains illegal html") {
     validMock()
-    val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<h1>Ugyldig</h1>", Some("nb")))))
+    val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<h1>Ugyldig</h1>", "nb"))))
     validationErrors.size should be(1)
     validationErrors.head.field should equal("description.description")
   }
 
   test("That validate returns error when description has an illegal language") {
-    when(languageValidator.validate("description.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("description.language", "Error")))
+    when(languageValidator.validate("description.language", "bergensk")).thenReturn(Some(ValidationMessage("description.language", "Error")))
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
-    when(languageValidator.validate("embedUrl.language", Some("nb"))).thenReturn(None)
-    val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<strong>Gyldig beskrivelse</strong>", Some("bergensk")))))
+    when(languageValidator.validate("embedUrl.language", "nb")).thenReturn(None)
+    val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<strong>Gyldig beskrivelse</strong>", "bergensk"))))
     validationErrors.size should be(1)
     validationErrors.head.field should equal("description.language")
   }
 
   test("That DescriptionValidator validates both description text and language") {
-    when(languageValidator.validate("description.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("description.language", "Error")))
+    when(languageValidator.validate("description.language", "bergensk")).thenReturn(Some(ValidationMessage("description.language", "Error")))
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
-    when(languageValidator.validate("embedUrl.language", Some("nb"))).thenReturn(None)
-    val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<h1>Ugyldig</h1>", Some("bergensk")))))
+    when(languageValidator.validate("embedUrl.language", "nb")).thenReturn(None)
+    val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(Description("<h1>Ugyldig</h1>", "bergensk"))))
     validationErrors.size should be(2)
     validationErrors.head.field should equal("description.description")
     validationErrors.last.field should equal("description.language")
@@ -72,9 +72,9 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
   test("That validate returns error for all invalid descriptions") {
     validMock()
     val validationErrors = validator.validateLearningStep(ValidLearningStep.copy(description = List(
-      Description("<strong>Gyldig</strong>", Some("nb")),
-      Description("<h1>Ugyldig</h1>", Some("nb")),
-      Description("<h2>Også ugyldig</h2>", Some("nb"))
+      Description("<strong>Gyldig</strong>", "nb"),
+      Description("<h1>Ugyldig</h1>", "nb"),
+      Description("<h2>Også ugyldig</h2>", "nb")
     )))
 
     validationErrors.size should be(2)
@@ -84,41 +84,41 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
 
   test("That validate returns error when embedUrl contains html") {
     validMock()
-    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("<strong>ikke gyldig</strong>", Some("nb"), EmbedType.OEmbed))))
+    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("<strong>ikke gyldig</strong>", "nb", EmbedType.OEmbed))))
     validationMessages.size should be(2)
     validationMessages.head.field should equal("embedUrl.url")
   }
 
   test("That validate returns error when embedUrl.language is invalid") {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
-    when(languageValidator.validate("embedUrl.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("embedUrl.language", "Error")))
-    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("https://www.ndla.no/123", Some("bergensk"), EmbedType.OEmbed))))
+    when(languageValidator.validate("embedUrl.language", "bergensk")).thenReturn(Some(ValidationMessage("embedUrl.language", "Error")))
+    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("https://www.ndla.no/123", "bergensk", EmbedType.OEmbed))))
     validationMessages.size should be(1)
     validationMessages.head.field should equal("embedUrl.language")
   }
 
   test("That validate returns error for both embedUrl.url and embedUrl.language") {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
-    when(languageValidator.validate("embedUrl.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("embedUrl.language", "Error")))
+    when(languageValidator.validate("embedUrl.language", "bergensk")).thenReturn(Some(ValidationMessage("embedUrl.language", "Error")))
 
-    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("<h1>Ugyldig</h1>", Some("bergensk"), EmbedType.OEmbed))))
+    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("<h1>Ugyldig</h1>", "bergensk", EmbedType.OEmbed))))
     validationMessages.size should be(3)
     validationMessages.head.field should equal("embedUrl.url")
     validationMessages.last.field should equal("embedUrl.language")
   }
 
   test("That all embedUrls are validated") {
-    when(languageValidator.validate("description.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("description.language", "nb")).thenReturn(None)
     when(titleValidator.validate(ValidLearningStep.title)).thenReturn(List())
-    when(languageValidator.validate("embedUrl.language", Some("bergensk"))).thenReturn(Some(ValidationMessage("embedUrl.language", "Error")))
-    when(languageValidator.validate("embedUrl.language", Some("nb"))).thenReturn(None)
+    when(languageValidator.validate("embedUrl.language", "bergensk")).thenReturn(Some(ValidationMessage("embedUrl.language", "Error")))
+    when(languageValidator.validate("embedUrl.language", "nb")).thenReturn(None)
 
     val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl =
       List(
-        EmbedUrl("<h1>Ugyldig</h1>", Some("nb"), EmbedType.OEmbed),
-        EmbedUrl("https://www.ndla.no/123", Some("bergensk"), EmbedType.OEmbed)
+        EmbedUrl("<h1>Ugyldig</h1>", "nb", EmbedType.OEmbed),
+        EmbedUrl("https://www.ndla.no/123", "bergensk", EmbedType.OEmbed)
       )))
     validationMessages.size should be(3)
     validationMessages.head.field should equal("embedUrl.url")

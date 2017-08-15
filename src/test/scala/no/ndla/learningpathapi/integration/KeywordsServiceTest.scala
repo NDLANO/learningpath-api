@@ -58,15 +58,15 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
     when(resp.body).thenReturn(parseableResponse)
     val tagsList = service.forRequest(mockRequestWithResponse(resp))
     tagsList.size should be(4)
-    tagsList.find(_.language.isEmpty).get.tags.size should be (1)
-    tagsList.find(_.language.contains("nb")).get.tags.size should be (1)
-    tagsList.find(_.language.contains("nn")).get.tags.size should be (1)
-    tagsList.find(_.language.contains("en")).get.tags.size should be (1)
+    tagsList.find(_.language == "unknown").get.tags.size should be (1)
+    tagsList.find(_.language == "nb").get.tags.size should be (1)
+    tagsList.find(_.language == "nn").get.tags.size should be (1)
+    tagsList.find(_.language == "en").get.tags.size should be (1)
 
-    tagsList.find(_.language.isEmpty).get.tags.head should be ("språknøytral")
-    tagsList.find(_.language.contains("nb")).get.tags.head should be ("bokmålspoesi")
-    tagsList.find(_.language.contains("nn")).get.tags.head should be ("nynorsk poesi")
-    tagsList.find(_.language.contains("en")).get.tags.head should be ("english poetry")
+    tagsList.find(_.language == "unknown").get.tags.head should be ("språknøytral")
+    tagsList.find(_.language == "nb").get.tags.head should be ("bokmålspoesi")
+    tagsList.find(_.language == "nn").get.tags.head should be ("nynorsk poesi")
+    tagsList.find(_.language == "en").get.tags.head should be ("english poetry")
 
   }
 

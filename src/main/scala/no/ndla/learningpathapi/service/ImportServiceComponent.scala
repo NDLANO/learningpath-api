@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.service
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
 import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummary}
+import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
@@ -60,11 +61,11 @@ trait ImportServiceComponent {
         }
       })
 
-      val descriptions = Seq(Description(tidyUpDescription(mainImport.mainPackage.description, allowHtml = false), Some(mainImport.mainPackage.language))) ++
-        mainImport.translations.map(tr => Description(tidyUpDescription(tr.description, allowHtml = false), Some(tr.language)))
+      val descriptions = Seq(Description(tidyUpDescription(mainImport.mainPackage.description, allowHtml = false), languageOrUnknown(mainImport.mainPackage.language))) ++
+        mainImport.translations.map(tr => Description(tidyUpDescription(tr.description, allowHtml = false), languageOrUnknown(tr.language)))
 
-      val titles = Seq(Title(mainImport.mainPackage.title, Some(mainImport.mainPackage.language))) ++
-        mainImport.translations.map(tr => Title(tr.title, Some(tr.language)))
+      val titles = Seq(Title(mainImport.mainPackage.title, languageOrUnknown(mainImport.mainPackage.language))) ++
+        mainImport.translations.map(tr => Title(tr.title, languageOrUnknown(tr.language)))
 
       val tags = keywordsService.forNodeId(mainImport.mainPackage.nid) ++
         mainImport.translations.flatMap(tr => keywordsService.forNodeId(tr.nid))
@@ -116,7 +117,7 @@ trait ImportServiceComponent {
       val seqNo = step.pos - 1
       val stepType = asLearningStepType(s"${step.stepType}")
 
-      val title = Seq(Title(step.title, Some(step.language))) ++ translations.map(translation => Title(translation.title, Some(translation.language)))
+      val title = Seq(Title(step.title, step.language)) ++ translations.map(translation => Title(translation.title, languageOrUnknown(translation.language)))
       val descriptions = descriptionAsList(Some(step), translations)
 
       val embedUrls = embedUrlsAsList(step, translations)
@@ -141,11 +142,11 @@ trait ImportServiceComponent {
 
 
     def descriptionAsList(step: Option[Step], translations: Seq[Step]): Seq[Description] = {
-      val translationDescriptions = translations.filter(step => step.description.isDefined && !step.description.get.isEmpty).map(tr => Description(tidyUpDescription(tr.description.get), Some(tr.language)))
+      val translationDescriptions = translations.filter(step => step.description.isDefined && !step.description.get.isEmpty).map(tr => Description(tidyUpDescription(tr.description.get), languageOrUnknown(tr.language)))
       step match {
         case Some(s) => {
           s.description.isDefined && !s.description.get.isEmpty match {
-            case true => Seq(Description(tidyUpDescription(s.description.get), Some(s.language))) ++ translationDescriptions
+            case true => Seq(Description(tidyUpDescription(s.description.get), languageOrUnknown(s.language))) ++ translationDescriptions
             case false => translationDescriptions
           }
         }
@@ -154,11 +155,11 @@ trait ImportServiceComponent {
     }
 
     def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
-      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, Some(url.language), EmbedType.OEmbed))
+      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, languageOrUnknown(url.language), EmbedType.OEmbed))
       step.embedUrlToNdlaNo match {
         case None => translationUrls
         case Some(url) => {
-          Seq(EmbedUrl(url, Some(step.language), EmbedType.OEmbed)) ++ translationUrls
+          Seq(EmbedUrl(url, languageOrUnknown(step.language), EmbedType.OEmbed)) ++ translationUrls
         }
       }
     }
