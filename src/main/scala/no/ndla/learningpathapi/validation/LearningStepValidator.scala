@@ -23,35 +23,35 @@ trait LearningStepValidator {
 
     val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedUrl or both."
 
-    def validate(newLearningStep: LearningStep): LearningStep = {
-      validateLearningStep(newLearningStep) match {
+    def validate(newLearningStep: LearningStep, allowUnknownLanguage: Boolean = false): LearningStep = {
+      validateLearningStep(newLearningStep, allowUnknownLanguage) match {
         case head :: tail => throw new ValidationException(errors = head :: tail)
         case _ => newLearningStep
       }
     }
 
-    def validateLearningStep(newLearningStep: LearningStep): Seq[ValidationMessage] = {
-      titleValidator.validate(newLearningStep.title) ++
-        validateDescription(newLearningStep.description) ++
-        validateEmbedUrl(newLearningStep.embedUrl) ++
+    def validateLearningStep(newLearningStep: LearningStep, allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
+      titleValidator.validate(newLearningStep.title, allowUnknownLanguage) ++
+        validateDescription(newLearningStep.description, allowUnknownLanguage) ++
+        validateEmbedUrl(newLearningStep.embedUrl, allowUnknownLanguage) ++
         validateLicense(newLearningStep.license).toList ++
         validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep).toList
     }
 
-    def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
+    def validateDescription(descriptions: Seq[Description], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       descriptions.isEmpty match {
         case true => List()
         case false => descriptions.flatMap(description => {
           basicHtmlTextValidator.validate("description.description", description.description).toList :::
-            languageValidator.validate("description.language", description.language).toList
+            languageValidator.validate("description.language", description.language, allowUnknownLanguage).toList
         })
       }
     }
 
-    def validateEmbedUrl(embedUrls: Seq[EmbedUrl]): Seq[ValidationMessage] = {
+    def validateEmbedUrl(embedUrls: Seq[EmbedUrl], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       embedUrls.flatMap(embedUrl => {
         urlValidator.validate("embedUrl.url", embedUrl.url).toList :::
-          languageValidator.validate("embedUrl.language", embedUrl.language).toList
+          languageValidator.validate("embedUrl.language", embedUrl.language, allowUnknownLanguage).toList
       })
     }
 

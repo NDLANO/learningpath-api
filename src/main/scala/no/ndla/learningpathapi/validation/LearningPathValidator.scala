@@ -26,33 +26,33 @@ trait LearningPathValidator {
     val noHtmlTextValidator = new TextValidator(allowHtml = false)
     val durationValidator = new DurationValidator
 
-    def validate(newLearningPath: LearningPath): LearningPath = {
-      validateLearningPath(newLearningPath) match {
+    def validate(newLearningPath: LearningPath, allowUnknownLanguage: Boolean = false): LearningPath = {
+      validateLearningPath(newLearningPath, allowUnknownLanguage) match {
         case head :: tail => throw new ValidationException(errors = head :: tail)
         case _ => newLearningPath
       }
     }
 
-    def validateLearningPath(newLearningPath: LearningPath) : Seq[ValidationMessage] = {
-      titleValidator.validate(newLearningPath.title) ++
-        validateDescription(newLearningPath.description) ++
+    private[validation] def validateLearningPath(newLearningPath: LearningPath, allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
+      titleValidator.validate(newLearningPath.title, allowUnknownLanguage) ++
+        validateDescription(newLearningPath.description, allowUnknownLanguage) ++
         validateDuration(newLearningPath.duration).toList ++
-        validateTags(newLearningPath.tags) ++
+        validateTags(newLearningPath.tags, allowUnknownLanguage) ++
         validateCopyright(newLearningPath.copyright)
     }
 
-    def validateDescription(descriptions: Seq[Description]): Seq[ValidationMessage] = {
+    private def validateDescription(descriptions: Seq[Description], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       (descriptionRequired, descriptions.isEmpty) match {
         case (false, true) => List()
         case (true, true) => List(ValidationMessage("description", MISSING_DESCRIPTION))
         case (_, false) => descriptions.flatMap(description => {
           noHtmlTextValidator.validate("description.description", description.description).toList :::
-            languageValidator.validate("description.language", description.language).toList
+            languageValidator.validate("description.language", description.language, allowUnknownLanguage).toList
         })
       }
     }
 
-    def validateDuration(durationOpt: Option[Int]): Option[ValidationMessage] = {
+    private def validateDuration(durationOpt: Option[Int]): Option[ValidationMessage] = {
       durationOpt match {
         case None => None
         case Some(duration) => durationValidator.validateRequired(durationOpt)
@@ -72,28 +72,28 @@ trait LearningPathValidator {
       }
     }
 
-    def validateTags(tags: Seq[LearningPathTags]): Seq[ValidationMessage] = {
+    private def validateTags(tags: Seq[LearningPathTags], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       tags.flatMap(tagList => {
         tagList.tags.flatMap(noHtmlTextValidator.validate("tags.tags", _)).toList :::
-          languageValidator.validate("tags.language", tagList.language).toList
+          languageValidator.validate("tags.language", tagList.language, allowUnknownLanguage).toList
       })
     }
 
-    def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
+    private def validateCopyright(copyright: Copyright): Seq[ValidationMessage] = {
       val licenseMessage = validateLicense(copyright.license)
       val contributorsMessages = copyright.contributors.flatMap(validateAuthor)
 
       licenseMessage ++ contributorsMessages
     }
 
-    def validateLicense(license: String): Seq[ValidationMessage] = {
+    private def validateLicense(license: String): Seq[ValidationMessage] = {
       getLicense(license) match {
         case None => Seq(new ValidationMessage("license.license", s"$license is not a valid license"))
         case _ => Seq()
       }
     }
 
-    def validateAuthor(author: Author): Seq[ValidationMessage] = {
+    private def validateAuthor(author: Author): Seq[ValidationMessage] = {
       noHtmlTextValidator.validate("author.type", author.`type`).toList ++
         noHtmlTextValidator.validate("author.name", author.name).toList
     }
