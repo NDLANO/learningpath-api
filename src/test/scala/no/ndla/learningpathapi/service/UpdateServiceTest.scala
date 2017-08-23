@@ -12,7 +12,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.model.api.{License, NewLearningPathV2, NewLearningPath, NewLearningStep, NewLearningStepV2, UpdatedLearningPath, UpdatedLearningPathV2, UpdatedLearningStep, UpdatedLearningStepV2, NewCopyLearningPath}
+import no.ndla.learningpathapi.model.api.{NewLearningPathV2, NewLearningPath, NewLearningStep, NewLearningStepV2, UpdatedLearningPath, UpdatedLearningPathV2, UpdatedLearningStep, UpdatedLearningStepV2, NewCopyLearningPath, NewCopyLearningPathV2}
 import no.ndla.learningpathapi.model.domain._
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
@@ -606,6 +606,16 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     updatedStep.get.seqNo should equal (1)
 
     verify(learningPathRepository, times(2)).updateLearningStep(any[LearningStep])(any[DBSession])
+  }
+
+  test("new fromExisting2 should allow laugage fields set to unknown") {
+    val learningpathWithUnknownLang = PUBLISHED_LEARNINGPATH.copy(title = Seq(Title("what språk is this", "unknown")))
+
+    when(learningPathRepository.withId(learningpathWithUnknownLang.id.get)).thenReturn(Some(learningpathWithUnknownLang))
+    when(learningPathRepository.insert(any[LearningPath])(any[DBSession])).thenReturn(learningpathWithUnknownLang)
+
+    val newCopy = NewCopyLearningPathV2("hehe", None, "nb", None, None, None, None)
+    service.newFromExistingV2(learningpathWithUnknownLang.id.get, newCopy, "me").isDefined should be (true)
   }
 
   test("That newFromExisting throws exception when user is not owner of the path and the path is private") {

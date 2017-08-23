@@ -32,7 +32,10 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
   lazy val controller = new LearningpathControllerV2
   addServlet(controller, "/*")
 
-  override def beforeEach() = resetMocks()
+  override def beforeEach() = {
+    resetMocks()
+    when(languageValidator.validate(any[String], any[String], any[Boolean])).thenReturn(None)
+  }
 
   test("That requireHeader returns header value when header exists") {
     implicit val request:HttpServletRequest = mock[HttpServletRequest]
@@ -65,7 +68,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
 
     when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
     when(searchService.getHitsV2(searchResult, language)).thenReturn(Seq(DefaultLearningPathSummary))
-    when(languageValidator.validate(any[String], any[String])).thenReturn(None)
 
     get("/", Map(
       "query" -> query,
@@ -96,7 +98,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
 
     when(searchService.allV2(any[List[Long]], any[Option[String]], any[Sort.Value], any[Option[String]], any[Option[Int]], any[Option[Int]])).thenReturn(result)
     when(searchService.getHitsV2(any[io.searchbox.core.SearchResult], any[String])).thenReturn(Seq(DefaultLearningPathSummary))
-    when(languageValidator.validate(any[String], any[String])).thenReturn(None)
 
     get("/", Map(
       "query" -> query,
@@ -126,7 +127,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
 
     when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
     when(searchService.getHitsV2(any[io.searchbox.core.SearchResult], any[String])).thenReturn(Seq(DefaultLearningPathSummary))
-    when(languageValidator.validate(any[String], any[String])).thenReturn(None)
 
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
       status should equal (200)

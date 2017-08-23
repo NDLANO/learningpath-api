@@ -49,7 +49,7 @@ trait UpdateServiceComponent {
             tags = tags,
             coverPhotoId = coverPhotoId,
             duration = duration)
-          learningPathValidator.validate(toInsert)
+          learningPathValidator.validate(toInsert, allowUnknownLanguage = true)
           Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
         }
       }
@@ -94,7 +94,7 @@ trait UpdateServiceComponent {
             tags = tags,
             coverPhotoId = coverPhotoId,
             duration = duration)
-          learningPathValidator.validate(toInsert)
+          learningPathValidator.validate(toInsert, allowUnknownLanguage = true)
           converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, Some(owner))
         }
       }

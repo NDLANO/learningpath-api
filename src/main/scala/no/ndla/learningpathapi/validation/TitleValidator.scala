@@ -20,17 +20,17 @@ trait TitleValidator {
 
     val noHtmlTextValidator = new TextValidator(allowHtml = false)
 
-    def validate(titles: Seq[Title]): Seq[ValidationMessage] = {
+    def validate(titles: Seq[Title], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       (titleRequired, titles.isEmpty) match {
         case (false, true) => List()
         case (true, true) => List(ValidationMessage("title", MISSING_TITLE))
-        case (_, false) => titles.flatMap(title => validate(title))
+        case (_, false) => titles.flatMap(title => validate(title, allowUnknownLanguage))
       }
     }
 
-    private def validate(title: Title): Seq[ValidationMessage] = {
+    private def validate(title: Title, allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       noHtmlTextValidator.validate("title.title", title.title).toList :::
-        languageValidator.validate("title.language", title.language).toList
+        languageValidator.validate("title.language", title.language, allowUnknownLanguage).toList
     }
   }
 }
