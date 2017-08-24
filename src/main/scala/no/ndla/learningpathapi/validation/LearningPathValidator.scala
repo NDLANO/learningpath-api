@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.validation
 
 import com.netaporter.uri.Uri._
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.model.api.{ValidationMessage}
+import no.ndla.learningpathapi.model.api.{UpdatedLearningPath, UpdatedLearningPathV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.mapping.License.getLicense
 
@@ -30,6 +30,13 @@ trait LearningPathValidator {
       validateLearningPath(newLearningPath, allowUnknownLanguage) match {
         case head :: tail => throw new ValidationException(errors = head :: tail)
         case _ => newLearningPath
+      }
+    }
+
+    def validate(updateLearningPath: UpdatedLearningPathV2): Unit = {
+      languageValidator.validate("language", updateLearningPath.language, allowUnknownLanguage=false) match {
+        case None =>
+        case Some(validationMessage) => throw new ValidationException(errors=Seq(validationMessage))
       }
     }
 

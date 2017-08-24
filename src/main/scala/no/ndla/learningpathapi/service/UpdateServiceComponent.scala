@@ -181,6 +181,8 @@ trait UpdateServiceComponent {
     }
 
     def updateLearningPathV2(id: Long, learningPathToUpdate: UpdatedLearningPathV2, owner: String): Option[LearningPathV2] = {
+      learningPathValidator.validate(learningPathToUpdate)
+
       val titles = learningPathToUpdate.title match {
         case None => Seq.empty
         case Some(value) => Seq(domain.Title(value, learningPathToUpdate.language))
@@ -208,7 +210,7 @@ trait UpdateServiceComponent {
             tags = mergeLearningPathTags(existing.tags, tags),
             copyright = if (learningPathToUpdate.copyright.isDefined) converterService.asCopyright(learningPathToUpdate.copyright.get) else existing.copyright,
             lastUpdated = clock.now())
-          learningPathValidator.validate(toUpdate)
+          learningPathValidator.validate(toUpdate, allowUnknownLanguage=true)
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
