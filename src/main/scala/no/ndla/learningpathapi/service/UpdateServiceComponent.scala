@@ -181,6 +181,9 @@ trait UpdateServiceComponent {
     }
 
     def updateLearningPathV2(id: Long, learningPathToUpdate: UpdatedLearningPathV2, owner: String): Option[LearningPathV2] = {
+      // Should not be able to submit with an illegal language
+      learningPathValidator.validate(learningPathToUpdate)
+
       val titles = learningPathToUpdate.title match {
         case None => Seq.empty
         case Some(value) => Seq(domain.Title(value, learningPathToUpdate.language))
@@ -208,7 +211,9 @@ trait UpdateServiceComponent {
             tags = mergeLearningPathTags(existing.tags, tags),
             copyright = if (learningPathToUpdate.copyright.isDefined) converterService.asCopyright(learningPathToUpdate.copyright.get) else existing.copyright,
             lastUpdated = clock.now())
-          learningPathValidator.validate(toUpdate)
+          // Imported learningpaths may contain fields with language=unknown.
+          // We should still be able to update it, but not add new fields with language=unknown.
+          learningPathValidator.validate(toUpdate, allowUnknownLanguage=true)
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
