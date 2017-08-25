@@ -8,7 +8,6 @@
 
 package no.ndla.learningpathapi.service
 
-import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
 import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummary}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
@@ -23,9 +22,7 @@ trait ImportServiceComponent {
   this: LearningPathRepositoryComponent with KeywordsServiceComponent with ImageApiClientComponent with MigrationApiClient with SearchIndexServiceComponent with ConverterServiceComponent =>
   val importService: ImportService
 
-  val ChristerTest = "K2pcS0O04OiICIyGcQPZL9g0"
-  val ChristerStaging = "K2pcS0O04OiICIyGcQPZL9g0"
-  val ChristerProd = "K2pcS0O04OiICIyGcQPZL9g0"
+  val ImportUserId = "import-user"
 
   class ImportService {
 
@@ -190,17 +187,10 @@ trait ImportServiceComponent {
         LearningPathVerificationStatus.CREATED_BY_NDLA,
         lastUpdated,
         tags,
-        getOwnerForEnvironment(LearningpathApiProperties.Environment),
+        ImportUserId,
         Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
         learningSteps)
     }
 
-    def getOwnerForEnvironment(environment: String): String = {
-      environment match {
-        case "prod" => ChristerProd
-        case "staging" => ChristerStaging
-        case _ => ChristerTest
-      }
-    }
   }
 }
