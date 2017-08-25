@@ -110,17 +110,6 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(learningPathRepository, times(1)).update(any[LearningPath])
   }
 
-  test("That getOwnerForEnvironment returns expected owner for each environment") {
-    val envToOwner = Map("test" -> ChristerTest,
-      "staging" -> ChristerStaging,
-      "prod" -> ChristerProd,
-      "etannetmiljø" -> ChristerTest)
-
-    envToOwner.foreach {
-      case (environment, expectedOwner) => importService.getOwnerForEnvironment(environment) should equal(expectedOwner)
-    }
-  }
-
   test("That duration is calculated correctly") {
     val pakke = packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1)
     val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None)
