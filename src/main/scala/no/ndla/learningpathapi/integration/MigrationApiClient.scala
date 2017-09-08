@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.integration
 
 import java.util.Date
 
-import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.LearningpathApiProperties.{Environment, MigrationHost, MigrationPassword, MigrationUser}
 import no.ndla.network.NdlaClient
 
 import scala.util.Try
@@ -22,18 +22,19 @@ trait MigrationApiClient {
   val migrationApiClient: MigrationApiClient
 
   class MigrationApiClient {
-    private val LearningPathsEndpoint = s"${LearningpathApiProperties.MigrationHost}/learningpaths"
-    private val LearningPathEndpoint = s"$LearningPathsEndpoint/:node_id"
+    val DBSource = if (Environment == "prod") "cm" else "red"
+    private val LearningPathsEndpoint = s"$MigrationHost/learningpaths" ? (s"db-source" -> s"$DBSource")
+    private val LearningPathEndpoint = s"$MigrationHost/learningpaths/:node_id" ? (s"db-source" -> s"$DBSource")
 
     def getAllLearningPathIds: Try[Seq[String]] = {
       ndlaClient.fetchWithBasicAuth[Seq[String]](Http(LearningPathsEndpoint),
-        LearningpathApiProperties.MigrationUser, LearningpathApiProperties.MigrationPassword)
+        MigrationUser, MigrationPassword)
     }
 
     def getLearningPath(nodeId: String): Try[MainPackageImport] = {
       ndlaClient.fetchWithBasicAuth[MainPackageImport](
         Http(LearningPathEndpoint.replace(":node_id", nodeId)),
-        LearningpathApiProperties.MigrationUser, LearningpathApiProperties.MigrationPassword)
+        MigrationUser, MigrationPassword)
     }
   }
 }
