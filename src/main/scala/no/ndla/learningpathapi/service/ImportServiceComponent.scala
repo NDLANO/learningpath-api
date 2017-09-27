@@ -14,12 +14,18 @@ import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-
+import com.netaporter.uri.dsl._
 import scala.util.{Failure, Success, Try}
 
 
 trait ImportServiceComponent {
-  this: LearningPathRepositoryComponent with KeywordsServiceComponent with ImageApiClientComponent with MigrationApiClient with SearchIndexServiceComponent with ConverterServiceComponent =>
+  this: LearningPathRepositoryComponent
+    with KeywordsServiceComponent
+    with ImageApiClientComponent
+    with MigrationApiClient
+    with SearchIndexServiceComponent
+    with ConverterServiceComponent
+    with ArticleApiClient =>
   val importService: ImportService
 
   val ImportUserId = "import-user"
@@ -31,13 +37,13 @@ trait ImportServiceComponent {
         case Failure(f) => Failure(f)
         case Success(liste) => Success(liste
             .map(id => (id, doImport(id)))
-            .map(tuple => ImportReport(tuple._1, getStatus(tuple._2))))
+            .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
       }
     }
 
     def getStatus(learningPathSummaryTry: Try[LearningPathSummary]): String = {
       learningPathSummaryTry match {
-        case Success(learningPathSummary) => "OK"
+        case Success(_) => "OK"
         case Failure(f) => f.getMessage
       }
     }
@@ -120,7 +126,19 @@ trait ImportServiceComponent {
       val embedUrls = embedUrlsAsList(step, translations)
       val showTitle = descriptions.nonEmpty
 
+      importArticlesUsedInLearningStep(embedUrls)
+
       LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license, showTitle)
+    }
+
+    def importArticlesUsedInLearningStep(embedUrls: Seq[EmbedUrl]): Unit = {
+      val ndlaDomains = Seq("ndla.no", "red.ndla.no")
+      embedUrls.collect {
+        case (embedUrl) if ndlaDomains.contains(embedUrl.url.host.getOrElse("")) =>
+          val nodeId = embedUrl.url.path.split("/").lastOption
+          nodeId.foreach(articleApiClient.importArticle)
+        case _ =>
+      }
     }
 
     def asLearningStepType(stepType: String): StepType.Value = {

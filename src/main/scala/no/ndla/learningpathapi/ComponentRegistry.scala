@@ -32,11 +32,12 @@ object ComponentRegistry
   with SearchIndexServiceComponent
   with NdlaClient
   with ImageApiClientComponent
+  with ArticleApiClient
+  with MigrationApiClient
   with ConverterServiceComponent
   with ElasticClientComponent
   with DatasourceComponent
   with ImportServiceComponent
-  with MigrationApiClient
   with KeywordsServiceComponent
   with Clock
   with LanguageValidator
@@ -73,6 +74,7 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val ndlaClient = new NdlaClient
   lazy val imageApiClient = new ImageApiClient
+  lazy val articleApiClient = new ArticleApiClient
   lazy val importService = new ImportService
   lazy val keywordsService = new KeywordsService
   lazy val migrationApiClient = new MigrationApiClient
