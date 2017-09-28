@@ -104,10 +104,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
+    reset(articleApiClient)
 
     importService.upload(mainImport)
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
+    verify(articleApiClient, times(1)).importArticle("12345")
   }
 
   test("That duration is calculated correctly") {
@@ -117,7 +119,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     learningPath.duration should be(Some(61))
   }
 
-  private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq())
+  private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))
   private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, None, language)
   private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, None, language)
 }
