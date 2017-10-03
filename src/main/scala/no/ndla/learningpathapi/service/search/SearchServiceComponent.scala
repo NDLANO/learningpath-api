@@ -14,8 +14,8 @@ import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummary, LearningPathSummaryV2, License}
-import no.ndla.learningpathapi.model.domain.{LanguageField, NdlaSearchException, SearchResult, Sort}
+import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummary, LearningPathSummaryV2, License, Error}
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
 import org.apache.lucene.search.join.ScoreMode
@@ -151,6 +151,12 @@ trait SearchServiceComponent extends LazyLogging {
         .addIndex(LearningpathApiProperties.SearchIndex)
         .setParameter(Parameters.SIZE, numResults)
         .setParameter("from", startAt)
+
+      val requestedResultWindow = page.getOrElse(1)*numResults
+      if(requestedResultWindow > LearningpathApiProperties.ElasticSearchIndexMaxResultWindow) {
+        logger.info(s"Max supported results are ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}, user requested ${requestedResultWindow}")
+        throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
+      }
 
       jestClient.execute(request.build()) match {
         case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, language, response)

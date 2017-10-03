@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.{Error, ValidationError, ValidationMessage}
-import no.ndla.learningpathapi.model.domain.{AccessDeniedException, OptimisticLockException, ValidationException}
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, OptimisticLockException, ResultWindowTooLargeException, ValidationException}
 import no.ndla.network.{ApplicationUrl, AuthUser}
 import no.ndla.network.model.HttpRequestException
 import org.json4s.native.Serialization.read
@@ -40,6 +40,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case a: AccessDeniedException => halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
     case ole: OptimisticLockException => halt(status = 409, body = Error(Error.RESOURCE_OUTDATED, Error.RESOURCE_OUTDATED_DESCRIPTION))
     case hre: HttpRequestException => halt(status = 502, body = Error(Error.REMOTE_ERROR, hre.getMessage))
+    case rw: ResultWindowTooLargeException => UnprocessableEntity(body = Error(Error.WINDOW_TOO_LARGE, rw.getMessage))
     case t: Throwable => {
       t.printStackTrace()
       logger.error(t.getMessage)
