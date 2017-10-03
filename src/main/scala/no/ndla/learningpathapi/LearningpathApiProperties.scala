@@ -45,6 +45,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
+  val ElasticSearchIndexMaxResultWindow = 10000
 
   val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
     "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",
