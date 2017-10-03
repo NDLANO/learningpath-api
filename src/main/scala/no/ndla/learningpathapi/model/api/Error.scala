@@ -30,8 +30,10 @@ object Error {
   val ACCESS_DENIED = "ACCESS_DENIED"
   val REMOTE_ERROR = "REMOTE_ERROR"
   val RESOURCE_OUTDATED = "RESOURCE_OUTDATED"
+  val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
 
   val GENERIC_DESCRIPTION = s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
   val VALIDATION_DESCRIPTION = "Validation Error"
   val RESOURCE_OUTDATED_DESCRIPTION = "The resource is outdated. Please try fetching before submitting again."
+  val WindowTooLargeError = Error(WINDOW_TOO_LARGE, s"The result window is too large. Fetching pages above ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow} results are unsupported.")
 }

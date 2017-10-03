@@ -17,3 +17,4 @@ class OptimisticLockException(message: String) extends RuntimeException(message)
 class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
   def getResponse: JestResult = jestResponse
 }
+class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
