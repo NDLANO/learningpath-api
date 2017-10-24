@@ -28,13 +28,12 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val PRIVATE_OWNER = "eier2"
 
   val STEP1 = domain.LearningStep(Some(1), Some(1), None, None, 0, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
-  val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
-  val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
-  val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
-  val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
-  val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
+  val STEP2 = domain.LearningStep(Some(2), Some(1), None, None, 1, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
+  val STEP3 = domain.LearningStep(Some(3), Some(1), None, None, 2, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
+  val STEP4 = domain.LearningStep(Some(4), Some(1), None, None, 3, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
+  val STEP5 = domain.LearningStep(Some(5), Some(1), None, None, 4, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = true, status = StepStatus.ACTIVE)
+  val STEP6 = domain.LearningStep(Some(6), Some(1), None, None, 5, List(domain.Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = false, status = StepStatus.ACTIVE)
 
-  //val NEW_STEP = NewLearningStep(List(api.Title("Tittel", "nb")), List(api.Description("Beskrivelse", "nb")), List(), true, "TEXT", None)
   val NEW_STEPV2 = NewLearningStepV2("Tittel", Some("Beskrivelse"), "nb", Some(api.EmbedUrlV2("", "oembed")), true, "TEXT", None)
   val UPDATED_STEPV2 = UpdatedLearningStepV2(1, Option("Tittel"), "nb", Some("Beskrivelse"), None, Some(false), None, None)
 
@@ -200,7 +199,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.insertLearningStep(any[LearningStep])(any[DBSession])).thenReturn(STEP2)
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH)
-
     assertResult(STEP2.id.get) {
       service.addLearningStepV2(PUBLISHED_ID, NEW_STEPV2, PUBLISHED_OWNER).get.id
     }

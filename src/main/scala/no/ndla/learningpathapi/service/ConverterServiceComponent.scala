@@ -222,7 +222,7 @@ trait ConverterServiceComponent {
       val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2)
 
 
-      Some(api.LearningStepV2(
+      val x = Some(api.LearningStepV2(
         ls.id.get,
         ls.revision.get,
         ls.seqNo,
@@ -237,6 +237,7 @@ trait ConverterServiceComponent {
         ls.status.toString,
         supportedLanguages
       ))
+      x
     }
 
     def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): api.LearningStepSummary = {

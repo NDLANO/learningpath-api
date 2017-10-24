@@ -33,9 +33,9 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright)
   val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright)
 
-  val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(), List(), List(), StepType.TEXT, None, showTitle = true, StepStatus.ACTIVE)
-  val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
-  val STEP3 = LearningStep(Some(3), Some(1), None, None, 3, List(), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
+  val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = true, StepStatus.ACTIVE)
+  val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
+  val STEP3 = LearningStep(Some(3), Some(1), None, None, 3, List(Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
 
   override def beforeEach() = {
     service = new ReadService
