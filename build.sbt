@@ -82,11 +82,6 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-// Don't run Integration tests in default run
-def itFilter(name: String): Boolean = name endsWith "IntegrationTest"
-def unitFilter(name: String): Boolean = (name endsWith "Test") && !itFilter(name)
-testOptions in Test := Seq(Tests.Filter(unitFilter))
-testOptions in ITest := Seq(Tests.Filter(itFilter))
 // Don't run Integration tests with annotation IntegrationTest in default run on Travis as there is no elasticsearch localhost:9200 there yet.
 // NB this line will unfortunalty override runs on your local commandline so that
 // sbt "test-only -- -n no.ndla.tag.IntegrationTest"

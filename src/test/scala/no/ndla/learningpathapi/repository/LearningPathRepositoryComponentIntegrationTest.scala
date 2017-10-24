@@ -12,8 +12,10 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.tag.IntegrationTest
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
+@IntegrationTest
 class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
   var repository: LearningPathRepository = _
 
