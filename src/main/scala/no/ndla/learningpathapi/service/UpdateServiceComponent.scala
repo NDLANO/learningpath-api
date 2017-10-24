@@ -21,6 +21,7 @@ trait UpdateServiceComponent {
   val updateService: UpdateService
 
   class UpdateService {
+    /* TODO: Remove
     def newFromExisting(id: Long, newLearningPath: NewCopyLearningPath, owner: String): Option[LearningPath] = {
       learningPathRepository.withId(id) match {
         case None => None
@@ -53,7 +54,7 @@ trait UpdateServiceComponent {
           Some(converterService.asApiLearningpath(learningPathRepository.insert(toInsert), Some(owner)))
         }
       }
-    }
+    }*/
 
     def newFromExistingV2(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPathV2] = {
       learningPathRepository.withId(id) match {
@@ -100,7 +101,7 @@ trait UpdateServiceComponent {
       }
     }
 
-    def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
+    /*def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
       val learningPath = domain.LearningPath(None, None, None, None,
         newLearningPath.title.map(converterService.asTitle),
         newLearningPath.description.map(converterService.asDescription),
@@ -112,7 +113,7 @@ trait UpdateServiceComponent {
       learningPathValidator.validate(learningPath)
 
       converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
-    }
+    }*/
 
     def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): Option[LearningPathV2] = {
       val domainTags =
