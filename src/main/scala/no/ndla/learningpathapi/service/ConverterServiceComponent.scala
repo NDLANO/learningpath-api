@@ -86,6 +86,7 @@ trait ConverterServiceComponent {
       domain.Author(author.`type`, author.name)
     }
 
+    /* TODO: Remove
     def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): api.LearningPath = {
       api.LearningPath(lp.id.get,
         lp.revision.get,
@@ -103,7 +104,7 @@ trait ConverterServiceComponent {
         lp.tags.map(asApiLearningPathTags),
         asApiCopyright(lp.copyright),
         lp.canEdit(user))
-    }
+    }*/
 
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
@@ -306,10 +307,6 @@ trait ConverterServiceComponent {
       api.Description(description.description, description.language)
     }
 
-    /*def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
-      api.EmbedUrl(embedUrl.url, embedUrl.language, embedUrl.embedType.toString)
-    }*/
-
     def asApiEmbedUrlV2(embedUrl: domain.EmbedUrl): api.EmbedUrlV2 = {
       api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
     }
@@ -324,10 +321,6 @@ trait ConverterServiceComponent {
 
     def createUrlToLearningPath(lp: domain.LearningPath): String = {
       s"${ApplicationUrl.get}${lp.id.get}"
-    }
-
-    def createUrlToLearningPath(lp: api.LearningPath): String = {
-      s"${ApplicationUrl.get}${lp.id}"
     }
 
     def createUrlToImageApi(imageId: String): String = {

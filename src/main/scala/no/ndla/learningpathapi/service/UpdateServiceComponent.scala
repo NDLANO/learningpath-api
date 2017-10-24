@@ -155,32 +155,6 @@ trait UpdateServiceComponent {
       (toKeep ++ updated).filterNot(_.tags.isEmpty)
     }
 
-    def updateLearningPath(id: Long, learningPathToUpdate: UpdatedLearningPath, owner: String): Option[LearningPath] = {
-      withIdAndAccessGranted(id, owner) match {
-        case None => None
-        case Some(existing) => {
-          val toUpdate = existing.copy(
-            revision = Some(learningPathToUpdate.revision),
-            title = mergeLanguageFields(existing.title, learningPathToUpdate.title.map(converterService.asTitle)),
-            description = mergeLanguageFields(existing.description, learningPathToUpdate.description.map(converterService.asDescription)),
-            coverPhotoId = learningPathToUpdate.coverPhotoMetaUrl.map(extractImageId).getOrElse(existing.coverPhotoId),
-            duration = if(learningPathToUpdate.duration.isDefined) learningPathToUpdate.duration else existing.duration,
-            tags = mergeLearningPathTags(existing.tags, learningPathToUpdate.tags.map(converterService.asLearningPathTags)),
-            copyright = converterService.asCopyright(learningPathToUpdate.copyright),
-            lastUpdated = clock.now())
-          learningPathValidator.validate(toUpdate)
-
-
-          val updatedLearningPath = learningPathRepository.update(toUpdate)
-          if (updatedLearningPath.isPublished) {
-            searchIndexService.indexDocument(updatedLearningPath)
-          }
-
-          Some(converterService.asApiLearningpath(updatedLearningPath, Option(owner)))
-        }
-      }
-    }
-
     def updateLearningPathV2(id: Long, learningPathToUpdate: UpdatedLearningPathV2, owner: String): Option[LearningPathV2] = {
       // Should not be able to submit with an illegal language
       learningPathValidator.validate(learningPathToUpdate)
@@ -226,6 +200,32 @@ trait UpdateServiceComponent {
       }
     }
 
+    def updateLearningPathStatusV2(learningPathId: Long, status: LearningPathStatus.Value, owner: String, language: String): Option[LearningPathV2] = {
+      withIdAndAccessGranted(learningPathId, owner, includeDeleted = true) match {
+        case None => None
+        case Some(existing) => {
+          if (status == domain.LearningPathStatus.PUBLISHED) {
+            existing.validateForPublishing()
+          }
+
+          val updatedLearningPath = learningPathRepository.update(
+            existing.copy(
+              status = status,
+              lastUpdated = clock.now()))
+
+          if (updatedLearningPath.isPublished) {
+            searchIndexService.indexDocument(updatedLearningPath)
+          } else if (existing.isPublished) {
+            searchIndexService.deleteDocument(updatedLearningPath)
+            deleteIsBasedOnReference(updatedLearningPath)
+          }
+
+          converterService.asApiLearningpathV2(updatedLearningPath, language, Option(owner))
+        }
+      }
+    }
+
+    /* TODO: Remove comment
     def updateLearningPathStatus(learningPathId: Long, status: LearningPathStatus.Value, owner: String): Option[LearningPath] = {
       withIdAndAccessGranted(learningPathId, owner, includeDeleted = true) match {
         case None => None
@@ -250,6 +250,7 @@ trait UpdateServiceComponent {
         }
       }
     }
+    */
 
     private def deleteIsBasedOnReference(updatedLearningPath: domain.LearningPath) = {
       learningPathRepository.learningPathsWithIsBasedOn(updatedLearningPath.id.get).foreach(lp => {

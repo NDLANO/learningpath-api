@@ -269,7 +269,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val deleteLearningPath =
-      (apiOperation[LearningPath]("deleteLearningPath")
+      (apiOperation[LearningPathV2]("deleteLearningPath")
         summary "Deletes the given learningPath"
         notes "Deletes the given learningPath"
         parameters(
@@ -529,10 +529,11 @@ trait LearningpathControllerV2 {
       val learningPathStatus = extract[LearningPathStatus](request.body)
       val pathStatus = LearningPathStatus.valueOfOrError(learningPathStatus.status)
 
-      val updatedLearningPath: Option[LearningPath] = updateService.updateLearningPathStatus(
+      val updatedLearningPath: Option[LearningPathV2] = updateService.updateLearningPathStatusV2(
         long("path_id"),
         pathStatus,
-        requireUser)
+        requireUser,
+        Language.DefaultLanguage)
 
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
@@ -544,7 +545,7 @@ trait LearningpathControllerV2 {
     }
 
     delete("/:path_id/?", operation(deleteLearningPath)) {
-      val deleted = updateService.updateLearningPathStatus(long("path_id"), LearningPathStatus.DELETED, requireUser)
+      val deleted = updateService.updateLearningPathStatusV2(long("path_id"), LearningPathStatus.DELETED, requireUser, Language.DefaultLanguage)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {

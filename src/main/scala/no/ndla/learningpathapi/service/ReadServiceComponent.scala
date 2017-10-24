@@ -37,10 +37,6 @@ trait ReadServiceComponent {
       learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
     }
 
-    def withId(learningPathId: Long, user: Option[String] = None): Option[LearningPath] = {
-      withIdAndAccessGranted(learningPathId, user).map(lp => converterService.asApiLearningpath(lp, user))
-    }
-
     def withIdV2(learningPathId: Long, language: String, user: Option[String] = None): Option[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp => converterService.asApiLearningpathV2(lp, language, user))
     }
@@ -48,12 +44,6 @@ trait ReadServiceComponent {
     def statusFor(learningPathId: Long, user: Option[String] = None): Option[LearningPathStatus] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
-
-    /*
-    def learningStepStatusFor(learningPathId: Long, learningStepId: Long, user: Option[String] = None): Option[LearningStepStatus] = {
-      //learningstepFor(learningPathId, learningStepId, user).map(ls => LearningStepStatus(ls.status.toString))
-    }
-    */
 
     def learningStepStatusForV2(learningPathId: Long, learningStepId: Long, language: String, user: Option[String] = None): Option[LearningStepStatus] = {
       learningstepV2For(learningPathId, learningStepId, language, user).map(ls => LearningStepStatus(ls.status.toString))
