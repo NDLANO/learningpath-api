@@ -80,7 +80,7 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     )) {
       status should equal (200)
       val convertedBody = read[api.SearchResultV2](body)
-      convertedBody.results.head.title should equal ("Tittel")
+      convertedBody.results.head.title should equal (api.Title("Tittel","nb"))
     }
   }
 
@@ -131,7 +131,7 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
       status should equal (200)
       val convertedBody = read[api.SearchResultV2](body)
-      convertedBody.results.head.title should equal ("Tittel")
+      convertedBody.results.head.title should equal (api.Title("Tittel","nb"))
     }
   }
 

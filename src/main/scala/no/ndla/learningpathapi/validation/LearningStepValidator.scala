@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.validation
 
 
-import no.ndla.learningpathapi.model.api.{EmbedUrlV2, ValidationMessage}
+import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain._
 
 trait LearningStepValidator {
@@ -42,8 +42,8 @@ trait LearningStepValidator {
       descriptions.isEmpty match {
         case true => List()
         case false => descriptions.flatMap(description => {
-          basicHtmlTextValidator.validate("description.description", description.description).toList :::
-            languageValidator.validate("description.language", description.language, allowUnknownLanguage).toList
+          basicHtmlTextValidator.validate("description", description.description).toList :::
+            languageValidator.validate("language", description.language, allowUnknownLanguage).toList
         })
       }
     }
@@ -51,7 +51,7 @@ trait LearningStepValidator {
     def validateEmbedUrl(embedUrls: Seq[EmbedUrl], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       embedUrls.flatMap(embedUrl => {
         urlValidator.validate("embedUrl.url", embedUrl.url).toList :::
-          languageValidator.validate("embedUrl.language", embedUrl.language, allowUnknownLanguage).toList
+          languageValidator.validate("language", embedUrl.language, allowUnknownLanguage).toList
       })
     }
 
