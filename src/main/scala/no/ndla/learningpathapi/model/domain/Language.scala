@@ -85,19 +85,9 @@ object Language {
       supportedLanguages.head
   }
 
-  def findByLanguage[T <: Any](sequence: Seq[LanguageField[T]], lang: String): Option[LanguageField[T]] = {
+  def findByLanguage[T <: LanguageField[_]](sequence: Seq[T], lang: String): Option[T] = {
     sequence.find(_.language == lang)
   }
 
-  def findValueByLanguage[T <: Any](sequence: Seq[LanguageField[T]], lang: String): Option[T] = {
-    findByLanguage(sequence, lang).map(_.value)
-  }
-
-  def getByLanguageOrHead[T <: Any](sequence: Seq[LanguageField[T]], language: String): Option[T] = {
-    findValueByLanguage(sequence, language) match {
-      case Some(e) => Some(e)
-      case None => sequence.headOption.map(lf => lf.value)
-    }
-  }
 }
 
