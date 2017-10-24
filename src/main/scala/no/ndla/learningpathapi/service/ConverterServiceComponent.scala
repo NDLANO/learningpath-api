@@ -105,7 +105,6 @@ trait ConverterServiceComponent {
       val supportedLanguages = findSupportedLanguages(lp)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
-
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
       val title = findByLanguageOrBestEffort(lp.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
@@ -211,12 +210,9 @@ trait ConverterServiceComponent {
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
 
-      val searchLanguage = getSearchLanguage(language, supportedLanguages)
-
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
-      val description = findByLanguageOrBestEffort(ls.description, Some(language)).map(asApiDescription)
-      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrl)
-
+      val description = findByLanguage(ls.description, language).map(asApiDescription)
+      val embedUrl = findByLanguage(ls.embedUrl, language).map(asApiEmbedUrl)
 
       Some(api.LearningStepV2(
         ls.id.get,

@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.validation
 
 import no.ndla.learningpathapi.model.api.{EmbedUrlV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
+import Language._
 
 trait LearningStepValidator {
   this : TitleValidator with LanguageValidator =>
@@ -21,7 +22,7 @@ trait LearningStepValidator {
     val basicHtmlTextValidator = new TextValidator(allowHtml = true)
     val urlValidator = new UrlValidator()
 
-    val MISSING_DESCRIPTION_OR_EMBED_URL = "A learningstep is required to have either a description, embedUrl or both."
+    def MISSING_DESCRIPTION_OR_EMBED_URL(lang: String) = s"A learningstep is required to have either a description, embedUrl or both (language = $lang)"
 
     def validate(newLearningStep: LearningStep, allowUnknownLanguage: Boolean = false): LearningStep = {
       validateLearningStep(newLearningStep, allowUnknownLanguage) match {
@@ -35,15 +36,15 @@ trait LearningStepValidator {
         validateDescription(newLearningStep.description, allowUnknownLanguage) ++
         validateEmbedUrl(newLearningStep.embedUrl, allowUnknownLanguage) ++
         validateLicense(newLearningStep.license).toList ++
-        validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep).toList
+        validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep)
     }
 
     def validateDescription(descriptions: Seq[Description], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       descriptions.isEmpty match {
         case true => List()
         case false => descriptions.flatMap(description => {
-          basicHtmlTextValidator.validate("description.description", description.description).toList :::
-            languageValidator.validate("description.language", description.language, allowUnknownLanguage).toList
+          basicHtmlTextValidator.validate("description", description.description).toList :::
+            languageValidator.validate("language", description.language, allowUnknownLanguage).toList
         })
       }
     }
@@ -51,7 +52,7 @@ trait LearningStepValidator {
     def validateEmbedUrl(embedUrls: Seq[EmbedUrl], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       embedUrls.flatMap(embedUrl => {
         urlValidator.validate("embedUrl.url", embedUrl.url).toList :::
-          languageValidator.validate("embedUrl.language", embedUrl.language, allowUnknownLanguage).toList
+          languageValidator.validate("language", embedUrl.language, allowUnknownLanguage).toList
       })
     }
 
@@ -64,11 +65,18 @@ trait LearningStepValidator {
       }
     }
 
-    def validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep: LearningStep): Option[ValidationMessage] = {
-      newLearningStep.description.isEmpty && newLearningStep.embedUrl.isEmpty match {
-        case true => Some(ValidationMessage("description|embedUrl", MISSING_DESCRIPTION_OR_EMBED_URL))
-        case false => None
-      }
+    def validateThatDescriptionOrEmbedUrlOrBothIsDefined(newLearningStep: LearningStep): Seq[ValidationMessage] = {
+      findSupportedLanguages(newLearningStep).flatMap(lang => {
+        val description = findByLanguage(newLearningStep.description, lang)
+        val embedUrl = findByLanguage(newLearningStep.embedUrl, lang)
+
+        if (description.isEmpty && embedUrl.isEmpty) {
+          Some(ValidationMessage("description|embedUrl", MISSING_DESCRIPTION_OR_EMBED_URL(lang)))
+        } else {
+          None
+        }
+      })
     }
+
   }
 }

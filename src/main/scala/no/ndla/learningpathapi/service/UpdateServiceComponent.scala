@@ -393,17 +393,17 @@ trait UpdateServiceComponent {
             case None => None
             case Some(existing) => {
               val titles = learningStepToUpdate.title match {
-                case None => Seq.empty
+                case None => existing.title
                 case Some(value) => mergeLanguageFields(existing.title, Seq(domain.Title(value, learningStepToUpdate.language)))
               }
 
               val descriptions = learningStepToUpdate.description match {
-                case None => Seq.empty
+                case None => existing.description
                 case Some(value) => mergeLanguageFields(existing.description, Seq(domain.Description(value, learningStepToUpdate.language)))
               }
 
               val embedUrls = learningStepToUpdate.embedUrl match {
-                case None => Seq.empty
+                case None => existing.embedUrl
                 case Some(value) => mergeLanguageFields(existing.embedUrl, Seq(domain.EmbedUrl(value.url, learningStepToUpdate.language, EmbedType.valueOfOrError(value.embedType))))
               }
 
