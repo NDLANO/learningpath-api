@@ -26,8 +26,12 @@ trait ConverterServiceComponent {
   val converterService: ConverterService
 
   class ConverterService {
-    def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
+    /*def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
       domain.EmbedUrl(embedUrl.url, embedUrl.language, EmbedType.valueOfOrError(embedUrl.embedType))
+    }*/
+
+    def asEmbedUrlV2(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
+      domain.EmbedUrl(embedUrl.url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def asDescription(description: api.Description): domain.Description = {
@@ -190,7 +194,7 @@ trait ConverterServiceComponent {
       )
     }
 
-    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
+    /*def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
       api.LearningStep(
         ls.id.get,
         ls.revision.get,
@@ -204,7 +208,7 @@ trait ConverterServiceComponent {
         createUrlToLearningStep(ls, lp),
         lp.canEdit(user),
         ls.status.toString)
-    }
+    }*/
 
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
@@ -215,7 +219,7 @@ trait ConverterServiceComponent {
 
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
       val description = findByLanguageOrBestEffort(ls.description, Some(language)).map(asApiDescription)
-      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrl)
+      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2)
 
 
       Some(api.LearningStepV2(
@@ -301,8 +305,12 @@ trait ConverterServiceComponent {
       api.Description(description.description, description.language)
     }
 
-    def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
+    /*def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
       api.EmbedUrl(embedUrl.url, embedUrl.language, embedUrl.embedType.toString)
+    }*/
+
+    def asApiEmbedUrlV2(embedUrl: domain.EmbedUrl): api.EmbedUrlV2 = {
+      api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {

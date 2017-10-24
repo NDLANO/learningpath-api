@@ -49,8 +49,14 @@ trait ReadServiceComponent {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
+    /*
     def learningStepStatusFor(learningPathId: Long, learningStepId: Long, user: Option[String] = None): Option[LearningStepStatus] = {
-      learningstepFor(learningPathId, learningStepId, user).map(ls => LearningStepStatus(ls.status.toString))
+      //learningstepFor(learningPathId, learningStepId, user).map(ls => LearningStepStatus(ls.status.toString))
+    }
+    */
+
+    def learningStepStatusForV2(learningPathId: Long, learningStepId: Long, language: String, user: Option[String] = None): Option[LearningStepStatus] = {
+      learningstepV2For(learningPathId, learningStepId, language, user).map(ls => LearningStepStatus(ls.status.toString))
     }
 
     def learningstepsForWithStatus(learningPathId: Long, status: StepStatus.Value, user: Option[String] = None): Option[Seq[LearningStepSummary]] = {
@@ -71,12 +77,12 @@ trait ReadServiceComponent {
       }
     }
 
-    def learningstepFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStep] = {
+    /*def learningstepFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStep] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) => learningPathRepository.learningStepWithId(learningPathId, learningstepId).map(ls => converterService.asApiLearningStep(ls, lp, user))
         case None => None
       }
-    }
+    }*/
 
     def learningstepV2For(learningPathId: Long, learningstepId: Long, language: String, user: Option[String] = None): Option[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {

@@ -196,12 +196,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asEmbedUrl returns embedUrl if embedType is oembed") {
-    service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", "nb", "oembed")) should equal(EmbedUrl("http://test.no/2/oembed/", "nb", EmbedType.OEmbed))
+    service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "oembed"), "nb") should equal(EmbedUrl("http://test.no/2/oembed/", "nb",EmbedType.OEmbed))
   }
 
   test("asEmbedUrl throws error if an not allowed value for embedType is used") {
     assertResult("Validation Error") {
-      intercept[ValidationException] { service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", "nb", "test")) }.getMessage()
+      intercept[ValidationException] { service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "test"), "nb") }.getMessage()
     }
   }
 

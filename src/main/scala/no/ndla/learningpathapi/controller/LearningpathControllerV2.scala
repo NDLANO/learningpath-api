@@ -256,7 +256,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val updateLearningStepStatus =
-      (apiOperation[LearningStep]("updateLearningStepStatus")
+      (apiOperation[LearningStepV2]("updateLearningStepStatus")
         summary "Updates the status of the given learningstep"
         notes "Updates the status of the given learningstep"
         parameters(
@@ -416,7 +416,7 @@ trait LearningpathControllerV2 {
     }
 
     get("/:path_id/learningsteps/:step_id/status/?", operation(getLearningStepStatus)) {
-      readService.learningStepStatusFor(long("path_id"), long("step_id"), AuthUser.get) match {
+      readService.learningStepStatusForV2(long("path_id"), long("step_id"), Language.DefaultLanguage, AuthUser.get) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
@@ -515,7 +515,7 @@ trait LearningpathControllerV2 {
       val learningStepStatus = extract[LearningStepStatus](request.body)
       val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
 
-      val updatedStep = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), stepStatus, requireUser)
+      val updatedStep = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), stepStatus, requireUser)
       updatedStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {
@@ -555,7 +555,7 @@ trait LearningpathControllerV2 {
     }
 
     delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-      val deleted = updateService.updateLearningStepStatus(long("path_id"), long("step_id"), StepStatus.DELETED, requireUser)
+      val deleted = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), StepStatus.DELETED, requireUser)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {

@@ -178,48 +178,48 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
     }
   }
 
-  test("That learningstepFor returns None when the learningPath does not exist") {
+  test("That learningstepV2For returns None when the learningPath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      service.learningstepFor(PUBLISHED_ID, STEP1.id.get)
+      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb")
     }
   }
 
-  test("That learningstepFor returns None when the learningStep does not exist") {
+  test("That learningstepV2For returns None when the learningStep does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(None)
     assertResult(None) {
-      service.learningstepFor(PUBLISHED_ID, STEP1.id.get)
+      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb")
     }
   }
 
-  test("That learningstepFor returns the LearningStep when it exists") {
+  test("That learningstepV2For returns the LearningStep when it exists") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get)).thenReturn(Some(STEP1))
     assertResult(STEP1.id.get) {
-      service.learningstepFor(PUBLISHED_ID, STEP1.id.get).get.id
+      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb").get.id
     }
   }
 
-  test("That learningstepFor returns the LearningStep when it exists and status is PRIVATE and user is the owner") {
+  test("That learningstepV2For returns the LearningStep when it exists and status is PRIVATE and user is the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PRIVATE_ID, STEP1.id.get)).thenReturn(Some(STEP1))
     assertResult(STEP1.id.get) {
-      service.learningstepFor(PRIVATE_ID, STEP1.id.get, Some(PRIVATE_OWNER)).get.id
+      service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", Some(PRIVATE_OWNER)).get.id
     }
   }
 
-  test("That learningstepFor throws an AccessDeniedException when the status is PRIVATE and no user") {
+  test("That learningstepV2For throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.learningstepFor(PRIVATE_ID, STEP1.id.get) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb") }.getMessage
     }
   }
 
   test("That learningstepFor throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.learningstepFor(PRIVATE_ID, STEP1.id.get, Some(PUBLISHED_OWNER)) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", Some(PUBLISHED_OWNER)) }.getMessage
     }
   }
 

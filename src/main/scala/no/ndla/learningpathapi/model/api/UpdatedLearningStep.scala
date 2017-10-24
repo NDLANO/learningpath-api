@@ -14,7 +14,8 @@ import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
 import scala.annotation.meta.field
-
+//TODO: Remove comment
+/*
 @ApiModel(description = "Information about a new learningstep")
 case class UpdatedLearningStep(@(ApiModelProperty@field)(description = "The revision number for this learningstep") revision: Int,
                                @(ApiModelProperty@field)(description = "The titles of the learningstep") title: Seq[Title],
@@ -23,6 +24,7 @@ case class UpdatedLearningStep(@(ApiModelProperty@field)(description = "The revi
                                @(ApiModelProperty@field)(description = "Determines if the title of the step should be displayed in viewmode") showTitle: Option[Boolean],
                                @(ApiModelProperty@field)(description = "The type of the step", allowableValues = "INTRODUCTION,TEXT,QUIZ,TASK,MULTIMEDIA,SUMMARY,TEST") `type`: Option[String],
                                @(ApiModelProperty@field)(description = "Describes the copyright information for the learningstep") license: Option[String])
+*/
 
 @ApiModel(description = "Information about a new learningstep")
 case class UpdatedLearningStepV2(@(ApiModelProperty@field)(description = "The revision number for this learningstep") revision: Int,
