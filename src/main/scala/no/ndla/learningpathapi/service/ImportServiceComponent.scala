@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
-import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummary}
+import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -36,24 +36,24 @@ trait ImportServiceComponent {
       migrationApiClient.getAllLearningPathIds match {
         case Failure(f) => Failure(f)
         case Success(liste) => Success(liste
-            .map(id => (id, doImport(id)))
-            .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
+          .map(id => (id, doImport(id)))
+          .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
       }
     }
 
-    def getStatus(learningPathSummaryTry: Try[LearningPathSummary]): String = {
+    def getStatus(learningPathSummaryTry: Try[LearningPathSummaryV2]): String = {
       learningPathSummaryTry match {
         case Success(_) => "OK"
         case Failure(f) => f.getMessage
       }
     }
 
-    def doImport(nodeId: String): Try[LearningPathSummary] = {
+    def doImport(nodeId: String): Try[LearningPathSummaryV2] = {
       for {
         metaData <- migrationApiClient.getLearningPath(nodeId)
         converted <- Try(upload(metaData))
         indexed <- searchIndexService.indexDocument(converted)
-      } yield converterService.asApiLearningpathSummary(converted)
+      } yield converterService.asApiLearningpathSummaryV2(converted, Language.AllLanguages).get
     }
 
     def upload(mainImport: MainPackageImport): LearningPath = {
@@ -211,4 +211,5 @@ trait ImportServiceComponent {
     }
 
   }
+
 }

@@ -26,8 +26,8 @@ trait ConverterServiceComponent {
   val converterService: ConverterService
 
   class ConverterService {
-    def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
-      domain.EmbedUrl(embedUrl.url, embedUrl.language, EmbedType.valueOfOrError(embedUrl.embedType))
+    def asEmbedUrlV2(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
+      domain.EmbedUrl(embedUrl.url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def asDescription(description: api.Description): domain.Description = {
@@ -82,25 +82,6 @@ trait ConverterServiceComponent {
       domain.Author(author.`type`, author.name)
     }
 
-    def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): api.LearningPath = {
-      api.LearningPath(lp.id.get,
-        lp.revision.get,
-        lp.isBasedOn,
-        lp.title.map(asApiTitle),
-        lp.description.map(asApiDescription),
-        createUrlToLearningPath(lp),
-        lp.learningsteps.map(ls => asApiLearningStepSummary(ls, lp)).toList.sortBy(_.seqNo),
-        createUrlToLearningSteps(lp),
-        lp.coverPhotoId.flatMap(asCoverPhoto),
-        lp.duration,
-        lp.status.toString,
-        lp.verificationStatus.toString,
-        lp.lastUpdated,
-        lp.tags.map(asApiLearningPathTags),
-        asApiCopyright(lp.copyright),
-        lp.canEdit(user))
-    }
-
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
       if (languageIsNotSupported(supportedLanguages, language)) return None
@@ -142,21 +123,6 @@ trait ConverterServiceComponent {
         .map(x => api.Introduction(x.description, x.language))
     }
 
-    def asApiLearningpathSummary(learningpath: domain.LearningPath): api.LearningPathSummary = {
-      api.LearningPathSummary(learningpath.id.get,
-        learningpath.title.map(asApiTitle),
-        learningpath.description.map(asApiDescription),
-        getApiIntroduction(learningpath.learningsteps),
-        createUrlToLearningPath(learningpath),
-        learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
-        learningpath.duration,
-        learningpath.status.toString,
-        learningpath.lastUpdated,
-        learningpath.tags.map(asApiLearningPathTags),
-        asApiCopyright(learningpath.copyright),
-        learningpath.isBasedOn)
-    }
-
     def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
       supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
     }
@@ -190,32 +156,15 @@ trait ConverterServiceComponent {
       )
     }
 
-    def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
-      api.LearningStep(
-        ls.id.get,
-        ls.revision.get,
-        ls.seqNo,
-        ls.title.map(asApiTitle),
-        ls.description.map(asApiDescription),
-        ls.embedUrl.map(asApiEmbedUrl),
-        ls.showTitle,
-        ls.`type`.toString,
-        ls.license.map(asApiLicense),
-        createUrlToLearningStep(ls, lp),
-        lp.canEdit(user),
-        ls.status.toString)
-    }
-
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
       if (languageIsNotSupported(supportedLanguages, language)) return None
-
 
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
       val description = findByLanguageOrBestEffort(ls.description, Some(language)).map(asApiDescription)
-      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrl)
+      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2)
 
 
       Some(api.LearningStepV2(
@@ -233,16 +182,6 @@ trait ConverterServiceComponent {
         ls.status.toString,
         supportedLanguages
       ))
-    }
-
-    def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): api.LearningStepSummary = {
-      api.LearningStepSummary(
-        ls.id.get,
-        ls.seqNo,
-        ls.title.map(asApiTitle),
-        ls.`type`.toString,
-        createUrlToLearningStep(ls, lp)
-      )
     }
 
     def asApiLearningStepSummaryV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String): Option[api.LearningStepSummaryV2] = {
@@ -301,8 +240,8 @@ trait ConverterServiceComponent {
       api.Description(description.description, description.language)
     }
 
-    def asApiEmbedUrl(embedUrl: domain.EmbedUrl): api.EmbedUrl = {
-      api.EmbedUrl(embedUrl.url, embedUrl.language, embedUrl.embedType.toString)
+    def asApiEmbedUrlV2(embedUrl: domain.EmbedUrl): api.EmbedUrlV2 = {
+      api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {
@@ -317,7 +256,7 @@ trait ConverterServiceComponent {
       s"${ApplicationUrl.get}${lp.id.get}"
     }
 
-    def createUrlToLearningPath(lp: api.LearningPath): String = {
+    def createUrlToLearningPath(lp: api.LearningPathV2): String = {
       s"${ApplicationUrl.get}${lp.id}"
     }
 
@@ -325,4 +264,5 @@ trait ConverterServiceComponent {
       s"http://$InternalImageApiUrl/$imageId"
     }
   }
+
 }
