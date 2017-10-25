@@ -226,16 +226,6 @@ trait ConverterServiceComponent {
       x
     }
 
-    def asApiLearningStepSummary(ls: domain.LearningStep, lp: domain.LearningPath): api.LearningStepSummary = {
-      api.LearningStepSummary(
-        ls.id.get,
-        ls.seqNo,
-        ls.title.map(asApiTitle),
-        ls.`type`.toString,
-        createUrlToLearningStep(ls, lp)
-      )
-    }
-
     def asApiLearningStepSummaryV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String): Option[api.LearningStepSummaryV2] = {
       findByLanguageOrBestEffort(ls.title, Some(language)).map(title =>
         api.LearningStepSummaryV2(

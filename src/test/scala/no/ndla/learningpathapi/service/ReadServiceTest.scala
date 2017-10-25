@@ -125,48 +125,48 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   test("That learningstepsFor returns None when the learningPath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.ACTIVE)
+      service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb")
     }
   }
 
-  test("That learningstepsFor returns an empty list if the learningPath does not have any learningsteps") {
+  test("That learningstepsFor returns None the learningPath does not have any learningsteps") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List())
-    assertResult(0) {
-      service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.ACTIVE).get.length
+    assertResult(None) {
+      service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb")
     }
   }
 
   test("That learningstepsFor returns only active steps when specifying status active") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
-    val learningSteps = service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.ACTIVE)
+    val learningSteps = service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb")
     learningSteps.isDefined should be (true)
-    learningSteps.get.size should be (2)
-    learningSteps.get.head.id should equal (STEP1.id.get)
-    learningSteps.get.last.id should equal (STEP3.id.get)
+    learningSteps.get.learningsteps.size should be (2)
+    learningSteps.get.learningsteps.head.id should equal (STEP1.id.get)
+    learningSteps.get.learningsteps.last.id should equal (STEP3.id.get)
   }
 
   test("That learningstepsFor returns only deleted steps when specifying status deleted") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID)).thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
-    val learningSteps = service.learningstepsForWithStatus(PUBLISHED_ID, StepStatus.DELETED)
+    val learningSteps = service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.DELETED, "nb")
     learningSteps.isDefined should be (true)
-    learningSteps.get.size should be (1)
-    learningSteps.get.head.id should equal (STEP2.id.get)
+    learningSteps.get.learningsteps.size should be (1)
+    learningSteps.get.learningsteps.head.id should equal (STEP2.id.get)
   }
 
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.learningstepsForWithStatus(PRIVATE_ID, StepStatus.ACTIVE) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb") }.getMessage
     }
   }
 
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.learningstepsForWithStatus(PRIVATE_ID, StepStatus.ACTIVE, Some(PUBLISHED_OWNER)) }.getMessage
+      intercept[AccessDeniedException] { service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", Some(PUBLISHED_OWNER)) }.getMessage
     }
   }
 
@@ -174,7 +174,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PRIVATE_ID)).thenReturn(List(STEP1, STEP2))
     assertResult(2) {
-      service.learningstepsForWithStatus(PRIVATE_ID, StepStatus.ACTIVE, Some(PRIVATE_OWNER)).get.length
+      service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", Some(PRIVATE_OWNER)).get.learningsteps.length
     }
   }
 
