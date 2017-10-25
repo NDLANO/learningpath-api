@@ -53,7 +53,7 @@ trait ImportServiceComponent {
         metaData <- migrationApiClient.getLearningPath(nodeId)
         converted <- Try(upload(metaData))
         indexed <- searchIndexService.indexDocument(converted)
-      } yield converterService.asApiLearningpathSummaryV2(converted, Language.DefaultLanguage).get //TODO: Revisit (is it okay to return DefaultLanguage?)
+      } yield converterService.asApiLearningpathSummaryV2(converted, Language.AllLanguages).get
     }
 
     def upload(mainImport: MainPackageImport): LearningPath = {
