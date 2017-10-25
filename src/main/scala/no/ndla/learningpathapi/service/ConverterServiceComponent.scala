@@ -86,26 +86,6 @@ trait ConverterServiceComponent {
       domain.Author(author.`type`, author.name)
     }
 
-    /* TODO: Remove
-    def asApiLearningpath(lp: domain.LearningPath, user: Option[String]): api.LearningPath = {
-      api.LearningPath(lp.id.get,
-        lp.revision.get,
-        lp.isBasedOn,
-        lp.title.map(asApiTitle),
-        lp.description.map(asApiDescription),
-        createUrlToLearningPath(lp),
-        lp.learningsteps.map(ls => asApiLearningStepSummary(ls, lp)).toList.sortBy(_.seqNo),
-        createUrlToLearningSteps(lp),
-        lp.coverPhotoId.flatMap(asCoverPhoto),
-        lp.duration,
-        lp.status.toString,
-        lp.verificationStatus.toString,
-        lp.lastUpdated,
-        lp.tags.map(asApiLearningPathTags),
-        asApiCopyright(lp.copyright),
-        lp.canEdit(user))
-    }*/
-
     def asApiLearningpathV2(lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
       if (languageIsNotSupported(supportedLanguages, language)) return None

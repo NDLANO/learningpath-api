@@ -35,24 +35,6 @@ trait SearchServiceComponent extends LazyLogging {
   val searchService: SearchService
 
   class SearchService {
-    /*
-    //TODO: Remove
-      def getHits(response: JestSearchResult): Seq[LearningPathSummary] = {
-        var resultList = Seq[LearningPathSummary]()
-        response.getTotal match {
-          case count: Integer if count > 0 => {
-            val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
-            val iterator = resultArray.iterator()
-            while (iterator.hasNext) {
-              resultList = resultList :+ hitAsLearningPathSummary(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject])
-            }
-            resultList
-          }
-          case _ => Seq()
-        }
-      }
-      */
-
     def getHitsV2(response: JestSearchResult, language: String): Seq[LearningPathSummaryV2] = {
       var resultList = Seq[LearningPathSummaryV2]()
       response.getTotal match {
