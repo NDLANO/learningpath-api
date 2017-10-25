@@ -29,10 +29,6 @@ trait ReadServiceComponent {
       learningPathRepository.allPublishedContributors.map(author => Author(author.`type`, author.name))
     }
 
-    def withOwner(owner: String): List[LearningPathSummary] = {
-      learningPathRepository.withOwner(owner).map(converterService.asApiLearningpathSummary)
-    }
-
     def withOwnerV2(owner: String, language: String): List[LearningPathSummaryV2] = {
       learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
     }

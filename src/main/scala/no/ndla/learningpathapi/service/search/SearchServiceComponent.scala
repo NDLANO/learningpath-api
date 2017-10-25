@@ -14,7 +14,7 @@ import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
 import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummary, LearningPathSummaryV2, License, Error}
+import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummaryV2, License, Error}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
@@ -35,20 +35,23 @@ trait SearchServiceComponent extends LazyLogging {
   val searchService: SearchService
 
   class SearchService {
-    def getHits(response: JestSearchResult): Seq[LearningPathSummary] = {
-      var resultList = Seq[LearningPathSummary]()
-      response.getTotal match {
-        case count: Integer if count > 0 => {
-          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
-          val iterator = resultArray.iterator()
-          while (iterator.hasNext) {
-            resultList = resultList :+ hitAsLearningPathSummary(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject])
+    /*
+    //TODO: Remove
+      def getHits(response: JestSearchResult): Seq[LearningPathSummary] = {
+        var resultList = Seq[LearningPathSummary]()
+        response.getTotal match {
+          case count: Integer if count > 0 => {
+            val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
+            val iterator = resultArray.iterator()
+            while (iterator.hasNext) {
+              resultList = resultList :+ hitAsLearningPathSummary(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject])
+            }
+            resultList
           }
-          resultList
+          case _ => Seq()
         }
-        case _ => Seq()
       }
-    }
+      */
 
     def getHitsV2(response: JestSearchResult, language: String): Seq[LearningPathSummaryV2] = {
       var resultList = Seq[LearningPathSummaryV2]()
@@ -63,11 +66,6 @@ trait SearchServiceComponent extends LazyLogging {
         }
         case _ => Seq()
       }
-    }
-
-    def hitAsLearningPathSummary(jsonObject: JsonObject): LearningPathSummary = {
-      implicit val formats = org.json4s.DefaultFormats
-      searchConverterService.asApiLearningPathSummary(read[SearchableLearningPath](jsonObject.toString))
     }
 
     def hitAsLearningPathSummaryV2(jsonObject: JsonObject, language: String): LearningPathSummaryV2 = {

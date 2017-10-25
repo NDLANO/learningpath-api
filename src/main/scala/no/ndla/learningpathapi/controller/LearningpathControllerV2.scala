@@ -68,7 +68,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     val getLearningpathsPost =
-      (apiOperation[List[SearchResult]]("searchArticles")
+      (apiOperation[List[SearchResultV2]]("searchArticles")
         summary "Show all articles"
         notes "Shows all articles. You can search it too."
         parameters(

@@ -147,21 +147,6 @@ trait ConverterServiceComponent {
         .map(x => api.Introduction(x.description, x.language))
     }
 
-    def asApiLearningpathSummary(learningpath: domain.LearningPath): api.LearningPathSummary = {
-      api.LearningPathSummary(learningpath.id.get,
-        learningpath.title.map(asApiTitle),
-        learningpath.description.map(asApiDescription),
-        getApiIntroduction(learningpath.learningsteps),
-        createUrlToLearningPath(learningpath),
-        learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
-        learningpath.duration,
-        learningpath.status.toString,
-        learningpath.lastUpdated,
-        learningpath.tags.map(asApiLearningPathTags),
-        asApiCopyright(learningpath.copyright),
-        learningpath.isBasedOn)
-    }
-
     def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
       supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
     }

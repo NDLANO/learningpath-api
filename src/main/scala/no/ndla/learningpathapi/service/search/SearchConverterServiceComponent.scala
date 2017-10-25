@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.service.search
 
 import no.ndla.learningpathapi.integration.ImageApiClientComponent
-import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummary, LearningPathSummaryV2}
+import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain.Language.{DefaultLanguage, findByLanguageOrBestEffort}
 import no.ndla.learningpathapi.model.domain._
@@ -79,23 +79,6 @@ trait SearchConverterServiceComponent {
           ).filter(_._1.isDefined).map(tuple => Introduction(tuple._1.get, tuple._2))
         }
       }
-    }
-
-    def asApiLearningPathSummary(searchableLearningPath: SearchableLearningPath): LearningPathSummary = {
-      LearningPathSummary(
-        searchableLearningPath.id,
-        asApiTitle(searchableLearningPath.titles),
-        asApiDescription(searchableLearningPath.descriptions),
-        asApiIntroduction(searchableLearningPath.learningsteps.find(_.stepType == StepType.INTRODUCTION.toString)),
-        createUrlToLearningPath(searchableLearningPath.id),
-        searchableLearningPath.coverPhotoUrl,
-        searchableLearningPath.duration,
-        searchableLearningPath.status,
-        searchableLearningPath.lastUpdated,
-        asApiLearningPathTag(searchableLearningPath.tags),
-        searchableLearningPath.copyright,
-        searchableLearningPath.isBasedOn
-      )
     }
 
     def asApiLearningPathSummaryV2(searchableLearningPath: SearchableLearningPath, language: String): LearningPathSummaryV2 = {
