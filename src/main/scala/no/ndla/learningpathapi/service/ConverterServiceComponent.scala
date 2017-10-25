@@ -160,7 +160,6 @@ trait ConverterServiceComponent {
       val supportedLanguages = findSupportedLanguages(ls)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
-
       val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
@@ -168,7 +167,7 @@ trait ConverterServiceComponent {
       val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2)
 
 
-      val x = Some(api.LearningStepV2(
+      Some(api.LearningStepV2(
         ls.id.get,
         ls.revision.get,
         ls.seqNo,
@@ -183,7 +182,6 @@ trait ConverterServiceComponent {
         ls.status.toString,
         supportedLanguages
       ))
-      x
     }
 
     def asApiLearningStepSummaryV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String): Option[api.LearningStepSummaryV2] = {
@@ -266,4 +264,5 @@ trait ConverterServiceComponent {
       s"http://$InternalImageApiUrl/$imageId"
     }
   }
+
 }

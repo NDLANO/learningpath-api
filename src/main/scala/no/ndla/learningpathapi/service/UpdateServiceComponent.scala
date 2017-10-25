@@ -66,20 +66,6 @@ trait UpdateServiceComponent {
       }
     }
 
-    /*def addLearningPath(newLearningPath: NewLearningPath, owner: String): LearningPath = {
-      val learningPath = domain.LearningPath(None, None, None, None,
-        newLearningPath.title.map(converterService.asTitle),
-        newLearningPath.description.map(converterService.asDescription),
-        newLearningPath.coverPhotoMetaUrl.flatMap(extractImageId),
-        newLearningPath.duration, domain.LearningPathStatus.PRIVATE,
-        LearningPathVerificationStatus.EXTERNAL,
-        clock.now(), newLearningPath.tags.map(converterService.asLearningPathTags), owner,
-        converterService.asCopyright(newLearningPath.copyright), List())
-      learningPathValidator.validate(learningPath)
-
-      converterService.asApiLearningpath(learningPathRepository.insert(learningPath), Option(owner))
-    }*/
-
     def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): Option[LearningPathV2] = {
       val domainTags =
         if (newLearningPath.tags.isEmpty) Seq.empty
