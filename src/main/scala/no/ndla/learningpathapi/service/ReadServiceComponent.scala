@@ -67,13 +67,6 @@ trait ReadServiceComponent {
       }
     }
 
-    /*def learningstepFor(learningPathId: Long, learningstepId: Long, user: Option[String] = None): Option[LearningStep] = {
-      withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) => learningPathRepository.learningStepWithId(learningPathId, learningstepId).map(ls => converterService.asApiLearningStep(ls, lp, user))
-        case None => None
-      }
-    }*/
-
     def learningstepV2For(learningPathId: Long, learningstepId: Long, language: String, user: Option[String] = None): Option[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>

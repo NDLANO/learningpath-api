@@ -110,53 +110,53 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     }
   }
 
-  test("That updateLearningPathStatus returns None when the given ID does not exist") {
+  test("That updateLearningPathStatusV2 returns None when the given ID does not exist") {
     when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(None)
     assertResult(None) {
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER)
+      service.updateLearningPathStatusV2(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER, "nb")
     }
   }
 
-  test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PUBLISHED") {
+  test("That updateLearningPathStatusV2 updates the status when the given user is the owner and the status is PUBLISHED") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PRIVATE))
     when(learningPathRepository.learningPathsWithIsBasedOn(PUBLISHED_ID)).thenReturn(List())
 
     assertResult("PRIVATE") {
-      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER).get.status
+      service.updateLearningPathStatusV2(PUBLISHED_ID, LearningPathStatus.PRIVATE, PUBLISHED_OWNER, "nb").get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
   }
 
-  test("That updateLearningPathStatus updates the status when the given user is the owner and the status is PRIVATE") {
+  test("That updateLearningPathStatusV2 updates the status when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PRIVATE_LEARNINGPATH.copy(status = domain.LearningPathStatus.DELETED))
 
     assertResult("DELETED") {
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.DELETED, PRIVATE_OWNER).get.status
+      service.updateLearningPathStatusV2(PRIVATE_ID, LearningPathStatus.DELETED, PRIVATE_OWNER, "nb").get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
   }
 
-  test("That updateLearningPathStatus updates the status when the given user is the owner and the status is DELETED") {
+  test("That updateLearningPathStatusV2 updates the status when the given user is the owner and the status is DELETED") {
     when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID)).thenReturn(Some(DELETED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(DELETED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PUBLISHED))
 
     assertResult("PUBLISHED") {
-      service.updateLearningPathStatus(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER).get.status
+      service.updateLearningPathStatusV2(PRIVATE_ID, LearningPathStatus.PUBLISHED, PRIVATE_OWNER, "nb").get.status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
     verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
-  test("That updateLearningPathStatus updates isBasedOn when a PUBLISHED path is DELETED") {
+  test("That updateLearningPathStatusV2 updates isBasedOn when a PUBLISHED path is DELETED") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.DELETED))
     when(learningPathRepository.learningPathsWithIsBasedOn(PUBLISHED_ID)).thenReturn(List(DELETED_LEARNINGPATH.copy(id = Some(9), isBasedOn = Some(PUBLISHED_ID)), DELETED_LEARNINGPATH.copy(id = Some(8), isBasedOn = Some(PUBLISHED_ID))))
 
     assertResult("DELETED") {
-      service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.DELETED, PUBLISHED_OWNER).get.status
+      service.updateLearningPathStatusV2(PUBLISHED_ID, LearningPathStatus.DELETED, PUBLISHED_OWNER, "nb").get.status
     }
 
     verify(learningPathRepository, times(3)).update(any[domain.LearningPath])
@@ -164,11 +164,11 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
   }
 
-  test("That updateLearningPathStatus throws an AccessDeniedException when the given user is NOT the owner") {
+  test("That updateLearningPathStatusV2 throws an AccessDeniedException when the given user is NOT the owner") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.updateLearningPathStatus(PUBLISHED_ID, LearningPathStatus.PRIVATE, PRIVATE_OWNER)
+        service.updateLearningPathStatusV2(PUBLISHED_ID, LearningPathStatus.PRIVATE, PRIVATE_OWNER, "nb")
       }.getMessage
     }
   }

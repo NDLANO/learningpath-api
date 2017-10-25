@@ -30,8 +30,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   val license = "publicdomain"
   val copyright = Copyright(license, List(cruz))
 
-  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright)
-  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright)
+  val PUBLISHED_LEARNINGPATH = LearningPath(Some(PUBLISHED_ID), Some(1), None, None, List(Title("Tittel", "nb")), List(), None, Some(1), LearningPathStatus.PUBLISHED, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PUBLISHED_OWNER, copyright)
+  val PRIVATE_LEARNINGPATH = LearningPath(Some(PRIVATE_ID), Some(1), None, None, List(Title("Tittel", "nb")), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.EXTERNAL, new Date(), List(), PRIVATE_OWNER, copyright)
 
   val STEP1 = LearningStep(Some(1), Some(1), None, None, 1, List(Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = true, StepStatus.ACTIVE)
   val STEP2 = LearningStep(Some(2), Some(1), None, None, 2, List(Title("Tittel", "nb")), List(), List(), StepType.TEXT, None, showTitle = false, StepStatus.ACTIVE)
@@ -42,16 +42,16 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
     resetMocks()
   }
 
-  test("That withId returns None when id does not exist") {
+  test("That withIdV2 returns None when id does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      service.withId(PUBLISHED_ID)
+      service.withIdV2(PUBLISHED_ID, "nb")
     }
   }
 
-  test("That withId returns a learningPath when the status is PUBLISHED") {
+  test("That withIdV2 returns a learningPath when the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    val learningPath = service.withId(PUBLISHED_ID)
+    val learningPath = service.withIdV2(PUBLISHED_ID, "nb")
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
@@ -59,7 +59,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
 
   test("That withId returns a learningPath when the status is PUBLISHED and user is not the owner") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    val learningPath = service.withId(PUBLISHED_ID, Some(PRIVATE_OWNER))
+    val learningPath = service.withIdV2(PUBLISHED_ID, "nb", Some(PRIVATE_OWNER))
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
@@ -68,20 +68,20 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment{
   test("That withId throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.withId(PRIVATE_ID) }.getMessage
+      intercept[AccessDeniedException] { service.withIdV2(PRIVATE_ID, "nb") }.getMessage
     }
   }
 
   test("That withId throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.withId(PRIVATE_ID, Some(PUBLISHED_OWNER)) }.getMessage
+      intercept[AccessDeniedException] { service.withIdV2(PRIVATE_ID, "nb", Some(PUBLISHED_OWNER)) }.getMessage
     }
   }
 
   test("That withId returns a learningPath when the status is PRIVATE and user is the owner") {
     when(learningPathRepository.withId(PRIVATE_ID)).thenReturn(Some(PRIVATE_LEARNINGPATH))
-    val learningPath = service.withId(PRIVATE_ID, Some(PRIVATE_OWNER))
+    val learningPath = service.withIdV2(PRIVATE_ID, "nb", Some(PRIVATE_OWNER))
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PRIVATE_ID)
     assert(learningPath.get.status == "PRIVATE")

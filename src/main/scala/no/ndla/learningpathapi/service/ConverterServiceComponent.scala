@@ -323,6 +323,10 @@ trait ConverterServiceComponent {
       s"${ApplicationUrl.get}${lp.id.get}"
     }
 
+    def createUrlToLearningPath(lp: api.LearningPathV2): String = {
+      s"${ApplicationUrl.get}${lp.id}"
+    }
+
     def createUrlToImageApi(imageId: String): String = {
       s"http://$InternalImageApiUrl/$imageId"
     }
