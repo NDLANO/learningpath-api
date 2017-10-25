@@ -26,10 +26,6 @@ trait ConverterServiceComponent {
   val converterService: ConverterService
 
   class ConverterService {
-    /*def asEmbedUrl(embedUrl: api.EmbedUrl): domain.EmbedUrl = {
-      domain.EmbedUrl(embedUrl.url, embedUrl.language, EmbedType.valueOfOrError(embedUrl.embedType))
-    }*/
-
     def asEmbedUrlV2(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
       domain.EmbedUrl(embedUrl.url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
@@ -159,22 +155,6 @@ trait ConverterServiceComponent {
         )
       )
     }
-
-    /*def asApiLearningStep(ls: domain.LearningStep, lp: domain.LearningPath, user: Option[String]): api.LearningStep = {
-      api.LearningStep(
-        ls.id.get,
-        ls.revision.get,
-        ls.seqNo,
-        ls.title.map(asApiTitle),
-        ls.description.map(asApiDescription),
-        ls.embedUrl.map(asApiEmbedUrl),
-        ls.showTitle,
-        ls.`type`.toString,
-        ls.license.map(asApiLicense),
-        createUrlToLearningStep(ls, lp),
-        lp.canEdit(user),
-        ls.status.toString)
-    }*/
 
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
