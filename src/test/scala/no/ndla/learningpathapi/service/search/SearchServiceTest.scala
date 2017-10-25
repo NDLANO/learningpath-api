@@ -187,12 +187,12 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all filtered by id only returns learningpaths with the given ids") {
-    val searchResult = searchService.all(List(1,2), None, Sort.ByTitleAsc, None, None, None)
+    val searchResult = searchService.all(List(1, 2), None, Sort.ByTitleAsc, None, None, None)
     val hits = searchService.getHitsV2(searchResult.response, "nb")
 
-    searchResult.totalCount should be (2)
-    hits.head.id should be (BatmanId)
-    hits.last.id should be (PenguinId)
+    searchResult.totalCount should be(2)
+    hits.head.id should be(BatmanId)
+    hits.last.id should be(PenguinId)
   }
 
   test("That searching only returns documents matching the query") {
@@ -207,8 +207,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(3), "morsom", None, None, Sort.ByTitleAsc, None, None)
     val hits = searchService.getHitsV2(searchResult.response, "nb")
 
-    searchResult.totalCount should be (1)
-    hits.head.id should be (DonaldId)
+    searchResult.totalCount should be(1)
+    hits.head.id should be(DonaldId)
   }
 
   test("That searching only returns documents matching the query in the specified language") {

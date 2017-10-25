@@ -36,8 +36,8 @@ trait ImportServiceComponent {
       migrationApiClient.getAllLearningPathIds match {
         case Failure(f) => Failure(f)
         case Success(liste) => Success(liste
-            .map(id => (id, doImport(id)))
-            .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
+          .map(id => (id, doImport(id)))
+          .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
       }
     }
 
@@ -211,4 +211,5 @@ trait ImportServiceComponent {
     }
 
   }
+
 }

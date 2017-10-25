@@ -14,6 +14,7 @@ import org.scalatra.swagger.annotations._
 import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 
 import scala.annotation.meta.field
+
 @ApiModel(description = "Summary of meta information for a learningpath")
 case class LearningPathSummaryV2(@(ApiModelProperty@field)(description = "The unique id of the learningpath") id: Long,
                                  @(ApiModelProperty@field)(description = "The titles of the learningpath") title: Title,
@@ -26,5 +27,5 @@ case class LearningPathSummaryV2(@(ApiModelProperty@field)(description = "The un
                                  @(ApiModelProperty@field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
                                  @(ApiModelProperty@field)(description = "Searchable tags for the learningpath") tags: LearningPathTags,
                                  @(ApiModelProperty@field)(description = "The contributors of this learningpath") copyright: Copyright,
-                                 @(ApiModelProperty @field)(description = "A list of available languages for this audio") supportedLanguages: Seq[String],
+                                 @(ApiModelProperty@field)(description = "A list of available languages for this audio") supportedLanguages: Seq[String],
                                  @(ApiModelProperty@field)(description = "The id this learningpath is based on, if any") isBasedOn: Option[Long])

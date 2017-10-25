@@ -78,4 +78,5 @@ trait ReadServiceComponent {
       learningPath
     }
   }
+
 }
