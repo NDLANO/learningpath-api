@@ -21,6 +21,8 @@ import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
+import scala.util.Success
+
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
   val license = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
@@ -83,7 +85,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
-    val expected = Some(api.LearningPathSummaryV2(
+    val expected = Success(api.LearningPathSummaryV2(
       1,
       api.Title("tittel", Language.DefaultLanguage),
       api.Description("deskripsjon", Language.DefaultLanguage),

@@ -15,6 +15,8 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import com.netaporter.uri.dsl._
+
+import scala.Option
 import scala.util.{Failure, Success, Try}
 
 
@@ -53,7 +55,8 @@ trait ImportServiceComponent {
         metaData <- migrationApiClient.getLearningPath(nodeId)
         converted <- Try(upload(metaData))
         indexed <- searchIndexService.indexDocument(converted)
-      } yield converterService.asApiLearningpathSummaryV2(converted, Language.AllLanguages).get
+        summary <- converterService.asApiLearningpathSummaryV2(converted, Language.AllLanguages)
+      } yield summary
     }
 
     def upload(mainImport: MainPackageImport): LearningPath = {

@@ -30,7 +30,7 @@ trait ReadServiceComponent {
     }
 
     def withOwnerV2(owner: String, language: String): List[LearningPathSummaryV2] = {
-      learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language))
+      learningPathRepository.withOwner(owner).flatMap(value => converterService.asApiLearningpathSummaryV2(value, language).toOption)
     }
 
     def withIdV2(learningPathId: Long, language: String, user: Option[String] = None): Option[LearningPathV2] = {
