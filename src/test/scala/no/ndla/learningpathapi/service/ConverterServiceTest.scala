@@ -105,7 +105,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       List(Language.DefaultLanguage),
       None
     ))
-    service.asApiLearningpathSummaryV2(domainLearningPath, Language.DefaultLanguage) should equal(expected)
+    service.asApiLearningpathSummaryV2(domainLearningPath) should equal(expected)
   }
 
   test("asApiLearningStepV2 converts domain learningstep to api LearningStepV2") {

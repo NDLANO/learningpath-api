@@ -55,7 +55,7 @@ trait ImportServiceComponent {
         metaData <- migrationApiClient.getLearningPath(nodeId)
         converted <- Try(upload(metaData))
         indexed <- searchIndexService.indexDocument(converted)
-        summary <- converterService.asApiLearningpathSummaryV2(converted, Language.AllLanguages)
+        summary <- converterService.asApiLearningpathSummaryV2(converted)
       } yield summary
     }
 

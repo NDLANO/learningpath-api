@@ -423,14 +423,7 @@ trait LearningpathControllerV2 {
     }
 
     get("/mine/?", operation(getMyLearningpaths)) {
-      val language = paramOrDefault("language", Language.AllLanguages)
-      val myLearningpaths = readService.withOwnerV2(owner = requireUser, language)
-
-      if (myLearningpaths.isEmpty) {
-        halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with language $language not found"))
-      } else {
-        myLearningpaths
-      }
+      readService.withOwnerV2(owner = requireUser)
     }
 
     get("/licenses", operation(getLicenses)) {

@@ -129,35 +129,31 @@ trait ConverterServiceComponent {
       supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
     }
 
-    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath, language: String): Try[api.LearningPathSummaryV2] = {
+    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath): Try[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 
-      if (languageIsNotSupported(supportedLanguages, language)) {
-        Failure(LanguageNotSupportedException(s"Learningpath ${learningpath.id.getOrElse("")} does not support $language"))
-      } else {
-        val title = findByLanguageOrBestEffort(learningpath.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
-        val description = findByLanguageOrBestEffort(learningpath.description, Some(language)).map(asApiDescription).getOrElse(api.Description("", DefaultLanguage))
-        val tags = findByLanguageOrBestEffort(learningpath.tags, Some(language)).map(asApiLearningPathTags).getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
-        val introduction = findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps), Some(language)).getOrElse(api.Introduction("", DefaultLanguage))
+      val title = findByLanguageOrBestEffort(learningpath.title, Some(Language.AllLanguages)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
+      val description = findByLanguageOrBestEffort(learningpath.description, Some(Language.AllLanguages)).map(asApiDescription).getOrElse(api.Description("", DefaultLanguage))
+      val tags = findByLanguageOrBestEffort(learningpath.tags, Some(Language.AllLanguages)).map(asApiLearningPathTags).getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
+      val introduction = findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps), Some(Language.AllLanguages)).getOrElse(api.Introduction("", DefaultLanguage))
 
-        Success(
-          api.LearningPathSummaryV2(
-            learningpath.id.get,
-            title,
-            description,
-            introduction,
-            createUrlToLearningPath(learningpath),
-            learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
-            learningpath.duration,
-            learningpath.status.toString,
-            learningpath.lastUpdated,
-            tags,
-            asApiCopyright(learningpath.copyright),
-            supportedLanguages,
-            learningpath.isBasedOn
-          )
+      Success(
+        api.LearningPathSummaryV2(
+          learningpath.id.get,
+          title,
+          description,
+          introduction,
+          createUrlToLearningPath(learningpath),
+          learningpath.coverPhotoId.flatMap(asCoverPhoto).map(_.url),
+          learningpath.duration,
+          learningpath.status.toString,
+          learningpath.lastUpdated,
+          tags,
+          asApiCopyright(learningpath.copyright),
+          supportedLanguages,
+          learningpath.isBasedOn
         )
-      }
+      )
     }
 
     def asApiLearningStepV2(ls: domain.LearningStep, lp: domain.LearningPath, language: String, user: Option[String]): Option[api.LearningStepV2] = {
