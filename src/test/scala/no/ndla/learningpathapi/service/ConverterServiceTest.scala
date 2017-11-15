@@ -21,11 +21,13 @@ import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 
+import scala.util.Success
+
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
   val license = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
   val copyright = api.Copyright(license, List(clinton))
-  val apiLearningPath = api.LearningPath(1, 1, None, List(), List(), "", List(), "", None, Some(1), "PRIVATE", "", new Date(), List(), copyright, true)
+  val apiLearningPath = api.LearningPathV2(1, 1, None, api.Title("Tittel", "nb"), api.Description("Beskrivelse", "nb"), "", List(), "", None, None, "PRIVATE", "CREATED_BY_NDLA", new Date(), api.LearningPathTags(List(), "nb"), copyright, true, List("nb"))
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
   val domainLearningStep2 = LearningStep(Some(1), Some(1), None, None, 1, List(Title("tittel", "nb")), List(Description("deskripsjon", "nb")), List(), StepType.INTRODUCTION, None)
   val apiTags = List(api.LearningPathTags(Seq("tag"), Language.DefaultLanguage))
@@ -83,7 +85,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
-    val expected = Some(api.LearningPathSummaryV2(
+    val expected = Success(api.LearningPathSummaryV2(
       1,
       api.Title("tittel", Language.DefaultLanguage),
       api.Description("deskripsjon", Language.DefaultLanguage),
@@ -196,21 +198,21 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asEmbedUrl returns embedUrl if embedType is oembed") {
-    service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", "nb", "oembed")) should equal(EmbedUrl("http://test.no/2/oembed/", "nb", EmbedType.OEmbed))
+    service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "oembed"), "nb") should equal(EmbedUrl("http://test.no/2/oembed/", "nb",EmbedType.OEmbed))
   }
 
   test("asEmbedUrl throws error if an not allowed value for embedType is used") {
     assertResult("Validation Error") {
-      intercept[ValidationException] { service.asEmbedUrl(api.EmbedUrl("http://test.no/2/oembed/", "nb", "test")) }.getMessage()
+      intercept[ValidationException] { service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "test"), "nb") }.getMessage()
     }
   }
 
   test("asCoverPhoto converts an image id to CoverPhoto") {
     val imageMeta = ImageMetaInformation("1",
-      "http://image-api.ndla-local/image-api/v1/images/1",
+      "http://image-api.ndla-local/image-api/v2/images/1",
       "http://image-api.ndla-local/image-api/raw/1.jpg",
       1024, "something")
-    val expectedResult = CoverPhoto("http://api-gateway.ndla-local/image-api/raw/1.jpg", "http://api-gateway.ndla-local/image-api/v1/images/1")
+    val expectedResult = CoverPhoto("http://api-gateway.ndla-local/image-api/raw/1.jpg", "http://api-gateway.ndla-local/image-api/v2/images/1")
     when(imageApiClient.imageMetaOnUrl(any[String])).thenReturn(Some(imageMeta))
     val Some(result) = service.asCoverPhoto("1")
 

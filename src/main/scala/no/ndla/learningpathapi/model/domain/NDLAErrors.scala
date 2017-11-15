@@ -18,3 +18,4 @@ class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jes
   def getResponse: JestResult = jestResponse
 }
 class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
+case class LanguageNotSupportedException(message: String) extends RuntimeException(message)
