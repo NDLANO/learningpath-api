@@ -20,6 +20,7 @@ import scalikejdbc.DBSession
 class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   override val importService = new ImportService
+  val CLIENT_ID = "Klient1"
 
   test("That tidyUpDescription returns emtpy string for null") {
     importService.tidyUpDescription(null) should equal("")
@@ -89,7 +90,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
 
-    importService.upload(mainImport)
+    importService.upload(mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).insert(any[LearningPath])
   }
@@ -106,7 +107,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     reset(articleApiClient)
 
-    importService.upload(mainImport)
+    importService.upload(mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
     verify(articleApiClient, times(1)).importArticle("12345")
@@ -114,7 +115,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That duration is calculated correctly") {
     val pakke = packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1)
-    val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None)
+    val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None, CLIENT_ID)
 
     learningPath.duration should be(Some(61))
   }
