@@ -34,7 +34,7 @@ trait ImageApiClientComponent {
     def importImage(externalId: String): Option[ImageMetaInformation] = doRequest(Http(importImageEndpoint.replace(ExternalId, externalId)).timeout(ImageImportTimeout, ImageImportTimeout).method("POST"))
 
     private def doRequest(httpRequest: HttpRequest): Option[ImageMetaInformation] = {
-      ndlaClient.fetch[ImageMetaInformation](httpRequest) match {
+      ndlaClient.fetchWithForwardedAuth[ImageMetaInformation](httpRequest) match {
         case Success(metaInfo) => Some(metaInfo)
         case Failure(hre: HttpRequestException) => if (hre.is404) None else throw hre
         case Failure(ex: Throwable) => throw ex

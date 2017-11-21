@@ -24,7 +24,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
   val DefaultImage = ImageMetaInformation("1", "http://api.test.ndla.no/images/1", "full", 1000, "contentType")
 
   test("That some metaInfo is returned when images is found") {
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Success(DefaultImage))
+    when(ndlaClient.fetchWithForwardedAuth[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Success(DefaultImage))
 
     val imageMeta = imageApiClient.imageMetaWithExternalId("abc")
     imageMeta.isDefined should be (true)
@@ -35,7 +35,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
   test("That none is returned when http 404 is received") {
     val exception = mock[HttpRequestException]
     when(exception.is404).thenReturn(true)
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
+    when(ndlaClient.fetchWithForwardedAuth[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     imageApiClient.imageMetaOnUrl("abc") should be (None)
   }
@@ -43,7 +43,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
   test("That exception is returned when http-error") {
     val exception = mock[HttpRequestException]
     when(exception.is404).thenReturn(false)
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
+    when(ndlaClient.fetchWithForwardedAuth[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     intercept[HttpRequestException]{
       imageApiClient.imageMetaOnUrl("abc")
@@ -55,7 +55,7 @@ class ImageApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   test("That exception is returned for a randomly chosen exception") {
     val exception = mock[NoSuchElementException]
-    when(ndlaClient.fetch[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
+    when(ndlaClient.fetchWithForwardedAuth[ImageMetaInformation](any[HttpRequest])(any[Manifest[ImageMetaInformation]])).thenReturn(Failure(exception))
 
     intercept[NoSuchElementException]{
       imageApiClient.imageMetaWithExternalId("abc")
