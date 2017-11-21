@@ -59,7 +59,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     }
   }
 
-  def requireUser(implicit request: HttpServletRequest): String = {
+  def requireUserId(implicit request: HttpServletRequest): String = {
     AuthUser.get match {
       case Some(user) => user
       case None => {
