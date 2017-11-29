@@ -15,8 +15,7 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import com.netaporter.uri.dsl._
-
-import scala.Option
+import no.ndla.mapping.License._
 import scala.util.{Failure, Success, Try}
 
 
@@ -119,6 +118,22 @@ trait ImportServiceComponent {
       persisted
     }
 
+
+    private[service] def mapOldToNewLicenseKey(license: Option[String]): Option[String] = {
+      license match {
+        case None => None
+        case Some(l) => {
+          val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
+          val newLicense = licenses.getOrElse(l, l)
+          if (getLicense(newLicense).isEmpty) {
+            throw new ImportException(s"License $license is not supported.")
+          }
+          Some(newLicense)
+        }
+      }
+    }
+
+
     def asLearningStep(step: Step, translations: Seq[Step]): LearningStep = {
       val seqNo = step.pos - 1
       val stepType = asLearningStepType(s"${step.stepType}")
@@ -131,7 +146,7 @@ trait ImportServiceComponent {
 
       importArticlesUsedInLearningStep(embedUrls)
 
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license, showTitle)
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, mapOldToNewLicenseKey(step.license), showTitle)
     }
 
     def importArticlesUsedInLearningStep(embedUrls: Seq[EmbedUrl]): Unit = {

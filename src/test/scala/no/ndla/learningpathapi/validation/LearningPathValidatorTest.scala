@@ -27,7 +27,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   }
 
   val trump = Author("author", "Donald Drumpf")
-  val license = "publicdomain"
+  val license = "pd"
   val copyright = Copyright(license, List(trump))
   val ValidLearningPath = LearningPath(
     id = None,
