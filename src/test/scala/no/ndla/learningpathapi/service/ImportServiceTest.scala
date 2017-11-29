@@ -135,11 +135,8 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That mapOldToNewLicenseKey converts nolaw to cc0") {
     importService.mapOldToNewLicenseKey(Some("by-sa")) should be(Some("by-sa"))
   }
-
-
-
+  
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))
   private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, None, language)
   private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, None, language)
-
 }
