@@ -28,7 +28,7 @@ trait ArticleApiClient{
       doRequest(Http(importArticleEndpoint.replace(ExternalId, externalId)).timeout(ArticleImportTimeout, ArticleImportTimeout).method("POST"))
 
     private def doRequest(httpRequest: HttpRequest): Option[ArticleImportStatus] = {
-      ndlaClient.fetch[ArticleImportStatus](httpRequest) match {
+      ndlaClient.fetchWithForwardedAuth[ArticleImportStatus](httpRequest) match {
         case Success(metaInfo) => Some(metaInfo)
         case Failure(hre: HttpRequestException) => if (hre.is404) None else throw hre
         case Failure(ex: Throwable) => throw ex

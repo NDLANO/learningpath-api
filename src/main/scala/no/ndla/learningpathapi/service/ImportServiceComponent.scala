@@ -8,13 +8,13 @@
 
 package no.ndla.learningpathapi.service
 
+import com.netaporter.uri.dsl._
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
 import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-import com.netaporter.uri.dsl._
 import no.ndla.mapping.License._
 import scala.util.{Failure, Success, Try}
 
@@ -29,15 +29,13 @@ trait ImportServiceComponent {
     with ArticleApiClient =>
   val importService: ImportService
 
-  val ImportUserId = "import-user"
-
   class ImportService {
 
-    def importAll: Try[Seq[ImportReport]] = {
+    def importAll(clientId: String): Try[Seq[ImportReport]] = {
       migrationApiClient.getAllLearningPathIds match {
         case Failure(f) => Failure(f)
         case Success(liste) => Success(liste
-          .map(id => (id, doImport(id)))
+          .map(id => (id, doImport(id, clientId)))
           .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
       }
     }
@@ -49,16 +47,16 @@ trait ImportServiceComponent {
       }
     }
 
-    def doImport(nodeId: String): Try[LearningPathSummaryV2] = {
+    def doImport(nodeId: String, clientId: String): Try[LearningPathSummaryV2] = {
       for {
         metaData <- migrationApiClient.getLearningPath(nodeId)
-        converted <- Try(upload(metaData))
+        converted <- Try(upload(metaData, clientId))
         indexed <- searchIndexService.indexDocument(converted)
         summary <- converterService.asApiLearningpathSummaryV2(converted)
       } yield summary
     }
 
-    def upload(mainImport: MainPackageImport): LearningPath = {
+    def upload(mainImport: MainPackageImport, clientId: String): LearningPath = {
       val coverPhoto = mainImport.mainPackage.imageNid.flatMap(img => {
         imageApiClient.imageMetaWithExternalId(img.toString) match {
           case Some(image) => Some(image)
@@ -77,7 +75,7 @@ trait ImportServiceComponent {
 
       val steps = mainImport.mainPackage.steps.map(step => asLearningStep(step, mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))
 
-      val learningPath = asLearningPath(mainImport.mainPackage, titles, descriptions, tags, steps, coverPhoto)
+      val learningPath = asLearningPath(mainImport.mainPackage, titles, descriptions, tags, steps, coverPhoto, clientId)
 
       val persisted = learningPathRepository.withExternalId(learningPath.externalId) match {
         case None => {
@@ -119,18 +117,13 @@ trait ImportServiceComponent {
     }
 
 
-    private[service] def mapOldToNewLicenseKey(license: Option[String]): Option[String] = {
-      license match {
-        case None => None
-        case Some(l) => {
-          val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
-          val newLicense = licenses.getOrElse(l, l)
-          if (getLicense(newLicense).isEmpty) {
-            throw new ImportException(s"License $license is not supported.")
-          }
-          Some(newLicense)
-        }
+    private[service] def oldToNewLicenseKey(license: String): String = {
+      val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
+      val newLicense = licenses.getOrElse(license, license)
+      if (getLicense(newLicense).isEmpty) {
+        throw new ImportException(s"License $license is not supported.")
       }
+      newLicense
     }
 
 
@@ -145,8 +138,7 @@ trait ImportServiceComponent {
       val showTitle = descriptions.nonEmpty
 
       importArticlesUsedInLearningStep(embedUrls)
-
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, mapOldToNewLicenseKey(step.license), showTitle)
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license.map(oldToNewLicenseKey), showTitle)
     }
 
     def importArticlesUsedInLearningStep(embedUrls: Seq[EmbedUrl]): Unit = {
@@ -187,6 +179,15 @@ trait ImportServiceComponent {
       }
     }
 
+    def tidyUpDescription(description: String, allowHtml: Boolean = true): String = {
+      Option(description) match {
+        case None => ""
+        case Some(desc) => {
+          HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
+        }
+      }
+    }
+
     def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
       val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, languageOrUnknown(url.language), EmbedType.OEmbed))
       step.embedUrlToNdlaNo match {
@@ -197,16 +198,7 @@ trait ImportServiceComponent {
       }
     }
 
-    def tidyUpDescription(description: String, allowHtml: Boolean = true): String = {
-      Option(description) match {
-        case None => ""
-        case Some(desc) => {
-          HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
-        }
-      }
-    }
-
-    def asLearningPath(pakke: Package, titles: Seq[Title], descriptions: Seq[Description], tags: Seq[LearningPathTags], learningSteps: Seq[LearningStep], imageUrl: Option[ImageMetaInformation]) = {
+    def asLearningPath(pakke: Package, titles: Seq[Title], descriptions: Seq[Description], tags: Seq[LearningPathTags], learningSteps: Seq[LearningStep], imageUrl: Option[ImageMetaInformation], clientId: String) = {
       val duration = Some((pakke.durationHours * 60) + pakke.durationMinutes)
       val lastUpdated = pakke.lastUpdated
 
@@ -223,7 +215,7 @@ trait ImportServiceComponent {
         LearningPathVerificationStatus.CREATED_BY_NDLA,
         lastUpdated,
         tags,
-        ImportUserId,
+        clientId,
         Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
         learningSteps)
     }

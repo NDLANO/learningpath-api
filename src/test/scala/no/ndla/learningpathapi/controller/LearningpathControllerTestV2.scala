@@ -37,24 +37,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     when(languageValidator.validate(any[String], any[String], any[Boolean])).thenReturn(None)
   }
 
-  test("That requireHeader returns header value when header exists") {
-    implicit val request:HttpServletRequest = mock[HttpServletRequest]
-    when(request.getHeader("username")).thenReturn("verdi")
-    assertResult(Some("verdi")) {
-      controller.requireHeader("username")
-    }
-  }
-
-  test("That requireHeader throws HeaderMissingException if heades does not exist") {
-    implicit val request:HttpServletRequest = mock[HttpServletRequest]
-    when(request.getHeader("username")).thenReturn(null)
-    when(request.getRequestURI).thenReturn(""
-    )
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { controller.requireHeader("username") }.getMessage
-    }
-  }
-
   test("That GET / will send all query-params to the search service") {
     val query = "hoppetau"
     val tag = "lek"

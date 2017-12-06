@@ -20,6 +20,7 @@ import scalikejdbc.DBSession
 class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   override val importService = new ImportService
+  val CLIENT_ID = "Klient1"
 
   test("That tidyUpDescription returns emtpy string for null") {
     importService.tidyUpDescription(null) should equal("")
@@ -89,7 +90,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
 
-    importService.upload(mainImport)
+    importService.upload(mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).insert(any[LearningPath])
   }
@@ -108,7 +109,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     reset(articleApiClient)
 
-    importService.upload(mainImport)
+    importService.upload(mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
     verify(articleApiClient, times(1)).importArticle("12345")
@@ -116,24 +117,24 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That duration is calculated correctly") {
     val pakke = packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1)
-    val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None)
+    val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None, CLIENT_ID)
 
     learningPath.duration should be(Some(61))
   }
 
-  test("That mapOldToNewLicenseKey throws on invalid license") {
+  test("That oldToNewLicenseKey throws on invalid license") {
     assertThrows[ImportException] {
-      importService.mapOldToNewLicenseKey(Some("publicdomain"))
+      importService.oldToNewLicenseKey("publicdomain")
     }
   }
 
-  test("That mapOldToNewLicenseKey converts correctly") {
-    importService.mapOldToNewLicenseKey(Some("nolaw")) should be(Some("cc0"))
-    importService.mapOldToNewLicenseKey(Some("noc")) should be(Some("pd"))
+  test("That oldToNewLicenseKey converts correctly") {
+    importService.oldToNewLicenseKey("nolaw") should be("cc0")
+    importService.oldToNewLicenseKey("noc") should be("pd")
   }
 
-  test("That mapOldToNewLicenseKey does not convert an license that should not be converted") {
-    importService.mapOldToNewLicenseKey(Some("by-sa")) should be(Some("by-sa"))
+  test("That oldToNewLicenseKey does not convert an license that should not be converted") {
+    importService.oldToNewLicenseKey("by-sa") should be("by-sa")
   }
 
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))

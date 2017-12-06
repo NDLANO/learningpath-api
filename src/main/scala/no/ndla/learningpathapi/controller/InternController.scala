@@ -8,12 +8,15 @@
 
 package no.ndla.learningpathapi.controller
 
+import javax.servlet.http.HttpServletRequest
+
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.Error
+import no.ndla.learningpathapi.model.domain.AccessDeniedException
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{ImportServiceComponent, ReadServiceComponent}
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-import no.ndla.network.ApplicationUrl
+import no.ndla.network.{ApplicationUrl, AuthUser}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.{InternalServerError, NotFound, Ok, ScalatraServlet}
@@ -32,10 +35,13 @@ trait InternController {
     before() {
       contentType = formats("json")
       ApplicationUrl.set(request)
+      AuthUser.set(request)
+
     }
 
     after() {
       ApplicationUrl.clear
+      AuthUser.clear()
     }
 
     error {
@@ -43,6 +49,17 @@ trait InternController {
         val error = Error(Error.GENERIC, t.getMessage)
         logger.error(error.toString, t)
         halt(status = 500, body = error)
+      }
+    }
+
+
+    def requireClientId(implicit request: HttpServletRequest): String = {
+      AuthUser.getClientId match {
+        case Some(clientId) => clientId
+        case None => {
+          logger.warn(s"Request made to ${request.getRequestURI} without clientId")
+          throw new AccessDeniedException("You do not have access to the requested resource.")
+        }
       }
     }
 
@@ -70,7 +87,7 @@ trait InternController {
 
     post("/import") {
       val start = System.currentTimeMillis
-      importService.importAll match {
+      importService.importAll(requireClientId) match {
         case Success(importReport) => importReport
         case Failure(ex: Throwable) => {
           val errMsg = s"Import of learningpaths failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
@@ -84,7 +101,7 @@ trait InternController {
       val start = System.currentTimeMillis
       val nodeId = params("node_id")
 
-      importService.doImport(nodeId) match {
+      importService.doImport(nodeId, requireClientId) match {
         case Success(learningPathSummary) => learningPathSummary
         case Failure(ex: Throwable) => {
           val errMsg = s"Import of node with external_id $nodeId failed after ${System.currentTimeMillis - start} ms with error: ${ex.getMessage}\n"
