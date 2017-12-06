@@ -409,7 +409,7 @@ trait LearningpathControllerV2 {
     get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
       val language = paramOrDefault("language", Language.AllLanguages)
 
-      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.DELETED, language, Some(requireUser)) match {
+      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.DELETED, language, Some(requireUserId)) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
@@ -423,7 +423,7 @@ trait LearningpathControllerV2 {
     }
 
     get("/mine/?", operation(getMyLearningpaths)) {
-      readService.withOwnerV2(owner = requireUser)
+      readService.withOwnerV2(owner = requireUserId)
     }
 
     get("/licenses", operation(getLicenses)) {
@@ -437,7 +437,7 @@ trait LearningpathControllerV2 {
 
     post("/", operation(addNewLearningpath)) {
       val newLearningPath = extract[NewLearningPathV2](request.body)
-      updateService.addLearningPathV2(newLearningPath, requireUser) match {
+      updateService.addLearningPathV2(newLearningPath, requireUserId) match {
         case None => halt(status = 404, body = Error(Error.GENERIC, s"The chosen language is not supported"))
         case Some(learningPath) => {
           logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
@@ -449,7 +449,7 @@ trait LearningpathControllerV2 {
     post("/:path_id/copy", operation(copyLearningpath)) {
       val newLearningPath = extract[NewCopyLearningPathV2](request.body)
       val pathId = long("path_id")
-      updateService.newFromExistingV2(pathId, newLearningPath, requireUser) match {
+      updateService.newFromExistingV2(pathId, newLearningPath, requireUserId) match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
         case Some(learningPath) => {
           logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
@@ -459,7 +459,7 @@ trait LearningpathControllerV2 {
     }
 
     patch("/:path_id/?", operation(updateLearningPath)) {
-      val updatedLearningPath = updateService.updateLearningPathV2(long("path_id"), extract[UpdatedLearningPathV2](request.body), requireUser)
+      val updatedLearningPath = updateService.updateLearningPathV2(long("path_id"), extract[UpdatedLearningPathV2](request.body), requireUserId)
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
@@ -471,7 +471,7 @@ trait LearningpathControllerV2 {
 
     post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
       val newLearningStep = extract[NewLearningStepV2](request.body)
-      val createdLearningStep = updateService.addLearningStepV2(long("path_id"), newLearningStep, requireUser)
+      val createdLearningStep = updateService.addLearningStepV2(long("path_id"), newLearningStep, requireUserId)
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {
@@ -485,7 +485,7 @@ trait LearningpathControllerV2 {
       val updatedLearningStep = extract[UpdatedLearningStepV2](request.body)
       val createdLearningStep = updateService.updateLearningStepV2(long("path_id"), long("step_id"),
         updatedLearningStep,
-        requireUser)
+        requireUserId)
 
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
@@ -498,7 +498,7 @@ trait LearningpathControllerV2 {
 
     put("/:path_id/learningsteps/:step_id/seqNo/?", operation(updateLearningstepSeqNo)) {
       val newSeqNo = extract[LearningStepSeqNo](request.body)
-      updateService.updateSeqNo(long("path_id"), long("step_id"), newSeqNo.seqNo, requireUser) match {
+      updateService.updateSeqNo(long("path_id"), long("step_id"), newSeqNo.seqNo, requireUserId) match {
         case Some(seqNo) => seqNo
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
       }
@@ -508,7 +508,7 @@ trait LearningpathControllerV2 {
       val learningStepStatus = extract[LearningStepStatus](request.body)
       val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
 
-      val updatedStep = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), stepStatus, requireUser)
+      val updatedStep = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), stepStatus, requireUserId)
       updatedStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {
@@ -525,7 +525,7 @@ trait LearningpathControllerV2 {
       val updatedLearningPath: Option[LearningPathV2] = updateService.updateLearningPathStatusV2(
         long("path_id"),
         pathStatus,
-        requireUser,
+        requireUserId,
         Language.DefaultLanguage)
 
       updatedLearningPath match {
@@ -538,7 +538,7 @@ trait LearningpathControllerV2 {
     }
 
     delete("/:path_id/?", operation(deleteLearningPath)) {
-      val deleted = updateService.updateLearningPathStatusV2(long("path_id"), LearningPathStatus.DELETED, requireUser, Language.DefaultLanguage)
+      val deleted = updateService.updateLearningPathStatusV2(long("path_id"), LearningPathStatus.DELETED, requireUserId, Language.DefaultLanguage)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
         case Some(learningPath) => {
@@ -549,7 +549,7 @@ trait LearningpathControllerV2 {
     }
 
     delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-      val deleted = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), StepStatus.DELETED, requireUser)
+      val deleted = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), StepStatus.DELETED, requireUserId)
       deleted match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
         case Some(learningStep) => {

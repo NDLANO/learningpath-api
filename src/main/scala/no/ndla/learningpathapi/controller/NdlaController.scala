@@ -59,21 +59,11 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     }
   }
 
-  def requireUser(implicit request: HttpServletRequest): String = {
+  def requireUserId(implicit request: HttpServletRequest): String = {
     AuthUser.get match {
       case Some(user) => user
       case None => {
         logger.warn(s"Request made to ${request.getRequestURI} without authorization")
-        throw new AccessDeniedException("You do not have access to the requested resource.")
-      }
-    }
-  }
-
-  def requireHeader(headerName: String)(implicit request: HttpServletRequest): Option[String] = {
-    request.header(headerName) match {
-      case Some(h) => Some(h)
-      case None => {
-        logger.warn(s"Request made to ${request.getRequestURI} without required header $headerName.")
         throw new AccessDeniedException("You do not have access to the requested resource.")
       }
     }
