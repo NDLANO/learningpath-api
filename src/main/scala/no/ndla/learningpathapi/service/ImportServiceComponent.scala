@@ -15,7 +15,7 @@ import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-
+import no.ndla.mapping.License._
 import scala.util.{Failure, Success, Try}
 
 
@@ -116,6 +116,17 @@ trait ImportServiceComponent {
       persisted
     }
 
+
+    private[service] def oldToNewLicenseKey(license: String): String = {
+      val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
+      val newLicense = licenses.getOrElse(license, license)
+      if (getLicense(newLicense).isEmpty) {
+        throw new ImportException(s"License $license is not supported.")
+      }
+      newLicense
+    }
+
+
     def asLearningStep(step: Step, translations: Seq[Step]): LearningStep = {
       val seqNo = step.pos - 1
       val stepType = asLearningStepType(s"${step.stepType}")
@@ -127,8 +138,7 @@ trait ImportServiceComponent {
       val showTitle = descriptions.nonEmpty
 
       importArticlesUsedInLearningStep(embedUrls)
-
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license, showTitle)
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license.map(oldToNewLicenseKey), showTitle)
     }
 
     def importArticlesUsedInLearningStep(embedUrls: Seq[EmbedUrl]): Unit = {

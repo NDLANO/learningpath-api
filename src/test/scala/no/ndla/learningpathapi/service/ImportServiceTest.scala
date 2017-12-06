@@ -95,10 +95,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(learningPathRepository, times(1)).insert(any[LearningPath])
   }
 
+
+
   test("That importNode updates for an existing node") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
     val sanders = Author("author", "Crazy Bernie")
-    val license = "publicdomain"
+    val license = "pd"
     val copyright = Copyright(license, List(sanders))
     val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
 
@@ -118,6 +120,21 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None, CLIENT_ID)
 
     learningPath.duration should be(Some(61))
+  }
+
+  test("That oldToNewLicenseKey throws on invalid license") {
+    assertThrows[ImportException] {
+      importService.oldToNewLicenseKey("publicdomain")
+    }
+  }
+
+  test("That oldToNewLicenseKey converts correctly") {
+    importService.oldToNewLicenseKey("nolaw") should be("cc0")
+    importService.oldToNewLicenseKey("noc") should be("pd")
+  }
+
+  test("That oldToNewLicenseKey does not convert an license that should not be converted") {
+    importService.oldToNewLicenseKey("by-sa") should be("by-sa")
   }
 
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))

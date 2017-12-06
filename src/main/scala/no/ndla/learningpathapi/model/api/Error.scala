@@ -31,6 +31,7 @@ object Error {
   val REMOTE_ERROR = "REMOTE_ERROR"
   val RESOURCE_OUTDATED = "RESOURCE_OUTDATED"
   val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
+  val IMPORT_FAILED = "IMPORT_FAILED"
 
   val GENERIC_DESCRIPTION = s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
   val VALIDATION_DESCRIPTION = "Validation Error"
