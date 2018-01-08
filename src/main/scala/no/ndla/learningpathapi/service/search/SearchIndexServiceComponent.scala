@@ -30,18 +30,6 @@ trait SearchIndexServiceComponent {
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
-    val langToAnalyzer = Map(
-      NORWEGIAN_BOKMAL -> NorwegianLanguageAnalyzer,
-      NORWEGIAN_NYNORSK -> NorwegianLanguageAnalyzer,
-      ENGLISH -> EnglishLanguageAnalyzer,
-      FRENCH -> FrenchLanguageAnalyzer,
-      GERMAN -> GermanLanguageAnalyzer,
-      SPANISH -> SpanishLanguageAnalyzer,
-      SAMI -> StandardAnalyzer,
-      CHINESE -> ChineseLanguageAnalyzer,
-      UNKNOWN -> StandardAnalyzer
-    )
-
     implicit val formats = org.json4s.DefaultFormats
 
     def indexDocuments: Try[ReindexResult] = {
@@ -220,6 +208,7 @@ trait SearchIndexServiceComponent {
         textField("status"),
         textField("verificationStatus"),
         dateField("lastUpdated"),
+        keywordField("defaultTitle"),
         languageSupportedField("tags", keepRaw = true),
         textField("author"),
         nestedField("learningsteps").fields(

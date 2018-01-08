@@ -157,10 +157,22 @@ trait SearchServiceComponent extends LazyLogging {
     }
 
     def getSortDefinition(sort: Sort.Value, language: String) = {
+      val sortLanguage = language match {
+        case Language.NoLanguage => Language.DefaultLanguage
+        case _ => language
+      }
+
       sort match {
-          //TODO: add defaultTitle
-        case (Sort.ByTitleAsc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByTitleDesc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByTitleAsc) =>
+          language match {
+            case "*" | Language.AllLanguages => fieldSort("defaultTitle").order(SortOrder.ASC).missing("_last")
+            case _ => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
+          }
+        case (Sort.ByTitleDesc) =>
+          language match {
+            case "*" | Language.AllLanguages => fieldSort("defaultTitle").order(SortOrder.DESC).missing("_last")
+            case _ => fieldSort(s"titles.$sortLanguage.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
+          }
         case (Sort.ByDurationAsc) => fieldSort("duration").order(SortOrder.ASC).missing("_last")
         case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
         case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")

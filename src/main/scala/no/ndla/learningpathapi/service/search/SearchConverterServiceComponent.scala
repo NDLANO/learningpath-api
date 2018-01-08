@@ -108,6 +108,11 @@ trait SearchConverterServiceComponent {
 
 
     def asSearchableLearningpath(learningPath: LearningPath): SearchableLearningPath = {
+      val defaultTitle = learningPath.title.sortBy(title => {
+        val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
+        languagePriority.indexOf(title.language)
+      }).lastOption
+
       SearchableLearningPath(
         learningPath.id.get,
         asSearchableTitles(learningPath.title),
@@ -117,6 +122,7 @@ trait SearchConverterServiceComponent {
         learningPath.status.toString,
         learningPath.verificationStatus.toString,
         learningPath.lastUpdated,
+        defaultTitle.map(_.title),
         asSearchableTags(learningPath.tags),
         learningPath.learningsteps.map(asSearchableLearningStep).toList,
         converterService.asApiCopyright(learningPath.copyright),
