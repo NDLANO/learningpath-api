@@ -35,6 +35,7 @@ trait TestEnvironment
   with MigrationApiClient
   with ConverterServiceComponent
   with ElasticClientComponent
+  with Elastic4sClient
   with DatasourceComponent
   with MockitoSugar
   with KeywordsServiceComponent
@@ -69,6 +70,7 @@ trait TestEnvironment
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
   val jestClient = mock[NdlaJestClient]
+  val e4sClient = mock[NdlaE4sClient]
 
   def resetMocks() = {
     Mockito.reset(

@@ -8,6 +8,7 @@
 
 package no.ndla.learningpathapi.model.domain
 
+import com.sksamuel.elastic4s.http.RequestFailure
 import io.searchbox.client.JestResult
 import no.ndla.learningpathapi.model.api.ValidationMessage
 
@@ -18,5 +19,14 @@ class ImportException(message: String) extends  RuntimeException(message)
 class NdlaSearchException(jestResponse: JestResult) extends RuntimeException(jestResponse.getErrorMessage) {
   def getResponse: JestResult = jestResponse
 }
+case class Ndla4sSearchException(rf: RequestFailure) extends RuntimeException(
+  s"""
+     |index: ${rf.error.index.getOrElse("Error did not contain index")}
+     |reason: ${rf.error.reason}
+     |body: ${rf.body}
+     |shard: ${rf.error.shard.getOrElse("Error did not contain shard")}
+     |type: ${rf.error.`type`}
+   """.stripMargin
+)
 class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
 case class LanguageNotSupportedException(message: String) extends RuntimeException(message)

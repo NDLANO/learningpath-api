@@ -13,25 +13,20 @@ import java.util.Calendar
 
 import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.mappings.{MappingContentBuilder, NestedFieldDefinition}
+import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.core.{Bulk, Delete, Index}
-import io.searchbox.indices.aliases.{AddAliasMapping, GetAliases, ModifyAliases, RemoveAliasMapping}
-import io.searchbox.indices.mapping.PutMapping
-import io.searchbox.indices.{CreateIndex, DeleteIndex, IndicesExists}
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.integration.ElasticClientComponent
+import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.domain.Language._
-import no.ndla.learningpathapi.model.domain.{LearningPath, NdlaSearchException, ReindexResult}
+import no.ndla.learningpathapi.model.domain.{LearningPath, ReindexResult}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import org.elasticsearch.ElasticsearchException
 import org.json4s.native.Serialization._
 
 import scala.util.{Failure, Success, Try}
 
 
 trait SearchIndexServiceComponent {
-  this: ElasticClientComponent with SearchConverterServiceComponent with LearningPathRepositoryComponent =>
+  this: Elastic4sClient with SearchConverterServiceComponent with LearningPathRepositoryComponent =>
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
@@ -52,17 +47,17 @@ trait SearchIndexServiceComponent {
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
         val start = System.currentTimeMillis()
-        createIndex().flatMap(indexName => {
+        createIndexWithGeneratedName().flatMap(indexName => {
           val operations = for {
             numIndexed <- sendToElastic(indexName)
             aliasTarget <- aliasTarget
             updatedTarget <- updateAliasTarget(aliasTarget, indexName)
-            deleted <- delete(aliasTarget)
+            deleted <- deleteIndexWithName(aliasTarget)
           } yield numIndexed
 
           operations match {
             case Failure(f) => {
-              delete(Some(indexName))
+              deleteIndexWithName(Some(indexName))
               Failure(f)
             }
             case Success(totalIndexed) => {
@@ -77,15 +72,20 @@ trait SearchIndexServiceComponent {
       for {
         _ <- aliasTarget.map {
           case Some(index) => Success(index)
-          case None => createIndex().map(newIndex => updateAliasTarget(None, newIndex))
+          case None => createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
         }
         indexed <- {
-          val indexRequest = new Index.Builder(write(searchConverterService.asSearchableLearningpath(learningPath)))
-            .index(LearningpathApiProperties.SearchIndex)
-            .`type`(LearningpathApiProperties.SearchDocument)
-            .id(learningPath.id.get.toString).build
+          val source = write(searchConverterService.asSearchableLearningpath(learningPath))
 
-          jestClient.execute(indexRequest).map(_ => learningPath)
+          val response = e4sClient.execute{
+            indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+              .doc(source)
+              .id(learningPath.id.get.toString)
+          }
+          response match {
+            case Success(_) => Success(learningPath)
+            case Failure(ex) => Failure(ex)
+          }
         }
       } yield indexed
     }
@@ -94,28 +94,36 @@ trait SearchIndexServiceComponent {
       for {
         _ <- searchIndexService.aliasTarget.map {
           case Some(index) => Success(index)
-          case None => createIndex().map(newIndex => updateAliasTarget(None, newIndex))
+          case None => createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
         }
         deleted <- {
-          jestClient.execute(
-            new Delete.Builder(s"${learningPath.id.get}").index(LearningpathApiProperties.SearchIndex).`type`(LearningpathApiProperties.SearchDocument).build()
-          )
+          e4sClient.execute{
+            delete(s"${learningPath.id.get}")
+              .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+          }
         }
       } yield deleted
     }
 
-    def createIndex(): Try[String] = {
+    def createIndexWithGeneratedName(): Try[String] = {
       createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
-      if (indexExists(indexName).getOrElse(false)) {
+      if (indexWithNameExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
-        val createIndexResponse = jestClient.execute(new CreateIndex.Builder(indexName)
-          .settings(s"""{"index":{"max_result_window":${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}}}""")
-          .build())
-        createIndexResponse.map(_ => createMapping(indexName)).map(_ => indexName)
+        val response = e4sClient.execute{
+          createIndex(indexName)
+            .mappings(buildMapping)
+            .indexSetting("max_result_window", LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
+        }
+
+        response match {
+          case Success(_) => Success(indexName)
+          case Failure(ex) => Failure(ex)
+        }
+
       }
     }
 
@@ -141,136 +149,136 @@ trait SearchIndexServiceComponent {
     }
 
     private def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Try[Int] = {
-      val bulkBuilder = new Bulk.Builder()
-      learningPaths.foreach(lp => {
-        val source = write(searchConverterService.asSearchableLearningpath(lp))
-        bulkBuilder.addAction(new Index.Builder(source).index(indexName).`type`(LearningpathApiProperties.SearchDocument).id(s"${lp.id.get}").build())
-      })
+      if (learningPaths.isEmpty) {
+        Success(0)
+      } else {
+        val response = e4sClient.execute {
+          bulk(learningPaths.map(lp => {
+            val source = write(searchConverterService.asSearchableLearningpath(lp))
+            indexInto(indexName / LearningpathApiProperties.SearchDocument).doc(source).id(lp.id.get.toString)
+          }))
+        }
 
-      val response = jestClient.execute(bulkBuilder.build())
-      response.map(_ => {
-        logger.info(s"Indexed ${learningPaths.size} documents")
-        learningPaths.size
-      })
+        response match {
+          case Success(_) =>
+            logger.info(s"Indexed ${learningPaths.size} documents")
+            Success(learningPaths.size)
+          case Failure(ex) => Failure(ex)
+        }
+      }
     }
 
-    private def createMapping(indexName: String): Try[String] = {
-      val mappingResponse = jestClient.execute(new PutMapping.Builder(indexName, LearningpathApiProperties.SearchDocument, buildMapping()).build())
-      mappingResponse.map(_ => indexName)
-    }
-
-
-    def delete(optIndexName: Option[String]): Try[_] = {
+    def deleteIndexWithName(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
         case None => Success()
         case Some(indexName) => {
-          if (!indexExists(indexName).getOrElse(false)) {
+          if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
-            jestClient.execute(new DeleteIndex.Builder(indexName).build())
+            e4sClient.execute{
+              deleteIndex(indexName)
+            }
           }
         }
       }
     }
 
     private def aliasTarget: Try[Option[String]] = {
-      val getAliasRequest = new GetAliases.Builder().addIndex(s"${LearningpathApiProperties.SearchIndex}").build()
-      jestClient.execute(getAliasRequest) match {
-        case Success(result) => {
-          val aliasIterator = result.getJsonObject.entrySet().iterator()
-          aliasIterator.hasNext match {
-            case true => Success(Some(aliasIterator.next().getKey))
-            case false => Success(None)
-          }
-        }
-        case Failure(_: NdlaSearchException) => Success(None)
-        case Failure(t: Throwable) => Failure(t)
+      val response = e4sClient.execute{
+        getAliases(Nil, List(LearningpathApiProperties.SearchIndex))
+      }
+
+      response match {
+        case Success(results) => Success(results.result.mappings.headOption.map(t => t._1.name))
+        case Failure(ex) => Failure(ex)
       }
     }
 
     def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
-      if (!indexExists(newIndexName).getOrElse(false)) {
+      if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        val addAliasDefinition = new AddAliasMapping.Builder(newIndexName, LearningpathApiProperties.SearchIndex).build()
-        val modifyAliasRequest = oldIndexName match {
-          case None => new ModifyAliases.Builder(addAliasDefinition).build()
-          case Some(oldIndex) => {
-            new ModifyAliases.Builder(
-              new RemoveAliasMapping.Builder(oldIndex, LearningpathApiProperties.SearchIndex).build()
-            ).addAlias(addAliasDefinition).build()
-          }
+        oldIndexName match {
+          case None =>
+            e4sClient.execute(addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
+          case Some(oldIndex) =>
+            e4sClient.execute{
+              removeAlias(LearningpathApiProperties.SearchIndex).on(oldIndex)
+              addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName)
+            }
         }
-
-        jestClient.execute(modifyAliasRequest)
       }
     }
 
-    private def buildMapping() = {
-      MappingContentBuilder.buildWithName(mapping(LearningpathApiProperties.SearchDocument).fields(
+    private def buildMapping = {
+      mapping(LearningpathApiProperties.SearchDocument).fields(
         intField("id"),
         languageSupportedField("titles", keepRaw = true),
         languageSupportedField("descriptions"),
-        textField("coverPhotoUrl") index "not_analyzed",
+        textField("coverPhotoUrl"),
         intField("duration"),
-        textField("status") index "not_analyzed",
-        textField("verificationStatus") index "not_analyzed",
+        textField("status"),
+        textField("verificationStatus"),
         dateField("lastUpdated"),
         languageSupportedField("tags", keepRaw = true),
         textField("author"),
-        nestedField("learningsteps").as(
-          textField("stepType") index "not_analyzed",
+        nestedField("learningsteps").fields(
+          textField("stepType"),
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
         ),
-        objectField("copyright").as(
-          objectField("license").as(
-            textField("license") index "not_analyzed",
-            textField("description") index "not_analyzed",
-            textField("url") index "not_analyzed"
+        objectField("copyright").fields(
+          objectField("license").fields(
+            textField("license"),
+            textField("description"),
+            textField("url")
           ),
-          nestedField("contributors").as(
-            textField("type") index "not_analyzed",
-            textField("name") index "not_analyzed"
+          nestedField("contributors").fields(
+            textField("type"),
+            textField("name")
           )
         ),
-        booleanField("isBasedOn") index "not_analyzed"
-      ), LearningpathApiProperties.SearchDocument).string()
+        booleanField("isBasedOn")
+      )
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
       if (keepRaw) {
-        new NestedFieldDefinition(fieldName).as(
-          textField(NORWEGIAN_BOKMAL) analyzer langToAnalyzer(NORWEGIAN_BOKMAL) fields (keywordField("raw") index "not_analyzed"),
-          textField(NORWEGIAN_NYNORSK) analyzer langToAnalyzer(NORWEGIAN_NYNORSK) fields (keywordField("raw") index "not_analyzed"),
-          textField(ENGLISH) analyzer langToAnalyzer(ENGLISH) fields (keywordField("raw") index "not_analyzed"),
-          textField(FRENCH) analyzer langToAnalyzer(FRENCH) fields (keywordField("raw") index "not_analyzed"),
-          textField(GERMAN) analyzer langToAnalyzer(GERMAN) fields (keywordField("raw") index "not_analyzed"),
-          textField(SPANISH) analyzer langToAnalyzer(SPANISH) fields (keywordField("raw") index "not_analyzed"),
-          textField(SAMI) analyzer langToAnalyzer(SAMI) fields (keywordField("raw") index "not_analyzed"),
-          textField(CHINESE) analyzer langToAnalyzer(CHINESE) fields (keywordField("raw") index "not_analyzed"),
-          textField(UNKNOWN) analyzer langToAnalyzer(UNKNOWN) fields (keywordField("raw") index "not_analyzed")
+        NestedFieldDefinition(fieldName).fields(
+          textField(NORWEGIAN_BOKMAL).analyzer(langToAnalyzer(NORWEGIAN_BOKMAL)).fields(keywordField("raw")),
+          textField(NORWEGIAN_NYNORSK).analyzer(langToAnalyzer(NORWEGIAN_NYNORSK)).fields(keywordField("raw")),
+          textField(ENGLISH).analyzer(langToAnalyzer(ENGLISH)).fields(keywordField("raw")),
+          textField(FRENCH).analyzer(langToAnalyzer(FRENCH)).fields(keywordField("raw")),
+          textField(GERMAN).analyzer(langToAnalyzer(GERMAN)).fields(keywordField("raw")),
+          textField(SPANISH).analyzer(langToAnalyzer(SPANISH)).fields(keywordField("raw")),
+          textField(SAMI).analyzer(langToAnalyzer(SAMI)).fields(keywordField("raw")),
+          textField(CHINESE).analyzer(langToAnalyzer(CHINESE)).fields(keywordField("raw")),
+          textField(UNKNOWN).analyzer(langToAnalyzer(UNKNOWN)).fields(keywordField("raw"))
         )
       } else {
-        new NestedFieldDefinition(fieldName).as(
-          textField(NORWEGIAN_BOKMAL) analyzer langToAnalyzer(NORWEGIAN_BOKMAL),
-          textField(NORWEGIAN_NYNORSK) analyzer langToAnalyzer(NORWEGIAN_NYNORSK),
-          textField(ENGLISH) analyzer langToAnalyzer(ENGLISH),
-          textField(FRENCH) analyzer langToAnalyzer(FRENCH),
-          textField(GERMAN) analyzer langToAnalyzer(GERMAN),
-          textField(SPANISH) analyzer langToAnalyzer(SPANISH),
-          textField(SAMI) analyzer langToAnalyzer(SAMI),
-          textField(CHINESE) analyzer langToAnalyzer(CHINESE),
-          textField(UNKNOWN) analyzer langToAnalyzer(UNKNOWN)
+        NestedFieldDefinition(fieldName).fields(
+          textField(NORWEGIAN_BOKMAL).analyzer(langToAnalyzer(NORWEGIAN_BOKMAL)),
+          textField(NORWEGIAN_NYNORSK).analyzer(langToAnalyzer(NORWEGIAN_NYNORSK)),
+          textField(ENGLISH).analyzer(langToAnalyzer(ENGLISH)),
+          textField(FRENCH).analyzer(langToAnalyzer(FRENCH)),
+          textField(GERMAN).analyzer(langToAnalyzer(GERMAN)),
+          textField(SPANISH).analyzer(langToAnalyzer(SPANISH)),
+          textField(SAMI).analyzer(langToAnalyzer(SAMI)),
+          textField(CHINESE).analyzer(langToAnalyzer(CHINESE)),
+          textField(UNKNOWN).analyzer(langToAnalyzer(UNKNOWN))
         )
       }
     }
 
-    private def indexExists(indexName: String): Try[Boolean] = {
-      jestClient.execute(new IndicesExists.Builder(indexName).build()) match {
-        case Success(_) => Success(true)
-        case Failure(_: ElasticsearchException) => Success(false)
-        case Failure(t: Throwable) => Failure(t)
+    private def indexWithNameExists(indexName: String): Try[Boolean] = {
+      val response = e4sClient.execute {
+        indexExists(indexName)
+      }
+
+      response match {
+        case Success(resp) if resp.status != 404 => Success(true)
+        case Success(_) => Success(false)
+        case Failure(ex) => Failure(ex)
       }
     }
 

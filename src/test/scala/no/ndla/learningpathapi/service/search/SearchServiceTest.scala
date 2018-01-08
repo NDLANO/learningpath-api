@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service.search
 
 
 import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.learningpathapi.integration.JestClientFactory
+import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, JestClientFactory}
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
@@ -25,6 +25,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val esPort = 9200
 
   override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esPort")
+  override val e4sClient = Elastic4sClientFactory.getClient(searchServer = s"http://localhosT:$esPort")
   override val searchConverterService: SearchConverterService = new SearchConverterService
   override val searchIndexService: SearchIndexService = new SearchIndexService
   override val searchService: SearchService = new SearchService
@@ -94,7 +95,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   override def afterAll() = {
-    searchIndexService.delete(Some(LearningpathApiProperties.SearchIndex))
+    searchIndexService.deleteIndexWithName(Some(LearningpathApiProperties.SearchIndex))
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {

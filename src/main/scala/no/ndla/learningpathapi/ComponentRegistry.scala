@@ -35,6 +35,7 @@ object ComponentRegistry
   with MigrationApiClient
   with ConverterServiceComponent
   with ElasticClientComponent
+  with Elastic4sClient
   with DatasourceComponent
   with ImportServiceComponent
   with KeywordsServiceComponent
@@ -82,4 +83,5 @@ object ComponentRegistry
   lazy val learningPathValidator = new LearningPathValidator
   lazy val learningStepValidator = new LearningStepValidator
   lazy val jestClient = JestClientFactory.getClient()
+  lazy val e4sClient = Elastic4sClientFactory.getClient()
 }
