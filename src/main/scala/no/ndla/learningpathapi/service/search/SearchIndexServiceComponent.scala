@@ -243,31 +243,15 @@ trait SearchIndexServiceComponent {
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
-      if (keepRaw) {
-        NestedFieldDefinition(fieldName).fields(
-          textField(NORWEGIAN_BOKMAL).analyzer(langToAnalyzer(NORWEGIAN_BOKMAL)).fields(keywordField("raw")),
-          textField(NORWEGIAN_NYNORSK).analyzer(langToAnalyzer(NORWEGIAN_NYNORSK)).fields(keywordField("raw")),
-          textField(ENGLISH).analyzer(langToAnalyzer(ENGLISH)).fields(keywordField("raw")),
-          textField(FRENCH).analyzer(langToAnalyzer(FRENCH)).fields(keywordField("raw")),
-          textField(GERMAN).analyzer(langToAnalyzer(GERMAN)).fields(keywordField("raw")),
-          textField(SPANISH).analyzer(langToAnalyzer(SPANISH)).fields(keywordField("raw")),
-          textField(SAMI).analyzer(langToAnalyzer(SAMI)).fields(keywordField("raw")),
-          textField(CHINESE).analyzer(langToAnalyzer(CHINESE)).fields(keywordField("raw")),
-          textField(UNKNOWN).analyzer(langToAnalyzer(UNKNOWN)).fields(keywordField("raw"))
-        )
-      } else {
-        NestedFieldDefinition(fieldName).fields(
-          textField(NORWEGIAN_BOKMAL).analyzer(langToAnalyzer(NORWEGIAN_BOKMAL)),
-          textField(NORWEGIAN_NYNORSK).analyzer(langToAnalyzer(NORWEGIAN_NYNORSK)),
-          textField(ENGLISH).analyzer(langToAnalyzer(ENGLISH)),
-          textField(FRENCH).analyzer(langToAnalyzer(FRENCH)),
-          textField(GERMAN).analyzer(langToAnalyzer(GERMAN)),
-          textField(SPANISH).analyzer(langToAnalyzer(SPANISH)),
-          textField(SAMI).analyzer(langToAnalyzer(SAMI)),
-          textField(CHINESE).analyzer(langToAnalyzer(CHINESE)),
-          textField(UNKNOWN).analyzer(langToAnalyzer(UNKNOWN))
-        )
-      }
+      val languageSupportedField = NestedFieldDefinition(fieldName).fields(
+        keepRaw match {
+          case true => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true).analyzer(langAnalyzer.analyzer).fields(keywordField("raw")))
+          case false => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true).analyzer(langAnalyzer.analyzer))
+        }
+      )
+      languageSupportedField
+
+
     }
 
     private def indexWithNameExists(indexName: String): Try[Boolean] = {

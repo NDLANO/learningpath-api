@@ -313,7 +313,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     def search(query: Option[String], language: Option[String], tag: Option[String], idList: List[Long], sort: Option[String], pageSize: Option[Int], page: Option[Int]): SearchResultV2 = {
-      val searchResult = query match {
+      query match {
         case Some(q) => searchService.matchingQuery(
           query = q,
           withIdIn = idList,
@@ -331,16 +331,6 @@ trait LearningpathControllerV2 {
           page = page,
           pageSize = pageSize)
       }
-
-      val hitResult = searchService.getHitsV2(searchResult.response, language.getOrElse(Language.DefaultLanguage))
-      
-      SearchResultV2(
-        searchResult.totalCount,
-        searchResult.page,
-        searchResult.pageSize,
-        searchResult.language,
-        hitResult
-      )
     }
 
     get("/", operation(getLearningpaths)) {

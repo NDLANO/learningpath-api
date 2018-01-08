@@ -8,6 +8,7 @@
 
 package no.ndla.learningpathapi.model.domain
 
+import com.sksamuel.elastic4s.analyzers._
 import no.ndla.learningpathapi.model.domain
 
 object Language {
@@ -25,6 +26,20 @@ object Language {
   val NoLanguage = ""
   val AllLanguages = "all"
   val UnknownLanguage = "unknown"
+
+  val languageAnalyzers = Seq(
+    LanguageAnalyzer(NORWEGIAN_BOKMAL, NorwegianLanguageAnalyzer),
+    LanguageAnalyzer(NORWEGIAN_NYNORSK, NorwegianLanguageAnalyzer),
+    LanguageAnalyzer(ENGLISH, EnglishLanguageAnalyzer),
+    LanguageAnalyzer(FRENCH, FrenchLanguageAnalyzer),
+    LanguageAnalyzer(GERMAN, GermanLanguageAnalyzer),
+    LanguageAnalyzer(SPANISH, SpanishLanguageAnalyzer),
+    LanguageAnalyzer(SAMI, StandardAnalyzer), // SAMI
+    LanguageAnalyzer(CHINESE, ChineseLanguageAnalyzer),
+    LanguageAnalyzer(UnknownLanguage, NorwegianLanguageAnalyzer)
+  )
+
+  val supportedLanguages = languageAnalyzers.map(_.lang)
 
   def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], lang: Option[String]): Option[P] = {
     def findFirstLanguageMatching(sequence: Seq[P], lang: Seq[String]): Option[P] = {
@@ -101,3 +116,4 @@ object Language {
   }
 }
 
+case class LanguageAnalyzer(lang: String, analyzer: Analyzer)

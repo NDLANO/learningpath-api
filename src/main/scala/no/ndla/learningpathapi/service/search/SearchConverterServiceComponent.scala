@@ -8,6 +8,7 @@
 
 package no.ndla.learningpathapi.service.search
 
+import com.sksamuel.elastic4s.http.search.SearchHit
 import no.ndla.learningpathapi.integration.ImageApiClientComponent
 import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model._
@@ -179,6 +180,39 @@ trait SearchConverterServiceComponent {
     def createUrlToLearningPath(id: Long): String = {
       s"${ApplicationUrl.get}$id"
     }
+
+    def getLanguageFromHit(result: SearchHit): Option[String] = {
+      val sortedInnerHits = result.innerHits.toList.filter(ih => ih._2.total > 0).sortBy{
+        case (_, hit) => hit.max_score
+      }.reverse
+
+      val matchLanguage = sortedInnerHits.headOption.flatMap{
+        case (_, innerHit) =>
+          innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
+            hit.highlight.headOption.map(hl => hl._1.split('.').last)
+          })
+      }
+
+      matchLanguage match {
+        case Some(lang) =>
+          Some(lang)
+        case _ =>
+          val title = result.sourceAsMap.get("title")
+          val titleMap = title.map(tm => {
+            tm.asInstanceOf[Map[String, _]]
+          })
+
+          val languages = titleMap.map(title => title.keySet.toList)
+
+          languages.flatMap(languageList => {
+            languageList.sortBy(lang => {
+              val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
+              languagePriority.indexOf(lang)
+            }).lastOption
+          })
+      }
+    }
+
   }
 
 }

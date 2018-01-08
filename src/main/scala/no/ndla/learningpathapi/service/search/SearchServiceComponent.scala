@@ -9,21 +9,22 @@
 package no.ndla.learningpathapi.service.search
 
 import com.google.gson.{JsonElement, JsonObject}
+import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.typesafe.scalalogging.LazyLogging
-import io.searchbox.core.{Count, Search, SearchResult => JestSearchResult}
-import io.searchbox.params.Parameters
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.integration.ElasticClientComponent
-import no.ndla.learningpathapi.model.api.{Copyright, LearningPathSummaryV2, License, Error}
+import no.ndla.learningpathapi.integration.{Elastic4sClient, ElasticClientComponent}
+import no.ndla.learningpathapi.model.api.{Copyright, Error, LearningPathSummaryV2, License, SearchResultV2}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
-import org.apache.lucene.search.join.ScoreMode
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.searches.ScoreMode
+import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
+import com.sksamuel.elastic4s.searches.sort.SortOrder
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
 import org.elasticsearch.search.builder.SearchSourceBuilder
-import org.elasticsearch.search.sort.{FieldSortBuilder, SortBuilders, SortOrder}
 import org.json4s.native.Serialization._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -31,52 +32,46 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 trait SearchServiceComponent extends LazyLogging {
-  this: SearchIndexServiceComponent with ElasticClientComponent with SearchConverterServiceComponent =>
+  this: SearchIndexServiceComponent with Elastic4sClient with SearchConverterServiceComponent =>
   val searchService: SearchService
 
   class SearchService {
-    def getHitsV2(response: JestSearchResult, language: String): Seq[LearningPathSummaryV2] = {
-      var resultList = Seq[LearningPathSummaryV2]()
-      response.getTotal match {
-        case count: Integer if count > 0 => {
-          val resultArray = response.getJsonObject.get("hits").asInstanceOf[JsonObject].get("hits").getAsJsonArray
-          val iterator = resultArray.iterator()
-          while (iterator.hasNext) {
-            resultList = resultList :+ hitAsLearningPathSummaryV2(iterator.next().asInstanceOf[JsonObject].get("_source").asInstanceOf[JsonObject], language)
-          }
-          resultList
-        }
+    def getHitsV2(response: SearchResponse, language: String): Seq[LearningPathSummaryV2] = {
+      response.totalHits match {
+        case count if count > 0 =>
+          val resultArray = response.hits.hits
+
+          resultArray.map(result => {
+            val matchedLanguage = language match {
+              case Language.AllLanguages | "*" =>
+                searchConverterService.getLanguageFromHit(result).getOrElse(language)
+              case _ => language
+            }
+
+            hitAsLearningPathSummaryV2(result.sourceAsString, matchedLanguage)
+          })
         case _ => Seq()
       }
     }
 
-    def hitAsLearningPathSummaryV2(jsonObject: JsonObject, language: String): LearningPathSummaryV2 = {
+    def hitAsLearningPathSummaryV2(hitString: String, language: String): LearningPathSummaryV2 = {
       implicit val formats = org.json4s.DefaultFormats
-      searchConverterService.asApiLearningPathSummaryV2(read[SearchableLearningPath](jsonObject.toString), language)
+      searchConverterService.asApiLearningPathSummaryV2(read[SearchableLearningPath](hitString), language)
     }
 
-    def all(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      executeSearch(
-        QueryBuilders.boolQuery(),
-        withIdIn,
-        taggedWith,
-        sort,
-        language.getOrElse(LearningpathApiProperties.DefaultLanguage),
-        page,
-        pageSize)
-    }
-
-    def allV2(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResult = {
+    def allV2(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResultV2 = {
 
       val fullQuery = language match {
-        case None => QueryBuilders.boolQuery()
+        case None => boolQuery()
         case Some(language) => {
-          val titleSearch = QueryBuilders.existsQuery(s"titles.$language")
-          val descSearch = QueryBuilders.existsQuery(s"descriptions.$language")
+          val titleSearch = existsQuery(s"titles.$language")
+          val descSearch = existsQuery(s"descriptions.$language")
 
-          QueryBuilders.boolQuery()
-            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg))
-            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg))
+          boolQuery()
+            .should(
+              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg),
+              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg)
+            )
         }
       }
 
@@ -90,79 +85,90 @@ trait SearchServiceComponent extends LazyLogging {
         pageSize)
     }
 
-    def matchingQuery(withIdIn: List[Long], query: String, taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val searchLanguage = language.getOrElse(LearningpathApiProperties.DefaultLanguage)
+    def matchingQuery(withIdIn: List[Long], query: String, taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResultV2 = {
+      val searchLanguage = language match {
+        case None | Some(Language.AllLanguages) => "*"
+        case Some(lang) => lang
+      }
 
-      val titleSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"titles.$searchLanguage")
-      val descSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"descriptions.$searchLanguage")
-      val stepTitleSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"learningsteps.titles.$searchLanguage")
-      val stepDescSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"learningsteps.descriptions.$searchLanguage")
-      val tagSearch = QueryBuilders.simpleQueryStringQuery(query).field(s"tags.$searchLanguage")
-      val authorSearch = QueryBuilders.simpleQueryStringQuery(query).field("author")
+      val titleSearch = simpleStringQuery(query).field(s"titles.$searchLanguage", 2)
+      val descSearch = simpleStringQuery(query).field(s"descriptions.$searchLanguage", 2)
+      val stepTitleSearch = simpleStringQuery(query).field(s"learningsteps.titles.$searchLanguage", 1)
+      val stepDescSearch = simpleStringQuery(query).field(s"learningsteps.descriptions.$searchLanguage", 1)
+      val tagSearch = simpleStringQuery(query).field(s"tags.$searchLanguage", 2)
+      val authorSearch = simpleStringQuery(query).field("author", 1)
 
-      val fullQuery = QueryBuilders.boolQuery()
+      val fullQuery = boolQuery()
         .must(
-          QueryBuilders.boolQuery()
-            .should(QueryBuilders.nestedQuery("titles", titleSearch, ScoreMode.Avg)).boost(2)
-            .should(QueryBuilders.nestedQuery("descriptions", descSearch, ScoreMode.Avg)).boost(2)
-            .should(QueryBuilders.nestedQuery("learningsteps.titles", stepTitleSearch, ScoreMode.Avg)).boost(1)
-            .should(QueryBuilders.nestedQuery("learningsteps.descriptions", stepDescSearch, ScoreMode.Avg)).boost(1)
-            .should(QueryBuilders.nestedQuery("tags", tagSearch, ScoreMode.Avg)).boost(2)
-            .should(authorSearch).boost(1))
+          boolQuery()
+            .should(
+              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg),
+              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg),
+              nestedQuery("learningsteps.titles", stepTitleSearch).scoreMode(ScoreMode.Avg),
+              nestedQuery("learningsteps.descriptions", stepDescSearch).scoreMode(ScoreMode.Avg),
+              nestedQuery("tags", tagSearch).scoreMode(ScoreMode.Avg),
+              authorSearch
+            )
+        )
 
       executeSearch(fullQuery, withIdIn, taggedWith, sort, searchLanguage, page, pageSize)
     }
 
-    def executeSearch(queryBuilder: BoolQueryBuilder, withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResult = {
-      val tagFilteredSearch = taggedWith match {
-        case None => queryBuilder
-        case Some(tag) => queryBuilder.filter(QueryBuilders.nestedQuery("tags", QueryBuilders.termQuery(s"tags.$language.raw", tag), ScoreMode.None))
+    def executeSearch(queryBuilder: BoolQueryDefinition, withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: String, page: Option[Int], pageSize: Option[Int]): SearchResultV2 = {
+      val tagFilter = taggedWith match {
+        case None => None
+        case Some(tag) => Some(nestedQuery("tags", termQuery(s"tags.$language.raw", tag)).scoreMode(ScoreMode.None))
       }
+      val idFilter = if (withIdIn.isEmpty) None else Some(idsQuery(withIdIn))
 
-      val idFilteredSearch = withIdIn match {
-        case head :: tail => tagFilteredSearch.filter(QueryBuilders.idsQuery(LearningpathApiProperties.SearchDocument).addIds(head.toString :: tail.map(_.toString):_*))
-        case Nil => tagFilteredSearch
-      }
-
-      val searchQuery = new SearchSourceBuilder().query(idFilteredSearch).sort(getSortDefinition(sort, language))
+      val filters = List(tagFilter, idFilter)
+      val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      val request = new Search.Builder(searchQuery.toString)
-        .addIndex(LearningpathApiProperties.SearchIndex)
-        .setParameter(Parameters.SIZE, numResults)
-        .setParameter("from", startAt)
-
       val requestedResultWindow = page.getOrElse(1)*numResults
       if(requestedResultWindow > LearningpathApiProperties.ElasticSearchIndexMaxResultWindow) {
         logger.info(s"Max supported results are ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}, user requested ${requestedResultWindow}")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
-      jestClient.execute(request.build()) match {
-        case Success(response) => SearchResult(response.getTotal.toLong, page.getOrElse(1), numResults, language, response)
-        case Failure(f) => errorHandler(Failure(f))
+      e4sClient.execute{
+        search(LearningpathApiProperties.SearchIndex)
+          .size(numResults)
+          .from(startAt)
+          .query(filteredSearch)
+          .sortBy(getSortDefinition(sort, language))
+      } match {
+        case Success(response) =>
+          SearchResultV2(response.result.totalHits, page.getOrElse(1), numResults, language, getHitsV2(response.result, language))
+        case Failure(ex) =>
+          errorHandler(Failure(ex))
       }
     }
 
-    def countDocuments(): Int = {
-      val ret = jestClient.execute(
-        new Count.Builder().addIndex(LearningpathApiProperties.SearchIndex).build()
-      ).map(result => result.getCount.toInt)
-      ret.getOrElse(0)
+    def countDocuments(): Long = {
+      val response = e4sClient.execute{
+        catCount(LearningpathApiProperties.SearchIndex)
+      }
+
+      response match {
+        case Success(resp) => resp.result.count
+        case Failure(_) => 0
+      }
     }
 
-    def getSortDefinition(sort: Sort.Value, language: String): FieldSortBuilder = {
+    def getSortDefinition(sort: Sort.Value, language: String) = {
       sort match {
-        case (Sort.ByDurationAsc) => SortBuilders.fieldSort("duration").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByDurationDesc) => SortBuilders.fieldSort("duration").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByLastUpdatedAsc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByLastUpdatedDesc) => SortBuilders.fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByTitleAsc) => SortBuilders.fieldSort(s"titles.$language.raw").setNestedPath("titles").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByTitleDesc) => SortBuilders.fieldSort(s"titles.$language.raw").setNestedPath("titles").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByRelevanceAsc) => SortBuilders.fieldSort("_score").order(SortOrder.ASC)
-        case (Sort.ByRelevanceDesc) => SortBuilders.fieldSort("_score").order(SortOrder.DESC)
-        case (Sort.ByIdAsc) => SortBuilders.fieldSort("id").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByIdDesc) => SortBuilders.fieldSort("id").order(SortOrder.DESC).missing("_last")
+          //TODO: add defaultTitle
+        case (Sort.ByTitleAsc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByTitleDesc) => fieldSort(s"titles.$language.raw").nestedPath("titles").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByDurationAsc) => fieldSort("duration").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByDurationDesc) => fieldSort("duration").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByLastUpdatedAsc) => fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByLastUpdatedDesc) => fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
+        case (Sort.ByRelevanceAsc) => fieldSort("_score").order(SortOrder.ASC)
+        case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
+        case (Sort.ByIdAsc) => fieldSort("id").order(SortOrder.ASC).missing("_last")
+        case (Sort.ByIdDesc) => fieldSort("id").order(SortOrder.DESC).missing("_last")
       }
     }
 
