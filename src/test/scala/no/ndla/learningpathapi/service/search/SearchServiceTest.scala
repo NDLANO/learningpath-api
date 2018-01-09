@@ -101,7 +101,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
     val englando = DefaultLearningPath.copy(
       id = Some(EnglandoId),
-      title = List(Title("englando", "en")),
+      title = List(Title("Englando", "en")),
       description = List(Description("This is a englando learningpath", "en")),
       duration = Some(5),
       lastUpdated = tomorrowp2,
@@ -327,8 +327,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     hits3.last.id should be(BatmanId)
   }
 
-  //TODO: Search returns multiple languages ("best one")
-  //TODO: test("Search for all languages should return all languages if copyrighted")  MAYBE
   test("That searching for multiple languages returns result in matched language") {
     val searchNb = searchService.matchingQuery(List(), "Urelatert", None, Some("all"), Sort.ByTitleAsc, None, None)
     val searchEn = searchService.matchingQuery(List(), "Unrelated", None, Some("all"), Sort.ByTitleAsc, None, None)
@@ -346,6 +344,19 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchNb.results.head.title.title should be("Urelatert")
     searchNb.results.head.description.description should be("Dette er en urelatert")
     searchNb.results.head.description.language should be("nb")
+  }
+
+  test("That searching for all languages returns multiple languages") {
+    val search = searchService.allV2(List(), None, Sort.ByTitleAsc, Some("all"), None, None)
+
+    search.totalCount should be(5)
+    search.results(0).id should be(BatmanId)
+    search.results(1).id should be(DonaldId)
+    search.results(2).id should be(EnglandoId)
+    search.results(2).title.language should be("en")
+    search.results(3).id should be(PenguinId)
+    search.results(4).id should be(UnrelatedId)
+    search.results(4).title.language should be("nb")
   }
 
   def blockUntil(predicate: () => Boolean) = {
