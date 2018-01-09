@@ -55,14 +55,12 @@ lazy val learningpath_api = (project in file(".")).
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % Log4JVersion,
       "mysql" % "mysql-connector-java" % "5.1.36",
       "org.scalaj" %% "scalaj-http" % "2.3.0",
-      "io.searchbox" % "jest" % "2.0.4", //TODO: remove
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-aws" % Elastic4sVersion,
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
-      "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.16", //TODO: remove
       "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.jsoup" % "jsoup" % "1.7.3",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",

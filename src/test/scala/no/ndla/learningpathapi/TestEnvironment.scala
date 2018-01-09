@@ -10,7 +10,6 @@ package no.ndla.learningpathapi
 
 import javax.sql.DataSource
 
-import io.searchbox.client.JestClient
 import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -34,7 +33,6 @@ trait TestEnvironment
   with ArticleApiClient
   with MigrationApiClient
   with ConverterServiceComponent
-  with ElasticClientComponent
   with Elastic4sClient
   with DatasourceComponent
   with MockitoSugar
@@ -69,14 +67,13 @@ trait TestEnvironment
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
-  val jestClient = mock[NdlaJestClient]
   val e4sClient = mock[NdlaE4sClient]
 
   def resetMocks() = {
     Mockito.reset(
       datasource, learningPathRepository, readService,
       updateService, searchService, searchIndexService, converterService, searchConverterService,
-      languageValidator, titleValidator, jestClient, articleApiClient
+      languageValidator, titleValidator, e4sClient, articleApiClient
     )
   }
 }

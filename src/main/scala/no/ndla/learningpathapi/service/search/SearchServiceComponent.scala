@@ -8,24 +8,20 @@
 
 package no.ndla.learningpathapi.service.search
 
-import com.google.gson.{JsonElement, JsonObject}
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.integration.{Elastic4sClient, ElasticClientComponent}
+import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.api.{Copyright, Error, LearningPathSummaryV2, License, SearchResultV2}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.ScoreMode
 import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-import org.elasticsearch.index.query.{BoolQueryBuilder, QueryBuilders}
-import org.elasticsearch.search.builder.SearchSourceBuilder
 import org.json4s.native.Serialization._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -133,13 +129,13 @@ trait SearchServiceComponent extends LazyLogging {
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      val requestedResultWindow = page.getOrElse(1)*numResults
-      if(requestedResultWindow > LearningpathApiProperties.ElasticSearchIndexMaxResultWindow) {
+      val requestedResultWindow = page.getOrElse(1) * numResults
+      if (requestedResultWindow > LearningpathApiProperties.ElasticSearchIndexMaxResultWindow) {
         logger.info(s"Max supported results are ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
-      e4sClient.execute{
+      e4sClient.execute {
         search(LearningpathApiProperties.SearchIndex)
           .size(numResults)
           .from(startAt)
@@ -154,7 +150,7 @@ trait SearchServiceComponent extends LazyLogging {
     }
 
     def countDocuments(): Long = {
-      val response = e4sClient.execute{
+      val response = e4sClient.execute {
         catCount(LearningpathApiProperties.SearchIndex)
       }
 
@@ -209,16 +205,16 @@ trait SearchServiceComponent extends LazyLogging {
 
     private def errorHandler[T](failure: Failure[T]) = {
       failure match {
-        case Failure(e: NdlaSearchException) => {
-          e.getResponse.getResponseCode match {
+        case Failure(e: Ndla4sSearchException) => {
+          e.rf.status match {
             case notFound: Int if notFound == 404 => {
               logger.error(s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
               throw new IndexNotFoundException(s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex")
             }
             case _ => {
-              logger.error(e.getResponse.getErrorMessage)
-              throw new ElasticsearchException(s"Unable to execute search in ${LearningpathApiProperties.SearchIndex}", e.getResponse.getErrorMessage)
+              logger.error(e.getMessage)
+              throw new ElasticsearchException(s"Unable to execute search in ${LearningpathApiProperties.SearchIndex}", e.getMessage)
             }
           }
 
@@ -239,10 +235,6 @@ trait SearchServiceComponent extends LazyLogging {
       }
     }
 
-    def getOrNone(hit: JsonObject, fieldPath: String): Option[JsonElement] = {
-      Option(hit.get(fieldPath))
-    }
-
     def readToApiCopyright(copyright: Copyright): Copyright = {
       Copyright(
         License(
@@ -251,15 +243,6 @@ trait SearchServiceComponent extends LazyLogging {
           copyright.license.url
         ),
         copyright.contributors)
-    }
-
-    def findValueWithPathAndLanguage(hit: JsonObject, fieldPath: String, language: String): String = {
-      import scala.collection.JavaConversions._
-
-      hit.get(fieldPath).getAsJsonObject.entrySet().to[Seq]find(entry => entry.getKey == language) match {
-        case Some(element) => element.getValue.getAsString
-        case None => ""
-      }
     }
   }
 
