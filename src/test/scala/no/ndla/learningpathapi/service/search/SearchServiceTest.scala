@@ -327,11 +327,25 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     hits3.last.id should be(BatmanId)
   }
 
-  //TODO: Search returns matched language
   //TODO: Search returns multiple languages ("best one")
   //TODO: test("Search for all languages should return all languages if copyrighted")  MAYBE
   test("That searching for multiple languages returns result in matched language") {
+    val searchNb= searchService.matchingQuery(List(), "Urelatert", None, Some("all"), Sort.ByTitleAsc, None, None)
+    val searchEn= searchService.matchingQuery(List(), "Unrelated", None, Some("all"), Sort.ByTitleAsc, None, None)
 
+    searchEn.totalCount should be(1)
+    searchEn.results.head.id should be(UnrelatedId)
+    searchEn.results.head.title.language should be("en")
+    searchEn.results.head.title.title should be("Unrelated")
+    searchEn.results.head.description.description should be("This is unrelated")
+    searchEn.results.head.description.language should be("en")
+
+    searchNb.totalCount should be(1)
+    searchNb.results.head.id should be(UnrelatedId)
+    searchNb.results.head.title.language should be("nb")
+    searchNb.results.head.title.title should be("Urelatert")
+    searchNb.results.head.description.description should be("Dette er en urelatert")
+    searchNb.results.head.description.language should be("nb")
   }
 
   def blockUntil(predicate: () => Boolean) = {
