@@ -195,7 +195,9 @@ trait SearchConverterServiceComponent {
       val matchLanguage = sortedInnerHits.headOption.flatMap{
         case (_, innerHit) =>
           innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
-            hit.highlight.headOption.map(hl => hl._1.split('.').last)
+            hit.highlight.headOption.map(hl => {
+              hl._1.split('.').filterNot(_ == "raw").last
+            })
           })
       }
 
@@ -203,7 +205,7 @@ trait SearchConverterServiceComponent {
         case Some(lang) =>
           Some(lang)
         case _ =>
-          val title = result.sourceAsMap.get("title")
+          val title = result.sourceAsMap.get("titles")
           val titleMap = title.map(tm => {
             tm.asInstanceOf[Map[String, _]]
           })

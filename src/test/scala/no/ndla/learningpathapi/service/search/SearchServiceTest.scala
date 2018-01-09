@@ -330,8 +330,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   //TODO: Search returns multiple languages ("best one")
   //TODO: test("Search for all languages should return all languages if copyrighted")  MAYBE
   test("That searching for multiple languages returns result in matched language") {
-    val searchNb= searchService.matchingQuery(List(), "Urelatert", None, Some("all"), Sort.ByTitleAsc, None, None)
-    val searchEn= searchService.matchingQuery(List(), "Unrelated", None, Some("all"), Sort.ByTitleAsc, None, None)
+    val searchNb = searchService.matchingQuery(List(), "Urelatert", None, Some("all"), Sort.ByTitleAsc, None, None)
+    val searchEn = searchService.matchingQuery(List(), "Unrelated", None, Some("all"), Sort.ByTitleAsc, None, None)
 
     searchEn.totalCount should be(1)
     searchEn.results.head.id should be(UnrelatedId)

@@ -104,15 +104,17 @@ trait SearchServiceComponent extends LazyLogging {
       val tagSearch = simpleStringQuery(query).field(s"tags.$searchLanguage", 2)
       val authorSearch = simpleStringQuery(query).field("author", 1)
 
+      val hi = highlight("*").preTag("").postTag("").numberOfFragments(0)
+
       val fullQuery = boolQuery()
         .must(
           boolQuery()
             .should(
-              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg).boost(1),
-              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg).boost(1),
-              nestedQuery("learningsteps.titles", stepTitleSearch).scoreMode(ScoreMode.Avg).boost(1),
-              nestedQuery("learningsteps.descriptions", stepDescSearch).scoreMode(ScoreMode.Avg).boost(1),
-              nestedQuery("tags", tagSearch).scoreMode(ScoreMode.Avg).boost(1),
+              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg).boost(1).inner(innerHits("titles").highlighting(hi)),
+              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg).boost(1).inner(innerHits("descriptions").highlighting(hi)),
+              nestedQuery("learningsteps.titles", stepTitleSearch).scoreMode(ScoreMode.Avg).boost(1).inner(innerHits("learningsteps.titles").highlighting(hi)),
+              nestedQuery("learningsteps.descriptions", stepDescSearch).scoreMode(ScoreMode.Avg).boost(1).inner(innerHits("learningsteps.descriptions").highlighting(hi)),
+              nestedQuery("tags", tagSearch).scoreMode(ScoreMode.Avg).boost(1).inner(innerHits("tags").highlighting(hi)),
               authorSearch
             )
         )
