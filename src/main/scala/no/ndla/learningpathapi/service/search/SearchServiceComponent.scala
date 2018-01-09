@@ -18,6 +18,7 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.ScoreMode
 import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
 import com.sksamuel.elastic4s.searches.sort.SortOrder
@@ -60,10 +61,14 @@ trait SearchServiceComponent extends LazyLogging {
     }
 
     def allV2(withIdIn: List[Long], taggedWith: Option[String], sort: Sort.Value, language: Option[String], page: Option[Int], pageSize: Option[Int]): SearchResultV2 = {
+      val searchLanguage = language match {
+        case None | Some(Language.AllLanguages) => "*"
+        case Some(lang) => lang
+      }
 
-      val fullQuery = language match {
-        case None => boolQuery()
-        case Some(language) => {
+      val fullQuery = searchLanguage match {
+        case "*" => boolQuery()
+        case language => {
           val titleSearch = existsQuery(s"titles.$language")
           val descSearch = existsQuery(s"descriptions.$language")
 
@@ -80,9 +85,10 @@ trait SearchServiceComponent extends LazyLogging {
         withIdIn,
         taggedWith,
         sort,
-        language.getOrElse(LearningpathApiProperties.DefaultLanguage),
+        searchLanguage,
         page,
-        pageSize)
+        pageSize
+      )
     }
 
     def matchingQuery(withIdIn: List[Long], query: String, taggedWith: Option[String], language: Option[String], sort: Sort.Value, page: Option[Int], pageSize: Option[Int]): SearchResultV2 = {
@@ -102,11 +108,11 @@ trait SearchServiceComponent extends LazyLogging {
         .must(
           boolQuery()
             .should(
-              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg),
-              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg),
-              nestedQuery("learningsteps.titles", stepTitleSearch).scoreMode(ScoreMode.Avg),
-              nestedQuery("learningsteps.descriptions", stepDescSearch).scoreMode(ScoreMode.Avg),
-              nestedQuery("tags", tagSearch).scoreMode(ScoreMode.Avg),
+              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg).boost(1),
+              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg).boost(1),
+              nestedQuery("learningsteps.titles", stepTitleSearch).scoreMode(ScoreMode.Avg).boost(1),
+              nestedQuery("learningsteps.descriptions", stepDescSearch).scoreMode(ScoreMode.Avg).boost(1),
+              nestedQuery("tags", tagSearch).scoreMode(ScoreMode.Avg).boost(1),
               authorSearch
             )
         )
@@ -127,7 +133,7 @@ trait SearchServiceComponent extends LazyLogging {
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val requestedResultWindow = page.getOrElse(1)*numResults
       if(requestedResultWindow > LearningpathApiProperties.ElasticSearchIndexMaxResultWindow) {
-        logger.info(s"Max supported results are ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}, user requested ${requestedResultWindow}")
+        logger.info(s"Max supported results are ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
         throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
       }
 
