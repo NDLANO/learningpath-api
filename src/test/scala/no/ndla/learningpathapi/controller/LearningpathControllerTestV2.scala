@@ -13,6 +13,7 @@ import java.util.Date
 import javax.servlet.http.HttpServletRequest
 
 import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
@@ -45,11 +46,10 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     val pageSize = 111
     val ids = "1,2"
 
-    val searchResult = mock[io.searchbox.core.SearchResult]
-    val result = SearchResult(1, 1,1, "nb", searchResult)
+    val result = SearchResultV2(1, 1,1, "nb", Seq(DefaultLearningPathSummary))
 
     when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
-    when(searchService.getHitsV2(searchResult, language)).thenReturn(Seq(DefaultLearningPathSummary))
+    //when(searchService.getHitsV2(searchResult, language)).thenReturn(Seq(DefaultLearningPathSummary))
 
     get("/", Map(
       "query" -> query,
@@ -75,11 +75,9 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     val duration = ""
     val ids = "1,2"
 
-    val searchResult = mock[io.searchbox.core.SearchResult]
-    val result = SearchResult(-1, 1,1, "nb", searchResult)
+    val result = SearchResultV2(-1, 1,1, "nb", Seq(DefaultLearningPathSummary))
 
     when(searchService.allV2(any[List[Long]], any[Option[String]], any[Sort.Value], any[Option[String]], any[Option[Int]], any[Option[Int]])).thenReturn(result)
-    when(searchService.getHitsV2(any[io.searchbox.core.SearchResult], any[String])).thenReturn(Seq(DefaultLearningPathSummary))
 
     get("/", Map(
       "query" -> query,
@@ -104,11 +102,9 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     val page = 22
     val pageSize = 111
 
-    val searchResult = mock[io.searchbox.core.SearchResult]
-    val result = SearchResult(1, page, pageSize, language, searchResult)
+    val result = SearchResultV2(1, page, pageSize, language, Seq(DefaultLearningPathSummary))
 
     when(searchService.matchingQuery(eqTo(List(1,2)), eqTo(query), eqTo(Some(tag)), eqTo(Some(language)), eqTo(Sort.ByDurationDesc), eqTo(Some(page)), eqTo(Some(pageSize)))).thenReturn(result)
-    when(searchService.getHitsV2(any[io.searchbox.core.SearchResult], any[String])).thenReturn(Seq(DefaultLearningPathSummary))
 
     post("/search/", body=s"""{"query": "$query", "tag": "$tag", "language": "$language", "page": $page, "pageSize": $pageSize, "ids": [1, 2], "sort": "-duration" }""") {
       status should equal (200)

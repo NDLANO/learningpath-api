@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service.search
 
 
 import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.learningpathapi.integration.JestClientFactory
+import no.ndla.learningpathapi.integration.Elastic4sClientFactory
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
@@ -24,7 +24,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   val esPort = 9200
 
-  override val jestClient = JestClientFactory.getClient(searchServer = s"http://localhost:$esPort")
+  override val e4sClient = Elastic4sClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService: SearchConverterService = new SearchConverterService
   override val searchIndexService: SearchIndexService = new SearchIndexService
   override val searchService: SearchService = new SearchService
@@ -49,6 +49,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val PenguinId = 1
   val BatmanId = 2
   val DonaldId = 3
+  val UnrelatedId = 4
+  val EnglandoId = 5
 
   override def beforeAll() = {
     searchIndexService.createIndexWithName(LearningpathApiProperties.SearchIndex)
@@ -58,6 +60,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val today = new DateTime().toDate
     val yesterday = new DateTime().minusDays(1).toDate
     val tomorrow = new DateTime().plusDays(1).toDate
+    val tomorrowp1 = new DateTime().plusDays(2).toDate
+    val tomorrowp2 = new DateTime().plusDays(3).toDate
 
     val thePenguin = DefaultLearningPath.copy(
       id = Some(PenguinId),
@@ -79,22 +83,42 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
     val theDuck = DefaultLearningPath.copy(
       id = Some(DonaldId),
-      title = List(Title("Donald er en tøff, rar og morsom and", "nb"), Title("Donald is a weird duck", "nb")),
+      title = List(Title("Donald er en tøff, rar og morsom and", "nb"), Title("Donald is a weird duck", "en")),
       description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", "nb")),
       duration = Some(3),
       lastUpdated = tomorrow,
       tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb"))
     )
 
+    val unrelated = DefaultLearningPath.copy(
+      id = Some(UnrelatedId),
+      title = List(Title("Unrelated", "en"), Title("Urelatert", "nb")),
+      description = List(Description("This is unrelated", "en"), Description("Dette er en urelatert", "nb")),
+      duration = Some(4),
+      lastUpdated = tomorrowp1,
+      tags = List()
+    )
+
+    val englando = DefaultLearningPath.copy(
+      id = Some(EnglandoId),
+      title = List(Title("Englando", "en")),
+      description = List(Description("This is a englando learningpath", "en")),
+      duration = Some(5),
+      lastUpdated = tomorrowp2,
+      tags = List()
+    )
+
     searchIndexService.indexDocument(thePenguin)
     searchIndexService.indexDocument(batman)
     searchIndexService.indexDocument(theDuck)
+    searchIndexService.indexDocument(unrelated)
+    searchIndexService.indexDocument(englando)
 
-    blockUntil(() => searchService.countDocuments() == 3)
+    blockUntil(() => searchService.countDocuments() == 5)
   }
 
   override def afterAll() = {
-    searchIndexService.delete(Some(LearningpathApiProperties.SearchIndex))
+    searchIndexService.deleteIndexWithName(Some(LearningpathApiProperties.SearchIndex))
   }
 
   test("That getStartAtAndNumResults returns default values for None-input") {
@@ -119,76 +143,88 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all learningpaths are returned ordered by title descending") {
-    val searchResult = searchService.all(List(), None, Sort.ByTitleDesc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
-    searchResult.totalCount should be(3)
+    val searchResult = searchService.allV2(List(), None, Sort.ByTitleDesc, Some("nb"), None, None)
+    val hits = searchResult.results
+    searchResult.totalCount should be(4)
 
-    hits.head.id should be(PenguinId)
+    hits(0).id should be(UnrelatedId)
+    hits(1).id should be(PenguinId)
+    hits(2).id should be(DonaldId)
+    hits(3).id should be(BatmanId)
+
   }
 
   test("That all learningpaths are returned ordered by title ascending") {
-    val searchResult = searchService.all(List(), None, Sort.ByTitleAsc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByTitleAsc, Some("nb"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
-    hits.head.id should be(BatmanId)
+    searchResult.totalCount should be(4)
+    hits(0).id should be(BatmanId)
+    hits(1).id should be(DonaldId)
+    hits(2).id should be(PenguinId)
+    hits(3).id should be(UnrelatedId)
   }
 
   test("That all learningpaths are returned ordered by id descending") {
-    val searchResult = searchService.all(List(), None, Sort.ByIdDesc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByIdDesc, Some("nb"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
-    hits.head.id should be(DonaldId)
-    hits.last.id should be(PenguinId)
+    searchResult.totalCount should be(4)
+    hits(0).id should be(UnrelatedId)
+    hits(1).id should be(DonaldId)
+    hits(2).id should be(BatmanId)
+    hits(3).id should be(PenguinId)
   }
 
   test("That all learningpaths are returned ordered by id ascending") {
-    val searchResult = searchService.all(List(), None, Sort.ByIdAsc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByIdAsc, Some("all"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
-    hits.head.id should be(PenguinId)
-    hits.last.id should be(DonaldId)
+    searchResult.totalCount should be(5)
+    hits(0).id should be(PenguinId)
+    hits(1).id should be(BatmanId)
+    hits(2).id should be(DonaldId)
+    hits(3).id should be(UnrelatedId)
+    hits(4).id should be(EnglandoId)
   }
 
   test("That order by durationDesc orders search result by duration descending") {
-    val searchResult = searchService.all(List(), None, Sort.ByDurationDesc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByDurationDesc, Some("nb"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
-    hits.head.id should be(DonaldId)
+    searchResult.totalCount should be(4)
+    hits.head.id should be(UnrelatedId)
   }
 
   test("That order ByDurationAsc orders search result by duration ascending") {
-    val searchResult = searchService.all(List(), None, Sort.ByDurationAsc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByDurationAsc, Some("nb"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
+    searchResult.totalCount should be(4)
     hits.head.id should be(PenguinId)
   }
 
   test("That order ByLastUpdatedDesc orders search result by last updated date descending") {
-    val searchResult = searchService.all(List(), None, Sort.ByLastUpdatedDesc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByLastUpdatedDesc, Some("nb"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
-    hits.head.id should be(DonaldId)
+    searchResult.totalCount should be(4)
+    hits.head.id should be(UnrelatedId)
     hits.last.id should be(PenguinId)
   }
 
   test("That order ByLastUpdatedAsc orders search result by last updated date ascending") {
-    val searchResult = searchService.all(List(), None, Sort.ByLastUpdatedAsc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), None, Sort.ByLastUpdatedAsc, Some("nb"), None, None)
+    val hits = searchResult.results
 
-    searchResult.totalCount should be(3)
+    searchResult.totalCount should be(4)
     hits.head.id should be(PenguinId)
-    hits.last.id should be(DonaldId)
+    hits.last.id should be(UnrelatedId)
   }
 
   test("That all filtered by id only returns learningpaths with the given ids") {
-    val searchResult = searchService.all(List(1, 2), None, Sort.ByTitleAsc, None, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(1, 2), None, Sort.ByTitleAsc, None, None, None)
+    val hits = searchResult.results
 
     searchResult.totalCount should be(2)
     hits.head.id should be(BatmanId)
@@ -197,7 +233,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching only returns documents matching the query") {
     val searchResult = searchService.matchingQuery(List(), "heltene", None, Some("nb"), Sort.ByTitleAsc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(1)
     hits.head.id should be(BatmanId)
@@ -205,7 +241,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That search combined with filter by id only returns documents matching the query with one of the given ids") {
     val searchResult = searchService.matchingQuery(List(3), "morsom", None, None, Sort.ByTitleAsc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(1)
     hits.head.id should be(DonaldId)
@@ -213,15 +249,15 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching only returns documents matching the query in the specified language") {
     val searchResult = searchService.matchingQuery(List(), "guy", None, Some("en"), Sort.ByTitleAsc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(1)
     hits.head.id should be(BatmanId)
   }
 
   test("That filtering on tag only returns documents where the tag is present") {
-    val searchResult = searchService.all(List(), Some("superhelt"), Sort.ByTitleAsc, Some("nb"), None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val searchResult = searchService.allV2(List(), Some("superhelt"), Sort.ByTitleAsc, Some("nb"), None, None)
+    val hits = searchResult.results
 
     searchResult.totalCount should be(2)
     hits.head.id should be(BatmanId)
@@ -230,7 +266,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That filtering on tag combined with search only returns documents where the tag is present and the search matches the query") {
     val searchResult = searchService.matchingQuery(List(), "heltene", Some("kanfly"), Some("nb"), Sort.ByTitleAsc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(1)
     hits.head.id should be(BatmanId)
@@ -238,7 +274,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching and ordering by relevance is returning Donald before Batman when searching for tough weirdos") {
     val searchResult = searchService.matchingQuery(List(), "tøff rar", None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(2)
     hits.head.id should be(DonaldId)
@@ -247,7 +283,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching and ordering by relevance is returning Donald before Batman and the penguin when searching for duck, bat and bird") {
     val searchResult = searchService.matchingQuery(List(), "and flaggermus fugl", None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(3)
     hits.toList(0).id should be(DonaldId)
@@ -257,7 +293,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching and ordering by relevance is not returning Penguin when searching for duck, bat and bird, but filtering on kanfly") {
     val searchResult = searchService.matchingQuery(List(), "and flaggermus fugl", Some("kanfly"), Some("nb"), Sort.ByRelevanceDesc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(2)
     hits.head.id should be(DonaldId)
@@ -266,7 +302,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That a search for flaggremsu returns Donald but not Batman if it is misspelled") {
     val searchResult = searchService.matchingQuery(List(), "and flaggremsu", None, Some("nb"), Sort.ByRelevanceDesc, None, None)
-    val hits = searchService.getHitsV2(searchResult.response, "nb")
+    val hits = searchResult.results
 
     searchResult.totalCount should be(1)
     hits.head.id should be(DonaldId)
@@ -277,18 +313,50 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     searchResult1.totalCount should be(0)
 
     val searchResult2 = searchService.matchingQuery(List(), "tøff + morsom + -and", None, Some("nb"), Sort.ByRelevanceAsc, None, None)
-    val hits2 = searchService.getHitsV2(searchResult2.response, "nb")
+    val hits2 = searchResult2.results
 
     searchResult2.totalCount should be(1)
     hits2.head.id should be(BatmanId)
 
     val searchResult3 = searchService.matchingQuery(List(), "tøff | morsom | kjeltring", None, Some("nb"), Sort.ByRelevanceAsc, None, None)
-    val hits3 = searchService.getHitsV2(searchResult3.response, "nb")
+    val hits3 = searchResult3.results
 
     searchResult3.totalCount should be(3)
     hits3.head.id should be(PenguinId)
     hits3(1).id should be(DonaldId)
     hits3.last.id should be(BatmanId)
+  }
+
+  test("That searching for multiple languages returns result in matched language") {
+    val searchNb = searchService.matchingQuery(List(), "Urelatert", None, Some("all"), Sort.ByTitleAsc, None, None)
+    val searchEn = searchService.matchingQuery(List(), "Unrelated", None, Some("all"), Sort.ByTitleAsc, None, None)
+
+    searchEn.totalCount should be(1)
+    searchEn.results.head.id should be(UnrelatedId)
+    searchEn.results.head.title.language should be("en")
+    searchEn.results.head.title.title should be("Unrelated")
+    searchEn.results.head.description.description should be("This is unrelated")
+    searchEn.results.head.description.language should be("en")
+
+    searchNb.totalCount should be(1)
+    searchNb.results.head.id should be(UnrelatedId)
+    searchNb.results.head.title.language should be("nb")
+    searchNb.results.head.title.title should be("Urelatert")
+    searchNb.results.head.description.description should be("Dette er en urelatert")
+    searchNb.results.head.description.language should be("nb")
+  }
+
+  test("That searching for all languages returns multiple languages") {
+    val search = searchService.allV2(List(), None, Sort.ByTitleAsc, Some("all"), None, None)
+
+    search.totalCount should be(5)
+    search.results(0).id should be(BatmanId)
+    search.results(1).id should be(DonaldId)
+    search.results(2).id should be(EnglandoId)
+    search.results(2).title.language should be("en")
+    search.results(3).id should be(PenguinId)
+    search.results(4).id should be(UnrelatedId)
+    search.results(4).title.language should be("nb")
   }
 
   def blockUntil(predicate: () => Boolean) = {
