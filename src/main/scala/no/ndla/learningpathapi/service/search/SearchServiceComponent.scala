@@ -143,7 +143,7 @@ trait SearchServiceComponent extends LazyLogging {
           .sortBy(getSortDefinition(sort, language))
       } match {
         case Success(response) =>
-          SearchResultV2(response.result.totalHits, page.getOrElse(1), numResults, language, getHitsV2(response.result, language))
+          SearchResultV2(response.result.totalHits, page.getOrElse(1), numResults, if (language == "*") Language.AllLanguages else language, getHitsV2(response.result, language))
         case Failure(ex) =>
           errorHandler(Failure(ex))
       }
