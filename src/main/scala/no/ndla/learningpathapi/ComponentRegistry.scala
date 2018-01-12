@@ -31,7 +31,7 @@ object ComponentRegistry
   with SearchIndexServiceComponent
   with NdlaClient
   with ImageApiClientComponent
-  with ArticleApiClient
+  with ArticleImportClient
   with MigrationApiClient
   with ConverterServiceComponent
   with Elastic4sClient
@@ -72,7 +72,7 @@ object ComponentRegistry
   lazy val resourcesApp = new ResourcesApp
   lazy val ndlaClient = new NdlaClient
   lazy val imageApiClient = new ImageApiClient
-  lazy val articleApiClient = new ArticleApiClient
+  lazy val articleImportClient = new ArticleImportClient
   lazy val importService = new ImportService
   lazy val keywordsService = new KeywordsService
   lazy val migrationApiClient = new MigrationApiClient
