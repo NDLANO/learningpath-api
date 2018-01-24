@@ -107,12 +107,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
-    reset(articleApiClient)
+    reset(articleImportClient)
 
     importService.upload(mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(articleApiClient, times(1)).importArticle("12345")
+    verify(articleImportClient, times(1)).importArticle("12345")
   }
 
   test("That duration is calculated correctly") {

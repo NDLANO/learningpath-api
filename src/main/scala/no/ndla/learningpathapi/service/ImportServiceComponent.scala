@@ -26,7 +26,7 @@ trait ImportServiceComponent {
     with MigrationApiClient
     with SearchIndexServiceComponent
     with ConverterServiceComponent
-    with ArticleApiClient =>
+    with ArticleImportClient =>
   val importService: ImportService
 
   class ImportService {
@@ -146,7 +146,7 @@ trait ImportServiceComponent {
       embedUrls.collect {
         case (embedUrl) if ndlaDomains.contains(embedUrl.url.host.getOrElse("")) =>
           val nodeId = embedUrl.url.path.split("/").lastOption
-          nodeId.foreach(articleApiClient.importArticle)
+          nodeId.foreach(articleImportClient.importArticle)
         case _ =>
       }
     }

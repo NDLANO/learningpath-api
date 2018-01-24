@@ -8,21 +8,21 @@
 package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.LearningpathApiProperties.ArticleApiHost
+import no.ndla.learningpathapi.LearningpathApiProperties.ArticleImportHost
 import no.ndla.network.NdlaClient
 import no.ndla.network.model.HttpRequestException
 
 import scala.util.{Failure, Success}
 import scalaj.http.{Http, HttpRequest}
 
-trait ArticleApiClient{
+trait ArticleImportClient {
   this: NdlaClient =>
-  val articleApiClient: ArticleApiClient
+  val articleImportClient: ArticleImportClient
 
-  class ArticleApiClient extends LazyLogging {
+  class ArticleImportClient extends LazyLogging {
     private val ArticleImportTimeout = 30 * 1000 // 30 seconds
     private val ExternalId = ":external_id"
-    private val importArticleEndpoint = s"http://$ArticleApiHost/intern/import/$ExternalId"
+    private val importArticleEndpoint = s"http://$ArticleImportHost/intern/import/$ExternalId"
 
     def importArticle(externalId: String): Option[ArticleImportStatus] =
       doRequest(Http(importArticleEndpoint.replace(ExternalId, externalId)).timeout(ArticleImportTimeout, ArticleImportTimeout).method("POST"))
