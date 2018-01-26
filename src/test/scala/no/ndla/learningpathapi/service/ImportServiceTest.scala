@@ -10,12 +10,14 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
-import no.ndla.learningpathapi.integration.{MainPackageImport, Package, Step}
+import no.ndla.learningpathapi.integration.{ArticleImportStatus, MainPackageImport, Package, Step, TaxonomyResource}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
+
+import scala.util.Success
 
 class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
@@ -86,16 +88,18 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That importNode inserts for a new node") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", Seq.empty, None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
+
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, Some(1))))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
 
     importService.upload(mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).insert(any[LearningPath])
   }
-
-
 
   test("That importNode updates for an existing node") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
@@ -103,11 +107,14 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val license = "pd"
     val copyright = Copyright(license, List(sanders))
     val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", Seq.empty, None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     reset(articleImportClient)
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, Some(1))))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
 
     importService.upload(mainImport, CLIENT_ID)
 
@@ -116,8 +123,9 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That duration is calculated correctly") {
-    val pakke = packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1)
-    val learningPath = importService.asLearningPath(pakke, Seq(), Seq(), Seq(), Seq(), None, CLIENT_ID)
+    val pakke = MainPackageImport(packageWithNodeId(1).copy(durationHours = 1, durationMinutes = 1), Seq())
+    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq.empty)
+    val learningPath = importService.asLearningPath(pakke, None, CLIENT_ID)
 
     learningPath.duration should be(Some(61))
   }

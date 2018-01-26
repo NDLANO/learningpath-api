@@ -7,7 +7,6 @@
 
 package no.ndla.learningpathapi.integration
 
-import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.ApiGatewayHost
 import no.ndla.network.NdlaClient
 import no.ndla.network.model.HttpRequestException
@@ -20,7 +19,7 @@ trait TaxonomyApiClient {
   this: NdlaClient =>
   val taxononyApiClient: TaxonomyApiClient
 
-  class TaxonomyApiClient extends LazyLogging {
+  class TaxonomyApiClient {
     implicit val formats = org.json4s.DefaultFormats
     private val TaxonomyApiEndpoint = s"http://$ApiGatewayHost/taxonomy/v1"
 
@@ -33,8 +32,8 @@ trait TaxonomyApiClient {
     }
 
     def updateResource(resource: TaxonomyResource): Try[TaxonomyResource] = {
-      put[TaxonomyResource, Any](s"$TaxonomyApiEndpoint/resources/${resource.id}", resource) match {
-        case Success(a) => Success(a)
+      put[String, TaxonomyResource](s"$TaxonomyApiEndpoint/resources/${resource.id}", resource) match {
+        case Success(_) => Success(resource)
         case Failure(ex: HttpRequestException) if ex.httpResponse.exists(_.is2xx) => Success(resource)
         case Failure(ex) => Failure(ex)
       }
@@ -55,7 +54,6 @@ trait TaxonomyApiClient {
     }
 
   }
-
 }
 
 case class TaxonomyResource(id: String, name: String, resourceTypes: Seq[TaxonomyResourceType], contentUri: Option[String], path: String)

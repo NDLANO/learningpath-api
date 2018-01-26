@@ -21,5 +21,4 @@ class HealthControllerTest extends UnitSuite with TestEnvironment with ScalatraF
       status should equal (200)
     }
   }
-
 }

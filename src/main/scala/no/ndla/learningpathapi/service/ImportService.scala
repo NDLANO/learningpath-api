@@ -19,7 +19,7 @@ import no.ndla.mapping.License._
 import scala.util.{Failure, Success, Try}
 
 
-trait ImportServiceComponent {
+trait ImportService {
   this: LearningPathRepositoryComponent
     with KeywordsServiceComponent
     with ImageApiClientComponent
