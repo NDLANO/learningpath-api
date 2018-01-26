@@ -71,7 +71,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     ))
 
     embedUrls.size should be(3)
-    embedUrls.map(_.url).mkString(",") should equal("https://ndla.no/1,https://ndla.no/2,https://ndla.no/3")
+    embedUrls.map(_.url).mkString(",") should equal("http://ndla.no/1,http://ndla.no/2,http://ndla.no/3")
     embedUrls.map(_.language).mkString(",") should equal("nb,nn,en")
   }
 
@@ -82,13 +82,13 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     ))
 
     embedUrls.size should be(2)
-    embedUrls.map(_.url).mkString(",") should equal("https://ndla.no/2,https://ndla.no/3")
+    embedUrls.map(_.url).mkString(",") should equal("http://ndla.no/2,http://ndla.no/3")
     embedUrls.map(_.language).mkString(",") should equal("nn,en")
   }
 
   test("That importNode inserts for a new node") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", Seq.empty, None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
@@ -107,7 +107,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val license = "pd"
     val copyright = Copyright(license, List(sanders))
     val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", Seq.empty, None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))

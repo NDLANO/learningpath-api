@@ -61,16 +61,24 @@ trait ImportService {
     private[service] def upload(mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
       val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
         .flatMap(_.steps).flatMap(_.embedUrl)
-      importArticles(embedUrls)
+      val embedUrlMap: Map[String, Option[String]] = importArticles(embedUrls)
 
       val coverPhoto = mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
-      val learningPath = asLearningPath(mainImport, coverPhoto, clientId)
+      val learningPathWithOldEmbedUrls = asLearningPath(mainImport, coverPhoto, clientId)
 
-      val persisted = learningPathRepository.withExternalId(learningPath.externalId) match {
-        case None => learningPathRepository.insert(learningPath)
+      val steps = learningPathWithOldEmbedUrls.learningsteps.map {
+        case l: LearningStep  if l.embedUrl.nonEmpty =>
+          val embedUrls = l.embedUrl.map(em => em.copy(url=embedUrlMap.get(em.url).flatten.getOrElse(em.url)))
+          l.copy(embedUrl = embedUrls)
+        case l => l
+      }
+      val learningPathWithNewEmbedUrls = learningPathWithOldEmbedUrls.copy(learningsteps=steps)
+
+      val persisted = learningPathRepository.withExternalId(learningPathWithNewEmbedUrls.externalId) match {
+        case None => learningPathRepository.insert(learningPathWithNewEmbedUrls)
         case Some(existingLearningPath) =>
-          learningPathRepository.update(asLearningPath(existingLearningPath, learningPath))
-          learningPath.learningsteps.foreach(learningStep => {
+          learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
+          learningPathWithNewEmbedUrls.learningsteps.foreach(learningStep => {
             learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
               case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
               case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
@@ -109,6 +117,8 @@ trait ImportService {
             case Some(nodeId) =>
               val articleId = articleImportClient.importArticle(nodeId).toOption.flatMap(_.articleId)
               val taxonomyResource = articleId.flatMap(updateTaxonomy(nodeId, _).toOption)
+
+              logger.info(s"Updated taxonomy: $taxonomyResource")
 
               embedUrl -> taxonomyResource.map(_.path)
             case None => embedUrl -> None // Faulty node url. Should never happen
@@ -151,13 +161,9 @@ trait ImportService {
     }
 
     private[service] def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
-      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined)
-        .map(url => EmbedUrl(url.embedUrlToNdlaNo.get, languageOrUnknown(url.language), EmbedType.OEmbed))
-
-      step.embedUrlToNdlaNo match {
-        case None => translationUrls
-        case Some(url) =>
-          Seq(EmbedUrl(url, languageOrUnknown(step.language), EmbedType.OEmbed)) ++ translationUrls
+      (Seq(step) ++ translations).collect {
+        case Step(_, _, _, _, _, _, Some(embedUrl), _, _, language) if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
+          EmbedUrl(embedUrl, languageOrUnknown(language), EmbedType.OEmbed)
       }
     }
 

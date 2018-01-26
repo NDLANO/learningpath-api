@@ -23,12 +23,14 @@ trait TaxonomyApiClient {
     implicit val formats = org.json4s.DefaultFormats
     private val TaxonomyApiEndpoint = s"http://$ApiGatewayHost/taxonomy/v1"
 
-    def contentUriQuery(articleId: Long): Option[Seq[TaxonomyResource]] =
-      get(s"$TaxonomyApiEndpoint/queries/resources?contentUri=urn:article:$articleId").toOption
-
     def getResource(nodeId: String): Try[TaxonomyResource] = {
       val resourceId = s"urn:resource:1:$nodeId"
-      get(s"$TaxonomyApiEndpoint/resources/$resourceId")
+      get[TaxonomyResource](s"$TaxonomyApiEndpoint/resources/$resourceId") match {
+        case Failure(ex) =>
+          Failure(ex)
+        case Success(a) =>
+          Success(a)
+      }
     }
 
     def updateResource(resource: TaxonomyResource): Try[TaxonomyResource] = {
@@ -56,5 +58,4 @@ trait TaxonomyApiClient {
   }
 }
 
-case class TaxonomyResource(id: String, name: String, resourceTypes: Seq[TaxonomyResourceType], contentUri: Option[String], path: String)
-case class TaxonomyResourceType(id: String, name: String)
+case class TaxonomyResource(id: String, name: String, contentUri: Option[String], path: String)
