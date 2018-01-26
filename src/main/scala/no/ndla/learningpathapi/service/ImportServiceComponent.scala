@@ -26,10 +26,12 @@ trait ImportServiceComponent {
     with MigrationApiClient
     with SearchIndexServiceComponent
     with ConverterServiceComponent
-    with ArticleImportClient =>
+    with ArticleImportClient
+    with TaxonomyApiClient =>
   val importService: ImportService
 
   class ImportService {
+    private val NdlaDomains = Seq("ndla.no", "red.ndla.no")
 
     def importAll(clientId: String): Try[Seq[ImportReport]] = {
       migrationApiClient.getAllLearningPathIds match {
@@ -40,7 +42,7 @@ trait ImportServiceComponent {
       }
     }
 
-    def getStatus(learningPathSummaryTry: Try[LearningPathSummaryV2]): String = {
+    private def getStatus(learningPathSummaryTry: Try[LearningPathSummaryV2]): String = {
       learningPathSummaryTry match {
         case Success(_) => "OK"
         case Failure(f) => f.getMessage
@@ -50,72 +52,39 @@ trait ImportServiceComponent {
     def doImport(nodeId: String, clientId: String): Try[LearningPathSummaryV2] = {
       for {
         metaData <- migrationApiClient.getLearningPath(nodeId)
-        converted <- Try(upload(metaData, clientId))
-        indexed <- searchIndexService.indexDocument(converted)
+        converted <- upload(metaData, clientId)
+        _ <- searchIndexService.indexDocument(converted)
         summary <- converterService.asApiLearningpathSummaryV2(converted)
       } yield summary
     }
 
-    def upload(mainImport: MainPackageImport, clientId: String): LearningPath = {
-      val coverPhoto = mainImport.mainPackage.imageNid.flatMap(img => {
-        imageApiClient.imageMetaWithExternalId(img.toString) match {
-          case Some(image) => Some(image)
-          case None => imageApiClient.importImage(img.toString)
-        }
-      })
+    private[service] def upload(mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
+      val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
+        .flatMap(_.steps).flatMap(_.embedUrl)
+      importArticles(embedUrls)
 
-      val descriptions = Seq(Description(tidyUpDescription(mainImport.mainPackage.description, allowHtml = false), languageOrUnknown(mainImport.mainPackage.language))) ++
-        mainImport.translations.map(tr => Description(tidyUpDescription(tr.description, allowHtml = false), languageOrUnknown(tr.language)))
-
-      val titles = Seq(Title(mainImport.mainPackage.title, languageOrUnknown(mainImport.mainPackage.language))) ++
-        mainImport.translations.map(tr => Title(tr.title, languageOrUnknown(tr.language)))
-
-      val tags = keywordsService.forNodeId(mainImport.mainPackage.nid) ++
-        mainImport.translations.flatMap(tr => keywordsService.forNodeId(tr.nid))
-
-      val steps = mainImport.mainPackage.steps.map(step => asLearningStep(step, mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))
-
-      val learningPath = asLearningPath(mainImport.mainPackage, titles, descriptions, tags, steps, coverPhoto, clientId)
+      val coverPhoto = mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
+      val learningPath = asLearningPath(mainImport, coverPhoto, clientId)
 
       val persisted = learningPathRepository.withExternalId(learningPath.externalId) match {
-        case None => {
-          learningPathRepository.insert(learningPath)
-        }
-        case Some(existingLearningPath) => {
-          learningPathRepository.update(existingLearningPath.copy(
-            title = learningPath.title,
-            description = learningPath.description,
-            coverPhotoId = learningPath.coverPhotoId,
-            duration = learningPath.duration,
-            lastUpdated = learningPath.lastUpdated,
-            tags = learningPath.tags,
-            owner = learningPath.owner,
-            status = learningPath.status
-          ))
-
+        case None => learningPathRepository.insert(learningPath)
+        case Some(existingLearningPath) =>
+          learningPathRepository.update(asLearningPath(existingLearningPath, learningPath))
           learningPath.learningsteps.foreach(learningStep => {
             learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
-              case None => {
-                learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
-              }
-              case Some(existingLearningStep) => {
-                learningPathRepository.updateLearningStep(existingLearningStep.copy(
-                  seqNo = learningStep.seqNo,
-                  title = learningStep.title,
-                  description = learningStep.description,
-                  embedUrl = learningStep.embedUrl,
-                  `type` = learningStep.`type`,
-                  license = learningStep.license
-                ))
-              }
+              case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
+              case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
             }
           })
           existingLearningPath
-        }
       }
-      persisted
+      Success(persisted)
     }
 
+    private def importCoverPhoto(imageNid: Int): Option[ImageMetaInformation] = {
+      imageApiClient.imageMetaWithExternalId(imageNid.toString)
+        .orElse(imageApiClient.importImage(imageNid.toString))
+    }
 
     private[service] def oldToNewLicenseKey(license: String): String = {
       val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
@@ -126,32 +95,29 @@ trait ImportServiceComponent {
       newLicense
     }
 
-
-    def asLearningStep(step: Step, translations: Seq[Step]): LearningStep = {
-      val seqNo = step.pos - 1
-      val stepType = asLearningStepType(s"${step.stepType}")
-
-      val title = Seq(Title(step.title, step.language)) ++ translations.map(translation => Title(translation.title, languageOrUnknown(translation.language)))
-      val descriptions = descriptionAsList(Some(step), translations)
-
-      val embedUrls = embedUrlsAsList(step, translations)
-      val showTitle = descriptions.nonEmpty
-
-      importArticlesUsedInLearningStep(embedUrls)
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license.map(oldToNewLicenseKey), showTitle)
+    private def updateTaxonomy(nodeId: String, articleId: Long): Try[TaxonomyResource] = {
+      for {
+        resource <- taxononyApiClient.getResource(nodeId)
+        updatedResource <- taxononyApiClient.updateResource(resource.copy(contentUri=Some(s"urn:article:$articleId")))
+      } yield updatedResource
     }
 
-    def importArticlesUsedInLearningStep(embedUrls: Seq[EmbedUrl]): Unit = {
-      val ndlaDomains = Seq("ndla.no", "red.ndla.no")
+    private def importArticles(embedUrls: Seq[String]): Map[String, Option[String]] = {
       embedUrls.collect {
-        case (embedUrl) if ndlaDomains.contains(embedUrl.url.host.getOrElse("")) =>
-          val nodeId = embedUrl.url.path.split("/").lastOption
-          nodeId.foreach(articleImportClient.importArticle)
-        case _ =>
-      }
+        case (embedUrl) if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
+          embedUrl.path.split("/").lastOption match {
+            case Some(nodeId) =>
+              val articleId = articleImportClient.importArticle(nodeId).toOption.flatMap(_.articleId)
+              val taxonomyResource = articleId.flatMap(updateTaxonomy(nodeId, _).toOption)
+
+              embedUrl -> taxonomyResource.map(_.path)
+            case None => embedUrl -> None // Faulty node url. Should never happen
+          }
+
+      }.toMap
     }
 
-    def asLearningStepType(stepType: String): StepType.Value = {
+    private def asLearningStepType(stepType: String): StepType.Value = {
       stepType match {
         case "1" => StepType.INTRODUCTION
         case "2" => StepType.TEXT
@@ -161,51 +127,61 @@ trait ImportServiceComponent {
         case "6" => StepType.SUMMARY
         case "7" => StepType.TEST
         case "8" => StepType.SUMMARY
-        case default => StepType.TEXT
+        case _ => StepType.TEXT
       }
     }
 
-
-    def descriptionAsList(step: Option[Step], translations: Seq[Step]): Seq[Description] = {
+    private[service] def descriptionAsList(step: Option[Step], translations: Seq[Step]): Seq[Description] = {
       val translationDescriptions = translations.filter(step => step.description.isDefined && !step.description.get.isEmpty).map(tr => Description(tidyUpDescription(tr.description.get), languageOrUnknown(tr.language)))
       step match {
-        case Some(s) => {
+        case Some(s) =>
           s.description.isDefined && !s.description.get.isEmpty match {
             case true => Seq(Description(tidyUpDescription(s.description.get), languageOrUnknown(s.language))) ++ translationDescriptions
             case false => translationDescriptions
           }
-        }
         case None => translationDescriptions
       }
     }
 
-    def tidyUpDescription(description: String, allowHtml: Boolean = true): String = {
+    private[service] def tidyUpDescription(description: String, allowHtml: Boolean = true): String = {
       Option(description) match {
         case None => ""
-        case Some(desc) => {
-          HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
-        }
+        case Some(desc) => HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
       }
     }
 
-    def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
-      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined).map(url => EmbedUrl(url.embedUrlToNdlaNo.get, languageOrUnknown(url.language), EmbedType.OEmbed))
+    private[service] def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
+      val translationUrls = translations.filter(step => step.embedUrlToNdlaNo.isDefined)
+        .map(url => EmbedUrl(url.embedUrlToNdlaNo.get, languageOrUnknown(url.language), EmbedType.OEmbed))
+
       step.embedUrlToNdlaNo match {
         case None => translationUrls
-        case Some(url) => {
+        case Some(url) =>
           Seq(EmbedUrl(url, languageOrUnknown(step.language), EmbedType.OEmbed)) ++ translationUrls
-        }
       }
     }
 
-    def asLearningPath(pakke: Package, titles: Seq[Title], descriptions: Seq[Description], tags: Seq[LearningPathTags], learningSteps: Seq[LearningStep], imageUrl: Option[ImageMetaInformation], clientId: String) = {
-      val duration = Some((pakke.durationHours * 60) + pakke.durationMinutes)
-      val lastUpdated = pakke.lastUpdated
+    private[service] def asLearningPath(mainImport: MainPackageImport, imageUrl: Option[ImageMetaInformation], clientId: String): LearningPath = {
+      val mainPackage = mainImport.mainPackage
+      val duration = Some((mainImport.mainPackage.durationHours * 60) + mainPackage.durationMinutes)
+      val lastUpdated = mainPackage.lastUpdated
+
+
+      val descriptions = Seq(Description(tidyUpDescription(mainImport.mainPackage.description, allowHtml = false), languageOrUnknown(mainImport.mainPackage.language))) ++
+        mainImport.translations.map(tr => Description(tidyUpDescription(tr.description, allowHtml = false), languageOrUnknown(tr.language)))
+
+      val titles = Seq(Title(mainImport.mainPackage.title, languageOrUnknown(mainImport.mainPackage.language))) ++
+        mainImport.translations.map(tr => Title(tr.title, languageOrUnknown(tr.language)))
+
+      val tags = keywordsService.forNodeId(mainImport.mainPackage.nid) ++
+        mainImport.translations.flatMap(tr => keywordsService.forNodeId(tr.nid))
+
+      val learningSteps = mainImport.mainPackage.steps.map(step => asLearningStep(step, mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))
 
       LearningPath(
         None,
         None,
-        Some(s"${pakke.packageId}"),
+        Some(s"${mainPackage.packageId}"),
         None,
         titles,
         descriptions,
@@ -220,6 +196,42 @@ trait ImportServiceComponent {
         learningSteps)
     }
 
-  }
+    private def asLearningPath(existing: LearningPath, toUpdate: LearningPath): LearningPath = {
+      existing.copy(
+        title = toUpdate.title,
+        description = toUpdate.description,
+        coverPhotoId = toUpdate.coverPhotoId,
+        duration = toUpdate.duration,
+        lastUpdated = toUpdate.lastUpdated,
+        tags = toUpdate.tags,
+        owner = toUpdate.owner,
+        status = toUpdate.status
+      )
+    }
 
+    private def asLearningStep(step: Step, translations: Seq[Step]): LearningStep = {
+      val seqNo = step.pos - 1
+      val stepType = asLearningStepType(s"${step.stepType}")
+
+      val title = Seq(Title(step.title, step.language)) ++ translations.map(translation => Title(translation.title, languageOrUnknown(translation.language)))
+      val descriptions = descriptionAsList(Some(step), translations)
+
+      val embedUrls = embedUrlsAsList(step, translations)
+      val showTitle = descriptions.nonEmpty
+
+      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license.map(oldToNewLicenseKey), showTitle)
+    }
+
+    private def asLearningStep(existing: LearningStep, toUpdate: LearningStep): LearningStep = {
+      existing.copy(
+        seqNo = toUpdate.seqNo,
+        title = toUpdate.title,
+        description = toUpdate.description,
+        embedUrl = toUpdate.embedUrl,
+        `type` = toUpdate.`type`,
+        license = toUpdate.license
+      )
+    }
+
+  }
 }

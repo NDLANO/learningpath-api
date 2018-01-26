@@ -12,7 +12,7 @@ import no.ndla.learningpathapi.LearningpathApiProperties.ArticleImportHost
 import no.ndla.network.NdlaClient
 import no.ndla.network.model.HttpRequestException
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, HttpRequest}
 
 trait ArticleImportClient {
@@ -24,16 +24,10 @@ trait ArticleImportClient {
     private val ExternalId = ":external_id"
     private val importArticleEndpoint = s"http://$ArticleImportHost/intern/import/$ExternalId"
 
-    def importArticle(externalId: String): Option[ArticleImportStatus] =
+    def importArticle(externalId: String): Try[ArticleImportStatus] =
       doRequest(Http(importArticleEndpoint.replace(ExternalId, externalId)).timeout(ArticleImportTimeout, ArticleImportTimeout).method("POST"))
 
-    private def doRequest(httpRequest: HttpRequest): Option[ArticleImportStatus] = {
-      ndlaClient.fetchWithForwardedAuth[ArticleImportStatus](httpRequest) match {
-        case Success(metaInfo) => Some(metaInfo)
-        case Failure(hre: HttpRequestException) => if (hre.is404) None else throw hre
-        case Failure(ex: Throwable) => throw ex
-      }
-    }
+    private def doRequest(httpRequest: HttpRequest): Try[ArticleImportStatus] = ndlaClient.fetchWithForwardedAuth[ArticleImportStatus](httpRequest)
   }
 
 }

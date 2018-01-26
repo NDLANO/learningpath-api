@@ -40,6 +40,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val AuthHost = "auth.ndla-local"
   val ArticleImportHost = "article-import.ndla-local"
+  val ApiGatewayHost = "api-gateway.ndla-local"
   val ImageApiHost = "image-api.ndla-local"
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL

@@ -19,8 +19,6 @@ trait ReadServiceComponent {
   val readService: ReadService
 
   class ReadService {
-
-
     def tags: List[LearningPathTags] = {
       learningPathRepository.allPublishedTags.map(tags => LearningPathTags(tags.tags, tags.language))
     }
@@ -66,6 +64,6 @@ trait ReadServiceComponent {
       learningPath.foreach(_.verifyOwnerOrPublic(user))
       learningPath
     }
-  }
 
+  }
 }
