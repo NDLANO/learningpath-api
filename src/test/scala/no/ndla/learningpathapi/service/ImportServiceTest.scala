@@ -93,7 +93,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
 
-    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, Some(1))))
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
 
     importService.upload(mainImport, CLIENT_ID)
@@ -113,7 +113,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     reset(articleImportClient)
-    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, Some(1))))
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
 
     importService.upload(mainImport, CLIENT_ID)

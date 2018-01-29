@@ -263,6 +263,10 @@ trait ConverterServiceComponent {
     def createUrlToImageApi(imageId: String): String = {
       s"http://$InternalImageApiUrl/$imageId"
     }
+
+    def createUrlToNdlaFrontend(taxonomyPath: String): String = {
+      s"https://ndla-frontend.test.api.ndla.no/articles/$taxonomyPath"
+    }
   }
 
 }

@@ -36,9 +36,12 @@ trait ImportService {
     def importAll(clientId: String): Try[Seq[ImportReport]] = {
       migrationApiClient.getAllLearningPathIds match {
         case Failure(f) => Failure(f)
-        case Success(liste) => Success(liste
+        case Success(liste) =>
+          val res = liste
           .map(id => (id, doImport(id, clientId)))
-          .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) })
+          .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) }
+
+          Success(res)
       }
     }
 
@@ -61,32 +64,40 @@ trait ImportService {
     private[service] def upload(mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
       val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
         .flatMap(_.steps).flatMap(_.embedUrl)
-      val embedUrlMap: Map[String, Option[String]] = importArticles(embedUrls)
+      val (articleImports, failedImports) = importArticles(embedUrls)
+        .partition { case (_, importStatus) => importStatus.isSuccess }
 
-      val coverPhoto = mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
-      val learningPathWithOldEmbedUrls = asLearningPath(mainImport, coverPhoto, clientId)
+      if (failedImports.nonEmpty) {
+        val messages = failedImports.map(a => s"${a._1}: ${a._2.failed.get.getMessage}").mkString(", ")
+        Failure(new ImportException(s"Failed to import embed article(s): $messages"))
+      } else {
+        val embedUrlMap = articleImports.map { case (oldUrl, newPath) => oldUrl -> newPath.get }.toMap
 
-      val steps = learningPathWithOldEmbedUrls.learningsteps.map {
-        case l: LearningStep  if l.embedUrl.nonEmpty =>
-          val embedUrls = l.embedUrl.map(em => em.copy(url=embedUrlMap.get(em.url).flatten.getOrElse(em.url)))
-          l.copy(embedUrl = embedUrls)
-        case l => l
+        val coverPhoto = mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
+        val learningPathWithOldEmbedUrls = asLearningPath(mainImport, coverPhoto, clientId)
+
+        val steps = learningPathWithOldEmbedUrls.learningsteps.map {
+          case l: LearningStep if l.embedUrl.nonEmpty =>
+            val embedUrls = l.embedUrl.map(em => em.copy(url = embedUrlMap.getOrElse(em.url, em.url))) // Fall back on old ndla url if article could not be imported or has no entry in taxonomy
+            l.copy(embedUrl = embedUrls)
+          case l => l
+        }
+        val learningPathWithNewEmbedUrls = learningPathWithOldEmbedUrls.copy(learningsteps = steps)
+
+        val persisted = learningPathRepository.withExternalId(learningPathWithNewEmbedUrls.externalId) match {
+          case None => learningPathRepository.insert(learningPathWithNewEmbedUrls)
+          case Some(existingLearningPath) =>
+            learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
+            learningPathWithNewEmbedUrls.learningsteps.foreach(learningStep => {
+              learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
+                case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
+                case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
+              }
+            })
+            existingLearningPath
+        }
+        Success(persisted)
       }
-      val learningPathWithNewEmbedUrls = learningPathWithOldEmbedUrls.copy(learningsteps=steps)
-
-      val persisted = learningPathRepository.withExternalId(learningPathWithNewEmbedUrls.externalId) match {
-        case None => learningPathRepository.insert(learningPathWithNewEmbedUrls)
-        case Some(existingLearningPath) =>
-          learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
-          learningPathWithNewEmbedUrls.learningsteps.foreach(learningStep => {
-            learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
-              case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
-              case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
-            }
-          })
-          existingLearningPath
-      }
-      Success(persisted)
     }
 
     private def importCoverPhoto(imageNid: Int): Option[ImageMetaInformation] = {
@@ -110,21 +121,22 @@ trait ImportService {
       } yield updatedResource
     }
 
-    private def importArticles(embedUrls: Seq[String]): Map[String, Option[String]] = {
+    private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[String])] = {
       embedUrls.collect {
         case (embedUrl) if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
           embedUrl.path.split("/").lastOption match {
             case Some(nodeId) =>
-              val articleId = articleImportClient.importArticle(nodeId).toOption.flatMap(_.articleId)
-              val taxonomyResource = articleId.flatMap(updateTaxonomy(nodeId, _).toOption)
+              val taxonomyResource = for {
+                aid <- articleImportClient.importArticle(nodeId)
+                tax <- updateTaxonomy(nodeId, aid.articleId)
+              } yield tax
 
               logger.info(s"Updated taxonomy: $taxonomyResource")
 
               embedUrl -> taxonomyResource.map(_.path)
-            case None => embedUrl -> None // Faulty node url. Should never happen
+            case None => embedUrl -> Failure(new ImportException(s"Invalid embed url '$embedUrl' cannot import article based on this. Should never happen")) // Faulty node url. Should never happen
           }
-
-      }.toMap
+      }
     }
 
     private def asLearningStepType(stepType: String): StepType.Value = {
