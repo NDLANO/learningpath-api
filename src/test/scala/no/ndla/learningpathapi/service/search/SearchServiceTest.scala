@@ -359,6 +359,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     search.results(4).title.language should be("nb")
   }
 
+  test("that supportedLanguages are sorted correctly") {
+    val search = searchService.matchingQuery(List(), "Batman", None, Some("all"), Sort.ByTitleAsc, None, None)
+    search.results.head.supportedLanguages should be(Seq("nb", "en"))
+  }
+
   def blockUntil(predicate: () => Boolean) = {
     var backoff = 0
     var done = false
