@@ -10,12 +10,13 @@ package no.ndla.learningpathapi.service
 
 import com.netaporter.uri.dsl._
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
-import no.ndla.learningpathapi.model.api.{ImportReport, LearningPathSummaryV2}
+import no.ndla.learningpathapi.model.api.{ImportReport, ImportStatus, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.mapping.License._
+
 import scala.util.{Failure, Success, Try}
 
 
@@ -33,45 +34,36 @@ trait ImportService {
   class ImportService {
     private val NdlaDomains = Seq("ndla.no", "red.ndla.no")
 
-    def importAll(clientId: String): Try[Seq[ImportReport]] = {
-      migrationApiClient.getAllLearningPathIds match {
-        case Failure(f) => Failure(f)
-        case Success(liste) =>
-          val res = liste
-          .map(id => (id, doImport(id, clientId)))
-          .map { case (nid, summary) => ImportReport(nid, getStatus(summary)) }
-
-          Success(res)
-      }
-    }
-
-    private def getStatus(learningPathSummaryTry: Try[LearningPathSummaryV2]): String = {
-      learningPathSummaryTry match {
-        case Success(_) => "OK"
-        case Failure(f) => f.getMessage
-      }
-    }
-
-    def doImport(nodeId: String, clientId: String): Try[LearningPathSummaryV2] = {
-      for {
+    def doImport(nodeId: String, clientId: String): Try[ImportReport] = {
+      val learningpathSummary = for {
         metaData <- migrationApiClient.getLearningPath(nodeId)
-        converted <- upload(metaData, clientId)
+        converted <- upload(nodeId, metaData, clientId)
         _ <- searchIndexService.indexDocument(converted)
         summary <- converterService.asApiLearningpathSummaryV2(converted)
       } yield summary
+
+      generateImportReport(nodeId, learningpathSummary)
     }
 
-    private[service] def upload(mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
+    private def generateImportReport(nodeId: String, learningPathSummaryV2: Try[LearningPathSummaryV2]): Try[ImportReport] = {
+      learningPathSummaryV2 match {
+        case Success(l) => Success(ImportReport(nodeId, ImportStatus.OK, Seq.empty, Some(l.id)))
+        case Failure(ex) => Failure(ex)
+      }
+    }
+
+    private[service] def upload(nodeId: String, mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
       val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
         .flatMap(_.steps).flatMap(_.embedUrl)
-      val (articleImports, failedImports) = importArticles(embedUrls)
-        .partition { case (_, importStatus) => importStatus.isSuccess }
+      val (articleImports, failedImports) = importArticles(embedUrls).partition {
+        case (_, importStatus) => importStatus.isSuccess
+      }
 
       if (failedImports.nonEmpty) {
-        val messages = failedImports.map(a => s"${a._1}: ${a._2.failed.get.getMessage}").mkString(", ")
-        Failure(new ImportException(s"Failed to import embed article(s): $messages"))
+        val messages = failedImports.map(a => a._2.failed.get.getMessage)
+        Failure(ImportReport(nodeId, ImportStatus.ERROR, messages, None))
       } else {
-        val embedUrlMap = articleImports.map { case (oldUrl, newPath) => oldUrl -> newPath.get }.toMap
+        val embedUrlMap = articleImports.map { case (oldUrl, taxonomyResource) => oldUrl -> taxonomyResource.get.path }.toMap
 
         val coverPhoto = mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
         val learningPathWithOldEmbedUrls = asLearningPath(mainImport, coverPhoto, clientId)
@@ -105,6 +97,42 @@ trait ImportService {
         .orElse(imageApiClient.importImage(imageNid.toString))
     }
 
+    private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[TaxonomyResource])] = {
+      def getNodeIdFromUrl = (url: String) => url.path.split("/").lastOption
+      val urlToMainNidMap = embedUrls.map(url => {
+        if (NdlaDomains.contains(url.host.getOrElse(""))) {
+          url -> getNodeIdFromUrl(url).map(migrationApiClient.getAllNodeIds)
+        } else {
+          url -> None
+        }
+      }).filter(_._2.isDefined).toMap
+
+      val ass = urlToMainNidMap.values
+        .map(_.getOrElse(Set.empty))
+        .map(nids => nids -> importAndUpdateTaxonomy(nids)).toMap
+
+      embedUrls.map(b => {
+        val nodeIdsForArticle = urlToMainNidMap.get(b).flatten.getOrElse(Set.empty)
+        val taxonomyResourceForArticle = ass(nodeIdsForArticle)
+        b -> taxonomyResourceForArticle
+      })
+    }
+
+    private def importAndUpdateTaxonomy(nodeWithTranslations: Set[ArticleMigrationContent]): Try[TaxonomyResource] = {
+      val mainNodeIdOpt = nodeWithTranslations.find(_.isMainNode)
+
+      (nodeWithTranslations.map(c => taxononyApiClient.getResource(c.nid)).find(_.isSuccess), mainNodeIdOpt) match {
+        case (Some(Success(resource)), Some(mainNodeId)) =>
+          for {
+            a <- articleImportClient.importArticle(mainNodeId.nid)
+            taxonomyResource <- taxononyApiClient.updateResource(resource.copy(contentUri=Some(s"urn:article:${a.articleId}")))
+          } yield taxonomyResource
+        case (Some(Success(_)), None) => Failure(new ImportException("Failed to retrieve main node id for article"))
+        case (Some(Failure(ex)), _) => Failure(ex)
+        case (None, _) => Failure(new ImportException(s"Resource with node id(s) ${nodeWithTranslations.map(_.nid).mkString(",")} does not exist in taxonomy"))
+      }
+    }
+
     private[service] def oldToNewLicenseKey(license: String): String = {
       val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
       val newLicense = licenses.getOrElse(license, license)
@@ -112,31 +140,6 @@ trait ImportService {
         throw new ImportException(s"License $license is not supported.")
       }
       newLicense
-    }
-
-    private def updateTaxonomy(nodeId: String, articleId: Long): Try[TaxonomyResource] = {
-      for {
-        resource <- taxononyApiClient.getResource(nodeId)
-        updatedResource <- taxononyApiClient.updateResource(resource.copy(contentUri=Some(s"urn:article:$articleId")))
-      } yield updatedResource
-    }
-
-    private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[String])] = {
-      embedUrls.collect {
-        case (embedUrl) if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
-          embedUrl.path.split("/").lastOption match {
-            case Some(nodeId) =>
-              val taxonomyResource = for {
-                aid <- articleImportClient.importArticle(nodeId)
-                tax <- updateTaxonomy(nodeId, aid.articleId)
-              } yield tax
-
-              logger.info(s"Updated taxonomy: $taxonomyResource")
-
-              embedUrl -> taxonomyResource.map(_.path)
-            case None => embedUrl -> Failure(new ImportException(s"Invalid embed url '$embedUrl' cannot import article based on this. Should never happen")) // Faulty node url. Should never happen
-          }
-      }
     }
 
     private def asLearningStepType(stepType: String): StepType.Value = {

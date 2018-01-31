@@ -10,19 +10,29 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
-import no.ndla.learningpathapi.integration.{ArticleImportStatus, MainPackageImport, Package, Step, TaxonomyResource}
+import no.ndla.learningpathapi.caching.Memoize
+import no.ndla.learningpathapi.integration.{ArticleImportStatus, ArticleMigrationContent, MainPackageImport, Package, Step, TaxonomyResource}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
+import no.ndla.network.model.HttpRequestException
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import scalikejdbc.DBSession
 
-import scala.util.Success
+import scala.util.{Failure, Success}
+import scalaj.http.HttpResponse
 
 class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
+  val nodeId = "1234"
+  def memoizeFunc(n: String) = Set(ArticleMigrationContent(nodeId, nodeId))
+
   override val importService = new ImportService
   val CLIENT_ID = "Klient1"
+
+  override def beforeEach: Unit = {
+    reset(articleImportClient, taxononyApiClient, learningPathRepository)
+  }
 
   test("That tidyUpDescription returns emtpy string for null") {
     importService.tidyUpDescription(null) should equal("")
@@ -96,9 +106,16 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
 
-    importService.upload(mainImport, CLIENT_ID)
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+    when(taxononyApiClient.updateResource(any[TaxonomyResource])).thenReturn(Success(taxonomyResource))
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize(memoizeFunc))
+
+    importService.upload("1", mainImport, CLIENT_ID)
 
     verify(learningPathRepository, times(1)).insert(any[LearningPath])
+    verify(articleImportClient, times(1)).importArticle(nodeId)
+    verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
 
   test("That importNode updates for an existing node") {
@@ -112,14 +129,73 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
-    reset(articleImportClient)
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
 
-    importService.upload(mainImport, CLIENT_ID)
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+    when(taxononyApiClient.updateResource(any[TaxonomyResource])).thenReturn(Success(taxonomyResource))
+
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
+    val res = importService.upload("1", mainImport, CLIENT_ID)
+    res.isSuccess should be(true)
 
     verify(learningPathRepository, times(1)).update(any[LearningPath])
-    verify(articleImportClient, times(1)).importArticle("12345")
+    verify(articleImportClient, times(1)).importArticle(nodeId)
+    verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
+  }
+
+  test("That importNode fails if an article cannot be imported") {
+    val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
+    val sanders = Author("author", "Crazy Bernie")
+    val license = "pd"
+    val copyright = Copyright(license, List(sanders))
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+
+    when(keywordsService.forNodeId(any[Long])).thenReturn(List())
+    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
+
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
+    when(articleImportClient.importArticle(any[String])).thenReturn(Failure(new HttpRequestException("Received error 422. H5P is not imported to new service", None)))
+
+    val Failure(res) = importService.upload("1", mainImport, CLIENT_ID)
+    res.getMessage.contains("Received error 422. H5P is not imported to new service") should be (true)
+
+    verify(learningPathRepository, times(0)).update(any[LearningPath])
+    verify(articleImportClient, times(1)).importArticle(nodeId)
+  }
+
+  test("That importNode fails if taxonomy lookup") {
+    val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
+    val sanders = Author("author", "Crazy Bernie")
+    val license = "pd"
+    val copyright = Copyright(license, List(sanders))
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+
+    when(keywordsService.forNodeId(any[Long])).thenReturn(List())
+    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Failure(new HttpRequestException("Received error 404 when looking up resource")))
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
+
+    val Failure(res) = importService.upload("1", mainImport, CLIENT_ID)
+    res.getMessage.contains(s"Resource with node id(s) $nodeId does not exist in taxonomy") should be (true)
+
+    verify(learningPathRepository, times(0)).update(any[LearningPath])
+    verify(taxononyApiClient, times(1)).getResource(nodeId)
+    verify(articleImportClient, times(0)).importArticle(nodeId)
+    verify(taxononyApiClient, times(0)).updateResource(any[TaxonomyResource])
   }
 
   test("That duration is calculated correctly") {
@@ -143,6 +219,37 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That oldToNewLicenseKey does not convert an license that should not be converted") {
     importService.oldToNewLicenseKey("by-sa") should be("by-sa")
+  }
+
+  test("upload should import all articles handle taxonomy with different translations") {
+    val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
+    val sanders = Author("author", "Crazy Bernie")
+    val license = "pd"
+    val copyright = Copyright(license, List(sanders))
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+
+    when(keywordsService.forNodeId(any[Long])).thenReturn(List())
+    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+    when(taxononyApiClient.updateResource(any[TaxonomyResource])).thenReturn(Success(taxonomyResource))
+
+    val articleNids = Set(ArticleMigrationContent("54321", "54321"), ArticleMigrationContent("00987", "54321"))
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]]((_: String) => articleNids))
+
+    importService.upload("1", mainImport, CLIENT_ID)
+
+    verify(taxononyApiClient, times(1)).getResource(articleNids.head.nid)
+    verify(taxononyApiClient, times(1)).getResource(articleNids.last.nid)
+
+    verify(learningPathRepository, times(1)).update(any[LearningPath])
+    verify(articleImportClient, times(1)).importArticle(articleNids.head.nid)
+    verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
 
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))
