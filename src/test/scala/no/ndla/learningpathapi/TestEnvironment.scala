@@ -30,7 +30,7 @@ trait TestEnvironment
   with SearchIndexServiceComponent
   with NdlaClient
   with ImageApiClientComponent
-  with ArticleApiClient
+  with ArticleImportClient
   with MigrationApiClient
   with ConverterServiceComponent
   with Elastic4sClient
@@ -57,7 +57,7 @@ trait TestEnvironment
   val clock = mock[SystemClock]
   val ndlaClient = mock[NdlaClient]
   val imageApiClient = mock[ImageApiClient]
-  val articleApiClient = mock[ArticleApiClient]
+  val articleImportClient = mock[ArticleImportClient]
   val keywordsService = mock[KeywordsService]
   val migrationApiClient = mock[MigrationApiClient]
   val importService = mock[ImportService]
@@ -73,7 +73,7 @@ trait TestEnvironment
     Mockito.reset(
       datasource, learningPathRepository, readService,
       updateService, searchService, searchIndexService, converterService, searchConverterService,
-      languageValidator, titleValidator, e4sClient, articleApiClient
+      languageValidator, titleValidator, e4sClient, articleImportClient
     )
   }
 }
