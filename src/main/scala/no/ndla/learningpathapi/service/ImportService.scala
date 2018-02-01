@@ -99,7 +99,7 @@ trait ImportService {
 
     private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[TaxonomyResource])] = {
       def getNodeIdFromUrl = (url: String) => url.path.split("/").lastOption
-      val urlToMainNidMap = embedUrls.map(url => {
+      val mainNodeIds = embedUrls.map(url => {
         if (NdlaDomains.contains(url.host.getOrElse(""))) {
           url -> getNodeIdFromUrl(url).map(migrationApiClient.getAllNodeIds)
         } else {
@@ -107,14 +107,14 @@ trait ImportService {
         }
       }).filter(_._2.isDefined).toMap
 
-      val ass = urlToMainNidMap.values
+      val nodeIdsToTaxonomyResourceMap = mainNodeIds.values
         .map(_.getOrElse(Set.empty))
         .map(nids => nids -> importAndUpdateTaxonomy(nids)).toMap
 
-      embedUrls.map(b => {
-        val nodeIdsForArticle = urlToMainNidMap.get(b).flatten.getOrElse(Set.empty)
-        val taxonomyResourceForArticle = ass(nodeIdsForArticle)
-        b -> taxonomyResourceForArticle
+      embedUrls.map(embedUrl => {
+        val nodeIdsForArticle = mainNodeIds.get(embedUrl).flatten.getOrElse(Set.empty)
+        val taxonomyResourceForArticle = nodeIdsToTaxonomyResourceMap(nodeIdsForArticle)
+        embedUrl -> taxonomyResourceForArticle
       })
     }
 
