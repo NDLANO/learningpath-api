@@ -171,7 +171,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         title,
         description,
-        embedUrl.map(createEmbedUrl),
+        embedUrl.map(createEmbedUrl(_, language)),
         ls.showTitle,
         ls.`type`.toString,
         ls.license.map(asApiLicense),
@@ -266,10 +266,10 @@ trait ConverterServiceComponent {
       s"https://ndla-frontend.test.api.ndla.no/articles/$taxonomyPath"
     }
 
-    def createEmbedUrl(embedUrlOrPath: EmbedUrlV2): EmbedUrlV2 = {
+    def createEmbedUrl(embedUrlOrPath: EmbedUrlV2, language: String): EmbedUrlV2 = {
       embedUrlOrPath.url.host match {
         case Some(_) => embedUrlOrPath
-        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost/articles/$language/${embedUrlOrPath.url}")
+        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost/articles/$language${embedUrlOrPath.url}")
       }
     }
 
