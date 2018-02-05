@@ -10,6 +10,7 @@ package no.ndla.learningpathapi.model.domain
 
 import com.sksamuel.elastic4s.analyzers._
 import no.ndla.learningpathapi.model.domain
+import no.ndla.mapping.ISO639
 
 object Language {
   val CHINESE = "zh"
@@ -66,7 +67,9 @@ object Language {
   }
 
   def findSupportedLanguages[_](fields: Seq[LanguageField[_]]*): Seq[String] = {
-    fields.map(getLanguages).reduce(_ union _).distinct
+    fields.map(getLanguages).reduce(_ union _).distinct.sortBy{lang =>
+      ISO639.languagePriority.indexOf(lang)
+    }
   }
 
   def getLanguages[_](sequence: Seq[LanguageField[_]]): Seq[String] = {
@@ -74,22 +77,22 @@ object Language {
   }
 
   def findSupportedLanguages(domainLearningpath: domain.LearningPath): Seq[String] = {
-    val languages =
-      getLanguages(domainLearningpath.title) ++
-        getLanguages(domainLearningpath.description) ++
-        getLanguages(domainLearningpath.tags) ++
-        domainLearningpath.learningsteps.flatMap(findSupportedLanguages)
+    val languages = findSupportedLanguages(
+      domainLearningpath.title,
+      domainLearningpath.description,
+      domainLearningpath.tags
+    ) ++
+    domainLearningpath.learningsteps.flatMap(findSupportedLanguages)
 
     languages.distinct
   }
 
   def findSupportedLanguages(domainLearningStep: domain.LearningStep): Seq[String] = {
-    val languages =
-      getLanguages(domainLearningStep.title) ++
-        getLanguages(domainLearningStep.description) ++
-        getLanguages(domainLearningStep.embedUrl)
-
-    languages.distinct
+    findSupportedLanguages(
+      domainLearningStep.title,
+      domainLearningStep.description,
+      domainLearningStep.embedUrl
+    )
   }
 
   def getSearchLanguage(languageParam: String, supportedLanguages: Seq[String]): String = {

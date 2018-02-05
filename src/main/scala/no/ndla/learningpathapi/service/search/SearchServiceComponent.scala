@@ -64,9 +64,9 @@ trait SearchServiceComponent extends LazyLogging {
 
       val fullQuery = searchLanguage match {
         case "*" => boolQuery()
-        case language => {
-          val titleSearch = existsQuery(s"titles.$language")
-          val descSearch = existsQuery(s"descriptions.$language")
+        case lang => {
+          val titleSearch = existsQuery(s"titles.$lang")
+          val descSearch = existsQuery(s"descriptions.$lang")
 
           boolQuery()
             .should(

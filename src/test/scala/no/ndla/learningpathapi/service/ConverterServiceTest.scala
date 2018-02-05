@@ -79,9 +79,9 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
           Some("https://creativecommons.org/licenses/by/2.0/")),
         List.empty),
       canEdit = true,
-      List(Language.DefaultLanguage)
+      List("nb", "en")
     ))
-    service.asApiLearningpathV2(domainLearningPath, Language.DefaultLanguage, Some("me")) should equal(expected)
+    service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")), Language.DefaultLanguage, Some("me")) should equal(expected)
   }
 
   test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
@@ -102,10 +102,10 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
           Some("Creative Commons Attribution 2.0 Generic"),
           Some("https://creativecommons.org/licenses/by/2.0/")),
         List.empty),
-      List(Language.DefaultLanguage),
+      List("nb", "en"),
       None
     ))
-    service.asApiLearningpathSummaryV2(domainLearningPath) should equal(expected)
+    service.asApiLearningpathSummaryV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en"))) should equal(expected)
   }
 
   test("asApiLearningStepV2 converts domain learningstep to api LearningStepV2") {
