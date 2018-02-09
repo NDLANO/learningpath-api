@@ -28,6 +28,7 @@ trait TestEnvironment
   with SearchConverterServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
+  with TaxonomyApiClient
   with NdlaClient
   with ImageApiClientComponent
   with ArticleImportClient
@@ -37,7 +38,7 @@ trait TestEnvironment
   with DatasourceComponent
   with MockitoSugar
   with KeywordsServiceComponent
-  with ImportServiceComponent
+  with ImportService
   with Clock
   with HealthController
   with LanguageValidator
@@ -55,6 +56,7 @@ trait TestEnvironment
   val searchIndexService = mock[SearchIndexService]
   val converterService = org.mockito.Mockito.spy(new ConverterService)
   val clock = mock[SystemClock]
+  val taxononyApiClient = mock[TaxonomyApiClient]
   val ndlaClient = mock[NdlaClient]
   val imageApiClient = mock[ImageApiClient]
   val articleImportClient = mock[ArticleImportClient]

@@ -29,6 +29,7 @@ object ComponentRegistry
   with SearchConverterServiceComponent
   with SearchServiceComponent
   with SearchIndexServiceComponent
+  with TaxonomyApiClient
   with NdlaClient
   with ImageApiClientComponent
   with ArticleImportClient
@@ -36,7 +37,7 @@ object ComponentRegistry
   with ConverterServiceComponent
   with Elastic4sClient
   with DatasourceComponent
-  with ImportServiceComponent
+  with ImportService
   with KeywordsServiceComponent
   with Clock
   with LanguageValidator
@@ -70,6 +71,7 @@ object ComponentRegistry
   lazy val learningpathControllerV2 = new LearningpathControllerV2
   lazy val internController = new InternController
   lazy val resourcesApp = new ResourcesApp
+  lazy val taxononyApiClient= new TaxonomyApiClient
   lazy val ndlaClient = new NdlaClient
   lazy val imageApiClient = new ImageApiClient
   lazy val articleImportClient = new ArticleImportClient

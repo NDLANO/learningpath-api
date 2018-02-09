@@ -45,27 +45,6 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   val mainPackage = MainPackageImport(Package(1, 1, "nb", "Title", None, "Description", 1, new Date(), 1, "PackageTitle", 1, 1, Seq()), Seq())
 
-  test("That Step.embedUrlToNdlaNo converts None to None") {
-    testStep.copy(embedUrl = None).embedUrlToNdlaNo should equal(None)
-  }
-
-  test("That Step.embedUrlToNdlaNo converts no-host to None") {
-    val noHostUrl = Some("ingenhost")
-    testStep.copy(embedUrl = noHostUrl).embedUrlToNdlaNo should equal(None)
-  }
-
-  test("That Step.embedUrlToNdlaNo converts red.ndla.no to ndla.no") {
-    val redUrl = Some("http://red.ndla.no/node/145805")
-    val expectedUrl = Some("https://ndla.no/node/145805")
-
-    testStep.copy(embedUrl = redUrl).embedUrlToNdlaNo should equal(expectedUrl)
-  }
-
-  test("That Step.embedUrlToNdlaNo returns other than red.ndla.no as is") {
-    val (urlToCnn, expectedUrl) = (Some("http://www.cnn.com/"), Some("https://www.cnn.com/"))
-    testStep.copy(embedUrl = urlToCnn).embedUrlToNdlaNo should equal(expectedUrl)
-  }
-
   test("That failure is returned when ndlaClient returns a failure") {
     val exception = new HttpRequestException("This is an error")
     when(ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest], any[String], any[String])(any[Manifest[MainPackageImport]])).thenReturn(Failure(exception))

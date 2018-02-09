@@ -14,42 +14,45 @@ import org.mockito.Mockito._
 class MemoizeTest extends UnitSuite {
 
   class Target {
-    def targetMethod(): String = "Hei"
+    def targetMethod(value: String): String = s"Hei, $value"
   }
 
   test("That an uncached value will do an actual call") {
     val targetMock = mock[Target]
-    val memoizedTarget = Memoize[String](Long.MaxValue, targetMock.targetMethod)
+    val name = "Rune Rudberg"
+    val memoizedTarget = Memoize[String, String](targetMock.targetMethod)
 
-    when(targetMock.targetMethod()).thenReturn("Hello from mock")
-    memoizedTarget() should equal("Hello from mock")
-    verify(targetMock, times(1)).targetMethod()
+    when(targetMock.targetMethod(name)).thenReturn("Hello from mock")
+    memoizedTarget(name) should equal("Hello from mock")
+    verify(targetMock, times(1)).targetMethod(name)
   }
 
   test("That a cached value will not forward the call to the target") {
     val targetMock = mock[Target]
-    val memoizedTarget = Memoize[String](Long.MaxValue, targetMock.targetMethod)
+    val name = "Rune Rudberg"
+    val memoizedTarget = Memoize[String, String](targetMock.targetMethod)
 
-    when(targetMock.targetMethod()).thenReturn("Hello from mock")
+    when(targetMock.targetMethod(name)).thenReturn("Hello from mock")
     Seq(1 to 10).foreach (i => {
-      memoizedTarget() should equal("Hello from mock")
+      memoizedTarget(name) should equal("Hello from mock")
     })
-    verify(targetMock, times(1)).targetMethod()
+    verify(targetMock, times(1)).targetMethod(name)
   }
 
   test("That the cache is invalidated after cacheMaxAge") {
     val cacheMaxAgeInMs = 20
+    val name = "Rune Rudberg"
     val targetMock = mock[Target]
-    val memoizedTarget = Memoize[String](cacheMaxAgeInMs, targetMock.targetMethod)
+    val memoizedTarget = Memoize[String, String](targetMock.targetMethod, cacheMaxAgeInMs)
 
-    when(targetMock.targetMethod()).thenReturn("Hello from mock")
+    when(targetMock.targetMethod(name)).thenReturn("Hello from mock")
 
-    memoizedTarget() should equal("Hello from mock")
-    memoizedTarget() should equal("Hello from mock")
+    memoizedTarget(name) should equal("Hello from mock")
+    memoizedTarget(name) should equal("Hello from mock")
     Thread.sleep(cacheMaxAgeInMs)
-    memoizedTarget() should equal("Hello from mock")
-    memoizedTarget() should equal("Hello from mock")
+    memoizedTarget(name) should equal("Hello from mock")
+    memoizedTarget(name) should equal("Hello from mock")
 
-    verify(targetMock, times(2)).targetMethod()
+    verify(targetMock, times(2)).targetMethod(name)
   }
 }

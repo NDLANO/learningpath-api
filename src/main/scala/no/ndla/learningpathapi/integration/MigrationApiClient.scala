@@ -10,12 +10,13 @@ package no.ndla.learningpathapi.integration
 
 import java.util.Date
 
+import com.netaporter.uri.dsl._
 import no.ndla.learningpathapi.LearningpathApiProperties.{Environment, MigrationHost, MigrationPassword, MigrationUser}
+import no.ndla.learningpathapi.caching.Memoize
 import no.ndla.network.NdlaClient
 
 import scala.util.Try
 import scalaj.http.Http
-import com.netaporter.uri.dsl._
 
 trait MigrationApiClient {
   this: NdlaClient =>
@@ -36,6 +37,14 @@ trait MigrationApiClient {
         Http(LearningPathEndpoint.replace(":node_id", nodeId)),
         MigrationUser, MigrationPassword)
     }
+
+    val getAllNodeIds: Memoize[String, Set[ArticleMigrationContent]] = Memoize((nodeId: String) => {
+      val url = s"$MigrationHost/contents/$nodeId" ? ("db-source" -> s"$DBSource")
+      ndlaClient.fetchWithBasicAuth[ArticleMigrationData](Http(url), MigrationUser, MigrationPassword)
+        .toOption
+        .map(_.contents)
+        .getOrElse(Seq.empty).toSet
+    })
   }
 }
 
@@ -66,3 +75,7 @@ case class Package(nid: Long,
                    durationHours: Int,
                    durationMinutes: Int,
                    steps: Seq[Step])
+case class ArticleMigrationContent(nid: String, tnid: String) {
+  def isMainNode: Boolean = nid == tnid || tnid == "0"
+}
+case class ArticleMigrationData(contents: Seq[ArticleMigrationContent])

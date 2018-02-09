@@ -9,9 +9,9 @@
 package no.ndla.learningpathapi.service
 
 import com.netaporter.uri.dsl._
-import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl}
+import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl, NdlaFrontendHost}
 import no.ndla.learningpathapi.integration._
-import no.ndla.learningpathapi.model.api.CoverPhoto
+import no.ndla.learningpathapi.model.api.{CoverPhoto, EmbedUrlV2}
 import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain._
@@ -160,8 +160,6 @@ trait ConverterServiceComponent {
       val supportedLanguages = findSupportedLanguages(ls)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
-      val searchLanguage = getSearchLanguage(language, supportedLanguages)
-
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
       val description = findByLanguageOrBestEffort(ls.description, Some(language)).map(asApiDescription)
       val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2)
@@ -173,7 +171,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         title,
         description,
-        embedUrl,
+        embedUrl.map(createEmbedUrl(_, language)),
         ls.showTitle,
         ls.`type`.toString,
         ls.license.map(asApiLicense),
@@ -263,6 +261,13 @@ trait ConverterServiceComponent {
     def createUrlToImageApi(imageId: String): String = {
       s"http://$InternalImageApiUrl/$imageId"
     }
-  }
 
+    def createEmbedUrl(embedUrlOrPath: EmbedUrlV2, language: String): EmbedUrlV2 = {
+      embedUrlOrPath.url.host match {
+        case Some(_) => embedUrlOrPath
+        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost/subjects/$language${embedUrlOrPath.url}")
+      }
+    }
+
+  }
 }

@@ -8,24 +8,24 @@
 
 package no.ndla.learningpathapi.caching
 
-class Memoize[R](f: () => R, maxAgeMs: Long) extends (() => R) {
+class Memoize[T, R](f: T => R, maxAgeMs: Long) extends (T => R) {
   case class CacheValue(value: R, lastUpdated: Long) {
     def isExpired: Boolean = lastUpdated + maxAgeMs <= System.currentTimeMillis()
   }
 
-  private[this] var cache: Option[CacheValue] = None
+  private[this] var cache: Map[T, CacheValue] = Map.empty
 
-  def apply(): R = {
-    cache match {
+  override def apply(value: T): R = {
+    cache.get(value) match {
       case Some(cachedValue) if !cachedValue.isExpired => cachedValue.value
-      case _ => {
-        cache = Some(CacheValue(f(), System.currentTimeMillis()))
-        cache.get.value
-      }
+      case _ =>
+        cache = cache.updated(value, CacheValue(f(value), System.currentTimeMillis()))
+        cache(value).value
     }
   }
 }
 
 object Memoize {
-  def apply[R](maxAgeMs: Long, f: () => R) = new Memoize(f, maxAgeMs)
+  // default to 30 minutes cache time
+  def apply[T, R](f: T => R, maxAgeMs: Long = 1000 * 60 * 30) = new Memoize[T, R](f, maxAgeMs)
 }

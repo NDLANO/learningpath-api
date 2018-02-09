@@ -20,7 +20,6 @@ import scala.util.{Failure, Success}
 object LearningpathApiProperties extends LazyLogging {
   val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
 
-
   val SecretsFile = "learningpath-api.secrets"
 
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
@@ -38,15 +37,19 @@ object LearningpathApiProperties extends LazyLogging {
   val MaxPageSize = 100
   val IndexBulkSize = 1000
 
-  val AuthHost = "auth.ndla-local"
-  val ArticleImportHost = "article-import.ndla-local"
-  val ImageApiHost = "image-api.ndla-local"
+  val ArticleImportHost = propOrElse("ARTICLE_IMPORT_HOST", "article-import.ndla-local")
+  val ApiGatewayHost = "api-gateway.ndla-local"
+  val ImageApiHost = propOrElse("IMAGE_API_HOST", "image-api.ndla-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
+  val NdlaFrontendHost = Environment match {
+    case "prod" => "ndla-frontend.api.ndla.no"
+    case "local" => "localhost:30017"
+    case _ => s"ndla-frontend.$Environment.api.ndla.no"
+  }
+
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
 
-  val IsoMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
-  val LicenseMappingCacheAgeInMs = 1000 * 60 * 60 // 1 hour caching
   val ElasticSearchIndexMaxResultWindow = 10000
 
   val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
