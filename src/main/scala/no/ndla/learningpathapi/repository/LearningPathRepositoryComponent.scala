@@ -21,7 +21,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
   this: DatasourceComponent =>
   val learningPathRepository: LearningPathRepository
 
-  def inTransaction[A](work: DBSession => A)(implicit session: DBSession = null):A = {
+  def inTransaction[A](work: DBSession => A)(implicit session: DBSession = null): A = {
     Option(session) match {
       case Some(x) => work(x)
       case None => {

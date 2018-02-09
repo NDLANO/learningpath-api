@@ -1,6 +1,6 @@
 /*
  * Part of NDLA learningpath_api.
- * Copyright (C) 2016 NDLA
+ * Copyright (C) 2018 NDLA
  *
  * See LICENSE
  *
