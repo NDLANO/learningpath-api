@@ -32,6 +32,7 @@ object Error {
   val RESOURCE_OUTDATED = "RESOURCE_OUTDATED"
   val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
   val IMPORT_FAILED = "IMPORT_FAILED"
+  val DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
 
   val GENERIC_DESCRIPTION = s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
   val VALIDATION_DESCRIPTION = "Validation Error"
@@ -39,4 +40,5 @@ object Error {
   val INDEX_MISSING_DESCRIPTION = s"Ooops. Our search index is not available at the moment, but we are trying to recreate it. Please try again in a few minutes. Feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
   val WindowTooLargeError = Error(WINDOW_TOO_LARGE, s"The result window is too large. Fetching pages above ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow} results are unsupported.")
   val IndexMissingError = Error(INDEX_MISSING, INDEX_MISSING_DESCRIPTION)
+  val DatabaseUnavailableError = Error(DATABASE_UNAVAILABLE, s"Database seems to be unavailable, retrying connection.")
 }
