@@ -22,7 +22,7 @@ class UrlValidatorTest extends UnitSuite {
 
   test("That empty url returns a ValidationMessage") {
     val validationMessages = validator.validate(fieldname, "")
-    validationMessages.size should be (2)
+    validationMessages.size should be (1)
     validationMessages.head.field should equal(fieldname)
     validationMessages.head.message should equal("Required field is empty.")
   }
