@@ -12,6 +12,7 @@ package no.ndla.learningpath.controller
 import javax.servlet.http.HttpServletRequest
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.{Error, ValidationError, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.network.{ApplicationUrl, AuthUser}
@@ -19,6 +20,7 @@ import no.ndla.network.model.HttpRequestException
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.native.Serialization.read
 import org.json4s.{DefaultFormats, Formats}
+import org.postgresql.util.PSQLException
 import org.scalatra._
 import org.scalatra.json.NativeJsonSupport
 
@@ -44,6 +46,9 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case i: ImportException => UnprocessableEntity(body = Error(Error.IMPORT_FAILED, i.getMessage))
     case rw: ResultWindowTooLargeException => UnprocessableEntity(body = Error(Error.WINDOW_TOO_LARGE, rw.getMessage))
     case e: IndexNotFoundException => InternalServerError(body=Error.IndexMissingError)
+    case _: PSQLException =>
+      ComponentRegistry.connectToDatabase()
+      InternalServerError(Error.DatabaseUnavailableError)
     case t: Throwable => {
       t.printStackTrace()
       logger.error(t.getMessage)

@@ -46,7 +46,7 @@ trait TestEnvironment
   with LearningStepValidator
   with TitleValidator {
 
-  val datasource = mock[DataSource]
+  val dataSource = mock[DataSource]
 
   val learningPathRepository = mock[LearningPathRepository]
   val readService = mock[ReadService]
@@ -73,7 +73,7 @@ trait TestEnvironment
 
   def resetMocks() = {
     Mockito.reset(
-      datasource, learningPathRepository, readService,
+      dataSource, learningPathRepository, readService,
       updateService, searchService, searchIndexService, converterService, searchConverterService,
       languageValidator, titleValidator, e4sClient, articleImportClient
     )
