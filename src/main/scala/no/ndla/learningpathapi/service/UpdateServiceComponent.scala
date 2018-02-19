@@ -192,15 +192,8 @@ trait UpdateServiceComponent {
         withIdAndAccessGranted(learningPathId, owner) match {
           case None => None
           case Some(learningPath) => {
-            val description = newLearningStep.description match {
-              case None => Seq.empty
-              case Some(value) => Seq(domain.Description(value, newLearningStep.language))
-            }
-
-            val embedUrl = newLearningStep.embedUrl match {
-              case None => Seq.empty
-              case Some(value) => Seq(domain.EmbedUrl(value.url, newLearningStep.language, EmbedType.valueOfOrError(value.embedType)))
-            }
+            val description = newLearningStep.description.map(domain.Description(_, newLearningStep.language)).toSeq
+            val embedUrl = newLearningStep.embedUrl.map(converterService.asDomainEmbedUrl(_, newLearningStep.language)).toSeq
 
             val newSeqNo = learningPath.learningsteps.isEmpty match {
               case true => 0
@@ -252,7 +245,7 @@ trait UpdateServiceComponent {
 
               val embedUrls = learningStepToUpdate.embedUrl match {
                 case None => existing.embedUrl
-                case Some(value) => mergeLanguageFields(existing.embedUrl, Seq(domain.EmbedUrl(value.url, learningStepToUpdate.language, EmbedType.valueOfOrError(value.embedType))))
+                case Some(value) => mergeLanguageFields(existing.embedUrl, Seq(converterService.asDomainEmbedUrl(value, learningStepToUpdate.language)))
               }
 
               val toUpdate = existing.copy(

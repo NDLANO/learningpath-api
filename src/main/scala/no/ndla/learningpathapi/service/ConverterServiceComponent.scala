@@ -8,8 +8,9 @@
 
 package no.ndla.learningpathapi.service
 
+import com.netaporter.uri.Uri
 import com.netaporter.uri.dsl._
-import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl, NdlaFrontendHost}
+import no.ndla.learningpathapi.LearningpathApiProperties.{Domain, InternalImageApiUrl, NdlaFrontendHost, NdlaFrontendHostNames}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api.{CoverPhoto, EmbedUrlV2}
 import no.ndla.learningpathapi.model.{api, domain}
@@ -162,8 +163,7 @@ trait ConverterServiceComponent {
 
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
       val description = findByLanguageOrBestEffort(ls.description, Some(language)).map(asApiDescription)
-      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2)
-
+      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2).map(createEmbedUrl(_, language))
 
       Some(api.LearningStepV2(
         ls.id.get,
@@ -171,7 +171,7 @@ trait ConverterServiceComponent {
         ls.seqNo,
         title,
         description,
-        embedUrl.map(createEmbedUrl(_, language)),
+        embedUrl,
         ls.showTitle,
         ls.`type`.toString,
         ls.license.map(asApiLicense),
@@ -240,6 +240,17 @@ trait ConverterServiceComponent {
 
     def asApiEmbedUrlV2(embedUrl: domain.EmbedUrl): api.EmbedUrlV2 = {
       api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
+    }
+
+    def asDomainEmbedUrl(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
+      val url = embedUrl.url.host match {
+        case Some(host) if NdlaFrontendHostNames.contains(host) =>
+          val pathAndQueryParams: String = embedUrl.url.path ? embedUrl.url.queryString
+          pathAndQueryParams
+        case _ => embedUrl.url
+      }
+
+      domain.EmbedUrl(url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {

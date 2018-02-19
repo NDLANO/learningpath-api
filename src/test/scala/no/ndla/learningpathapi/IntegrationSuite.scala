@@ -20,7 +20,7 @@ abstract class IntegrationSuite extends UnitSuite {
   setEnv(PropertyKeys.MetaResourceKey, "postgres")
   setEnv(PropertyKeys.MetaServerKey, "127.0.0.1")
   setEnv(PropertyKeys.MetaPortKey, "5432")
-  setEnv(PropertyKeys.MetaSchemaKey, "learningpathapi")
+  setEnv(PropertyKeys.MetaSchemaKey, "learningpathapi_test")
 
 
   def getDataSource: DataSource = {
