@@ -23,7 +23,7 @@ trait MigrationApiClient {
   val migrationApiClient: MigrationApiClient
 
   class MigrationApiClient {
-    val DBSource = if (Environment == "prod") "cm" else "red"
+    val DBSource = "red"
     private val LearningPathsEndpoint = s"$MigrationHost/learningpaths" ? (s"db-source" -> s"$DBSource")
     private val LearningPathEndpoint = s"$MigrationHost/learningpaths/:node_id" ? (s"db-source" -> s"$DBSource")
 
