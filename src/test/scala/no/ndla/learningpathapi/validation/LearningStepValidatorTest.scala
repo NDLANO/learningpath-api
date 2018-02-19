@@ -128,6 +128,15 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
     validationMessages.last.field should equal("language")
   }
 
+  test("Embedurls containing only paths should be legal") {
+    when(languageValidator.validate("language", "nb", false)).thenReturn(None)
+    when(titleValidator.validate(ValidLearningStep.title, false)).thenReturn(List())
+
+    val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl =
+      List(EmbedUrl("/subjects/subject:9/topic:1:179373/topic:1:170165/resource:1:16145", "nb", EmbedType.OEmbed))), false)
+    validationMessages.size should be(0)
+  }
+
   test("That html-code in license returns an error") {
     validMock()
     val license = "<strong>ugyldig</strong>"
