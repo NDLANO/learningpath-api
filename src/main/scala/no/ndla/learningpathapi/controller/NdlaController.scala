@@ -48,7 +48,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case rw: ResultWindowTooLargeException => UnprocessableEntity(body = Error(Error.WINDOW_TOO_LARGE, rw.getMessage))
     case e: IndexNotFoundException => InternalServerError(body=Error.IndexMissingError)
     case _: PSQLException =>
-      ConnectionPool.singleton(new DataSourceConnectionPool(ComponentRegistry.datasource))
+      ComponentRegistry.connectToDatabase()
       InternalServerError(Error.DatabaseUnavailableError)
     case t: Throwable => {
       t.printStackTrace()

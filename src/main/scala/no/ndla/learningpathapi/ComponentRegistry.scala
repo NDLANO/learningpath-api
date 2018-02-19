@@ -44,20 +44,21 @@ object ComponentRegistry
   with LearningPathValidator
   with LearningStepValidator
   with TitleValidator {
+  def connectToDatabase(): Unit = ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
   implicit val swagger = new LearningpathSwagger
 
-  lazy val datasource = new PGPoolingDataSource()
-  datasource.setUser(LearningpathApiProperties.MetaUserName)
-  datasource.setPassword(LearningpathApiProperties.MetaPassword)
-  datasource.setDatabaseName(LearningpathApiProperties.MetaResource)
-  datasource.setServerName(LearningpathApiProperties.MetaServer)
-  datasource.setPortNumber(LearningpathApiProperties.MetaPort)
-  datasource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
-  datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
-  datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
+  lazy val dataSource = new PGPoolingDataSource()
+  dataSource.setUser(LearningpathApiProperties.MetaUserName)
+  dataSource.setPassword(LearningpathApiProperties.MetaPassword)
+  dataSource.setDatabaseName(LearningpathApiProperties.MetaResource)
+  dataSource.setServerName(LearningpathApiProperties.MetaServer)
+  dataSource.setPortNumber(LearningpathApiProperties.MetaPort)
+  dataSource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
+  dataSource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
+  dataSource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
 
-  ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
+  connectToDatabase()
 
 
   lazy val learningPathRepository = new LearningPathRepository
