@@ -88,8 +88,9 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
   test("That validate returns error when embedUrl contains html") {
     validMock()
     val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("<strong>ikke gyldig</strong>", "nb", EmbedType.OEmbed))), false)
-    validationMessages.size should be(2)
+    validationMessages.size should be(1)
     validationMessages.head.field should equal("embedUrl.url")
+    validationMessages.head.message.contains("contains illegal html") should be (true)
   }
 
   test("That validate returns error when embedUrl.language is invalid") {
@@ -107,7 +108,7 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
     when(languageValidator.validate("language", "bergensk", false)).thenReturn(Some(ValidationMessage("language", "Error")))
 
     val validationMessages = validator.validateLearningStep(ValidLearningStep.copy(embedUrl = List(EmbedUrl("<h1>Ugyldig</h1>", "bergensk", EmbedType.OEmbed))), false)
-    validationMessages.size should be(3)
+    validationMessages.size should be(2)
     validationMessages.head.field should equal("embedUrl.url")
     validationMessages.last.field should equal("language")
   }
@@ -123,7 +124,7 @@ class LearningStepValidatorTest extends UnitSuite with TestEnvironment {
         EmbedUrl("<h1>Ugyldig</h1>", "nb", EmbedType.OEmbed),
         EmbedUrl("https://www.ndla.no/123", "bergensk", EmbedType.OEmbed)
       )), false)
-    validationMessages.size should be(3)
+    validationMessages.size should be(2)
     validationMessages.head.field should equal("embedUrl.url")
     validationMessages.last.field should equal("language")
   }

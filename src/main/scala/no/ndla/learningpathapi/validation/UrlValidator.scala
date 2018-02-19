@@ -17,7 +17,7 @@ class UrlValidator() {
   def validate(fieldPath: String, url: String): Seq[ValidationMessage] = {
     nonEmptyText(fieldPath, url) ++
       noHtmlInText(fieldPath, url) ++
-      startsWithHttps(fieldPath, url)
+      urlIsValid(fieldPath, url)
   }
 
   private def nonEmptyText(fieldPath: String, url: String): Seq[ValidationMessage] = {
@@ -34,8 +34,10 @@ class UrlValidator() {
     }
   }
 
-  private def startsWithHttps(fieldPath: String, url: String): Seq[ValidationMessage] = {
-    if (!url.startsWith("https") && url.scheme.isDefined && url.host.isDefined)
+  private def urlIsValid(fieldPath: String, url: String): Seq[ValidationMessage] = {
+    if (url.path.nonEmpty && url.scheme.isEmpty && url.host.isEmpty)
+      List.empty
+    else if(!url.startsWith("https"))
       List(ValidationMessage(fieldPath, "Illegal Url. All Urls must start with https."))
     else
       List.empty
