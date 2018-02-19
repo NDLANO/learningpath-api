@@ -23,7 +23,6 @@ import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
 import org.scalatra._
 import org.scalatra.json.NativeJsonSupport
-import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
