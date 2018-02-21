@@ -19,14 +19,14 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 
 object LearningpathApiInfo {
   val apiInfo = ApiInfo(
-    "Learningpath Api",
-    "Documentation for the LEARNINGPATH API of NDLA.no",
+    "Learningpath API",
+    "Services for accessing learningpaths",
     "http://ndla.no",
     LearningpathApiProperties.ContactEmail,
     "GPL v3.0",
     "http://www.gnu.org/licenses/gpl-3.0.en.html")
 }
 
-class LearningpathSwagger extends Swagger("2.0", "0.8", LearningpathApiInfo.apiInfo) {
+class LearningpathSwagger extends Swagger("2.0", "1.0", LearningpathApiInfo.apiInfo) {
   addAuthorization(OAuth(List(), List(ImplicitGrant(LoginEndpoint(LearningpathApiProperties.Auth0LoginEndpoint),"access_token"))))
 }
