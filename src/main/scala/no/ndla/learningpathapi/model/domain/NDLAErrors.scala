@@ -24,5 +24,6 @@ case class Ndla4sSearchException(rf: RequestFailure) extends RuntimeException(
      |type: ${rf.error.`type`}
    """.stripMargin
 )
+case class ElasticIndexingException(message: String) extends RuntimeException(message)
 class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
 case class LanguageNotSupportedException(message: String) extends RuntimeException(message)

@@ -9,24 +9,22 @@
 package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpath.controller.NdlaController
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger._
-import org.scalatra.{Ok, ScalatraServlet}
-
-import scala.util.Try
-import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{Language, LearningPathStatus, Sort, StepStatus}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.network.AuthUser
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
+import no.ndla.network.AuthUser
+import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.DataType.ValueDataType
+import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
+import org.scalatra.{Ok, ScalatraServlet}
+
+import scala.util.Try
 
 trait LearningpathControllerV2 {
 

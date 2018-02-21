@@ -11,14 +11,14 @@ package no.ndla.learningpathapi.service.search
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import com.sksamuel.elastic4s.analyzers._
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.RequestSuccess
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.domain.Language._
-import no.ndla.learningpathapi.model.domain.{LearningPath, ReindexResult}
+import no.ndla.learningpathapi.model.domain.{ElasticIndexingException, LearningPath, ReindexResult}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.json4s.native.Serialization._
 
@@ -148,9 +148,16 @@ trait SearchIndexServiceComponent {
         }
 
         response match {
-          case Success(_) =>
+          case Success(RequestSuccess(_, _, _, result)) if !result.errors =>
             logger.info(s"Indexed ${learningPaths.size} documents")
             Success(learningPaths.size)
+          case Success(RequestSuccess(_, _, _, result)) =>
+            val failed = result.items.collect {
+              case item if item.error.isDefined => s"'${item.id}: ${item.error.get.reason}'"
+            }
+
+            logger.error(s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
+            Failure(ElasticIndexingException(s"Failed to index ${failed.size}/${learningPaths.size} learningpaths"))
           case Failure(ex) => Failure(ex)
         }
       }
@@ -227,7 +234,7 @@ trait SearchIndexServiceComponent {
             textField("name")
           )
         ),
-        booleanField("isBasedOn")
+        intField("isBasedOn")
       )
     }
 
