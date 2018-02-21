@@ -218,7 +218,7 @@ trait LearningpathControllerV2 {
         responseMessages(response403, response404, response500, response502)
         authorizations "oauth2")
 
-    get("/:learningpath_id/learningsteps/:lerningstep_id", operation(getLearningstep)) {
+    get("/:learningpath_id/learningsteps/:learningstep_id", operation(getLearningstep)) {
       val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
 
       readService.learningstepV2For(long(this.learningpathId.paramName), long(this.learningstepId.paramName), language, AuthUser.get) match {
