@@ -12,7 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpath.controller.NdlaController
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import org.scalatra.swagger._
 import org.scalatra.{Ok, ScalatraServlet}
 
 import scala.util.Try
@@ -22,9 +22,11 @@ import no.ndla.learningpathapi.model.domain.{Language, LearningPathStatus, Sort,
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateServiceComponent}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.network.{AuthUser}
+import no.ndla.network.AuthUser
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
+import org.scalatra.swagger.DataType.ValueDataType
+import org.scalatra.util.NotNothing
 
 trait LearningpathControllerV2 {
 
@@ -45,6 +47,30 @@ trait LearningpathControllerV2 {
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
     val response502 = ResponseMessage(502, "Remote error", Some("Error"))
+
+    case class Param(paramName:String, description:String)
+
+    private val correlationId = Param("X-Correlation-ID","User supplied correlation-id. May be omitted.")
+    private val query = Param("query","Return only Learningpaths with content matching the specified query.")
+    private val language = Param("language", "The ISO 639-1 language code describing language.")
+    private val sort = Param("sort",
+      """The sorting used on results.
+             The following are supported: relevance, -relevance, duration, -duration, title, -title, lastUpdated, -lastUpdated, id, -id.
+             Default is by -relevance (desc) when query is set, and title (asc) when query is empty.""".stripMargin)
+    private val pageNo = Param("page","The page number of the search hits to display.")
+    private val pageSize = Param("page-size","The number of search hits to display for each page.")
+    private val learningpathId = Param("learningpath_id","Id of the learningpath.")
+    private val learningstepId = Param("learningstep_id","Id of the learningstep.")
+    private val tag = Param("tag","Return only Learningpaths that are tagged with this exact tag.")
+    private val learningpathIds = Param("ids","Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,).")
+    private val licenseFilter = Param("filter","Query for filtering licenses. Only licenses containing filter-string are returned.")
+
+
+    private def asQueryParam[T: Manifest: NotNothing](param: Param) = queryParam[T](param.paramName).description(param.description)
+    private def asHeaderParam[T: Manifest: NotNothing](param: Param) = headerParam[T](param.paramName).description(param.description)
+    private def asPathParam[T: Manifest: NotNothing](param: Param) = pathParam[T](param.paramName).description(param.description)
+    private def asFormParam[T: Manifest: NotNothing](param: Param) = formParam[T](param.paramName).description(param.description)
+    private def asFileParam(param: Param) = Parameter(name = param.paramName, `type` = ValueDataType("file"), description = Some(param.description), paramType = ParamType.Form)
 
     def search(query: Option[String], language: Option[String], tag: Option[String], idList: List[Long], sort: Option[String], pageSize: Option[Int], page: Option[Int]): SearchResultV2 = {
       query match {
@@ -69,33 +95,28 @@ trait LearningpathControllerV2 {
 
     val getLearningpaths =
       (apiOperation[SearchResultV2]("getLearningpaths")
-        summary "Show public learningpaths"
+        summary "Find public learningpaths"
         notes "Show public learningpaths."
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        queryParam[Option[String]]("query").description("Return only Learningpaths with content matching the specified query."),
-        queryParam[Option[String]]("tag").description("Return only Learningpaths that are tagged with this exact tag."),
-        queryParam[Option[String]]("ids").description("Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,)."),
-        queryParam[Option[String]]("language").description("The chosen language. Default is 'nb'"),
-        queryParam[Option[Int]]("page").description("The page number of the search hits to display."),
-        queryParam[Option[Int]]("page-size").description(s"The number of search hits to display for each page. Default is ${LearningpathApiProperties.DefaultPageSize}. Max page-size is ${LearningpathApiProperties.MaxPageSize}"),
-        queryParam[Option[String]]("sort").description(
-          """The sorting used on results.
-           Default is by -relevance (desc) when querying.
-           When browsing, the default is title (asc).
-           The following are supported: relevance, -relevance, lastUpdated, -lastUpdated, duration, -duration, title, -title, id, -id""".stripMargin))
+        asHeaderParam[Option[String]](correlationId),
+        asQueryParam[Option[String]](query),
+        asQueryParam[Option[String]](tag),
+        asQueryParam[Option[String]](learningpathIds),
+        asQueryParam[Option[String]](language),
+        asQueryParam[Option[Int]](pageNo),
+        asQueryParam[Option[Int]](pageSize),
+        asQueryParam[Option[String]](sort))
         responseMessages(response400, response500)
         authorizations "oauth2")
 
     get("/", operation(getLearningpaths)) {
-      val query = paramOrNone("query")
-      val tag = paramOrNone("tag")
-      val idList = paramAsListOfLong("ids")
-      val language = paramOrNone("language")
-      val sort = paramOrNone("sort")
-      val pageSize = paramOrNone("page-size").flatMap(ps => Try(ps.toInt).toOption)
-      val page = paramOrNone("page").flatMap(idx => Try(idx.toInt).toOption)
+      val query = paramOrNone(this.query.paramName)
+      val tag = paramOrNone(this.tag.paramName)
+      val idList = paramAsListOfLong(this.learningpathIds.paramName)
+      val language = paramOrNone(this.language.paramName)
+      val sort = paramOrNone(this.sort.paramName)
+      val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps => Try(ps.toInt).toOption)
+      val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
       logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}", query, language, tag, page, pageSize, sort, idList)
 
       search(query, language, tag, idList, sort, pageSize, page)
@@ -103,11 +124,10 @@ trait LearningpathControllerV2 {
 
     val getLearningpathsPost =
       (apiOperation[List[SearchResultV2]]("searchArticles")
-        summary "Show all articles"
-        notes "Shows all articles. You can search it too."
+        summary "Find public learningpaths"
+        notes "Show public learningpaths"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id"),
-        headerParam[Option[String]]("app-key").description("Your app-key"),
+        asHeaderParam[Option[String]](correlationId),
         bodyParam[SearchParams]
       )
         authorizations "oauth2"
@@ -130,100 +150,104 @@ trait LearningpathControllerV2 {
 
     val getLearningpath =
       (apiOperation[LearningPathV2]("getLearningpath")
-        summary "Show details about the specified learningpath"
+        summary "Fetch details about the specified learningpath"
         notes "Shows all information about the specified learningpath."
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        queryParam[Option[String]]("language").description("The chosen language of learningpath. Default is 'nb'"))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asQueryParam[Option[String]](language))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    get("/:path_id/?", operation(getLearningpath)) {
-      val language = paramOrDefault("language", Language.AllLanguages)
+    get("/:learningpath_id", operation(getLearningpath)) {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+      val id = long(this.learningpathId.paramName)
 
-      readService.withIdV2(long("path_id"), language, AuthUser.get) match {
+      readService.withIdV2(id, language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $id and language $language not found"))
       }
     }
 
     val getLearningpathStatus =
       (apiOperation[LearningPathStatus]("getLearningpathStatus")
-        summary "Show publishingstatus for the learningpath"
+        summary "Show status information for the learningpath"
         notes "Shows publishingstatus for the learningpath"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."))
+          asHeaderParam[Option[String]](correlationId),
+          asPathParam[String](learningpathId))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    get("/:path_id/status/?", operation(getLearningpathStatus)) {
-      readService.statusFor(long("path_id"), AuthUser.get) match {
+    get("/:learningpath_id/status/", operation(getLearningpathStatus)) {
+      val id = long(this.learningpathId.paramName)
+      readService.statusFor(id, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $id and language $language not found"))
       }
     }
 
     val getLearningsteps =
       (apiOperation[List[LearningStepSummaryV2]]("getLearningsteps")
-        summary "Show all learningsteps for given learningpath id"
+        summary "Fetch learningsteps for given learningpath"
         notes "Show all learningsteps for given learningpath id"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asQueryParam[Option[String]](language)
+      )
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    get("/:path_id/learningsteps/?", operation(getLearningsteps)) {
-      val language = paramOrDefault("language", Language.AllLanguages)
+    get("/:learningpath_id/learningsteps/", operation(getLearningsteps)) {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+      val id = long(this.learningpathId.paramName)
 
-      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.ACTIVE, language, AuthUser.get) match {
+      readService.learningstepsForWithStatusV2(id, StepStatus.ACTIVE, language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} and language $language not found"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $id and language $language not found"))
       }
     }
 
     val getLearningstep =
       (apiOperation[LearningStepV2]("getLearningstep")
-        summary "Show the given learningstep for the given learningpath"
+        summary "Fetch details about the specified learningstep"
         notes "Show the given learningstep for the given learningpath"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."),
-        queryParam[Option[String]]("language").description("The chosen language of learningstep. Default is 'nb'"))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asPathParam[String](learningstepId),
+        asQueryParam[Option[String]](language))
         responseMessages(response403, response404, response500, response502)
         authorizations "oauth2")
 
-    get("/:path_id/learningsteps/:step_id/?", operation(getLearningstep)) {
-      val language = paramOrDefault("language", Language.AllLanguages)
+    get("/:learningpath_id/learningsteps/:learningstep_id", operation(getLearningstep)) {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+      val pathId = long(this.learningpathId.paramName)
+      val stepId = long(this.learningstepId.paramName)
 
-      readService.learningstepV2For(long("path_id"), long("step_id"), language, AuthUser.get) match {
+      readService.learningstepV2For(pathId, stepId, language, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")} and language $language"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId and language $language"))
       }
     }
 
     val getLearningStepsInTrash =
       (apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
-        summary "Show all learningsteps for the given learningpath that are marked as deleted"
+        summary "Fetch deleted learningsteps for given learningpath"
         notes "Show all learningsteps for the given learningpath that are marked as deleted"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asQueryParam[Option[String]](language))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    get("/:path_id/learningsteps/trash/?", operation(getLearningStepsInTrash)) {
-      val language = paramOrDefault("language", Language.AllLanguages)
+    get("/:learningpath_id/learningsteps/trash/", operation(getLearningStepsInTrash)) {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+      val id = long(this.learningpathId.paramName)
 
-      readService.learningstepsForWithStatusV2(long("path_id"), StepStatus.DELETED, language, Some(requireUserId)) match {
+      readService.learningstepsForWithStatusV2(id, StepStatus.DELETED, language, Some(requireUserId)) match {
         case Some(x) => x
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
       }
@@ -231,34 +255,36 @@ trait LearningpathControllerV2 {
 
     val getLearningStepStatus =
       (apiOperation[LearningStepStatus]("getLearningStepStatus")
-        summary "Show status for the learningstep"
+        summary "Show status information for learningstep"
         notes "Shows status for the learningstep"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asPathParam[String](learningstepId))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    get("/:path_id/learningsteps/:step_id/status/?", operation(getLearningStepStatus)) {
-      readService.learningStepStatusForV2(long("path_id"), long("step_id"), Language.DefaultLanguage, AuthUser.get) match {
+    get("/:learningpath_id/learningsteps/:learningstep_id/status/", operation(getLearningStepStatus)) {
+      val pathId =long(this.learningpathId.paramName)
+      val stepId = long(this.learningstepId.paramName)
+
+      readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, AuthUser.get) match {
         case Some(x) => x
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId"))
       }
     }
 
     val getMyLearningpaths =
       (apiOperation[List[LearningPathSummaryV2]]("getMyLearningpaths")
-        summary "Show your learningpaths"
+        summary "Fetch all learningspaths you have created"
         notes "Shows your learningpaths."
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."))
+        asHeaderParam[Option[String]](correlationId)
+        )
         responseMessages(response403, response500)
         authorizations "oauth2")
 
-    get("/mine/?", operation(getMyLearningpaths)) {
+    get("/mine/", operation(getMyLearningpaths)) {
       readService.withOwnerV2(owner = requireUserId)
     }
 
@@ -267,14 +293,13 @@ trait LearningpathControllerV2 {
         summary "Show all valid licenses"
         notes "Shows all valid licenses"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        queryParam[Option[String]]("filter").description("A filter on the license keys. May be omitted"))
+        asHeaderParam[Option[String]](correlationId),
+        asQueryParam[Option[String]](licenseFilter))
         responseMessages(response403, response500)
         authorizations "oauth2")
 
-    get("/licenses", operation(getLicenses)) {
-      val licenses: Seq[LicenseDefinition] = paramOrNone("filter") match {
+    get("/licenses/", operation(getLicenses)) {
+      val licenses: Seq[LicenseDefinition] = paramOrNone(this.licenseFilter.paramName) match {
         case None => mapping.License.getLicenses
         case Some(filter) => mapping.License.getLicenses.filter(_.license.contains(filter))
       }
@@ -284,11 +309,10 @@ trait LearningpathControllerV2 {
 
     val addNewLearningpath =
       (apiOperation[LearningPathV2]("addLearningpath")
-        summary "Adds the given learningpath"
+        summary "Store new learningpath"
         notes "Adds the given learningpath"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
+        asHeaderParam[Option[String]](correlationId),
         bodyParam[NewLearningPathV2])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
@@ -297,249 +321,233 @@ trait LearningpathControllerV2 {
       val newLearningPath = extract[NewLearningPathV2](request.body)
       updateService.addLearningPathV2(newLearningPath, requireUserId) match {
         case None => halt(status = 404, body = Error(Error.GENERIC, s"The chosen language is not supported"))
-        case Some(learningPath) => {
+        case Some(learningPath) =>
           logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
           halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
-        }
       }
     }
 
     val copyLearningpath =
       (apiOperation[LearningPathV2]("copyLearningpath")
-        summary "Copies the given learningpath"
+        summary "Copy given learningpath and store it as a new learningpath"
         notes "Copies the given learningpath, with the option to override some fields"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath to copy."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
         bodyParam[NewCopyLearningPathV2])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
-    post("/:path_id/copy", operation(copyLearningpath)) {
+    post("/:learningpath_id/copy/", operation(copyLearningpath)) {
       val newLearningPath = extract[NewCopyLearningPathV2](request.body)
-      val pathId = long("path_id")
+      val pathId = long(this.learningpathId.paramName)
       updateService.newFromExistingV2(pathId, newLearningPath, requireUserId) match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-        case Some(learningPath) => {
+        case Some(learningPath) =>
           logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
           halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
-        }
       }
     }
 
     val updateLearningPath =
       (apiOperation[LearningPathV2]("updateLearningPath")
-        summary "Update the given learningpath"
+        summary "Update given learningpath"
         notes "Updates the given learningPath"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
         bodyParam[UpdatedLearningPathV2])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
-    patch("/:path_id/?", operation(updateLearningPath)) {
-      val updatedLearningPath = updateService.updateLearningPathV2(long("path_id"), extract[UpdatedLearningPathV2](request.body), requireUserId)
+    patch("/:learningpath_id", operation(updateLearningPath)) {
+      val updatedLearningPath = updateService.updateLearningPathV2(long(this.learningpathId.paramName), extract[UpdatedLearningPathV2](request.body), requireUserId)
       updatedLearningPath match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-        case Some(learningPath) => {
+        case Some(learningPath) =>
           logger.info(s"UPDATED LearningPath with ID =  ${learningPath.id}")
           Ok(body = learningPath)
-        }
       }
     }
 
     val addNewLearningStep =
       (apiOperation[LearningStepV2]("addLearningStep")
-        summary "Adds the given LearningStep"
+        summary "Add new learningstep to learningpath"
         notes "Adds the given LearningStep"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
         bodyParam[NewLearningStepV2])
         responseMessages(response400, response403, response404, response500, response502)
         authorizations "oauth2")
 
-    post("/:path_id/learningsteps/?", operation(addNewLearningStep)) {
+    post("/:learningpath_id/learningsteps/", operation(addNewLearningStep)) {
       val newLearningStep = extract[NewLearningStepV2](request.body)
-      val createdLearningStep = updateService.addLearningStepV2(long("path_id"), newLearningStep, requireUserId)
+      val createdLearningStep = updateService.addLearningStepV2(long(this.learningpathId.paramName), newLearningStep, requireUserId)
       createdLearningStep match {
         case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-        case Some(learningStep) => {
+        case Some(learningStep) =>
           logger.info(s"CREATED LearningStep with ID =  ${learningStep.id} for LearningPath with ID = ${params("path_id")}")
           halt(status = 201, headers = Map("Location" -> learningStep.metaUrl), body = createdLearningStep)
-        }
       }
     }
 
     val updateLearningStep =
       (apiOperation[LearningStepV2]("updateLearningStep")
-        summary "Updates the given learningStep"
+        summary "Update given learningstep"
         notes "Update the given learningStep"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asPathParam[String](learningstepId),
         bodyParam[UpdatedLearningStepV2])
         responseMessages(response400, response403, response404, response500, response502)
         authorizations "oauth2")
 
-    patch("/:path_id/learningsteps/:step_id/?", operation(updateLearningStep)) {
+    patch("/:learningpath_id/learningsteps/:learningstep_id", operation(updateLearningStep)) {
       val updatedLearningStep = extract[UpdatedLearningStepV2](request.body)
-      val createdLearningStep = updateService.updateLearningStepV2(long("path_id"), long("step_id"),
-        updatedLearningStep,
-        requireUserId)
+      val pathId = long(this.learningpathId.paramName)
+      val stepId = long(this.learningstepId.paramName)
+      val createdLearningStep = updateService.updateLearningStepV2(pathId, stepId, updatedLearningStep, requireUserId)
 
       createdLearningStep match {
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
-        case Some(learningStep) => {
-          logger.info(s"UPDATED LearningStep with ID = ${params("step_id")} for LearningPath with ID = ${params("path_id")}")
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+        case Some(learningStep) =>
+          logger.info(s"UPDATED LearningStep with ID = $stepId for LearningPath with ID = $pathId")
           Ok(body = learningStep)
-        }
       }
     }
 
     val updateLearningstepSeqNo =
       (apiOperation[LearningStepSeqNo]("updatetLearningstepSeqNo")
-        summary "Update the learning step sequence number."
+        summary "Store new sequence number for learningstep."
         notes "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this."
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asPathParam[String](learningstepId),
         bodyParam[LearningStepSeqNo])
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    put("/:path_id/learningsteps/:step_id/seqNo/?", operation(updateLearningstepSeqNo)) {
+    put("/:learningpath_id/learningsteps/:learningstep_id/seqNo/", operation(updateLearningstepSeqNo)) {
       val newSeqNo = extract[LearningStepSeqNo](request.body)
-      updateService.updateSeqNo(long("path_id"), long("step_id"), newSeqNo.seqNo, requireUserId) match {
+      val pathId = long(this.learningpathId.paramName)
+      val stepId = long(this.learningstepId.paramName)
+
+      updateService.updateSeqNo(pathId, stepId, newSeqNo.seqNo, requireUserId) match {
         case Some(seqNo) => seqNo
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} not found for learningpath with id ${params("path_id")}"))
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId"))
       }
     }
 
     val updateLearningStepStatus =
       (apiOperation[LearningStepV2]("updateLearningStepStatus")
-        summary "Updates the status of the given learningstep"
+        summary "Update status of given learningstep"
         notes "Updates the status of the given learningstep"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asPathParam[String](learningstepId),
         bodyParam[LearningStepStatus])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
-    put("/:path_id/learningsteps/:step_id/status/?", operation(updateLearningStepStatus)) {
+    put("/:learningpath_id/learningsteps/:learningstep_id/status/", operation(updateLearningStepStatus)) {
       val learningStepStatus = extract[LearningStepStatus](request.body)
       val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
+      val pathId = long(this.learningpathId.paramName)
+      val stepId = long(this.learningstepId.paramName)
 
-      val updatedStep = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), stepStatus, requireUserId)
+      val updatedStep = updateService.updateLearningStepStatusV2(pathId, stepId, stepStatus, requireUserId)
       updatedStep match {
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
-        case Some(learningStep) => {
-          logger.info(s"UPDATED LearningStep with id: ${params("step_id")} for LearningPath with id: ${params("path_id")} to STATUS = ${learningStep.status}")
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+        case Some(learningStep) =>
+          logger.info(s"UPDATED LearningStep with id: $stepId for LearningPath with id: $pathId to STATUS = ${learningStep.status}")
           Ok(body = learningStep)
-        }
       }
     }
 
     val updateLearningPathStatus =
       (apiOperation[LearningPathStatus]("updateLearningPathStatus")
-        summary "Updates the status of the given learningPath"
+        summary "Update status of given learningpath"
         notes "Updates the status of the given learningPath"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
         bodyParam[LearningPathStatus])
         responseMessages(response400, response403, response404, response500)
         authorizations "oauth2")
 
-    put("/:path_id/status/?", operation(updateLearningPathStatus)) {
+    put("/:learningpath_id/status/", operation(updateLearningPathStatus)) {
       val learningPathStatus = extract[LearningPathStatus](request.body)
       val pathStatus = LearningPathStatus.valueOfOrError(learningPathStatus.status)
+      val pathId = long(this.learningpathId.paramName)
 
-      val updatedLearningPath: Option[LearningPathV2] = updateService.updateLearningPathStatusV2(
-        long("path_id"),
-        pathStatus,
-        requireUserId,
-        Language.DefaultLanguage)
-
-      updatedLearningPath match {
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-        case Some(learningPath) => {
+      updateService.updateLearningPathStatusV2(pathId, pathStatus, requireUserId, Language.DefaultLanguage) match {
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+        case Some(learningPath) =>
           logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
           Ok(body = learningPath)
-        }
       }
     }
 
     val deleteLearningPath =
       (apiOperation[LearningPathV2]("deleteLearningPath")
-        summary "Deletes the given learningPath"
+        summary "Delete given learningpath"
         notes "Deletes the given learningPath"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    delete("/:path_id/?", operation(deleteLearningPath)) {
-      val deleted = updateService.updateLearningPathStatusV2(long("path_id"), LearningPathStatus.DELETED, requireUserId, Language.DefaultLanguage)
+    delete("/:learningpath_id", operation(deleteLearningPath)) {
+      val pathId = long(this.learningpathId.paramName)
+      val deleted = updateService.updateLearningPathStatusV2(pathId, LearningPathStatus.DELETED, requireUserId, Language.DefaultLanguage)
       deleted match {
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id ${params("path_id")} not found"))
-        case Some(learningPath) => {
-          logger.info(s"MARKED LearningPath with ID: ${params("path_id")} as DELETED")
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+        case Some(_) =>
+          logger.info(s"MARKED LearningPath with ID: $pathId as DELETED")
           halt(status = 204)
-        }
       }
     }
 
     val deleteLearningStep =
       (apiOperation[Void]("deleteLearningStep")
-        summary "Deletes the given learningStep"
+        summary "Delete given learningstep"
         notes "Deletes the given learningStep"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        pathParam[String]("path_id").description("The id of the learningpath."),
-        pathParam[String]("step_id").description("The id of the learningstep."))
+        asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningpathId),
+        asPathParam[String](learningstepId))
         responseMessages(response403, response404, response500)
         authorizations "oauth2")
 
-    delete("/:path_id/learningsteps/:step_id/?", operation(deleteLearningStep)) {
-      val deleted = updateService.updateLearningStepStatusV2(long("path_id"), long("step_id"), StepStatus.DELETED, requireUserId)
+    delete("/:learningpath_id/learningsteps/:learningstep_id", operation(deleteLearningStep)) {
+      val pathId = long(this.learningpathId.paramName)
+      val stepId = long(this.learningstepId.paramName)
+      val deleted = updateService.updateLearningStepStatusV2(pathId, stepId, StepStatus.DELETED, requireUserId)
       deleted match {
-        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id ${params("step_id")} for learningpath with id ${params("path_id")} not found"))
-        case Some(learningStep) => {
-          logger.info(s"MARKED LearningStep with id: ${params("step_id")} for LearningPath with id: ${params("path_id")} as DELETED.")
+        case None => halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+        case Some(_) =>
+          logger.info(s"MARKED LearningStep with id: $stepId for LearningPath with id: $pathId as DELETED.")
           halt(status = 204)
-        }
       }
     }
 
     val getTags =
       (apiOperation[List[LearningPathTags]]("getTags")
-        summary "Retrieves a list of all previously used tags in learningpaths"
+        summary "Fetch all previously used tags in learningpaths"
         notes "Retrieves a list of all previously used tags in learningpaths"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."),
-        queryParam[Option[String]]("language").description("The ISO 639-1 language code describing language used in query-params."))
+        asHeaderParam[Option[String]](correlationId),
+        asQueryParam[Option[String]](language))
         responseMessages response500
         authorizations "oauth2")
 
-    get("/tags/?", operation(getTags)) {
-      val language = paramOrDefault("language", Language.AllLanguages)
+    get("/tags/", operation(getTags)) {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
       val allTags = readService.tags
 
       converterService.asApiLearningPathTagsSummary(allTags, language) match {
@@ -550,15 +558,14 @@ trait LearningpathControllerV2 {
 
     val getContributors =
       (apiOperation[List[Author]]("getContributors")
-        summary "Retrieves a list of all previously used contributors in learningpaths"
+        summary "Fetch all previously used contributors in learningpaths"
         notes "Retrieves a list of all previously used contributors in learningpaths"
         parameters(
-        headerParam[Option[String]]("X-Correlation-ID").description("User supplied correlation-id. May be omitted."),
-        headerParam[Option[String]]("app-key").description("Your app-key."))
+        asHeaderParam[Option[String]](correlationId))
         responseMessages response500
         authorizations "oauth2")
 
-    get("/contributors", operation(getContributors)) {
+    get("/contributors/", operation(getContributors)) {
       readService.contributors
     }
 
