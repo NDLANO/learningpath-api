@@ -54,7 +54,9 @@ trait ImportService {
 
     private[service] def upload(nodeId: String, mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
       val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
-        .flatMap(_.steps).flatMap(_.embedUrl)
+        .flatMap(_.steps)
+        .flatMap(_.embedUrl)
+        .filter(_.nonEmpty)
       val (articleImports, failedImports) = importArticles(embedUrls).partition {
         case (_, importStatus) => importStatus.isSuccess
       }
