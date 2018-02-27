@@ -163,7 +163,7 @@ trait ConverterServiceComponent {
 
       val title = findByLanguageOrBestEffort(ls.title, Some(language)).map(asApiTitle).getOrElse(api.Title("", DefaultLanguage))
       val description = findByLanguageOrBestEffort(ls.description, Some(language)).map(asApiDescription)
-      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2).map(createEmbedUrl(_, language))
+      val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language)).map(asApiEmbedUrlV2).map(createEmbedUrl)
 
       Some(api.LearningStepV2(
         ls.id.get,
@@ -273,10 +273,11 @@ trait ConverterServiceComponent {
       s"http://$InternalImageApiUrl/$imageId"
     }
 
-    def createEmbedUrl(embedUrlOrPath: EmbedUrlV2, language: String): EmbedUrlV2 = {
+    def createEmbedUrl(embedUrlOrPath: EmbedUrlV2): EmbedUrlV2 = {
       embedUrlOrPath.url.host match {
         case Some(_) => embedUrlOrPath
-        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost/subjects/$language${embedUrlOrPath.url}")
+        case None if embedUrlOrPath.url.path.startsWith("/article") => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
+        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost/subjects${embedUrlOrPath.url}")
       }
     }
 
