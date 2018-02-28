@@ -276,8 +276,7 @@ trait ConverterServiceComponent {
     def createEmbedUrl(embedUrlOrPath: EmbedUrlV2): EmbedUrlV2 = {
       embedUrlOrPath.url.host match {
         case Some(_) => embedUrlOrPath
-        case None if embedUrlOrPath.url.path.startsWith("/article") => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
-        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost/subjects${embedUrlOrPath.url}")
+        case None => embedUrlOrPath.copy(url=s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
     }
 
