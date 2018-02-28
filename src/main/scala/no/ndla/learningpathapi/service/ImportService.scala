@@ -84,14 +84,14 @@ trait ImportService {
         val persisted = learningPathRepository.withExternalId(learningPathWithNewEmbedUrls.externalId) match {
           case None => learningPathRepository.insert(learningPathWithNewEmbedUrls)
           case Some(existingLearningPath) =>
-            learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
+            val updatedLp = learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
             learningPathWithNewEmbedUrls.learningsteps.foreach(learningStep => {
               learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
                 case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
                 case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
               }
             })
-            existingLearningPath
+            updatedLp
         }
         Success(persisted)
       }
@@ -232,7 +232,8 @@ trait ImportService {
         lastUpdated = toUpdate.lastUpdated,
         tags = toUpdate.tags,
         owner = toUpdate.owner,
-        status = toUpdate.status
+        status = toUpdate.status,
+        learningsteps = toUpdate.learningsteps
       )
     }
 
