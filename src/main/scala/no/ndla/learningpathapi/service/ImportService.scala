@@ -74,7 +74,7 @@ trait ImportService {
           case l: LearningStep if l.embedUrl.nonEmpty =>
             val embedUrls = l.embedUrl.map(embed => {
               val path = embedUrlMap.get(embed.url).map(p => s"/${embed.language}$p")
-              embed.copy(url = path.getOrElse(embed.url)) // Fall back on old ndla url if article could not be imported or has no entry in taxonomy
+              embed.copy(url = path.getOrElse(embed.url)) // Fall back on old ndla url if article could not be imported. Should never happen.
             })
             l.copy(embedUrl = embedUrls)
           case l => l
