@@ -72,7 +72,10 @@ trait ImportService {
 
         val steps = learningPathWithOldEmbedUrls.learningsteps.map {
           case l: LearningStep if l.embedUrl.nonEmpty =>
-            val embedUrls = l.embedUrl.map(em => em.copy(url = embedUrlMap.getOrElse(em.url, em.url))) // Fall back on old ndla url if article could not be imported or has no entry in taxonomy
+            val embedUrls = l.embedUrl.map(embed => {
+              val path = embedUrlMap.get(embed.url).map(p => s"/${embed.language}$p")
+              embed.copy(url = path.getOrElse(embed.url)) // Fall back on old ndla url if article could not be imported. Should never happen.
+            })
             l.copy(embedUrl = embedUrls)
           case l => l
         }
@@ -81,14 +84,14 @@ trait ImportService {
         val persisted = learningPathRepository.withExternalId(learningPathWithNewEmbedUrls.externalId) match {
           case None => learningPathRepository.insert(learningPathWithNewEmbedUrls)
           case Some(existingLearningPath) =>
-            learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
+            val updatedLp = learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
             learningPathWithNewEmbedUrls.learningsteps.foreach(learningStep => {
               learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
                 case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
                 case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
               }
             })
-            existingLearningPath
+            updatedLp
         }
         Success(persisted)
       }
@@ -99,7 +102,7 @@ trait ImportService {
         .orElse(imageApiClient.importImage(imageNid.toString))
     }
 
-    private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[TaxonomyResource])] = {
+    private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[String])] = {
       def getNodeIdFromUrl = (url: String) => url.path.split("/").lastOption
       val mainNodeIds = embedUrls.map(url => {
         if (NdlaDomains.contains(url.host.getOrElse(""))) {
@@ -120,18 +123,19 @@ trait ImportService {
       })
     }
 
-    private def importAndUpdateTaxonomy(nodeWithTranslations: Set[ArticleMigrationContent]): Try[TaxonomyResource] = {
-      val mainNodeIdOpt = nodeWithTranslations.find(_.isMainNode)
+    private def importAndUpdateTaxonomy(nodeWithTranslations: Set[ArticleMigrationContent]): Try[String] = {
+      val articleOpt = nodeWithTranslations.find(_.isMainNode)
+        .map(mainNodeId => articleImportClient.importArticle(mainNodeId.nid))
 
-      (nodeWithTranslations.map(c => taxononyApiClient.getResource(c.nid)).find(_.isSuccess), mainNodeIdOpt) match {
-        case (Some(Success(resource)), Some(mainNodeId)) =>
-          for {
-            a <- articleImportClient.importArticle(mainNodeId.nid)
-            taxonomyResource <- taxononyApiClient.updateResource(resource.copy(contentUri=Some(s"urn:article:${a.articleId}")))
-          } yield taxonomyResource
+      (nodeWithTranslations.map(c => taxononyApiClient.getResource(c.nid)).find(_.isSuccess), articleOpt) match {
+        case (Some(Success(resource)), Some(article)) =>
+          val taxonomyResource = article.flatMap(a => taxononyApiClient.updateResource(resource.copy(contentUri=Some(s"urn:article:${a.articleId}"))))
+          taxonomyResource.map(r => s"/subjects${r.path}").orElse(article.map(a => s"/article/${a.articleId}"))
         case (Some(Success(_)), None) => Failure(new ImportException("Failed to retrieve main node id for article"))
         case (Some(Failure(ex)), _) => Failure(ex)
-        case (None, _) => Failure(new ImportException(s"Resource with node id(s) ${nodeWithTranslations.map(_.nid).mkString(",")} does not exist in taxonomy"))
+        case (None, Some(article)) => article.map(a => s"/article/${a.articleId}")
+        case (None, None) =>
+          Failure(new ImportException(s"Article could not be imported, and resource with node id(s) ${nodeWithTranslations.map(_.nid).mkString(",")} does not exist in taxonomy"))
       }
     }
 
@@ -228,7 +232,8 @@ trait ImportService {
         lastUpdated = toUpdate.lastUpdated,
         tags = toUpdate.tags,
         owner = toUpdate.owner,
-        status = toUpdate.status
+        status = toUpdate.status,
+        learningsteps = toUpdate.learningsteps
       )
     }
 

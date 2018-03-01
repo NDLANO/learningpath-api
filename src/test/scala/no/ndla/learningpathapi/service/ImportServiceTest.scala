@@ -17,6 +17,8 @@ import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.model.HttpRequestException
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import scalikejdbc.DBSession
 
 import scala.util.{Failure, Success}
@@ -32,6 +34,9 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   override def beforeEach: Unit = {
     reset(articleImportClient, taxononyApiClient, learningPathRepository)
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenAnswer((invocation: InvocationOnMock) => {
+      invocation.getArgumentAt(0, classOf[LearningPath])
+    })
   }
 
   test("That tidyUpDescription returns emtpy string for null") {
@@ -140,6 +145,8 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val res = importService.upload("1", mainImport, CLIENT_ID)
     res.isSuccess should be(true)
 
+    res.get.learningsteps.head.embedUrl should equal (Seq(EmbedUrl(s"/nb/subjects${taxonomyResource.path}", "nb", EmbedType.OEmbed)))
+
     verify(learningPathRepository, times(1)).update(any[LearningPath])
     verify(articleImportClient, times(1)).importArticle(nodeId)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
@@ -170,7 +177,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(articleImportClient, times(1)).importArticle(nodeId)
   }
 
-  test("That importNode fails if taxonomy lookup") {
+  test("That importNode falls back on direct article link if taxonomy lookup fails") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
     val sanders = Author("author", "Crazy Bernie")
     val license = "pd"
@@ -189,13 +196,8 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(taxononyApiClient.getResource(any[String])).thenReturn(Failure(new HttpRequestException("Received error 404 when looking up resource")))
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
 
-    val Failure(res) = importService.upload("1", mainImport, CLIENT_ID)
-    res.getMessage.contains(s"Resource with node id(s) $nodeId does not exist in taxonomy") should be (true)
-
-    verify(learningPathRepository, times(0)).update(any[LearningPath])
-    verify(taxononyApiClient, times(1)).getResource(nodeId)
-    verify(articleImportClient, times(0)).importArticle(nodeId)
-    verify(taxononyApiClient, times(0)).updateResource(any[TaxonomyResource])
+    val Success(res) = importService.upload("1", mainImport, CLIENT_ID)
+    res.learningsteps.head.embedUrl should equal (Seq(EmbedUrl("/nb/article/1", "nb", EmbedType.OEmbed)))
   }
 
   test("That duration is calculated correctly") {
