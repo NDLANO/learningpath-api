@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.service.search
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
+import com.sksamuel.elastic4s.alias.AliasActionDefinition
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.RequestSuccess
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
@@ -31,6 +32,8 @@ trait SearchIndexServiceComponent {
 
   class SearchIndexService extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats
+    val searchIndex: String = LearningpathApiProperties.SearchIndex
+    val searchDocument: String = LearningpathApiProperties.SearchDocument
 
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
@@ -66,7 +69,7 @@ trait SearchIndexServiceComponent {
           val source = write(searchConverterService.asSearchableLearningpath(learningPath))
 
           val response = e4sClient.execute{
-            indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+            indexInto(searchIndex / searchDocument)
               .doc(source)
               .id(learningPath.id.get.toString)
           }
@@ -87,14 +90,14 @@ trait SearchIndexServiceComponent {
         deleted <- {
           e4sClient.execute{
             delete(s"${learningPath.id.get}")
-              .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+              .from(searchIndex / searchDocument)
           }
         }
       } yield deleted
     }
 
     def createIndexWithGeneratedName(): Try[String] = {
-      createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
+      createIndexWithName(searchIndex + "_" + getTimestamp)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
@@ -116,16 +119,13 @@ trait SearchIndexServiceComponent {
     }
 
     private def sendToElastic(indexName: String): Try[Int] = {
-      var numIndexed = 0
       getRanges.map(ranges => {
-        ranges.foreach(range => {
-          val numberInBulk = searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2), indexName)
-          numberInBulk match {
-            case Success(num) => numIndexed += num
-            case Failure(f) => return Failure(f)
-          }
-        })
-        numIndexed
+        ranges.map(range => {
+          searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2), indexName)
+        }).map({
+          case Success(s) => s
+          case Failure(ex) => return Failure(ex)
+        }).sum
       })
     }
 
@@ -143,7 +143,7 @@ trait SearchIndexServiceComponent {
         val response = e4sClient.execute {
           bulk(learningPaths.map(lp => {
             val source = write(searchConverterService.asSearchableLearningpath(lp))
-            indexInto(indexName / LearningpathApiProperties.SearchDocument).doc(source).id(lp.id.get.toString)
+            indexInto(indexName / searchDocument).doc(source).id(lp.id.get.toString)
           }))
         }
 
@@ -180,7 +180,7 @@ trait SearchIndexServiceComponent {
 
     private def aliasTarget: Try[Option[String]] = {
       val response = e4sClient.execute{
-        getAliases(Nil, List(LearningpathApiProperties.SearchIndex))
+        getAliases(Nil, List(searchIndex))
       }
 
       response match {
@@ -193,20 +193,73 @@ trait SearchIndexServiceComponent {
       if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
-        oldIndexName match {
+        val actions = oldIndexName match {
           case None =>
-            e4sClient.execute(addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
+            List[AliasActionDefinition](addAlias(searchIndex).on(newIndexName))
           case Some(oldIndex) =>
-            e4sClient.execute{
-              removeAlias(LearningpathApiProperties.SearchIndex).on(oldIndex)
-              addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName)
-            }
+            List[AliasActionDefinition](
+              removeAlias(searchIndex).on(oldIndex),
+              addAlias(searchIndex).on(newIndexName)
+            )
         }
+
+        e4sClient.execute(aliases(actions)) match {
+          case Success(_) =>
+            logger.info("Alias target updated successfully, deleting other indexes.")
+            cleanupIndexes()
+          case Failure(ex) =>
+            logger.error("Could not update alias target.")
+            Failure(ex)
+        }
+
       }
     }
 
+    /**
+      * Deletes every index that is not in use by this indexService.
+      * Only indexes starting with indexName are deleted.
+      * @param indexName Start of index names that is deleted if not aliased.
+      * @return Name of aliasTarget.
+      */
+    def cleanupIndexes(indexName: String = searchIndex): Try[String] = {
+      e4sClient.execute(getAliases()) match {
+        case Success(s) =>
+          val indexes = s.result.mappings.filter(_._1.name.startsWith(indexName))
+          val unreferencedIndexes = indexes.filter(_._2.isEmpty).map(_._1.name).toList
+          val (aliasTarget, aliasIndexesToDelete) = indexes.filter(_._2.nonEmpty).map(_._1.name) match {
+            case head :: tail =>
+              (head, tail)
+            case _ =>
+              logger.warn("No alias found, when attempting to clean up indexes.")
+              ("", List.empty)
+          }
+
+          val toDelete = unreferencedIndexes ++ aliasIndexesToDelete
+
+          if (toDelete.isEmpty){
+            logger.info("No indexes to be deleted.")
+            Success(aliasTarget)
+          } else {
+            e4sClient.execute {
+              deleteIndex(toDelete)
+            } match {
+              case Success(_) =>
+                logger.info(s"Successfully deleted unreferenced and redundant indexes.")
+                Success(aliasTarget)
+              case Failure(ex) =>
+                logger.error("Could not delete unreferenced and redundant indexes.")
+                Failure(ex)
+            }
+          }
+        case Failure(ex) =>
+          logger.warn("Could not fetch aliases after updating alias.")
+          Failure(ex)
+      }
+
+    }
+
     private def buildMapping = {
-      mapping(LearningpathApiProperties.SearchDocument).fields(
+      mapping(searchDocument).fields(
         intField("id"),
         languageSupportedField("titles", keepRaw = true),
         languageSupportedField("descriptions"),

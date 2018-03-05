@@ -67,7 +67,7 @@ object LearningpathApiProperties extends LazyLogging {
   val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
+  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-multi.ndla-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
   val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
