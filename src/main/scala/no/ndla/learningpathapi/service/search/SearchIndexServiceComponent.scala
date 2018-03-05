@@ -116,16 +116,13 @@ trait SearchIndexServiceComponent {
     }
 
     private def sendToElastic(indexName: String): Try[Int] = {
-      var numIndexed = 0
       getRanges.map(ranges => {
-        ranges.foreach(range => {
-          val numberInBulk = searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2), indexName)
-          numberInBulk match {
-            case Success(num) => numIndexed += num
-            case Failure(f) => return Failure(f)
-          }
-        })
-        numIndexed
+        ranges.map(range => {
+          searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2), indexName)
+        }).map({
+          case Success(s) => s
+          case Failure(ex) => return Failure(ex)
+        }).sum
       })
     }
 
