@@ -33,6 +33,7 @@ trait SearchIndexServiceComponent {
   class SearchIndexService extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats
     val searchIndex: String = LearningpathApiProperties.SearchIndex
+    val searchDocument: String = LearningpathApiProperties.SearchDocument
 
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
@@ -68,7 +69,7 @@ trait SearchIndexServiceComponent {
           val source = write(searchConverterService.asSearchableLearningpath(learningPath))
 
           val response = e4sClient.execute{
-            indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+            indexInto(searchIndex / searchDocument)
               .doc(source)
               .id(learningPath.id.get.toString)
           }
@@ -89,14 +90,14 @@ trait SearchIndexServiceComponent {
         deleted <- {
           e4sClient.execute{
             delete(s"${learningPath.id.get}")
-              .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+              .from(searchIndex / searchDocument)
           }
         }
       } yield deleted
     }
 
     def createIndexWithGeneratedName(): Try[String] = {
-      createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
+      createIndexWithName(searchIndex + "_" + getTimestamp)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
@@ -142,7 +143,7 @@ trait SearchIndexServiceComponent {
         val response = e4sClient.execute {
           bulk(learningPaths.map(lp => {
             val source = write(searchConverterService.asSearchableLearningpath(lp))
-            indexInto(indexName / LearningpathApiProperties.SearchDocument).doc(source).id(lp.id.get.toString)
+            indexInto(indexName / searchDocument).doc(source).id(lp.id.get.toString)
           }))
         }
 
@@ -179,7 +180,7 @@ trait SearchIndexServiceComponent {
 
     private def aliasTarget: Try[Option[String]] = {
       val response = e4sClient.execute{
-        getAliases(Nil, List(LearningpathApiProperties.SearchIndex))
+        getAliases(Nil, List(searchIndex))
       }
 
       response match {
@@ -194,11 +195,11 @@ trait SearchIndexServiceComponent {
       } else {
         val actions = oldIndexName match {
           case None =>
-            List[AliasActionDefinition](addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
+            List[AliasActionDefinition](addAlias(searchIndex).on(newIndexName))
           case Some(oldIndex) =>
             List[AliasActionDefinition](
-              removeAlias(LearningpathApiProperties.SearchIndex).on(oldIndex),
-              addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName)
+              removeAlias(searchIndex).on(oldIndex),
+              addAlias(searchIndex).on(newIndexName)
             )
         }
 
@@ -220,7 +221,7 @@ trait SearchIndexServiceComponent {
       * @param indexName Start of index names that is deleted if not aliased.
       * @return Name of aliasTarget.
       */
-    def cleanupIndexes(indexName: String = LearningpathApiProperties.SearchIndex): Try[String] = {
+    def cleanupIndexes(indexName: String = searchIndex): Try[String] = {
       e4sClient.execute(getAliases()) match {
         case Success(s) =>
           val indexes = s.result.mappings.filter(_._1.name.startsWith(indexName))
@@ -258,7 +259,7 @@ trait SearchIndexServiceComponent {
     }
 
     private def buildMapping = {
-      mapping(LearningpathApiProperties.SearchDocument).fields(
+      mapping(searchDocument).fields(
         intField("id"),
         languageSupportedField("titles", keepRaw = true),
         languageSupportedField("descriptions"),
