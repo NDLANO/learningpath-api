@@ -66,9 +66,11 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     }
   }
 
+  def userOrClientId: Option[String] = AuthUser.get orElse AuthUser.getClientId
+
   def requireUserOrClientId(): String = {
-    AuthUser.get orElse AuthUser.getClientId match {
-      case Some(user) => user
+    userOrClientId match {
+      case Some(id) => id
       case None =>
         logger.warn(s"Request made to ${request.getRequestURI} without authorization")
         throw new AccessDeniedException("You do not have access to the requested resource.")
