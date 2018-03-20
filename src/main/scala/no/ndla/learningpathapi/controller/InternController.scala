@@ -28,7 +28,7 @@ trait InternController {
   this: ImportService with SearchIndexServiceComponent with LearningPathRepositoryComponent =>
   val internController: InternController
 
-  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
+  class InternController extends NdlaController with ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
 

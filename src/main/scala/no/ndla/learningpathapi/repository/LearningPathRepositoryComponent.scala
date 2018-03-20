@@ -156,8 +156,12 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningStep.copy(revision = Some(newRevision))
     }
 
-    def delete(learningPathId: Long)(implicit session: DBSession = AutoSession) = {
+    def deletePath(learningPathId: Long)(implicit session: DBSession = AutoSession) = {
       sql"delete from learningpaths where id = $learningPathId".update().apply
+    }
+
+    def deleteStep(learningStepId: Long)(implicit session: DBSession = AutoSession) = {
+      sql"delete from learningsteps where id = $learningStepId".update().apply
     }
 
     def learningPathsWithIdBetween(min: Long, max: Long)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {

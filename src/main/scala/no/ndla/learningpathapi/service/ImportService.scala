@@ -35,12 +35,22 @@ trait ImportService {
     private val NdlaDomains = Seq("ndla.no", "red.ndla.no")
 
     def doImport(nodeId: String, clientId: String): Try[ImportReport] = {
+      val metaData = migrationApiClient.getLearningPath(nodeId)
+
       val learningpathSummary = for {
-        metaData <- migrationApiClient.getLearningPath(nodeId)
-        converted <- upload(nodeId, metaData, clientId)
-        _ <- searchIndexService.indexDocument(converted)
-        summary <- converterService.asApiLearningpathSummaryV2(converted)
+        data <- metaData
+        converted <- convert(nodeId, data, clientId)
+        persisted <- upload(converted)
+        _ <- searchIndexService.indexDocument(persisted)
+        summary <- converterService.asApiLearningpathSummaryV2(persisted)
       } yield summary
+
+      // delete any previously imported versions of this learningpath
+      if (learningpathSummary.isFailure) {
+        metaData.toOption
+          .flatMap(data => learningPathRepository.getIdFromExternalId(data.mainPackage.packageId.toString))
+          .map(learningPathRepository.deletePath)
+      }
 
       generateImportReport(nodeId, learningpathSummary)
     }
@@ -52,7 +62,7 @@ trait ImportService {
       }
     }
 
-    private[service] def upload(nodeId: String, mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
+    private[service] def convert(nodeId: String, mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
       val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
         .flatMap(_.steps)
         .flatMap(_.embedUrl)
@@ -79,21 +89,23 @@ trait ImportService {
             l.copy(embedUrl = embedUrls)
           case l => l
         }
-        val learningPathWithNewEmbedUrls = learningPathWithOldEmbedUrls.copy(learningsteps = steps)
 
-        val persisted = learningPathRepository.withExternalId(learningPathWithNewEmbedUrls.externalId) match {
-          case None => learningPathRepository.insert(learningPathWithNewEmbedUrls)
-          case Some(existingLearningPath) =>
-            val updatedLp = learningPathRepository.update(asLearningPath(existingLearningPath, learningPathWithNewEmbedUrls))
-            learningPathWithNewEmbedUrls.learningsteps.foreach(learningStep => {
-              learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
-                case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
-                case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
-              }
-            })
-            updatedLp
-        }
-        Success(persisted)
+        Success(learningPathWithOldEmbedUrls.copy(learningsteps = steps))
+      }
+    }
+
+    private def upload(learningpath: LearningPath): Try[LearningPath] = {
+      learningPathRepository.withExternalId(learningpath.externalId) match {
+        case None => Try(learningPathRepository.insert(learningpath))
+        case Some(existingLearningPath) =>
+          val updatedLp = Try(learningPathRepository.update(asLearningPath(existingLearningPath, learningpath)))
+          learningpath.learningsteps.foreach(learningStep => {
+            learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
+              case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
+              case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
+            }
+          })
+          updatedLp
       }
     }
 

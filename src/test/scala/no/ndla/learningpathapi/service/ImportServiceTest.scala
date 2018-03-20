@@ -116,9 +116,8 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(taxononyApiClient.updateResource(any[TaxonomyResource])).thenReturn(Success(taxonomyResource))
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize(memoizeFunc))
 
-    importService.upload("1", mainImport, CLIENT_ID)
+    importService.convert("1", mainImport, CLIENT_ID)
 
-    verify(learningPathRepository, times(1)).insert(any[LearningPath])
     verify(articleImportClient, times(1)).importArticle(nodeId)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
@@ -142,12 +141,11 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(taxononyApiClient.updateResource(any[TaxonomyResource])).thenReturn(Success(taxonomyResource))
 
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
-    val res = importService.upload("1", mainImport, CLIENT_ID)
+    val res = importService.convert("1", mainImport, CLIENT_ID)
     res.isSuccess should be(true)
 
     res.get.learningsteps.head.embedUrl should equal (Seq(EmbedUrl(s"/nb/subjects${taxonomyResource.path}", "nb", EmbedType.OEmbed)))
 
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
     verify(articleImportClient, times(1)).importArticle(nodeId)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
@@ -170,7 +168,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
     when(articleImportClient.importArticle(any[String])).thenReturn(Failure(new HttpRequestException("Received error 422. H5P is not imported to new service", None)))
 
-    val Failure(res) = importService.upload("1", mainImport, CLIENT_ID)
+    val Failure(res) = importService.convert("1", mainImport, CLIENT_ID)
     res.getMessage.contains("Received error 422. H5P is not imported to new service") should be (true)
 
     verify(learningPathRepository, times(0)).update(any[LearningPath])
@@ -196,7 +194,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(taxononyApiClient.getResource(any[String])).thenReturn(Failure(new HttpRequestException("Received error 404 when looking up resource")))
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
 
-    val Success(res) = importService.upload("1", mainImport, CLIENT_ID)
+    val Success(res) = importService.convert("1", mainImport, CLIENT_ID)
     res.learningsteps.head.embedUrl should equal (Seq(EmbedUrl("/nb/article/1", "nb", EmbedType.OEmbed)))
   }
 
@@ -244,14 +242,41 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val articleNids = Set(ArticleMigrationContent("54321", "54321"), ArticleMigrationContent("00987", "54321"))
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]]((_: String) => articleNids))
 
-    importService.upload("1", mainImport, CLIENT_ID)
+    importService.convert("1", mainImport, CLIENT_ID)
 
     verify(taxononyApiClient, times(1)).getResource(articleNids.head.nid)
     verify(taxononyApiClient, times(1)).getResource(articleNids.last.nid)
 
-    verify(learningPathRepository, times(1)).update(any[LearningPath])
     verify(articleImportClient, times(1)).importArticle(articleNids.head.nid)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
+  }
+
+  test("previously imported learningpaths should be deleted if failed to re-import") {
+    val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
+    val sanders = Author("author", "Crazy Bernie")
+    val license = "pd"
+    val copyright = Copyright(license, List(sanders))
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+
+    when(keywordsService.forNodeId(any[Long])).thenReturn(List())
+    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
+    when(learningPathRepository.getIdFromExternalId(any[String])(any[DBSession])).thenReturn(Some(1: Long))
+
+    when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
+    when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
+
+    when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
+    when(migrationApiClient.getLearningPath("1")).thenReturn(Success(mainImport))
+    when(articleImportClient.importArticle(any[String])).thenReturn(Failure(new HttpRequestException("Received error 422. H5P is not imported to new service", None)))
+
+    val Failure(res) = importService.doImport("1", CLIENT_ID)
+    res.getMessage.contains("Received error 422. H5P is not imported to new service") should be (true)
+
+    verify(learningPathRepository, times(0)).update(any[LearningPath])
+    verify(learningPathRepository, times(1)).deletePath(1)
+    verify(articleImportClient, times(1)).importArticle(nodeId)
   }
 
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))
