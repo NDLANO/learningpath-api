@@ -48,8 +48,14 @@ trait ImportService {
       // delete any previously imported versions of this learningpath
       if (learningpathSummary.isFailure) {
         metaData.toOption
-          .flatMap(data => learningPathRepository.getIdFromExternalId(data.mainPackage.packageId.toString))
-          .map(learningPathRepository.deletePath)
+          .flatMap(data => learningPathRepository.withExternalId(data.mainPackage.packageId.toString))
+          .map(existingLP => {
+            val pathId = existingLP.id
+            val stepIds = existingLP.learningsteps.flatMap(_.id)
+            logger.info(s"Failed to import learningpath with node id $nodeId. Deleting previously imported learningpath with id $pathId and steps ${stepIds.mkString(",")}")
+            stepIds.foreach(id => learningPathRepository.deleteStep(id)) // delete learningsteps
+            learningPathRepository.deletePath(pathId.get) // delete learningpath
+          })
       }
 
       generateImportReport(nodeId, learningpathSummary)
@@ -95,7 +101,7 @@ trait ImportService {
     }
 
     private def upload(learningpath: LearningPath): Try[LearningPath] = {
-      learningPathRepository.withExternalId(learningpath.externalId) match {
+      learningpath.externalId.flatMap(learningPathRepository.withExternalId) match {
         case None => Try(learningPathRepository.insert(learningpath))
         case Some(existingLearningPath) =>
           val updatedLp = Try(learningPathRepository.update(asLearningPath(existingLearningPath, learningpath)))

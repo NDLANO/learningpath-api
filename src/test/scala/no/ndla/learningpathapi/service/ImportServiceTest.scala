@@ -106,7 +106,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
-    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(None)
+    when(learningPathRepository.withExternalId(any[String])).thenReturn(None)
 
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
@@ -131,7 +131,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
-    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.withExternalId(any[String])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
@@ -159,7 +159,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
-    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.withExternalId(any[String])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
 
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
@@ -184,7 +184,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
-    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.withExternalId(any[String])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
@@ -230,7 +230,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
-    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.withExternalId(any[String])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     when(articleImportClient.importArticle(any[String])).thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String])).thenReturn(Success(taxonomyResource))
@@ -256,11 +256,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val sanders = Author("author", "Crazy Bernie")
     val license = "pd"
     val copyright = Copyright(license, List(sanders))
-    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright)
+    val learningStep = LearningStep(Some(234), Some(1), None, Some(1), 1, Seq(Title("lp", "nb")), Seq(Description("desc", "nb")), Seq.empty, StepType.TEXT, None, true)
+    val existingLearningPath = LearningPath(Some(1), Some(1), Some("1"), None, List(), List(), None, Some(1), LearningPathStatus.PRIVATE, LearningPathVerificationStatus.CREATED_BY_NDLA, new Date(), List(), "", copyright, Seq(learningStep))
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
-    when(learningPathRepository.withExternalId(any[Option[String]])).thenReturn(Some(existingLearningPath))
+    when(learningPathRepository.withExternalId(any[String])).thenReturn(Some(existingLearningPath))
     when(learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(any[DBSession])).thenReturn(None)
     when(learningPathRepository.getIdFromExternalId(any[String])(any[DBSession])).thenReturn(Some(1: Long))
 
@@ -276,6 +277,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     verify(learningPathRepository, times(0)).update(any[LearningPath])
     verify(learningPathRepository, times(1)).deletePath(1)
+    verify(learningPathRepository, times(1)).deleteStep(234)
     verify(articleImportClient, times(1)).importArticle(nodeId)
   }
 
