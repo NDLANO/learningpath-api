@@ -12,6 +12,7 @@ import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{StepStatus, ValidationException}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import scala.math.max
 
 
 trait ReadServiceComponent {
@@ -63,6 +64,13 @@ trait ReadServiceComponent {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.foreach(_.verifyOwnerOrPublic(user))
       learningPath
+    }
+
+    def getLearningPathDomainDump(pageNo: Int, pageSize: Int): LearningPathDomainDump = {
+      val (safePageNo, safePageSize) = (max(pageNo, 1), max(pageSize, 0))
+      val results = learningPathRepository.getLearningPathByPage(safePageSize, (safePageNo - 1) * safePageSize)
+
+      LearningPathDomainDump(learningPathRepository.learningPathCount, safePageNo, safePageSize, results)
     }
 
   }

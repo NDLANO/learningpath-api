@@ -9,7 +9,6 @@
 package no.ndla.learningpathapi.controller
 
 import javax.servlet.http.HttpServletRequest
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.{Error, ValidationError, ValidationMessage}
@@ -22,6 +21,8 @@ import org.json4s.{DefaultFormats, Formats}
 import org.postgresql.util.PSQLException
 import org.scalatra._
 import org.scalatra.json.NativeJsonSupport
+
+import scala.util.Try
 
 abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
   protected implicit override val jsonFormats: Formats = DefaultFormats
@@ -95,6 +96,10 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String = {
     paramOrNone(paramName).getOrElse(default)
   }
+
+  def intOrNone(paramName: String)(implicit request: HttpServletRequest): Option[Int] = paramOrNone(paramName).flatMap(p => Try(p.toInt).toOption)
+
+  def intOrDefault(paramName: String, default: Int): Int = intOrNone(paramName).getOrElse(default)
 
   def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {
     params.get(paramName) match {

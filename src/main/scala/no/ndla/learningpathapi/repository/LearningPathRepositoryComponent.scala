@@ -223,6 +223,20 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE)) }
         .single.apply()
     }
+
+    def getLearningPathByPage(pageSize: Int, offset: Int)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
+      val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
+      sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} offset $offset limit $pageSize"
+        .one(LearningPath(lp.resultName))
+        .toMany(LearningStep.opt(ls.resultName))
+        .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE)) }
+        .list.apply()
+    }
+
+    def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {
+      val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
+      sql"select count(*) from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId}".map(rs => rs.long("count")).single.apply().getOrElse(0)
+    }
   }
 
 }

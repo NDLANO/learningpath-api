@@ -25,10 +25,13 @@ import scala.util.{Failure, Success}
 
 
 trait InternController {
-  this: ImportService with SearchIndexServiceComponent with LearningPathRepositoryComponent =>
+  this: ImportService
+    with SearchIndexServiceComponent
+    with LearningPathRepositoryComponent
+    with ReadServiceComponent =>
   val internController: InternController
 
-  class InternController extends ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
+  class InternController extends NdlaController {
 
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
@@ -89,6 +92,13 @@ trait InternController {
         case Failure(ex: ImportReport) => errorHandler(ex)
         case Failure(ex) => errorHandler(ex)
       }
+    }
+
+    get("/dump/learningpath") {
+      val pageNo = intOrDefault("page", 1)
+      val pageSize = intOrDefault("page-size", 250)
+
+      readService.getLearningPathDomainDump(pageNo, pageSize)
     }
 
   }
