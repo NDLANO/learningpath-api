@@ -39,8 +39,8 @@ trait SearchIndexServiceComponent {
           val operations = for {
             numIndexed <- sendToElastic(indexName)
             aliasTarget <- aliasTarget
-            updatedTarget <- updateAliasTarget(aliasTarget, indexName)
-            deleted <- deleteIndexWithName(aliasTarget)
+            _ <- updateAliasTarget(aliasTarget, indexName)
+            _ <- deleteIndexWithName(aliasTarget)
           } yield numIndexed
 
           operations match {
@@ -165,7 +165,7 @@ trait SearchIndexServiceComponent {
 
     def deleteIndexWithName(optIndexName: Option[String]): Try[_] = {
       optIndexName match {
-        case None => Success()
+        case None => Success(optIndexName)
         case Some(indexName) => {
           if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))

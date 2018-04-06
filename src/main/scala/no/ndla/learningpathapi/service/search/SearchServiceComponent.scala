@@ -8,6 +8,8 @@
 
 package no.ndla.learningpathapi.service.search
 
+import java.util.concurrent.Executors
+
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
@@ -25,7 +27,7 @@ import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.native.Serialization._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait SearchServiceComponent extends LazyLogging {
@@ -223,13 +225,14 @@ trait SearchServiceComponent extends LazyLogging {
       }
     }
 
-    private def scheduleIndexDocuments() = {
+    private def scheduleIndexDocuments(): Unit = {
+      implicit val ec = ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor)
       val f = Future {
         searchIndexService.indexDocuments
       }
 
-      f onFailure { case t => logger.warn("Unable to create index: " + t.getMessage, t) }
-      f onSuccess {
+      f.failed.foreach(t => logger.warn("Unable to create index: " + t.getMessage, t))
+      f.foreach {
         case Success(reindexResult) => logger.info(s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms.")
         case Failure(ex) => logger.warn(ex.getMessage, ex)
       }
