@@ -56,7 +56,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
       fetched.isDefined should be (true)
       fetched.get.id.get should equal (inserted.id.get)
 
-      repository.delete(inserted.id.get)
+      repository.deletePath(inserted.id.get)
     }
   }
 
@@ -88,7 +88,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     secondUpdate.revision should equal (Some(3))
     thirdUpdate.revision should equal (Some(4))
 
-    repository.delete(thirdUpdate.id.get)
+    repository.deletePath(thirdUpdate.id.get)
   }
 
   test("That trying to update a learningPath with old revision number throws optimistic locking exception") {
@@ -99,7 +99,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
       intercept[OptimisticLockException] { repository.update(inserted.copy(title = List(Title("Second change, but with old revision", "unknown")))) }.getMessage
     }
 
-    repository.delete(inserted.id.get)
+    repository.deletePath(inserted.id.get)
   }
 
   test("That trying to update a learningStep with old revision throws optimistic locking exception") {
@@ -111,7 +111,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
       intercept[OptimisticLockException] { repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", "unknown")))) }.getMessage
     }
 
-    repository.delete(learningPath.id.get)
+    repository.deletePath(learningPath.id.get)
   }
 
   test("That learningPathsWithIsBasedOn returns all learningpaths that has one is based on id") {
@@ -136,10 +136,10 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     learningPaths.map(_.id) should not contain (learningPath2.id)
     learningPaths should have length(2)
 
-    repository.delete(learningPath1.id.get)
-    repository.delete(learningPath2.id.get)
-    repository.delete(copiedLearningPath1.id.get)
-    repository.delete(copiedLearningPath2.id.get)
+    repository.deletePath(learningPath1.id.get)
+    repository.deletePath(learningPath2.id.get)
+    repository.deletePath(copiedLearningPath1.id.get)
+    repository.deletePath(copiedLearningPath2.id.get)
 
   }
 
@@ -160,8 +160,8 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     publicTags should contain (LearningPathTags(Seq("ccc"), "en"))
     publicTags should not contain LearningPathTags(Seq("ddd"), "nb")
 
-    repository.delete(publicPath.id.get)
-    repository.delete(privatePath.id.get)
+    repository.deletePath(publicPath.id.get)
+    repository.deletePath(privatePath.id.get)
   }
 
   test("That allPublishedTags removes duplicates") {
@@ -174,8 +174,8 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
     publicTags.find(_.language.contains("nb")).map(_.tags.count(_ == "aaa")).getOrElse(0) should be (1)
 
-    repository.delete(publicPath1.id.get)
-    repository.delete(publicPath2.id.get)
+    repository.deletePath(publicPath1.id.get)
+    repository.deletePath(publicPath2.id.get)
   }
 
 
@@ -195,8 +195,8 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     publicContributors should contain (Author("forfatter","Jens Petrius"))
     publicContributors should not contain (Author("forfatter","Test testesen"))
 
-    repository.delete(publicPath.id.get)
-    repository.delete(privatePath.id.get)
+    repository.deletePath(publicPath.id.get)
+    repository.deletePath(privatePath.id.get)
   }
 
   test("That allPublishedContributors removes duplicates") {
@@ -215,8 +215,8 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
 
     publicContributors.count(_.name == "James Bond") should be (1)
 
-    repository.delete(publicPath1.id.get)
-    repository.delete(publicPath2.id.get)
+    repository.deletePath(publicPath1.id.get)
+    repository.deletePath(publicPath2.id.get)
   }
 
   test("That only learningsteps with status ACTIVE are returned together with a learningpath") {
@@ -231,12 +231,12 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     savedLearningPath.get.learningsteps.size should be (2)
     savedLearningPath.get.learningsteps.forall(_.status == StepStatus.ACTIVE) should be (true)
 
-    repository.delete(learningPath.id.get)
+    repository.deletePath(learningPath.id.get)
   }
 
   def deleteAllWithOwner(owner: String) = {
     inTransaction{ implicit session =>
-      repository.withOwner(owner).foreach(lp => repository.delete(lp.id.get))
+      repository.withOwner(owner).foreach(lp => repository.deletePath(lp.id.get))
     }
   }
 }

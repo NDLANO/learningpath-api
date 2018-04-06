@@ -48,11 +48,8 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningPathWhere(sqls"lp.id = $id")
     }
 
-    def withExternalId(externalId: Option[String]): Option[LearningPath] = {
-      externalId match {
-        case None => None
-        case Some(extId) => learningPathWhere(sqls"lp.external_id = $extId")
-      }
+    def withExternalId(externalId: String): Option[LearningPath] = {
+      learningPathWhere(sqls"lp.external_id = $externalId")
     }
 
     def withOwner(owner: String): List[LearningPath] = {
@@ -156,32 +153,36 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningStep.copy(revision = Some(newRevision))
     }
 
-    def delete(learningPathId: Long)(implicit session: DBSession = AutoSession) = {
+    def deletePath(learningPathId: Long)(implicit session: DBSession = AutoSession) = {
       sql"delete from learningpaths where id = $learningPathId".update().apply
+    }
+
+    def deleteStep(learningStepId: Long)(implicit session: DBSession = AutoSession) = {
+      sql"delete from learningsteps where id = $learningStepId".update().apply
     }
 
     def learningPathsWithIdBetween(min: Long, max: Long)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       val status = LearningPathStatus.PUBLISHED.toString
 
-        sql"""select ${lp.result.*}, ${ls.result.*}
+      sql"""select ${lp.result.*}, ${ls.result.*}
                from ${LearningPath.as(lp)}
                left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId}
                where lp.document->>'status' = $status
                and lp.id between $min and $max"""
-          .one(LearningPath(lp.resultName))
-          .toMany(LearningStep.opt(ls.resultName))
-          .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps) }
-          .toList().apply()
+        .one(LearningPath(lp.resultName))
+        .toMany(LearningStep.opt(ls.resultName))
+        .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps) }
+        .toList().apply()
     }
 
     def minMaxId(implicit session: DBSession = ReadOnlyAutoSession): (Long, Long) = {
-        sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from learningpaths".map(rs => {
-          (rs.long("mi"), rs.long("ma"))
-        }).single().apply() match {
-          case Some(minmax) => minmax
-          case None => (0L, 0L)
-        }
+      sql"select coalesce(MIN(id),0) as mi, coalesce(MAX(id),0) as ma from learningpaths".map(rs => {
+        (rs.long("mi"), rs.long("ma"))
+      }).single().apply() match {
+        case Some(minmax) => minmax
+        case None => (0L, 0L)
+      }
     }
 
     def allPublishedTags(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPathTags] = {
@@ -208,11 +209,11 @@ trait LearningPathRepositoryComponent extends LazyLogging {
 
     private def learningPathsWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
-        sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} where $whereClause"
-          .one(LearningPath(lp.resultName))
-          .toMany(LearningStep.opt(ls.resultName))
-          .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE)) }
-          .list.apply()
+      sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} where $whereClause"
+        .one(LearningPath(lp.resultName))
+        .toMany(LearningStep.opt(ls.resultName))
+        .map { (learningpath, learningsteps) => learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE)) }
+        .list.apply()
     }
 
     private def learningPathWhere(whereClause: SQLSyntax)(implicit session: DBSession = ReadOnlyAutoSession): Option[LearningPath] = {
