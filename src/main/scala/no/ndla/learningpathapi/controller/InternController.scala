@@ -15,7 +15,7 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{ImportService, ReadServiceComponent}
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-import no.ndla.network.{ApplicationUrl, AuthUser}
+import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
@@ -32,7 +32,6 @@ trait InternController {
   val internController: InternController
 
   class InternController extends NdlaController {
-
     protected implicit override val jsonFormats: Formats =
       org.json4s.DefaultFormats +
         new EnumNameSerializer(LearningPathStatus) +
@@ -40,27 +39,6 @@ trait InternController {
         new EnumNameSerializer(StepType) +
         new EnumNameSerializer(StepStatus) +
         new EnumNameSerializer(EmbedType)
-
-    before() {
-      contentType = formats("json")
-      ApplicationUrl.set(request)
-      AuthUser.set(request)
-
-    }
-
-    after() {
-      ApplicationUrl.clear
-      AuthUser.clear()
-    }
-
-    error {
-      case i: ImportReport => UnprocessableEntity(body=i)
-      case t: Throwable =>
-        val error = Error(Error.GENERIC, t.getMessage)
-        logger.error(error.toString, t)
-        halt(status = 500, body = error)
-    }
-
 
     def requireClientId(implicit request: HttpServletRequest): String = {
       AuthUser.getClientId match {
