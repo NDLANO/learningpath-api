@@ -9,14 +9,14 @@
 package no.ndla.learningpathapi.controller
 
 import javax.servlet.http.HttpServletRequest
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.{Error, ImportReport}
-import no.ndla.learningpathapi.model.domain.AccessDeniedException
+import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{ImportService, ReadServiceComponent}
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
-import no.ndla.network.{ApplicationUrl, AuthUser}
+import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra._
@@ -25,33 +25,20 @@ import scala.util.{Failure, Success}
 
 
 trait InternController {
-  this: ImportService with SearchIndexServiceComponent with LearningPathRepositoryComponent =>
+  this: ImportService
+    with SearchIndexServiceComponent
+    with LearningPathRepositoryComponent
+    with ReadServiceComponent =>
   val internController: InternController
 
-  class InternController extends NdlaController with ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
-
-    protected implicit override val jsonFormats: Formats = DefaultFormats
-
-    before() {
-      contentType = formats("json")
-      ApplicationUrl.set(request)
-      AuthUser.set(request)
-
-    }
-
-    after() {
-      ApplicationUrl.clear
-      AuthUser.clear()
-    }
-
-    error {
-      case i: ImportReport => UnprocessableEntity(body=i)
-      case t: Throwable =>
-        val error = Error(Error.GENERIC, t.getMessage)
-        logger.error(error.toString, t)
-        halt(status = 500, body = error)
-    }
-
+  class InternController extends NdlaController {
+    protected implicit override val jsonFormats: Formats =
+      org.json4s.DefaultFormats +
+        new EnumNameSerializer(LearningPathStatus) +
+        new EnumNameSerializer(LearningPathVerificationStatus) +
+        new EnumNameSerializer(StepType) +
+        new EnumNameSerializer(StepStatus) +
+        new EnumNameSerializer(EmbedType)
 
     def requireClientId(implicit request: HttpServletRequest): String = {
       AuthUser.getClientId match {
@@ -89,6 +76,13 @@ trait InternController {
         case Failure(ex: ImportReport) => errorHandler(ex)
         case Failure(ex) => errorHandler(ex)
       }
+    }
+
+    get("/dump/learningpath") {
+      val pageNo = intOrDefault("page", 1)
+      val pageSize = intOrDefault("page-size", 250)
+
+      readService.getLearningPathDomainDump(pageNo, pageSize)
     }
 
   }

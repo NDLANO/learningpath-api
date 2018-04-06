@@ -9,10 +9,9 @@
 package no.ndla.learningpathapi.controller
 
 import javax.servlet.http.HttpServletRequest
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.ComponentRegistry
-import no.ndla.learningpathapi.model.api.{Error, ValidationError, ValidationMessage}
+import no.ndla.learningpathapi.model.api.{Error, ImportReport, ValidationError, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.network.model.HttpRequestException
 import no.ndla.network.{ApplicationUrl, AuthUser}
@@ -23,7 +22,9 @@ import org.postgresql.util.PSQLException
 import org.scalatra._
 import org.scalatra.json.NativeJsonSupport
 
-abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging {
+import scala.util.Try
+
+abstract class NdlaController extends ScalatraServlet with NativeJsonSupport with LazyLogging with CorrelationIdSupport {
   protected implicit override val jsonFormats: Formats = DefaultFormats
 
   before() {
@@ -46,6 +47,7 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
     case rw: ResultWindowTooLargeException => UnprocessableEntity(body = Error(Error.WINDOW_TOO_LARGE, rw.getMessage))
     case e: IndexNotFoundException => InternalServerError(body=Error.IndexMissingError)
     case i: ElasticIndexingException => InternalServerError(body=Error(Error.GENERIC, i.getMessage))
+    case ir: ImportReport => UnprocessableEntity(body = ir)
     case _: PSQLException =>
       ComponentRegistry.connectToDatabase()
       InternalServerError(Error.DatabaseUnavailableError)
@@ -95,6 +97,10 @@ abstract class NdlaController extends ScalatraServlet with NativeJsonSupport wit
   def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String = {
     paramOrNone(paramName).getOrElse(default)
   }
+
+  def intOrNone(paramName: String)(implicit request: HttpServletRequest): Option[Int] = paramOrNone(paramName).flatMap(p => Try(p.toInt).toOption)
+
+  def intOrDefault(paramName: String, default: Int): Int = intOrNone(paramName).getOrElse(default)
 
   def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {
     params.get(paramName) match {

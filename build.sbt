@@ -34,7 +34,7 @@ lazy val learningpath_api = (project in file(".")).
   settings(
     name := "learningpath-api",
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-    scalacOptions := Seq("-target:jvm-1.8"),
+    scalacOptions := Seq("-target:jvm-1.8", "-deprecation"),
     libraryDependencies ++= Seq(
       "ndla" %% "network" % "0.28",
       "ndla" %% "mapping" % "0.7",
