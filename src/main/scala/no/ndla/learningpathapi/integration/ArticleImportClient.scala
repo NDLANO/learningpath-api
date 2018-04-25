@@ -20,7 +20,7 @@ trait ArticleImportClient {
   val articleImportClient: ArticleImportClient
 
   class ArticleImportClient extends LazyLogging {
-    private val ArticleImportTimeout = 30 * 1000 // 30 seconds
+    private val ArticleImportTimeout = 90 * 1000 // 90 seconds
     private val ExternalId = ":external_id"
     private val importArticleEndpoint = s"http://$ArticleImportHost/intern/import/$ExternalId"
 
