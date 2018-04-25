@@ -222,6 +222,9 @@ trait ImportService {
         mainImport.translations.flatMap(tr => keywordsService.forNodeId(tr.nid))
 
       val learningSteps = mainImport.mainPackage.steps.map(step => asLearningStep(step, mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))
+      val authors = (mainPackage.authors ++ mainImport.translations.flatMap(_.authors))
+        .distinct
+        .map(a => Author(a.`type`, a.name))
 
       LearningPath(
         None,
@@ -237,7 +240,7 @@ trait ImportService {
         lastUpdated,
         tags,
         clientId,
-        Copyright("by-sa", Seq()), // TODO: Verify with NDLA what to use as default license on imported learningpaths.
+        Copyright(mainPackage.license, authors),
         learningSteps)
     }
 
