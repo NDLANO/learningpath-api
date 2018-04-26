@@ -43,7 +43,7 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
     imageNid = None,
     description = "")
 
-  val mainPackage = MainPackageImport(Package(1, 1, "nb", "Title", None, "Description", 1, new Date(), 1, "PackageTitle", 1, 1, Seq()), Seq())
+  val mainPackage = MainPackageImport(Package(1, 1, "nb", "Title", None, "Description", 1, new Date(), 1, "PackageTitle", 1, 1, Seq(), "by-sa", Seq()), Seq())
 
   test("That failure is returned when ndlaClient returns a failure") {
     val exception = new HttpRequestException("This is an error")
