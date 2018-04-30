@@ -74,7 +74,10 @@ case class Package(nid: Long,
                    packageTitle: String,
                    durationHours: Int,
                    durationMinutes: Int,
-                   steps: Seq[Step])
+                   steps: Seq[Step],
+                   license: String,
+                   authors: Seq[MigrationAuthor])
+case class MigrationAuthor(`type`: String, name: String)
 case class ArticleMigrationContent(nid: String, tnid: String) {
   def isMainNode: Boolean = nid == tnid || tnid == "0"
 }

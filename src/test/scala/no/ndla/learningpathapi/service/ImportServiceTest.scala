@@ -11,7 +11,7 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi.caching.Memoize
-import no.ndla.learningpathapi.integration.{ArticleImportStatus, ArticleMigrationContent, MainPackageImport, Package, Step, TaxonomyResource}
+import no.ndla.learningpathapi.integration.{ArticleImportStatus, ArticleMigrationContent, MainPackageImport, MigrationAuthor, Package, Step, TaxonomyResource}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.model.HttpRequestException
@@ -281,7 +281,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(articleImportClient, times(1)).importArticle(nodeId)
   }
 
-  private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")))
+  private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")), "by-sa", Seq(MigrationAuthor("Redaksjonelt", "Henrik")))
   private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, None, language)
   private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, None, language)
 }
