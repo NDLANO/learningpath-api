@@ -208,7 +208,7 @@ trait ImportService {
 
     private[service] def asLearningPath(mainImport: MainPackageImport, imageUrl: Option[ImageMetaInformation], clientId: String): LearningPath = {
       val mainPackage = mainImport.mainPackage
-      val duration = Some((mainImport.mainPackage.durationHours * 60) + mainPackage.durationMinutes)
+      val duration = Some((mainImport.mainPackage.durationHours * 60) + mainPackage.durationMinutes).map(x => if (x <= 0) 1 else x)
       val lastUpdated = mainPackage.lastUpdated
 
 

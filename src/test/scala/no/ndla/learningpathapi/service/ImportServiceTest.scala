@@ -204,7 +204,14 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val learningPath = importService.asLearningPath(pakke, None, CLIENT_ID)
 
     learningPath.duration should be(Some(61))
+
+    val pakke2 = MainPackageImport(packageWithNodeId(1).copy(durationHours = 0, durationMinutes = 0), Seq())
+    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq.empty)
+    val learningPath2 = importService.asLearningPath(pakke2, None, CLIENT_ID)
+
+    learningPath2.duration should be(Some(1))
   }
+
 
   test("That oldToNewLicenseKey throws on invalid license") {
     assertThrows[ImportException] {
