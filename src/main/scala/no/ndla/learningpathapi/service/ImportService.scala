@@ -268,7 +268,21 @@ trait ImportService {
       val embedUrls = embedUrlsAsList(step, translations)
       val showTitle = descriptions.nonEmpty
 
-      LearningStep(None, None, Some(s"${step.pageId}"), None, seqNo, title, descriptions, embedUrls, stepType, step.license.map(oldToNewLicenseKey), showTitle)
+      val license = step.license.filter(_.trim.nonEmpty).map(oldToNewLicenseKey)
+
+      LearningStep(
+        None,
+        None,
+        Some(s"${step.pageId}"),
+        None,
+        seqNo,
+        title,
+        descriptions,
+        embedUrls,
+        stepType,
+        license,
+        showTitle
+      )
     }
 
     private def asLearningStep(existing: LearningStep, toUpdate: LearningStep): LearningStep = {

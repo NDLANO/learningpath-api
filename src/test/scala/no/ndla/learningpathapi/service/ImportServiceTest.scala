@@ -288,6 +288,14 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(articleImportClient, times(1)).importArticle(nodeId)
   }
 
+  test("That empty licenses are turned to None") {
+    val pakke = MainPackageImport(packageWithNodeId(1).copy(steps = Seq(stepWithDescriptionAndLanguage(Some("Heisann"), "nb").copy(license = Some("")))), Seq())
+    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq.empty)
+    val learningPath = importService.asLearningPath(pakke, None, CLIENT_ID)
+
+    learningPath.learningsteps.head.license should be (None)
+  }
+
   private def packageWithNodeId(nid: Long): Package = Package(nid, nid, "nb", "NodeTitle", None, "NodeDescription", 1, new Date(), 1, "PackageTittel", 1, 1, Seq(stepWithEmbedUrlAndLanguage(Some("http://ndla.no/node/12345"), "nb")), "by-sa", Seq(MigrationAuthor("Redaksjonelt", "Henrik")))
   private def stepWithDescriptionAndLanguage(description: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, None, description, None, language)
   private def stepWithEmbedUrlAndLanguage(embedUrl: Option[String], language: String): Step = Step(1, 1, 1, "Tittel", 1, 1, embedUrl, None, None, language)
