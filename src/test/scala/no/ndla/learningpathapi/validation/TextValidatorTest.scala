@@ -23,7 +23,8 @@ class TextValidatorTest extends UnitSuite {
 
   test("That TextValidator allows all tags in BasicHtmlTags tags") {
     BasicHtmlTags.foreach(tag => {
-      val text = s"<$tag>This is text with $tag</$tag>"
+      val starttext = s"<$tag>This is text with $tag"
+      val text = starttext + (if (tag.equals("br")) "" else s"</$tag>")
       basicHtmlValidator.validate("path1.path2", text) should equal (None)
     })
   }

@@ -19,7 +19,7 @@ object HtmlCleaner {
   def cleanHtml(text: String, allowHtml: Boolean): String = {
     val withoutHeaders = changeHeadersToStrongWrappedInP(text)
     allowHtml match {
-      case true => Jsoup.clean(withoutHeaders, "", new Whitelist().addTags(BasicHtmlTags:_*), new OutputSettings().prettyPrint(false))
+      case true => Jsoup.clean(withoutHeaders, "", new Whitelist().addTags(BasicHtmlTags:_*), new OutputSettings().prettyPrint(false).charset("ascii"))
       case false => Jsoup.clean(withoutHeaders, "", Whitelist.none(), new OutputSettings().prettyPrint(false).escapeMode(Entities.EscapeMode.xhtml))
     }
   }
