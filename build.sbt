@@ -62,7 +62,7 @@ lazy val learningpath_api = (project in file(".")).
       "com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion, // Overriding jackson-databind used in elastic4s because of https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-32111
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
       "com.netaporter" %% "scala-uri" % "0.4.16",
-      "org.jsoup" % "jsoup" % "1.7.3",
+      "org.jsoup" % "jsoup" % "1.11.3",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "com.h2database"  %  "h2" % "1.4.191",
