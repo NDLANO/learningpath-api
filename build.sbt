@@ -65,7 +65,6 @@ lazy val learningpath_api = (project in file(".")).
       "org.jsoup" % "jsoup" % "1.11.3",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
-      "com.h2database"  %  "h2" % "1.4.191",
       "org.flywaydb" % "flyway-core" % "4.0")
   ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
 
