@@ -34,18 +34,27 @@ trait TaxonomyApiClient {
     }
 
     def updateResource(resource: TaxonomyResource): Try[TaxonomyResource] = {
-      put[String, TaxonomyResource](s"$TaxonomyApiEndpoint/resources/${resource.id}", resource) match {
+      put[String, TaxonomyResource](
+        s"$TaxonomyApiEndpoint/resources/${resource.id}",
+        resource) match {
         case Success(_) => Success(resource)
-        case Failure(ex: HttpRequestException) if ex.httpResponse.exists(_.is2xx) => Success(resource)
+        case Failure(ex: HttpRequestException)
+            if ex.httpResponse.exists(_.is2xx) =>
+          Success(resource)
         case Failure(ex) => Failure(ex)
       }
     }
 
-    private def get[A](url: String, params: (String, String)*)(implicit mf: Manifest[A]): Try[A] = {
+    private def get[A](url: String, params: (String, String)*)(
+        implicit mf: Manifest[A]): Try[A] = {
       ndlaClient.fetchWithForwardedAuth[A](Http(url).params(params))
     }
 
-    private def put[A, B <: AnyRef](url: String, data: B, params: (String, String)*)(implicit mf: Manifest[A], format: org.json4s.Formats): Try[A] = {
+    private def put[A, B <: AnyRef](url: String,
+                                    data: B,
+                                    params: (String, String)*)(
+        implicit mf: Manifest[A],
+        format: org.json4s.Formats): Try[A] = {
       ndlaClient.fetchWithForwardedAuth[A](
         Http(url)
           .postData(write(data))
@@ -58,4 +67,7 @@ trait TaxonomyApiClient {
   }
 }
 
-case class TaxonomyResource(id: String, name: String, contentUri: Option[String], path: String)
+case class TaxonomyResource(id: String,
+                            name: String,
+                            contentUri: Option[String],
+                            path: String)

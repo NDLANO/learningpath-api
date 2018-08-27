@@ -31,17 +31,22 @@ class V3__ConvertCoverPhotoUrlToID extends JdbcMigration {
   }
 
   def allLearningPaths(implicit session: DBSession): List[V3_DBLearningPath] = {
-    sql"select id, document from learningpaths".map(rs => V3_DBLearningPath(rs.long("id"), rs.string("document"))).list().apply()
+    sql"select id, document from learningpaths"
+      .map(rs => V3_DBLearningPath(rs.long("id"), rs.string("document")))
+      .list()
+      .apply()
   }
 
-  def convertCoverPhotoUrl(learningPath: V3_DBLearningPath): Option[V3_DBLearningPath] = {
+  def convertCoverPhotoUrl(
+      learningPath: V3_DBLearningPath): Option[V3_DBLearningPath] = {
     val oldDocument = parse(learningPath.document)
 
     oldDocument.extractOpt[V3_DBCoverPhoto] match {
       case None => None
       case Some(_) =>
         val updatedDocument = oldDocument mapField {
-          case ("coverPhotoMetaUrl", JString(oldCoverPhotoUrl)) => ("coverPhotoId", JString(extractImageId(oldCoverPhotoUrl)))
+          case ("coverPhotoMetaUrl", JString(oldCoverPhotoUrl)) =>
+            ("coverPhotoId", JString(extractImageId(oldCoverPhotoUrl)))
           case x => x
         }
         Some(learningPath.copy(document = compact(render(updatedDocument))))
@@ -58,7 +63,9 @@ class V3__ConvertCoverPhotoUrlToID extends JdbcMigration {
     dataObject.setType("jsonb")
     dataObject.setValue(learningPath.document)
 
-    sql"update learningpaths set document = $dataObject where id = ${learningPath.id}".update().apply
+    sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
+      .update()
+      .apply
   }
 }
 

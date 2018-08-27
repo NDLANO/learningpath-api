@@ -20,12 +20,12 @@ appProperties := {
   prop
 }
 
-lazy val ITest = config("it") extend(Test)
+lazy val ITest = config("it") extend (Test)
 
-lazy val learningpath_api = (project in file(".")).
-  configs(ITest).
-  settings(inConfig(ITest)(Defaults.testTasks): _*).
-  settings(
+lazy val learningpath_api = (project in file("."))
+  .configs(ITest)
+  .settings(inConfig(ITest)(Defaults.testTasks): _*)
+  .settings(
     name := "learningpath-api",
     organization := appProperties.value.getProperty("NDLAOrganization"),
     version := appProperties.value.getProperty("NDLAComponentVersion"),
@@ -42,8 +42,8 @@ lazy val learningpath_api = (project in file(".")).
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "3.1.0" % "container;provided;test",
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
-      "org.json4s"   %% "json4s-native" % "3.5.0",
-      "org.scalatra" %% "scalatra-swagger"  % Scalatraversion,
+      "org.json4s" %% "json4s-native" % "3.5.0",
+      "org.scalatra" %% "scalatra-swagger" % Scalatraversion,
       "org.scalikejdbc" %% "scalikejdbc" % "2.5.0",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
@@ -61,16 +61,22 @@ lazy val learningpath_api = (project in file(".")).
       "org.jsoup" % "jsoup" % "1.11.3",
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
-      "org.flywaydb" % "flyway-core" % "4.0")
-  ).enablePlugins(DockerPlugin).enablePlugins(JettyPlugin)
+      "org.flywaydb" % "flyway-core" % "4.0"
+    )
+  )
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(JettyPlugin)
 
 assemblyJarName in assembly := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
-  case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
-  case PathList("org", "joda", "convert", "FromString.class")  => MergeStrategy.first
-  case PathList("org", "joda", "time", "base", "BaseDateTime.class")  => MergeStrategy.first
+  case PathList("org", "joda", "convert", "ToString.class") =>
+    MergeStrategy.first
+  case PathList("org", "joda", "convert", "FromString.class") =>
+    MergeStrategy.first
+  case PathList("org", "joda", "time", "base", "BaseDateTime.class") =>
+    MergeStrategy.first
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
@@ -111,17 +117,22 @@ docker / dockerfile := {
     from("openjdk:8-jre-alpine")
 
     add(artifact, artifactTargetPath)
-    entryPoint("java", "-Dorg.scalatra.environment=production", "-jar", artifactTargetPath)
+    entryPoint("java",
+               "-Dorg.scalatra.environment=production",
+               "-jar",
+               artifactTargetPath)
   }
 }
 
 docker / imageNames := Seq(
-  ImageName(
-    namespace = Some(organization.value),
-    repository = name.value,
-    tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
+  ImageName(namespace = Some(organization.value),
+            repository = name.value,
+            tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
 )
 
 Test / parallelExecution := false
 
-resolvers ++= scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "Release Sonatype Nexus Repository Manager" at repo).toSeq
+resolvers ++= scala.util.Properties
+  .envOrNone("NDLA_RELEASES")
+  .map(repo => "Release Sonatype Nexus Repository Manager" at repo)
+  .toSeq

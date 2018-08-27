@@ -12,4 +12,8 @@ object ImportStatus extends Enumeration {
   val OK = Value("OK")
   val ERROR = Value("ERROR")
 }
-case class ImportReport(nid: String, status: ImportStatus.Value, messages: Seq[String], id: Option[Long]) extends RuntimeException(s"$nid - $status: ${messages.mkString(",")}")
+case class ImportReport(nid: String,
+                        status: ImportStatus.Value,
+                        messages: Seq[String],
+                        id: Option[Long])
+    extends RuntimeException(s"$nid - $status: ${messages.mkString(",")}")

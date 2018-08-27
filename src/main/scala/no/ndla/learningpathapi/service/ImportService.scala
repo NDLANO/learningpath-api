@@ -10,7 +10,11 @@ package no.ndla.learningpathapi.service
 
 import com.netaporter.uri.dsl._
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
-import no.ndla.learningpathapi.model.api.{ImportReport, ImportStatus, LearningPathSummaryV2}
+import no.ndla.learningpathapi.model.api.{
+  ImportReport,
+  ImportStatus,
+  LearningPathSummaryV2
+}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -18,7 +22,6 @@ import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.mapping.License._
 
 import scala.util.{Failure, Success, Try}
-
 
 trait ImportService {
   this: LearningPathRepositoryComponent
@@ -48,11 +51,16 @@ trait ImportService {
       // delete any previously imported versions of this learningpath
       if (learningpathSummary.isFailure) {
         metaData.toOption
-          .flatMap(data => learningPathRepository.withExternalId(data.mainPackage.packageId.toString))
+          .flatMap(
+            data =>
+              learningPathRepository.withExternalId(
+                data.mainPackage.packageId.toString))
           .map(existingLP => {
             val pathId = existingLP.id
             val stepIds = existingLP.learningsteps.flatMap(_.id)
-            logger.info(s"Failed to import learningpath with node id $nodeId. Deleting previously imported learningpath with id $pathId and steps ${stepIds.mkString(",")}")
+            logger.info(
+              s"Failed to import learningpath with node id $nodeId. Deleting previously imported learningpath with id $pathId and steps ${stepIds
+                .mkString(",")}")
             stepIds.foreach(id => learningPathRepository.deleteStep(id)) // delete learningsteps
             learningPathRepository.deletePath(pathId.get) // delete learningpath
           })
@@ -61,35 +69,47 @@ trait ImportService {
       generateImportReport(nodeId, learningpathSummary)
     }
 
-    private def generateImportReport(nodeId: String, learningPathSummaryV2: Try[LearningPathSummaryV2]): Try[ImportReport] = {
+    private def generateImportReport(
+        nodeId: String,
+        learningPathSummaryV2: Try[LearningPathSummaryV2])
+      : Try[ImportReport] = {
       learningPathSummaryV2 match {
-        case Success(l) => Success(ImportReport(nodeId, ImportStatus.OK, Seq.empty, Some(l.id)))
+        case Success(l) =>
+          Success(ImportReport(nodeId, ImportStatus.OK, Seq.empty, Some(l.id)))
         case Failure(ex) => Failure(ex)
       }
     }
 
-    private[service] def convert(nodeId: String, mainImport: MainPackageImport, clientId: String): Try[LearningPath] = {
+    private[service] def convert(nodeId: String,
+                                 mainImport: MainPackageImport,
+                                 clientId: String): Try[LearningPath] = {
       val embedUrls = (mainImport.translations :+ mainImport.mainPackage)
         .flatMap(_.steps)
         .flatMap(_.embedUrl)
         .filter(_.nonEmpty)
-      val (articleImports, failedImports) = importArticles(embedUrls).partition {
-        case (_, importStatus) => importStatus.isSuccess
-      }
+      val (articleImports, failedImports) =
+        importArticles(embedUrls).partition {
+          case (_, importStatus) => importStatus.isSuccess
+        }
 
       if (failedImports.nonEmpty) {
         val messages = failedImports.map(a => a._2.failed.get.getMessage)
         Failure(ImportReport(nodeId, ImportStatus.ERROR, messages, None))
       } else {
-        val embedUrlMap = articleImports.map { case (oldUrl, taxonomyResource) => oldUrl -> taxonomyResource.get.path }.toMap
+        val embedUrlMap = articleImports.map {
+          case (oldUrl, taxonomyResource) => oldUrl -> taxonomyResource.get.path
+        }.toMap
 
-        val coverPhoto = mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
-        val learningPathWithOldEmbedUrls = asLearningPath(mainImport, coverPhoto, clientId)
+        val coverPhoto =
+          mainImport.mainPackage.imageNid.flatMap(importCoverPhoto)
+        val learningPathWithOldEmbedUrls =
+          asLearningPath(mainImport, coverPhoto, clientId)
 
         val steps = learningPathWithOldEmbedUrls.learningsteps.map {
           case l: LearningStep if l.embedUrl.nonEmpty =>
             val embedUrls = l.embedUrl.map(embed => {
-              val path = embedUrlMap.get(embed.url).map(p => s"/${embed.language}$p")
+              val path =
+                embedUrlMap.get(embed.url).map(p => s"/${embed.language}$p")
               embed.copy(url = path.getOrElse(embed.url)) // Fall back on old ndla url if article could not be imported. Should never happen.
             })
             l.copy(embedUrl = embedUrls)
@@ -104,56 +124,89 @@ trait ImportService {
       learningpath.externalId.flatMap(learningPathRepository.withExternalId) match {
         case None => Try(learningPathRepository.insert(learningpath))
         case Some(existingLearningPath) =>
-          val updatedLp = Try(learningPathRepository.update(asLearningPath(existingLearningPath, learningpath)))
+          val updatedLp = Try(
+            learningPathRepository.update(
+              asLearningPath(existingLearningPath, learningpath)))
           learningpath.learningsteps.foreach(learningStep => {
-            learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId, existingLearningPath.id) match {
-              case None => learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
-              case Some(existingLearningStep) => learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
+            learningPathRepository.learningStepWithExternalIdAndForLearningPath(
+              learningStep.externalId,
+              existingLearningPath.id) match {
+              case None =>
+                learningPathRepository.insertLearningStep(
+                  learningStep.copy(learningPathId = existingLearningPath.id))
+              case Some(existingLearningStep) =>
+                learningPathRepository.updateLearningStep(
+                  asLearningStep(existingLearningStep, learningStep))
             }
           })
           updatedLp
       }
     }
 
-    private def importCoverPhoto(imageNid: Int): Option[ImageMetaInformation] = {
-      imageApiClient.imageMetaWithExternalId(imageNid.toString)
+    private def importCoverPhoto(
+        imageNid: Int): Option[ImageMetaInformation] = {
+      imageApiClient
+        .imageMetaWithExternalId(imageNid.toString)
         .orElse(imageApiClient.importImage(imageNid.toString))
     }
 
-    private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[String])] = {
+    private def importArticles(
+        embedUrls: Seq[String]): Seq[(String, Try[String])] = {
       def getNodeIdFromUrl = (url: String) => url.path.split("/").lastOption
-      val mainNodeIds = embedUrls.map(url => {
-        if (NdlaDomains.contains(url.host.getOrElse(""))) {
-          url -> getNodeIdFromUrl(url).map(migrationApiClient.getAllNodeIds)
-        } else {
-          url -> None
-        }
-      }).filter(_._2.isDefined).toMap
+      val mainNodeIds = embedUrls
+        .map(url => {
+          if (NdlaDomains.contains(url.host.getOrElse(""))) {
+            url -> getNodeIdFromUrl(url).map(migrationApiClient.getAllNodeIds)
+          } else {
+            url -> None
+          }
+        })
+        .filter(_._2.isDefined)
+        .toMap
 
       val nodeIdsToTaxonomyResourceMap = mainNodeIds.values
         .map(_.getOrElse(Set.empty))
-        .map(nids => nids -> importAndUpdateTaxonomy(nids)).toMap
+        .map(nids => nids -> importAndUpdateTaxonomy(nids))
+        .toMap
 
       embedUrls.map(embedUrl => {
-        val nodeIdsForArticle = mainNodeIds.get(embedUrl).flatten.getOrElse(Set.empty)
-        val taxonomyResourceForArticle = nodeIdsToTaxonomyResourceMap(nodeIdsForArticle)
+        val nodeIdsForArticle =
+          mainNodeIds.get(embedUrl).flatten.getOrElse(Set.empty)
+        val taxonomyResourceForArticle =
+          nodeIdsToTaxonomyResourceMap(nodeIdsForArticle)
         embedUrl -> taxonomyResourceForArticle
       })
     }
 
-    private def importAndUpdateTaxonomy(nodeWithTranslations: Set[ArticleMigrationContent]): Try[String] = {
-      val articleOpt = nodeWithTranslations.find(_.isMainNode)
+    private def importAndUpdateTaxonomy(
+        nodeWithTranslations: Set[ArticleMigrationContent]): Try[String] = {
+      val articleOpt = nodeWithTranslations
+        .find(_.isMainNode)
         .map(mainNodeId => articleImportClient.importArticle(mainNodeId.nid))
 
-      (nodeWithTranslations.map(c => taxononyApiClient.getResource(c.nid)).find(_.isSuccess), articleOpt) match {
+      (nodeWithTranslations
+         .map(c => taxononyApiClient.getResource(c.nid))
+         .find(_.isSuccess),
+       articleOpt) match {
         case (Some(Success(resource)), Some(article)) =>
-          val taxonomyResource = article.flatMap(a => taxononyApiClient.updateResource(resource.copy(contentUri=Some(s"urn:article:${a.articleId}"))))
-          taxonomyResource.map(r => s"/subjects${r.path}").orElse(article.map(a => s"/article/${a.articleId}"))
-        case (Some(Success(_)), None) => Failure(new ImportException("Failed to retrieve main node id for article"))
+          val taxonomyResource = article.flatMap(a =>
+            taxononyApiClient.updateResource(
+              resource.copy(contentUri = Some(s"urn:article:${a.articleId}"))))
+          taxonomyResource
+            .map(r => s"/subjects${r.path}")
+            .orElse(article.map(a => s"/article/${a.articleId}"))
+        case (Some(Success(_)), None) =>
+          Failure(
+            new ImportException("Failed to retrieve main node id for article"))
         case (Some(Failure(ex)), _) => Failure(ex)
-        case (None, Some(article)) => article.map(a => s"/article/${a.articleId}")
+        case (None, Some(article)) =>
+          article.map(a => s"/article/${a.articleId}")
         case (None, None) =>
-          Failure(new ImportException(s"Article could not be imported, and resource with node id(s) ${nodeWithTranslations.map(_.nid).mkString(",")} does not exist in taxonomy"))
+          Failure(
+            new ImportException(
+              s"Article could not be imported, and resource with node id(s) ${nodeWithTranslations
+                .map(_.nid)
+                .mkString(",")} does not exist in taxonomy"))
       }
     }
 
@@ -176,54 +229,87 @@ trait ImportService {
         case "6" => StepType.SUMMARY
         case "7" => StepType.TEST
         case "8" => StepType.SUMMARY
-        case _ => StepType.TEXT
+        case _   => StepType.TEXT
       }
     }
 
-    private[service] def descriptionAsList(step: Option[Step], translations: Seq[Step]): Seq[Description] = {
-      val translationDescriptions = translations.filter(step => step.description.isDefined && !step.description.get.isEmpty).map(tr => Description(tidyUpDescription(tr.description.get), languageOrUnknown(tr.language)))
+    private[service] def descriptionAsList(
+        step: Option[Step],
+        translations: Seq[Step]): Seq[Description] = {
+      val translationDescriptions = translations
+        .filter(step =>
+          step.description.isDefined && !step.description.get.isEmpty)
+        .map(tr =>
+          Description(tidyUpDescription(tr.description.get),
+                      languageOrUnknown(tr.language)))
       step match {
         case Some(s) =>
           s.description.isDefined && !s.description.get.isEmpty match {
-            case true => Seq(Description(tidyUpDescription(s.description.get), languageOrUnknown(s.language))) ++ translationDescriptions
+            case true =>
+              Seq(
+                Description(
+                  tidyUpDescription(s.description.get),
+                  languageOrUnknown(s.language))) ++ translationDescriptions
             case false => translationDescriptions
           }
         case None => translationDescriptions
       }
     }
 
-    private[service] def tidyUpDescription(description: String, allowHtml: Boolean = true): String = {
+    private[service] def tidyUpDescription(
+        description: String,
+        allowHtml: Boolean = true): String = {
       Option(description) match {
         case None => ""
-        case Some(desc) => HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
+        case Some(desc) =>
+          HtmlCleaner.cleanHtml(desc.replaceAll("\\s", " "), allowHtml)
       }
     }
 
-    private[service] def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
+    private[service] def embedUrlsAsList(
+        step: Step,
+        translations: Seq[Step]): Seq[EmbedUrl] = {
       (Seq(step) ++ translations).collect {
-        case Step(_, _, _, _, _, _, Some(embedUrl), _, _, language) if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
+        case Step(_, _, _, _, _, _, Some(embedUrl), _, _, language)
+            if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
           EmbedUrl(embedUrl, languageOrUnknown(language), EmbedType.OEmbed)
       }
     }
 
-    private[service] def asLearningPath(mainImport: MainPackageImport, imageUrl: Option[ImageMetaInformation], clientId: String): LearningPath = {
+    private[service] def asLearningPath(mainImport: MainPackageImport,
+                                        imageUrl: Option[ImageMetaInformation],
+                                        clientId: String): LearningPath = {
       val mainPackage = mainImport.mainPackage
-      val duration = Some((mainImport.mainPackage.durationHours * 60) + mainPackage.durationMinutes).map(Math.max(1, _))
+      val duration = Some(
+        (mainImport.mainPackage.durationHours * 60) + mainPackage.durationMinutes)
+        .map(Math.max(1, _))
       val lastUpdated = mainPackage.lastUpdated
 
+      val descriptions = Seq(
+        Description(tidyUpDescription(mainImport.mainPackage.description,
+                                      allowHtml = false),
+                    languageOrUnknown(mainImport.mainPackage.language))) ++
+        mainImport.translations.map(
+          tr =>
+            Description(tidyUpDescription(tr.description, allowHtml = false),
+                        languageOrUnknown(tr.language)))
 
-      val descriptions = Seq(Description(tidyUpDescription(mainImport.mainPackage.description, allowHtml = false), languageOrUnknown(mainImport.mainPackage.language))) ++
-        mainImport.translations.map(tr => Description(tidyUpDescription(tr.description, allowHtml = false), languageOrUnknown(tr.language)))
-
-      val titles = Seq(Title(mainImport.mainPackage.title, languageOrUnknown(mainImport.mainPackage.language))) ++
-        mainImport.translations.map(tr => Title(tr.title, languageOrUnknown(tr.language)))
+      val titles = Seq(
+        Title(mainImport.mainPackage.title,
+              languageOrUnknown(mainImport.mainPackage.language))) ++
+        mainImport.translations.map(tr =>
+          Title(tr.title, languageOrUnknown(tr.language)))
 
       val tags = keywordsService.forNodeId(mainImport.mainPackage.nid) ++
         mainImport.translations.flatMap(tr => keywordsService.forNodeId(tr.nid))
 
-      val learningSteps = mainImport.mainPackage.steps.map(step => asLearningStep(step, mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))
-      val authors = (mainPackage.authors ++ mainImport.translations.flatMap(_.authors))
-        .distinct
+      val learningSteps = mainImport.mainPackage.steps.map(
+        step =>
+          asLearningStep(
+            step,
+            mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))
+      val authors = (mainPackage.authors ++ mainImport.translations.flatMap(
+        _.authors)).distinct
         .map(a => Author(a.`type`, a.name))
 
       LearningPath(
@@ -241,10 +327,12 @@ trait ImportService {
         tags,
         clientId,
         Copyright(mainPackage.license, authors),
-        learningSteps)
+        learningSteps
+      )
     }
 
-    private def asLearningPath(existing: LearningPath, toUpdate: LearningPath): LearningPath = {
+    private def asLearningPath(existing: LearningPath,
+                               toUpdate: LearningPath): LearningPath = {
       existing.copy(
         title = toUpdate.title,
         description = toUpdate.description,
@@ -258,11 +346,14 @@ trait ImportService {
       )
     }
 
-    private def asLearningStep(step: Step, translations: Seq[Step]): LearningStep = {
+    private def asLearningStep(step: Step,
+                               translations: Seq[Step]): LearningStep = {
       val seqNo = step.pos - 1
       val stepType = asLearningStepType(s"${step.stepType}")
 
-      val title = Seq(Title(step.title, step.language)) ++ translations.map(translation => Title(translation.title, languageOrUnknown(translation.language)))
+      val title = Seq(Title(step.title, step.language)) ++ translations.map(
+        translation =>
+          Title(translation.title, languageOrUnknown(translation.language)))
       val descriptions = descriptionAsList(Some(step), translations)
 
       val embedUrls = embedUrlsAsList(step, translations)
@@ -285,7 +376,8 @@ trait ImportService {
       )
     }
 
-    private def asLearningStep(existing: LearningStep, toUpdate: LearningStep): LearningStep = {
+    private def asLearningStep(existing: LearningStep,
+                               toUpdate: LearningStep): LearningStep = {
       existing.copy(
         seqNo = toUpdate.seqNo,
         title = toUpdate.title,

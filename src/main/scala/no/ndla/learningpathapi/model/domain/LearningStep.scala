@@ -28,8 +28,7 @@ case class LearningStep(id: Option[Long],
                         `type`: StepType.Value,
                         license: Option[String],
                         showTitle: Boolean = false,
-                        status: StepStatus.Value = StepStatus.ACTIVE) {
-}
+                        status: StepStatus.Value = StepStatus.ACTIVE) {}
 
 object StepStatus extends Enumeration {
 
@@ -40,10 +39,13 @@ object StepStatus extends Enumeration {
   }
 
   def valueOfOrError(status: String): StepStatus.Value = {
-   valueOf(status) match {
-     case Some(s) => s
-     case None => throw new ValidationException(errors = List(ValidationMessage("status", s"'$status' is not a valid status.")))
-   }
+    valueOf(status) match {
+      case Some(s) => s
+      case None =>
+        throw new ValidationException(
+          errors = List(
+            ValidationMessage("status", s"'$status' is not a valid status.")))
+    }
   }
 
   def valueOfOrDefault(s: String): StepStatus.Value = {
@@ -61,7 +63,10 @@ object StepType extends Enumeration {
   def valueOfOrError(s: String): StepType.Value = {
     valueOf(s) match {
       case Some(stepType) => stepType
-      case None => throw new ValidationException(errors = List(ValidationMessage("type", s"'$s' is not a valid steptype.")))
+      case None =>
+        throw new ValidationException(
+          errors =
+            List(ValidationMessage("type", s"'$s' is not a valid steptype.")))
     }
   }
 
@@ -74,20 +79,39 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
   val JSonSerializer = FieldSerializer[LearningStep](
     serializer =
       ignore("id") orElse
-      ignore("learningPathId") orElse
-      ignore("externalId") orElse
-      ignore("revision"))
+        ignore("learningPathId") orElse
+        ignore("externalId") orElse
+        ignore("revision"))
 
-  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(StepType) + new EnumNameSerializer(StepStatus) + new EnumNameSerializer(EmbedType) + JSonSerializer
+  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(
+    StepType) + new EnumNameSerializer(StepStatus) + new EnumNameSerializer(
+    EmbedType) + JSonSerializer
   override val tableName = "learningsteps"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
-  def apply(ls: SyntaxProvider[LearningStep])(rs: WrappedResultSet): LearningStep = apply(ls.resultName)(rs)
+  def apply(ls: SyntaxProvider[LearningStep])(
+      rs: WrappedResultSet): LearningStep = apply(ls.resultName)(rs)
 
-  def apply(ls: ResultName[LearningStep])(rs: WrappedResultSet): LearningStep = {
+  def apply(ls: ResultName[LearningStep])(
+      rs: WrappedResultSet): LearningStep = {
     val meta = read[LearningStep](rs.string(ls.c("document")))
-    LearningStep(Some(rs.long(ls.c("id"))), Some(rs.int(ls.c("revision"))), rs.stringOpt(ls.c("external_id")), Some(rs.long(ls.c("learning_path_id"))), meta.seqNo, meta.title, meta.description, meta.embedUrl, meta.`type`, meta.license, meta.showTitle, meta.status)
+    LearningStep(
+      Some(rs.long(ls.c("id"))),
+      Some(rs.int(ls.c("revision"))),
+      rs.stringOpt(ls.c("external_id")),
+      Some(rs.long(ls.c("learning_path_id"))),
+      meta.seqNo,
+      meta.title,
+      meta.description,
+      meta.embedUrl,
+      meta.`type`,
+      meta.license,
+      meta.showTitle,
+      meta.status
+    )
   }
 
-  def opt(ls: ResultName[LearningStep])(rs: WrappedResultSet): Option[LearningStep] = rs.longOpt(ls.c("id")).map(_ => LearningStep(ls)(rs))
+  def opt(ls: ResultName[LearningStep])(
+      rs: WrappedResultSet): Option[LearningStep] =
+    rs.longOpt(ls.c("id")).map(_ => LearningStep(ls)(rs))
 }

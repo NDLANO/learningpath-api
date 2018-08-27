@@ -10,14 +10,20 @@ package no.ndla.learningpathapi.service.search
 
 import com.sksamuel.elastic4s.http.search.SearchHit
 import no.ndla.learningpathapi.integration.ImageApiClientComponent
-import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2}
+import no.ndla.learningpathapi.model.api.{
+  Author,
+  Introduction,
+  LearningPathSummaryV2
+}
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.model.domain.Language.{DefaultLanguage, findByLanguageOrBestEffort}
+import no.ndla.learningpathapi.model.domain.Language.{
+  DefaultLanguage,
+  findByLanguageOrBestEffort
+}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search._
 import no.ndla.learningpathapi.service.ConverterServiceComponent
 import no.ndla.network.ApplicationUrl
-
 
 trait SearchConverterServiceComponent {
   this: ConverterServiceComponent with ImageApiClientComponent =>
@@ -26,7 +32,8 @@ trait SearchConverterServiceComponent {
   class SearchConverterService {
 
     def asApiTitle(titles: SearchableTitles): List[api.Title] = {
-      List((titles.zh, Language.CHINESE),
+      List(
+        (titles.zh, Language.CHINESE),
         (titles.en, Language.ENGLISH),
         (titles.fr, Language.FRENCH),
         (titles.de, Language.GERMAN),
@@ -38,8 +45,10 @@ trait SearchConverterServiceComponent {
       ).filter(_._1.isDefined).map(tuple => api.Title(tuple._1.get, tuple._2))
     }
 
-    def asApiDescription(descriptions: SearchableDescriptions): Seq[api.Description] = {
-      List((descriptions.zh, Language.CHINESE),
+    def asApiDescription(
+        descriptions: SearchableDescriptions): Seq[api.Description] = {
+      List(
+        (descriptions.zh, Language.CHINESE),
         (descriptions.en, Language.ENGLISH),
         (descriptions.fr, Language.FRENCH),
         (descriptions.de, Language.GERMAN),
@@ -48,22 +57,30 @@ trait SearchConverterServiceComponent {
         (descriptions.se, Language.SAMI),
         (descriptions.es, Language.SPANISH),
         (descriptions.unknown, Language.UNKNOWN)
-      ).filter(_._1.isDefined).map(tuple => api.Description(tuple._1.get, tuple._2))
+      ).filter(_._1.isDefined)
+        .map(tuple => api.Description(tuple._1.get, tuple._2))
     }
 
-    def asApiLearningPathTag(tags: SearchableTags): Seq[api.LearningPathTags] = {
-      Seq(api.LearningPathTags(tags.zh.getOrElse(Seq.empty), Language.CHINESE),
+    def asApiLearningPathTag(
+        tags: SearchableTags): Seq[api.LearningPathTags] = {
+      Seq(
+        api.LearningPathTags(tags.zh.getOrElse(Seq.empty), Language.CHINESE),
         api.LearningPathTags(tags.en.getOrElse(Seq.empty), Language.ENGLISH),
         api.LearningPathTags(tags.fr.getOrElse(Seq.empty), Language.FRENCH),
         api.LearningPathTags(tags.de.getOrElse(Seq.empty), Language.GERMAN),
-        api.LearningPathTags(tags.nb.getOrElse(Seq.empty), Language.NORWEGIAN_BOKMAL),
-        api.LearningPathTags(tags.nn.getOrElse(Seq.empty), Language.NORWEGIAN_NYNORSK),
+        api.LearningPathTags(tags.nb.getOrElse(Seq.empty),
+                             Language.NORWEGIAN_BOKMAL),
+        api.LearningPathTags(tags.nn.getOrElse(Seq.empty),
+                             Language.NORWEGIAN_NYNORSK),
         api.LearningPathTags(tags.se.getOrElse(Seq.empty), Language.SAMI),
         api.LearningPathTags(tags.es.getOrElse(Seq.empty), Language.SPANISH),
-        api.LearningPathTags(tags.unknown.getOrElse(Seq.empty), Language.UNKNOWN)).filterNot(_.tags.isEmpty)
+        api.LearningPathTags(tags.unknown.getOrElse(Seq.empty),
+                             Language.UNKNOWN)
+      ).filterNot(_.tags.isEmpty)
     }
 
-    def asApiIntroduction(learningStep: Option[SearchableLearningStep]): Seq[Introduction] = {
+    def asApiIntroduction(
+        learningStep: Option[SearchableLearningStep]): Seq[Introduction] = {
       learningStep.map(_.descriptions) match {
         case None => List()
         case Some(descriptions) => {
@@ -77,47 +94,64 @@ trait SearchConverterServiceComponent {
             (descriptions.se, Language.SAMI),
             (descriptions.es, Language.SPANISH),
             (descriptions.unknown, Language.UNKNOWN)
-          ).filter(_._1.isDefined).map(tuple => Introduction(tuple._1.get, tuple._2))
+          ).filter(_._1.isDefined)
+            .map(tuple => Introduction(tuple._1.get, tuple._2))
         }
       }
     }
 
-    def asApiLearningPathSummaryV2(searchableLearningPath: SearchableLearningPath, language: String): LearningPathSummaryV2 = {
+    def asApiLearningPathSummaryV2(
+        searchableLearningPath: SearchableLearningPath,
+        language: String): LearningPathSummaryV2 = {
       val titles = asApiTitle(searchableLearningPath.titles)
       val descriptions = asApiDescription(searchableLearningPath.descriptions)
-      val introductions = asApiIntroduction(searchableLearningPath.learningsteps.find(_.stepType == StepType.INTRODUCTION.toString))
+      val introductions = asApiIntroduction(
+        searchableLearningPath.learningsteps.find(
+          _.stepType == StepType.INTRODUCTION.toString))
       val tags = asApiLearningPathTag(searchableLearningPath.tags)
-      val supportedLanguages = Language.findSupportedLanguages(titles, descriptions, introductions, tags)
+      val supportedLanguages = Language.findSupportedLanguages(titles,
+                                                               descriptions,
+                                                               introductions,
+                                                               tags)
 
       LearningPathSummaryV2(
         searchableLearningPath.id,
-        findByLanguageOrBestEffort(titles, Some(language)).getOrElse(api.Title("", DefaultLanguage)),
-        findByLanguageOrBestEffort(descriptions, Some(language)).getOrElse(api.Description("", DefaultLanguage)),
-        findByLanguageOrBestEffort(introductions, Some(language)).getOrElse(api.Introduction("", DefaultLanguage)),
+        findByLanguageOrBestEffort(titles, Some(language))
+          .getOrElse(api.Title("", DefaultLanguage)),
+        findByLanguageOrBestEffort(descriptions, Some(language))
+          .getOrElse(api.Description("", DefaultLanguage)),
+        findByLanguageOrBestEffort(introductions, Some(language))
+          .getOrElse(api.Introduction("", DefaultLanguage)),
         createUrlToLearningPath(searchableLearningPath.id),
         searchableLearningPath.coverPhotoUrl,
         searchableLearningPath.duration,
         searchableLearningPath.status,
         searchableLearningPath.lastUpdated,
-        findByLanguageOrBestEffort(tags, Some(language)).getOrElse(api.LearningPathTags(Seq(), DefaultLanguage)),
+        findByLanguageOrBestEffort(tags, Some(language))
+          .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage)),
         searchableLearningPath.copyright,
         supportedLanguages,
         searchableLearningPath.isBasedOn
       )
     }
 
-
-    def asSearchableLearningpath(learningPath: LearningPath): SearchableLearningPath = {
-      val defaultTitle = learningPath.title.sortBy(title => {
-        val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
-        languagePriority.indexOf(title.language)
-      }).lastOption
+    def asSearchableLearningpath(
+        learningPath: LearningPath): SearchableLearningPath = {
+      val defaultTitle = learningPath.title
+        .sortBy(title => {
+          val languagePriority =
+            Language.languageAnalyzers.map(la => la.lang).reverse
+          languagePriority.indexOf(title.language)
+        })
+        .lastOption
 
       SearchableLearningPath(
         learningPath.id.get,
         asSearchableTitles(learningPath.title),
         asSearchableDescriptions(learningPath.description),
-        learningPath.coverPhotoId.flatMap(converterService.asCoverPhoto).map(_.url),
+        learningPath.coverPhotoId
+          .flatMap(converterService.asCoverPhoto)
+          .map(_.url),
         learningPath.duration,
         learningPath.status.toString,
         learningPath.verificationStatus.toString,
@@ -144,17 +178,23 @@ trait SearchConverterServiceComponent {
       )
     }
 
-    def asSearchableDescriptions(description: Seq[Description]): SearchableDescriptions = {
+    def asSearchableDescriptions(
+        description: Seq[Description]): SearchableDescriptions = {
       SearchableDescriptions(
-        nb = description.find(_.language == Language.NORWEGIAN_BOKMAL).map(_.description),
-        nn = description.find(_.language == Language.NORWEGIAN_NYNORSK).map(_.description),
+        nb = description
+          .find(_.language == Language.NORWEGIAN_BOKMAL)
+          .map(_.description),
+        nn = description
+          .find(_.language == Language.NORWEGIAN_NYNORSK)
+          .map(_.description),
         en = description.find(_.language == Language.ENGLISH).map(_.description),
         fr = description.find(_.language == Language.FRENCH).map(_.description),
         de = description.find(_.language == Language.GERMAN).map(_.description),
         es = description.find(_.language == Language.SPANISH).map(_.description),
         se = description.find(_.language == Language.SAMI).map(_.description),
         zh = description.find(_.language == Language.CHINESE).map(_.description),
-        unknown = description.find(_.language == Language.UNKNOWN).map(_.description)
+        unknown =
+          description.find(_.language == Language.UNKNOWN).map(_.description)
       )
     }
 
@@ -172,11 +212,11 @@ trait SearchConverterServiceComponent {
       )
     }
 
-    def asSearchableLearningStep(learningStep: LearningStep): SearchableLearningStep = {
-      SearchableLearningStep(
-        learningStep.`type`.toString,
-        asSearchableTitles(learningStep.title),
-        asSearchableDescriptions(learningStep.description))
+    def asSearchableLearningStep(
+        learningStep: LearningStep): SearchableLearningStep = {
+      SearchableLearningStep(learningStep.`type`.toString,
+                             asSearchableTitles(learningStep.title),
+                             asSearchableDescriptions(learningStep.description))
     }
 
     def asAuthor(author: String): Author = {
@@ -188,17 +228,24 @@ trait SearchConverterServiceComponent {
     }
 
     def getLanguageFromHit(result: SearchHit): Option[String] = {
-      val sortedInnerHits = result.innerHits.toList.filter(ih => ih._2.total > 0).sortBy{
-        case (_, hit) => hit.max_score
-      }.reverse
+      val sortedInnerHits = result.innerHits.toList
+        .filter(ih => ih._2.total > 0)
+        .sortBy {
+          case (_, hit) => hit.max_score
+        }
+        .reverse
 
-      val matchLanguage = sortedInnerHits.headOption.flatMap{
+      val matchLanguage = sortedInnerHits.headOption.flatMap {
         case (_, innerHit) =>
-          innerHit.hits.sortBy(hit => hit.score).reverse.headOption.flatMap(hit => {
-            hit.highlight.headOption.map(hl => {
-              hl._1.split('.').filterNot(_ == "raw").last
+          innerHit.hits
+            .sortBy(hit => hit.score)
+            .reverse
+            .headOption
+            .flatMap(hit => {
+              hit.highlight.headOption.map(hl => {
+                hl._1.split('.').filterNot(_ == "raw").last
+              })
             })
-          })
       }
 
       matchLanguage match {
@@ -213,10 +260,13 @@ trait SearchConverterServiceComponent {
           val languages = titleMap.map(title => title.keySet.toList)
 
           languages.flatMap(languageList => {
-            languageList.sortBy(lang => {
-              val languagePriority = Language.languageAnalyzers.map(la => la.lang).reverse
-              languagePriority.indexOf(lang)
-            }).lastOption
+            languageList
+              .sortBy(lang => {
+                val languagePriority =
+                  Language.languageAnalyzers.map(la => la.lang).reverse
+                languagePriority.indexOf(lang)
+              })
+              .lastOption
           })
       }
     }

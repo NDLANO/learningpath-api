@@ -8,7 +8,6 @@
 
 package no.ndla.learningpathapi.model.search
 
-
 case class SearchableDescriptions(nb: Option[String],
                                   nn: Option[String],
                                   en: Option[String],

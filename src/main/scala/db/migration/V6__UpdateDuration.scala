@@ -17,32 +17,38 @@ import scalikejdbc.{DB, DBSession, _}
 
 class V6__UpdateDuration extends JdbcMigration {
 
-
   override def migrate(connection: Connection) = {
     val db = DB(connection)
     db.autoClose(false)
 
     db.withinTx { implicit session =>
-      allLearningPaths.map { case (id, document) =>
-        (id, updateDuration(document))
-      }.foreach { case (id, document) =>
-        update(id, document)
-      }
+      allLearningPaths
+        .map {
+          case (id, document) =>
+            (id, updateDuration(document))
+        }
+        .foreach {
+          case (id, document) =>
+            update(id, document)
+        }
     }
   }
 
   def allLearningPaths(implicit session: DBSession): Seq[(Long, String)] = {
-    sql"select id, document from learningpaths".map(rs => {
-      (rs.long("id"), rs.string("document"))
-    }).list().apply()
+    sql"select id, document from learningpaths"
+      .map(rs => {
+        (rs.long("id"), rs.string("document"))
+      })
+      .list()
+      .apply()
   }
 
   def updateDuration(document: String): String = {
     val oldLearningPath = parse(document)
 
-
     val newLearningPath = oldLearningPath.mapField {
-      case ("duration", JInt(duration)) if duration <= 0 => "duration" -> JInt(1)
+      case ("duration", JInt(duration)) if duration <= 0 =>
+        "duration" -> JInt(1)
       case x => x
     }
     compact(render(newLearningPath))
@@ -53,8 +59,9 @@ class V6__UpdateDuration extends JdbcMigration {
     dataObject.setType("jsonb")
     dataObject.setValue(document)
 
-    sql"update learningpaths set document = $dataObject where id = ${id}".update().apply
+    sql"update learningpaths set document = $dataObject where id = ${id}"
+      .update()
+      .apply
   }
 
 }
-

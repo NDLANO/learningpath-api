@@ -13,7 +13,7 @@ import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 import no.ndla.learningpathapi.model.domain.Title
 import org.mockito.Mockito._
 
-class TitleValidatorTest extends UnitSuite with TestEnvironment{
+class TitleValidatorTest extends UnitSuite with TestEnvironment {
 
   var validator: TitleValidator = _
 
@@ -24,61 +24,82 @@ class TitleValidatorTest extends UnitSuite with TestEnvironment{
 
   val DefaultTitle = Title("Some title", "nb")
 
-  test("That TitleValidator.validate returns error message when no titles are defined") {
+  test(
+    "That TitleValidator.validate returns error message when no titles are defined") {
     val errorMessages = validator.validate(List(), false)
-    errorMessages.size should be (1)
+    errorMessages.size should be(1)
     errorMessages.head.field should equal("title")
     errorMessages.head.message should equal("At least one title is required.")
   }
 
   test("That TitleValidator validates title text") {
-    when(languageValidator.validate("title.language", "nb", false)).thenReturn(None)
-    val validationErrors = validator.validate(List(DefaultTitle.copy(title = "<h1>Illegal text</h1>")), false)
-    validationErrors.size should be (1)
+    when(languageValidator.validate("title.language", "nb", false))
+      .thenReturn(None)
+    val validationErrors = validator.validate(
+      List(DefaultTitle.copy(title = "<h1>Illegal text</h1>")),
+      false)
+    validationErrors.size should be(1)
     validationErrors.head.field should equal("title.title")
   }
 
   test("That TitleValidator validates language") {
-    when(languageValidator.validate("title.language", "bergensk", false)).thenReturn(Some(ValidationMessage("title.language", "Error")))
-    val validationErrors = validator.validate(List(DefaultTitle.copy(language = "bergensk")), false)
-    validationErrors.size should be (1)
+    when(languageValidator.validate("title.language", "bergensk", false))
+      .thenReturn(Some(ValidationMessage("title.language", "Error")))
+    val validationErrors =
+      validator.validate(List(DefaultTitle.copy(language = "bergensk")), false)
+    validationErrors.size should be(1)
     validationErrors.head.field should equal("title.language")
   }
 
   test("That TitleValidator validates both title text and language") {
-    when(languageValidator.validate("title.language", "bergensk", false)).thenReturn(Some(ValidationMessage("title.language", "Error")))
-    val validationErrors = validator.validate(List(DefaultTitle.copy(title = "<h1>Illegal text</h1>", language = "bergensk")), false)
-    validationErrors.size should be (2)
+    when(languageValidator.validate("title.language", "bergensk", false))
+      .thenReturn(Some(ValidationMessage("title.language", "Error")))
+    val validationErrors =
+      validator.validate(List(
+                           DefaultTitle.copy(title = "<h1>Illegal text</h1>",
+                                             language = "bergensk")),
+                         false)
+    validationErrors.size should be(2)
     validationErrors.head.field should equal("title.title")
     validationErrors.last.field should equal("title.language")
 
   }
 
   test("That TitleValidator returns no errors for a valid title") {
-    when(languageValidator.validate("title.language", "nb", false)).thenReturn(None)
+    when(languageValidator.validate("title.language", "nb", false))
+      .thenReturn(None)
     validator.validate(List(DefaultTitle), false) should equal(List())
   }
 
   test("That TitleValidator validates all titles") {
-    when(languageValidator.validate("title.language", "nb", false)).thenReturn(None)
-    val validationErrors = validator.validate(List(
-      DefaultTitle.copy(title = "<h1>Invalid text</h1>"),
-      DefaultTitle.copy(title = "<h1>Invalid text</h1>")
-    ), false)
-    validationErrors.size should be (2)
+    when(languageValidator.validate("title.language", "nb", false))
+      .thenReturn(None)
+    val validationErrors =
+      validator.validate(List(
+                           DefaultTitle.copy(title = "<h1>Invalid text</h1>"),
+                           DefaultTitle.copy(title = "<h1>Invalid text</h1>")
+                         ),
+                         false)
+    validationErrors.size should be(2)
     validationErrors.head.field should equal("title.title")
     validationErrors.last.field should equal("title.title")
   }
 
-  test("That TitleValidator does not return error message when no titles are defined and no titles are required") {
-    when(languageValidator.validate("title.language", "nb", false)).thenReturn(None)
-    new TitleValidator(titleRequired = false).validate(List(), false) should equal(List())
+  test(
+    "That TitleValidator does not return error message when no titles are defined and no titles are required") {
+    when(languageValidator.validate("title.language", "nb", false))
+      .thenReturn(None)
+    new TitleValidator(titleRequired = false)
+      .validate(List(), false) should equal(List())
   }
 
-  test("That TitleValidator returns error message for an invalid title even if no titles are required") {
-    when(languageValidator.validate("title.language", "nb", false)).thenReturn(None)
-    val validationErrors = new TitleValidator(titleRequired = false).validate(List(DefaultTitle.copy(title = "<h1>Invalid text</h1>")), false)
-    validationErrors.size should be (1)
+  test(
+    "That TitleValidator returns error message for an invalid title even if no titles are required") {
+    when(languageValidator.validate("title.language", "nb", false))
+      .thenReturn(None)
+    val validationErrors = new TitleValidator(titleRequired = false)
+      .validate(List(DefaultTitle.copy(title = "<h1>Invalid text</h1>")), false)
+    validationErrors.size should be(1)
     validationErrors.head.field should equal("title.title")
   }
 }
