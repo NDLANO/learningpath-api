@@ -42,7 +42,7 @@ object LearningpathApiProperties extends LazyLogging {
   val ImageApiHost = propOrElse("IMAGE_API_HOST", "image-api.ndla-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
   val NdlaFrontendHost = Environment match {
-    case "prod" => "beta.ndla.no"
+    case "prod" => "ndla.no"
     case "local" => "localhost:30017"
     case _ => s"ndla-frontend.$Environment.api.ndla.no"
   }
