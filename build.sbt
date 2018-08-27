@@ -1,6 +1,6 @@
 import java.util.Properties
 
-val Scalaversion = "2.12.1"
+val Scalaversion = "2.12.6"
 val Scalatraversion = "2.5.1"
 val ScalaLoggingVersion = "3.5.0"
 val Log4JVersion = "2.9.1"
@@ -20,20 +20,16 @@ appProperties := {
   prop
 }
 
-lazy val commonSettings = Seq(
-  organization := appProperties.value.getProperty("NDLAOrganization"),
-  version := appProperties.value.getProperty("NDLAComponentVersion"),
-  scalaVersion := Scalaversion
-)
-
 lazy val ITest = config("it") extend(Test)
 
 lazy val learningpath_api = (project in file(".")).
   configs(ITest).
-  settings(commonSettings: _*).
   settings(inConfig(ITest)(Defaults.testTasks): _*).
   settings(
     name := "learningpath-api",
+    organization := appProperties.value.getProperty("NDLAOrganization"),
+    version := appProperties.value.getProperty("NDLAComponentVersion"),
+    scalaVersion := Scalaversion,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-deprecation"),
     libraryDependencies ++= Seq(
@@ -66,10 +62,10 @@ lazy val learningpath_api = (project in file(".")).
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0")
-  ).enablePlugins(DockerPlugin).enablePlugins(GitVersioning).enablePlugins(JettyPlugin)
+  ).enablePlugins(DockerPlugin).enablePlugins(JettyPlugin)
 
 assemblyJarName in assembly := "learningpath-api.jar"
-mainClass in assembly := Some("no.ndla.learningpathapi.JettyLauncher")
+assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
   case "mime.types" => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class")  => MergeStrategy.first
@@ -85,12 +81,12 @@ assemblyMergeStrategy in assembly := {
 // sbt "test-only -- -n no.ndla.tag.IntegrationTest"
 // will not run unless this line gets commented out or you remove the tag over the test class
 // This should be solved better!
-testOptions in Test += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
+Test / testOptions += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker := (docker dependsOn assembly).value
 
-dockerfile in docker := {
+docker / dockerfile := {
   val artifact = (assemblyOutputPath in assembly).value
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
@@ -101,13 +97,13 @@ dockerfile in docker := {
   }
 }
 
-imageNames in docker := Seq(
+docker / imageNames := Seq(
   ImageName(
     namespace = Some(organization.value),
     repository = name.value,
     tag = Some(System.getProperty("docker.tag", "SNAPSHOT")))
 )
 
-parallelExecution in Test := false
+Test / parallelExecution := false
 
 resolvers ++= scala.util.Properties.envOrNone("NDLA_RELEASES").map(repo => "Release Sonatype Nexus Repository Manager" at repo).toSeq
