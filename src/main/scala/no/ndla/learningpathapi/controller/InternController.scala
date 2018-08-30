@@ -23,7 +23,6 @@ import org.scalatra._
 
 import scala.util.{Failure, Success}
 
-
 trait InternController {
   this: ImportService
     with SearchIndexServiceComponent
@@ -44,8 +43,10 @@ trait InternController {
       AuthUser.getClientId match {
         case Some(clientId) => clientId
         case None => {
-          logger.warn(s"Request made to ${request.getRequestURI} without clientId")
-          throw new AccessDeniedException("You do not have access to the requested resource.")
+          logger.warn(
+            s"Request made to ${request.getRequestURI} without clientId")
+          throw new AccessDeniedException(
+            "You do not have access to the requested resource.")
         }
       }
     }
@@ -54,14 +55,15 @@ trait InternController {
       val externalId = params("external_id")
       learningPathRepository.getIdFromExternalId(externalId) match {
         case Some(id) => id
-        case None => NotFound()
+        case None     => NotFound()
       }
     }
 
     post("/index") {
       searchIndexService.indexDocuments match {
         case Success(reindexResult) =>
-          val result = s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
+          val result =
+            s"Completed indexing of ${reindexResult.totalIndexed} documents in ${reindexResult.millisUsed} ms."
           logger.info(result)
           Ok(result)
         case Failure(f) =>
@@ -72,9 +74,9 @@ trait InternController {
 
     post("/import/:node_id") {
       importService.doImport(params("node_id"), requireClientId) match {
-        case Success(report) => report
+        case Success(report)           => report
         case Failure(ex: ImportReport) => errorHandler(ex)
-        case Failure(ex) => errorHandler(ex)
+        case Failure(ex)               => errorHandler(ex)
       }
     }
 

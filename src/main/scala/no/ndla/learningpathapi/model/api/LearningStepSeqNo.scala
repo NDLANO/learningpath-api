@@ -13,4 +13,6 @@ import org.scalatra.swagger.annotations.{ApiModel, ApiModelProperty}
 import scala.annotation.meta.field
 
 @ApiModel(description = "Information about the sequence number for a step")
-case class LearningStepSeqNo(@(ApiModelProperty@field)(description = "The sequence number for the learningstep") seqNo: Int)
+case class LearningStepSeqNo(
+    @(ApiModelProperty @field)(
+      description = "The sequence number for the learningstep") seqNo: Int)

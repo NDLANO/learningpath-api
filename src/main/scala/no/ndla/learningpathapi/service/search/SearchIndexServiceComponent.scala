@@ -18,15 +18,20 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.domain.Language._
-import no.ndla.learningpathapi.model.domain.{ElasticIndexingException, LearningPath, ReindexResult}
+import no.ndla.learningpathapi.model.domain.{
+  ElasticIndexingException,
+  LearningPath,
+  ReindexResult
+}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.json4s.native.Serialization._
 
 import scala.util.{Failure, Success, Try}
 
-
 trait SearchIndexServiceComponent {
-  this: Elastic4sClient with SearchConverterServiceComponent with LearningPathRepositoryComponent =>
+  this: Elastic4sClient
+    with SearchConverterServiceComponent
+    with LearningPathRepositoryComponent =>
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
@@ -49,7 +54,8 @@ trait SearchIndexServiceComponent {
               Failure(f)
             }
             case Success(totalIndexed) => {
-              Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
+              Success(
+                ReindexResult(totalIndexed, System.currentTimeMillis() - start))
             }
           }
         })
@@ -60,18 +66,22 @@ trait SearchIndexServiceComponent {
       for {
         _ <- aliasTarget.map {
           case Some(index) => Success(index)
-          case None => createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
+          case None =>
+            createIndexWithGeneratedName().map(newIndex =>
+              updateAliasTarget(None, newIndex))
         }
         indexed <- {
-          val source = write(searchConverterService.asSearchableLearningpath(learningPath))
+          val source = write(
+            searchConverterService.asSearchableLearningpath(learningPath))
 
-          val response = e4sClient.execute{
-            indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+          val response = e4sClient.execute {
+            indexInto(
+              LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
               .doc(source)
               .id(learningPath.id.get.toString)
           }
           response match {
-            case Success(_) => Success(learningPath)
+            case Success(_)  => Success(learningPath)
             case Failure(ex) => Failure(ex)
           }
         }
@@ -82,33 +92,39 @@ trait SearchIndexServiceComponent {
       for {
         _ <- searchIndexService.aliasTarget.map {
           case Some(index) => Success(index)
-          case None => createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
+          case None =>
+            createIndexWithGeneratedName().map(newIndex =>
+              updateAliasTarget(None, newIndex))
         }
         deleted <- {
-          e4sClient.execute{
+          e4sClient.execute {
             delete(s"${learningPath.id.get}")
-              .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+              .from(
+                LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
           }
         }
       } yield deleted
     }
 
     def createIndexWithGeneratedName(): Try[String] = {
-      createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
+      createIndexWithName(
+        LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
       if (indexWithNameExists(indexName).getOrElse(false)) {
         Success(indexName)
       } else {
-        val response = e4sClient.execute{
+        val response = e4sClient.execute {
           createIndex(indexName)
             .mappings(buildMapping)
-            .indexSetting("max_result_window", LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
+            .indexSetting(
+              "max_result_window",
+              LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
         }
 
         response match {
-          case Success(_) => Success(indexName)
+          case Success(_)  => Success(indexName)
           case Failure(ex) => Failure(ex)
         }
 
@@ -119,31 +135,42 @@ trait SearchIndexServiceComponent {
       var numIndexed = 0
       getRanges.map(ranges => {
         ranges.foreach(range => {
-          val numberInBulk = searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2), indexName)
+          val numberInBulk = searchIndexService.indexLearningPaths(
+            learningPathRepository.learningPathsWithIdBetween(range._1,
+                                                              range._2),
+            indexName)
           numberInBulk match {
             case Success(num) => numIndexed += num
-            case Failure(f) => return Failure(f)
+            case Failure(f)   => return Failure(f)
           }
         })
         numIndexed
       })
     }
 
-    private def getRanges:Try[List[(Long,Long)]] = {
-      Try{
+    private def getRanges: Try[List[(Long, Long)]] = {
+      Try {
         val (minId, maxId) = learningPathRepository.minMaxId
-        Seq.range(minId, maxId).grouped(LearningpathApiProperties.IndexBulkSize).map(group => (group.head, group.last + 1)).toList
+        Seq
+          .range(minId, maxId)
+          .grouped(LearningpathApiProperties.IndexBulkSize)
+          .map(group => (group.head, group.last + 1))
+          .toList
       }
     }
 
-    private def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Try[Int] = {
+    private def indexLearningPaths(learningPaths: List[LearningPath],
+                                   indexName: String): Try[Int] = {
       if (learningPaths.isEmpty) {
         Success(0)
       } else {
         val response = e4sClient.execute {
           bulk(learningPaths.map(lp => {
-            val source = write(searchConverterService.asSearchableLearningpath(lp))
-            indexInto(indexName / LearningpathApiProperties.SearchDocument).doc(source).id(lp.id.get.toString)
+            val source =
+              write(searchConverterService.asSearchableLearningpath(lp))
+            indexInto(indexName / LearningpathApiProperties.SearchDocument)
+              .doc(source)
+              .id(lp.id.get.toString)
           }))
         }
 
@@ -153,11 +180,14 @@ trait SearchIndexServiceComponent {
             Success(learningPaths.size)
           case Success(RequestSuccess(_, _, _, result)) =>
             val failed = result.items.collect {
-              case item if item.error.isDefined => s"'${item.id}: ${item.error.get.reason}'"
+              case item if item.error.isDefined =>
+                s"'${item.id}: ${item.error.get.reason}'"
             }
 
-            logger.error(s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
-            Failure(ElasticIndexingException(s"Failed to index ${failed.size}/${learningPaths.size} learningpaths"))
+            logger.error(
+              s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
+            Failure(ElasticIndexingException(
+              s"Failed to index ${failed.size}/${learningPaths.size} learningpaths"))
           case Failure(ex) => Failure(ex)
         }
       }
@@ -170,7 +200,7 @@ trait SearchIndexServiceComponent {
           if (!indexWithNameExists(indexName).getOrElse(false)) {
             Failure(new IllegalArgumentException(s"No such index: $indexName"))
           } else {
-            e4sClient.execute{
+            e4sClient.execute {
               deleteIndex(indexName)
             }
           }
@@ -179,25 +209,28 @@ trait SearchIndexServiceComponent {
     }
 
     private def aliasTarget: Try[Option[String]] = {
-      val response = e4sClient.execute{
+      val response = e4sClient.execute {
         getAliases(Nil, List(LearningpathApiProperties.SearchIndex))
       }
 
       response match {
-        case Success(results) => Success(results.result.mappings.headOption.map(t => t._1.name))
+        case Success(results) =>
+          Success(results.result.mappings.headOption.map(t => t._1.name))
         case Failure(ex) => Failure(ex)
       }
     }
 
-    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
+    def updateAliasTarget(oldIndexName: Option[String],
+                          newIndexName: String): Try[Any] = {
       if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
         oldIndexName match {
           case None =>
-            e4sClient.execute(addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
+            e4sClient.execute(
+              addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
           case Some(oldIndex) =>
-            e4sClient.execute{
+            e4sClient.execute {
               removeAlias(LearningpathApiProperties.SearchIndex).on(oldIndex)
               addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName)
             }
@@ -238,15 +271,26 @@ trait SearchIndexServiceComponent {
       )
     }
 
-    private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
+    private def languageSupportedField(fieldName: String,
+                                       keepRaw: Boolean = false) = {
       val languageSupportedField = NestedFieldDefinition(fieldName).fields(
         keepRaw match {
-          case true => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true).analyzer(langAnalyzer.analyzer).fields(keywordField("raw")))
-          case false => languageAnalyzers.map(langAnalyzer => textField(langAnalyzer.lang).fielddata(true).analyzer(langAnalyzer.analyzer))
+          case true =>
+            languageAnalyzers.map(
+              langAnalyzer =>
+                textField(langAnalyzer.lang)
+                  .fielddata(true)
+                  .analyzer(langAnalyzer.analyzer)
+                  .fields(keywordField("raw")))
+          case false =>
+            languageAnalyzers.map(
+              langAnalyzer =>
+                textField(langAnalyzer.lang)
+                  .fielddata(true)
+                  .analyzer(langAnalyzer.analyzer))
         }
       )
       languageSupportedField
-
 
     }
 
@@ -257,13 +301,14 @@ trait SearchIndexServiceComponent {
 
       response match {
         case Success(resp) if resp.status != 404 => Success(true)
-        case Success(_) => Success(false)
-        case Failure(ex) => Failure(ex)
+        case Success(_)                          => Success(false)
+        case Failure(ex)                         => Failure(ex)
       }
     }
 
     private def getTimestamp: String = {
-      new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance.getTime)
+      new SimpleDateFormat("yyyyMMddHHmmss")
+        .format(Calendar.getInstance.getTime)
     }
   }
 

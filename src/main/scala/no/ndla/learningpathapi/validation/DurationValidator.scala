@@ -19,11 +19,10 @@ class DurationValidator {
       case None => Some(ValidationMessage("duration", DURATION_REQUIRED))
       case Some(duration) => {
         duration < 1 match {
-          case true => Some(ValidationMessage("duration", DURATION_INVALID))
+          case true  => Some(ValidationMessage("duration", DURATION_INVALID))
           case false => None
         }
       }
     }
   }
 }
-

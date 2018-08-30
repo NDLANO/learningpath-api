@@ -14,5 +14,8 @@ import org.scalatra.swagger.runtime.annotations.ApiModelProperty
 import scala.annotation.meta.field
 
 @ApiModel(description = "Description of copyright information")
-case class Copyright(@(ApiModelProperty@field)(description = "Describes the license of the learningpath") license: License,
-                     @(ApiModelProperty@field)(description = "List of authors") contributors: Seq[Author])
+case class Copyright(
+    @(ApiModelProperty @field)(description =
+      "Describes the license of the learningpath") license: License,
+    @(ApiModelProperty @field)(description = "List of authors") contributors: Seq[
+      Author])

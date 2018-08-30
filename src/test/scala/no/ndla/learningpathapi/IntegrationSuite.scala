@@ -22,7 +22,6 @@ abstract class IntegrationSuite extends UnitSuite {
   setEnv(PropertyKeys.MetaPortKey, "5432")
   setEnv(PropertyKeys.MetaSchemaKey, "learningpathapi_test")
 
-
   def getDataSource: DataSource = {
     val datasource = new PGPoolingDataSource()
     datasource.setUser(LearningpathApiProperties.MetaUserName)
@@ -30,7 +29,8 @@ abstract class IntegrationSuite extends UnitSuite {
     datasource.setDatabaseName(LearningpathApiProperties.MetaResource)
     datasource.setServerName(LearningpathApiProperties.MetaServer)
     datasource.setPortNumber(LearningpathApiProperties.MetaPort)
-    datasource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
+    datasource.setInitialConnections(
+      LearningpathApiProperties.MetaInitialConnections)
     datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
     datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
     datasource

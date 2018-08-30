@@ -22,13 +22,20 @@ trait ArticleImportClient {
   class ArticleImportClient extends LazyLogging {
     private val ArticleImportTimeout = 90 * 1000 // 90 seconds
     private val ExternalId = ":external_id"
-    private val importArticleEndpoint = s"http://$ArticleImportHost/intern/import/$ExternalId"
+    private val importArticleEndpoint =
+      s"http://$ArticleImportHost/intern/import/$ExternalId"
 
     def importArticle(externalId: String): Try[ArticleImportStatus] =
-      doRequest(Http(importArticleEndpoint.replace(ExternalId, externalId)).timeout(ArticleImportTimeout, ArticleImportTimeout).method("POST"))
+      doRequest(
+        Http(importArticleEndpoint.replace(ExternalId, externalId))
+          .timeout(ArticleImportTimeout, ArticleImportTimeout)
+          .method("POST"))
 
-    private def doRequest(httpRequest: HttpRequest): Try[ArticleImportStatus] = ndlaClient.fetchWithForwardedAuth[ArticleImportStatus](httpRequest)
+    private def doRequest(httpRequest: HttpRequest): Try[ArticleImportStatus] =
+      ndlaClient.fetchWithForwardedAuth[ArticleImportStatus](httpRequest)
   }
 
 }
-case class ArticleImportStatus(messages: Seq[String], visitedNodes: Seq[String], articleId: Long)
+case class ArticleImportStatus(messages: Seq[String],
+                               visitedNodes: Seq[String],
+                               articleId: Long)

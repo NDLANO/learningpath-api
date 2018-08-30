@@ -33,7 +33,7 @@ class MemoizeTest extends UnitSuite {
     val memoizedTarget = Memoize[String, String](targetMock.targetMethod)
 
     when(targetMock.targetMethod(name)).thenReturn("Hello from mock")
-    Seq(1 to 10).foreach (i => {
+    Seq(1 to 10).foreach(i => {
       memoizedTarget(name) should equal("Hello from mock")
     })
     verify(targetMock, times(1)).targetMethod(name)
@@ -43,7 +43,8 @@ class MemoizeTest extends UnitSuite {
     val cacheMaxAgeInMs = 20
     val name = "Rune Rudberg"
     val targetMock = mock[Target]
-    val memoizedTarget = Memoize[String, String](targetMock.targetMethod, cacheMaxAgeInMs)
+    val memoizedTarget =
+      Memoize[String, String](targetMock.targetMethod, cacheMaxAgeInMs)
 
     when(targetMock.targetMethod(name)).thenReturn("Hello from mock")
 

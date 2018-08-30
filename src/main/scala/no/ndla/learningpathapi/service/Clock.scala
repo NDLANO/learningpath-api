@@ -10,7 +10,6 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
-
 trait Clock {
   val clock: SystemClock
 
@@ -21,4 +20,3 @@ trait Clock {
     }
   }
 }
-

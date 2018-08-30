@@ -37,25 +37,47 @@ object LearningpathApiProperties extends LazyLogging {
   val MaxPageSize = 100
   val IndexBulkSize = 1000
 
-  val ArticleImportHost = propOrElse("ARTICLE_IMPORT_HOST", "article-import.ndla-local")
+  val ArticleImportHost =
+    propOrElse("ARTICLE_IMPORT_HOST", "article-import.ndla-local")
   val ApiGatewayHost = "api-gateway.ndla-local"
   val ImageApiHost = propOrElse("IMAGE_API_HOST", "image-api.ndla-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
   val NdlaFrontendHost = Environment match {
-    case "prod" => "ndla.no"
+    case "prod"  => "ndla.no"
     case "local" => "localhost:30017"
-    case _ => s"ndla-frontend.$Environment.api.ndla.no"
+    case _       => s"ndla-frontend.$Environment.api.ndla.no"
   }
-  val NdlaFrontendHostNames = Set("beta.ndla.no", s"ndla-frontend.$Environment.api.ndla.no", s"ndla-frontend.api.ndla.no")
+  val NdlaFrontendHostNames = Set("beta.ndla.no",
+                                  s"ndla-frontend.$Environment.api.ndla.no",
+                                  s"ndla-frontend.api.ndla.no")
 
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
 
   val ElasticSearchIndexMaxResultWindow = 10000
 
-  val BasicHtmlTags = List("b", "blockquote", "br", "cite", "code", "dd", "dl", "dt", "em",
-    "i", "li", "ol", "p", "pre", "q", "small", "strike", "strong",
-    "sub", "sup", "u", "ul")
+  val BasicHtmlTags = List("b",
+                           "blockquote",
+                           "br",
+                           "cite",
+                           "code",
+                           "dd",
+                           "dl",
+                           "dt",
+                           "em",
+                           "i",
+                           "li",
+                           "ol",
+                           "p",
+                           "pre",
+                           "q",
+                           "small",
+                           "strike",
+                           "strong",
+                           "sub",
+                           "sup",
+                           "u",
+                           "ul")
 
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
@@ -67,18 +89,23 @@ object LearningpathApiProperties extends LazyLogging {
   val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
   val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
-  val SearchServer = propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
+  val SearchServer =
+    propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
-  val RunWithSignedSearchRequests = propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
+  val RunWithSignedSearchRequests =
+    propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
   val MigrationHost = prop("MIGRATION_HOST")
   val MigrationUser = prop("MIGRATION_USER")
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
   lazy val secrets = readSecrets(SecretsFile) match {
-     case Success(values) => values
-     case Failure(exception) => throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
-   }
+    case Success(values) => values
+    case Failure(exception) =>
+      throw new RuntimeException(
+        s"Unable to load remote secrets from $SecretsFile",
+        exception)
+  }
 
   def prop(key: String): String = {
     propOrElse(key, throw new RuntimeException(s"Unable to load property $key"))
@@ -90,7 +117,7 @@ object LearningpathApiProperties extends LazyLogging {
       case None =>
         envOrNone(key) match {
           case Some(env) => env
-          case None => default
+          case None      => default
         }
     }
   }

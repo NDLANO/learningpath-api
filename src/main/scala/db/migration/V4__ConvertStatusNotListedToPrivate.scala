@@ -30,14 +30,18 @@ class V4__ConvertStatusNotListedToPrivate extends JdbcMigration {
   }
 
   def allLearningPaths(implicit session: DBSession): List[V4_DBLearningPath] = {
-    sql"select id, document from learningpaths where document ->> 'status' = 'NOT_LISTED'".map(rs => V4_DBLearningPath(rs.long("id"), rs.string("document"))).list().apply()
+    sql"select id, document from learningpaths where document ->> 'status' = 'NOT_LISTED'"
+      .map(rs => V4_DBLearningPath(rs.long("id"), rs.string("document")))
+      .list()
+      .apply()
   }
 
-  def convertLearningPathStatus(learningPath: V4_DBLearningPath): V4_DBLearningPath = {
+  def convertLearningPathStatus(
+      learningPath: V4_DBLearningPath): V4_DBLearningPath = {
     val oldDocument = parse(learningPath.document)
     val updatedDocument = oldDocument mapField {
       case ("status", JString(oldStatus)) => ("status", JString("PRIVATE"))
-      case x => x
+      case x                              => x
     }
     learningPath.copy(document = compact(render(updatedDocument)))
   }
@@ -47,10 +51,10 @@ class V4__ConvertStatusNotListedToPrivate extends JdbcMigration {
     dataObject.setType("jsonb")
     dataObject.setValue(learningPath.document)
 
-    sql"update learningpaths set document = $dataObject where id = ${learningPath.id}".update().apply
+    sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
+      .update()
+      .apply
   }
 }
 
 case class V4_DBLearningPath(id: Long, document: String)
-
-

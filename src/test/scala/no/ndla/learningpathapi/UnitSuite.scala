@@ -12,7 +12,15 @@ import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
 import org.scalatest.mock.MockitoSugar
 
-abstract class UnitSuite extends FunSuite with Matchers with OptionValues with Inside with Inspectors with MockitoSugar with BeforeAndAfterAll with BeforeAndAfterEach {
+abstract class UnitSuite
+    extends FunSuite
+    with Matchers
+    with OptionValues
+    with Inside
+    with Inspectors
+    with MockitoSugar
+    with BeforeAndAfterAll
+    with BeforeAndAfterEach {
 
   setEnv("NDLA_ENVIRONMENT", "local")
 
@@ -35,7 +43,9 @@ abstract class UnitSuite extends FunSuite with Matchers with OptionValues with I
   def setEnv(key: String, value: String) = {
     val field = System.getenv().getClass.getDeclaredField("m")
     field.setAccessible(true)
-    val map = field.get(System.getenv()).asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
+    val map = field
+      .get(System.getenv())
+      .asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
     map.put(key, value)
   }
 }

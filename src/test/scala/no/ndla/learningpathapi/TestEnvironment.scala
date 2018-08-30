@@ -10,41 +10,48 @@ package no.ndla.learningpathapi
 
 import javax.sql.DataSource
 
-import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
+import no.ndla.learningpathapi.controller.{
+  HealthController,
+  LearningpathControllerV2
+}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexServiceComponent, SearchServiceComponent}
+import no.ndla.learningpathapi.service.search.{
+  SearchConverterServiceComponent,
+  SearchIndexServiceComponent,
+  SearchServiceComponent
+}
 import no.ndla.learningpathapi.validation._
 import no.ndla.network.NdlaClient
 import org.mockito.Mockito
 import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
-  extends LearningpathControllerV2
-  with LearningPathRepositoryComponent
-  with ReadServiceComponent
-  with UpdateServiceComponent
-  with SearchConverterServiceComponent
-  with SearchServiceComponent
-  with SearchIndexServiceComponent
-  with TaxonomyApiClient
-  with NdlaClient
-  with ImageApiClientComponent
-  with ArticleImportClient
-  with MigrationApiClient
-  with ConverterServiceComponent
-  with Elastic4sClient
-  with DatasourceComponent
-  with MockitoSugar
-  with KeywordsServiceComponent
-  with ImportService
-  with Clock
-  with HealthController
-  with LanguageValidator
-  with LearningPathValidator
-  with LearningStepValidator
-  with TitleValidator {
+    extends LearningpathControllerV2
+    with LearningPathRepositoryComponent
+    with ReadServiceComponent
+    with UpdateServiceComponent
+    with SearchConverterServiceComponent
+    with SearchServiceComponent
+    with SearchIndexServiceComponent
+    with TaxonomyApiClient
+    with NdlaClient
+    with ImageApiClientComponent
+    with ArticleImportClient
+    with MigrationApiClient
+    with ConverterServiceComponent
+    with Elastic4sClient
+    with DatasourceComponent
+    with MockitoSugar
+    with KeywordsServiceComponent
+    with ImportService
+    with Clock
+    with HealthController
+    with LanguageValidator
+    with LearningPathValidator
+    with LearningStepValidator
+    with TitleValidator {
 
   val dataSource = mock[DataSource]
 
@@ -73,9 +80,18 @@ trait TestEnvironment
 
   def resetMocks() = {
     Mockito.reset(
-      dataSource, learningPathRepository, readService,
-      updateService, searchService, searchIndexService, converterService, searchConverterService,
-      languageValidator, titleValidator, e4sClient, articleImportClient
+      dataSource,
+      learningPathRepository,
+      readService,
+      updateService,
+      searchService,
+      searchIndexService,
+      converterService,
+      searchConverterService,
+      languageValidator,
+      titleValidator,
+      e4sClient,
+      articleImportClient
     )
   }
 }
