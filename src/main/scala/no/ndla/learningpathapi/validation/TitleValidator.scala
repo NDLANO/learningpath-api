@@ -20,8 +20,7 @@ trait TitleValidator {
 
     val noHtmlTextValidator = new TextValidator(allowHtml = false)
 
-    def validate(titles: Seq[Title],
-                 allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
+    def validate(titles: Seq[Title], allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       (titleRequired, titles.isEmpty) match {
         case (false, true) => List()
         case (true, true)  => List(ValidationMessage("title", MISSING_TITLE))
@@ -30,9 +29,7 @@ trait TitleValidator {
       }
     }
 
-    private def validate(
-        title: Title,
-        allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
+    private def validate(title: Title, allowUnknownLanguage: Boolean): Seq[ValidationMessage] = {
       noHtmlTextValidator.validate("title.title", title.title).toList :::
         languageValidator
         .validate("title.language", title.language, allowUnknownLanguage)

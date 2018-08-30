@@ -34,37 +34,16 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
                       language = "",
                       license = None)
 
-  val testNode = Node(nid = 1,
-                      tnid = 1,
-                      language = "",
-                      title = "",
-                      packageId = 1,
-                      imageNid = None,
-                      description = "")
+  val testNode = Node(nid = 1, tnid = 1, language = "", title = "", packageId = 1, imageNid = None, description = "")
 
-  val mainPackage = MainPackageImport(Package(1,
-                                              1,
-                                              "nb",
-                                              "Title",
-                                              None,
-                                              "Description",
-                                              1,
-                                              new Date(),
-                                              1,
-                                              "PackageTitle",
-                                              1,
-                                              1,
-                                              Seq(),
-                                              "by-sa",
-                                              Seq()),
-                                      Seq())
+  val mainPackage = MainPackageImport(
+    Package(1, 1, "nb", "Title", None, "Description", 1, new Date(), 1, "PackageTitle", 1, 1, Seq(), "by-sa", Seq()),
+    Seq())
 
   test("That failure is returned when ndlaClient returns a failure") {
     val exception = new HttpRequestException("This is an error")
     when(
-      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest],
-                                                       any[String],
-                                                       any[String])(
+      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest], any[String], any[String])(
         any[Manifest[MainPackageImport]])).thenReturn(Failure(exception))
 
     val result = migrationApiClient.getLearningPath("abc")
@@ -74,9 +53,7 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
 
   test("That a MainPackageImport is returned when ndlaClient returns a success") {
     when(
-      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest],
-                                                       any[String],
-                                                       any[String])(
+      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest], any[String], any[String])(
         any[Manifest[MainPackageImport]])).thenReturn(Success(mainPackage))
 
     val result = migrationApiClient.getLearningPath("abc")

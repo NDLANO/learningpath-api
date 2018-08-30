@@ -15,6 +15,7 @@ import org.mockito.Mockito._
 import scalaj.http.{HttpRequest, HttpResponse}
 
 class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
+
   val parseableResponse =
     """
       {"keyword": [{
@@ -63,8 +64,7 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
     tagsList.find(_.language == "nn").get.tags.size should be(1)
     tagsList.find(_.language == "en").get.tags.size should be(1)
 
-    tagsList.find(_.language == "unknown").get.tags.head should be(
-      "språknøytral")
+    tagsList.find(_.language == "unknown").get.tags.head should be("språknøytral")
     tagsList.find(_.language == "nb").get.tags.head should be("bokmålspoesi")
     tagsList.find(_.language == "nn").get.tags.head should be("nynorsk poesi")
     tagsList.find(_.language == "en").get.tags.head should be("english poetry")
@@ -76,13 +76,11 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That getISO639 returns None for unknown language") {
-    service.getISO639("http://psi.oasis-open.org/iso/639/#klingon") should be(
-      None)
+    service.getISO639("http://psi.oasis-open.org/iso/639/#klingon") should be(None)
   }
 
   test("That getISO639 returns correct language for known language") {
-    service.getISO639("http://psi.oasis-open.org/iso/639/#eng") should be(
-      Some("en"))
+    service.getISO639("http://psi.oasis-open.org/iso/639/#eng") should be(Some("en"))
   }
 
   def mockRequestWithResponse(response: HttpResponse[String]) = {

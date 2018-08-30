@@ -18,20 +18,14 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.domain.Language._
-import no.ndla.learningpathapi.model.domain.{
-  ElasticIndexingException,
-  LearningPath,
-  ReindexResult
-}
+import no.ndla.learningpathapi.model.domain.{ElasticIndexingException, LearningPath, ReindexResult}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import org.json4s.native.Serialization._
 
 import scala.util.{Failure, Success, Try}
 
 trait SearchIndexServiceComponent {
-  this: Elastic4sClient
-    with SearchConverterServiceComponent
-    with LearningPathRepositoryComponent =>
+  this: Elastic4sClient with SearchConverterServiceComponent with LearningPathRepositoryComponent =>
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
@@ -54,8 +48,7 @@ trait SearchIndexServiceComponent {
               Failure(f)
             }
             case Success(totalIndexed) => {
-              Success(
-                ReindexResult(totalIndexed, System.currentTimeMillis() - start))
+              Success(ReindexResult(totalIndexed, System.currentTimeMillis() - start))
             }
           }
         })
@@ -67,16 +60,13 @@ trait SearchIndexServiceComponent {
         _ <- aliasTarget.map {
           case Some(index) => Success(index)
           case None =>
-            createIndexWithGeneratedName().map(newIndex =>
-              updateAliasTarget(None, newIndex))
+            createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
         }
         indexed <- {
-          val source = write(
-            searchConverterService.asSearchableLearningpath(learningPath))
+          val source = write(searchConverterService.asSearchableLearningpath(learningPath))
 
           val response = e4sClient.execute {
-            indexInto(
-              LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+            indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
               .doc(source)
               .id(learningPath.id.get.toString)
           }
@@ -93,22 +83,19 @@ trait SearchIndexServiceComponent {
         _ <- searchIndexService.aliasTarget.map {
           case Some(index) => Success(index)
           case None =>
-            createIndexWithGeneratedName().map(newIndex =>
-              updateAliasTarget(None, newIndex))
+            createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
         }
         deleted <- {
           e4sClient.execute {
             delete(s"${learningPath.id.get}")
-              .from(
-                LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+              .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
           }
         }
       } yield deleted
     }
 
     def createIndexWithGeneratedName(): Try[String] = {
-      createIndexWithName(
-        LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
+      createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
@@ -118,9 +105,7 @@ trait SearchIndexServiceComponent {
         val response = e4sClient.execute {
           createIndex(indexName)
             .mappings(buildMapping)
-            .indexSetting(
-              "max_result_window",
-              LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
+            .indexSetting("max_result_window", LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
         }
 
         response match {
@@ -135,10 +120,9 @@ trait SearchIndexServiceComponent {
       var numIndexed = 0
       getRanges.map(ranges => {
         ranges.foreach(range => {
-          val numberInBulk = searchIndexService.indexLearningPaths(
-            learningPathRepository.learningPathsWithIdBetween(range._1,
-                                                              range._2),
-            indexName)
+          val numberInBulk =
+            searchIndexService.indexLearningPaths(learningPathRepository.learningPathsWithIdBetween(range._1, range._2),
+                                                  indexName)
           numberInBulk match {
             case Success(num) => numIndexed += num
             case Failure(f)   => return Failure(f)
@@ -159,8 +143,7 @@ trait SearchIndexServiceComponent {
       }
     }
 
-    private def indexLearningPaths(learningPaths: List[LearningPath],
-                                   indexName: String): Try[Int] = {
+    private def indexLearningPaths(learningPaths: List[LearningPath], indexName: String): Try[Int] = {
       if (learningPaths.isEmpty) {
         Success(0)
       } else {
@@ -184,10 +167,8 @@ trait SearchIndexServiceComponent {
                 s"'${item.id}: ${item.error.get.reason}'"
             }
 
-            logger.error(
-              s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
-            Failure(ElasticIndexingException(
-              s"Failed to index ${failed.size}/${learningPaths.size} learningpaths"))
+            logger.error(s"Failed to index ${failed.length} items: ${failed.mkString(", ")}")
+            Failure(ElasticIndexingException(s"Failed to index ${failed.size}/${learningPaths.size} learningpaths"))
           case Failure(ex) => Failure(ex)
         }
       }
@@ -220,15 +201,13 @@ trait SearchIndexServiceComponent {
       }
     }
 
-    def updateAliasTarget(oldIndexName: Option[String],
-                          newIndexName: String): Try[Any] = {
+    def updateAliasTarget(oldIndexName: Option[String], newIndexName: String): Try[Any] = {
       if (!indexWithNameExists(newIndexName).getOrElse(false)) {
         Failure(new IllegalArgumentException(s"No such index: $newIndexName"))
       } else {
         oldIndexName match {
           case None =>
-            e4sClient.execute(
-              addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
+            e4sClient.execute(addAlias(LearningpathApiProperties.SearchIndex).on(newIndexName))
           case Some(oldIndex) =>
             e4sClient.execute {
               removeAlias(LearningpathApiProperties.SearchIndex).on(oldIndex)
@@ -271,8 +250,7 @@ trait SearchIndexServiceComponent {
       )
     }
 
-    private def languageSupportedField(fieldName: String,
-                                       keepRaw: Boolean = false) = {
+    private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
       val languageSupportedField = NestedFieldDefinition(fieldName).fields(
         keepRaw match {
           case true =>

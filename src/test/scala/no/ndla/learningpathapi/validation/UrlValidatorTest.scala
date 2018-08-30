@@ -31,8 +31,7 @@ class UrlValidatorTest extends UnitSuite {
     val validationMessages = validator.validate(fieldname, "https://<h1>")
     validationMessages.size should be(1)
     validationMessages.head.field should equal(fieldname)
-    validationMessages.head.message should equal(
-      "The content contains illegal html-characters. No HTML is allowed.")
+    validationMessages.head.message should equal("The content contains illegal html-characters. No HTML is allowed.")
   }
 
   test("That non-https in url returns a ValidationMessage") {
@@ -40,8 +39,7 @@ class UrlValidatorTest extends UnitSuite {
       validator.validate(fieldname, "http://something.no")
     validationMessages.size should be(1)
     validationMessages.head.field should equal(fieldname)
-    validationMessages.head.message should equal(
-      "Illegal Url. All Urls must start with https.")
+    validationMessages.head.message should equal("Illegal Url. All Urls must start with https.")
   }
 
   test("That https in url is ok") {

@@ -29,8 +29,7 @@ abstract class IntegrationSuite extends UnitSuite {
     datasource.setDatabaseName(LearningpathApiProperties.MetaResource)
     datasource.setServerName(LearningpathApiProperties.MetaServer)
     datasource.setPortNumber(LearningpathApiProperties.MetaPort)
-    datasource.setInitialConnections(
-      LearningpathApiProperties.MetaInitialConnections)
+    datasource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
     datasource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
     datasource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
     datasource

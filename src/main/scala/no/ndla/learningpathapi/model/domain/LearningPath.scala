@@ -12,33 +12,29 @@ import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.validation.{
-  DurationValidator,
-  LearningPathValidator,
-  LearningStepValidator
-}
+import no.ndla.learningpathapi.validation.{DurationValidator, LearningPathValidator, LearningStepValidator}
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningPath(
-    id: Option[Long],
-    revision: Option[Int],
-    externalId: Option[String],
-    isBasedOn: Option[Long],
-    title: Seq[Title],
-    description: Seq[Description],
-    coverPhotoId: Option[String],
-    duration: Option[Int],
-    status: LearningPathStatus.Value,
-    verificationStatus: LearningPathVerificationStatus.Value,
-    lastUpdated: Date,
-    tags: Seq[LearningPathTags],
-    owner: String,
-    copyright: Copyright,
-    learningsteps: Seq[LearningStep] = Nil) {
+case class LearningPath(id: Option[Long],
+                        revision: Option[Int],
+                        externalId: Option[String],
+                        isBasedOn: Option[Long],
+                        title: Seq[Title],
+                        description: Seq[Description],
+                        coverPhotoId: Option[String],
+                        duration: Option[Int],
+                        status: LearningPathStatus.Value,
+                        verificationStatus: LearningPathVerificationStatus.Value,
+                        lastUpdated: Date,
+                        tags: Seq[LearningPathTags],
+                        owner: String,
+                        copyright: Copyright,
+                        learningsteps: Seq[LearningStep] = Nil) {
+
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE
   }
@@ -56,15 +52,13 @@ case class LearningPath(
 
   def verifyOwner(loggedInUser: String) = {
     if (loggedInUser != owner) {
-      throw new AccessDeniedException(
-        "You do not have access to the requested resource.")
+      throw new AccessDeniedException("You do not have access to the requested resource.")
     }
   }
 
   def verifyNotPrivate = {
     if (isPrivate) {
-      throw new AccessDeniedException(
-        "You do not have access to the requested resource.")
+      throw new AccessDeniedException("You do not have access to the requested resource.")
     }
   }
 
@@ -73,8 +67,7 @@ case class LearningPath(
       loggedInUser match {
         case Some(user) => verifyOwner(user)
         case None =>
-          throw new AccessDeniedException(
-            "You do not have access to the requested resource.")
+          throw new AccessDeniedException("You do not have access to the requested resource.")
       }
     }
   }
@@ -82,10 +75,7 @@ case class LearningPath(
   def validateSeqNo(seqNo: Int) = {
     if (seqNo < 0 || seqNo > learningsteps.length - 1) {
       throw new ValidationException(
-        errors = List(
-          ValidationMessage(
-            "seqNo",
-            s"seqNo must be between 0 and ${learningsteps.length - 1}")))
+        errors = List(ValidationMessage("seqNo", s"seqNo must be between 0 and ${learningsteps.length - 1}")))
     }
   }
 
@@ -111,9 +101,7 @@ object LearningPathStatus extends Enumeration {
       case Some(status) => status
       case None =>
         throw new ValidationException(
-          errors = List(
-            ValidationMessage("status",
-                              s"'$status' is not a valid publishingstatus.")))
+          errors = List(ValidationMessage("status", s"'$status' is not a valid publishingstatus.")))
     }
   }
 
@@ -135,15 +123,14 @@ object LearningPathVerificationStatus extends Enumeration {
 }
 
 object LearningPath extends SQLSyntaxSupport[LearningPath] {
-  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(
-    LearningPathStatus) + new EnumNameSerializer(LearningPathVerificationStatus)
+  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(LearningPathStatus) + new EnumNameSerializer(
+    LearningPathVerificationStatus)
   override val tableName = "learningpaths"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
-  def apply(lp: SyntaxProvider[LearningPath])(
-      rs: WrappedResultSet): LearningPath = apply(lp.resultName)(rs)
-  def apply(lp: ResultName[LearningPath])(
-      rs: WrappedResultSet): LearningPath = {
+  def apply(lp: SyntaxProvider[LearningPath])(rs: WrappedResultSet): LearningPath = apply(lp.resultName)(rs)
+
+  def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
     val meta = read[LearningPath](rs.string(lp.c("document")))
     LearningPath(
       Some(rs.long(lp.c("id"))),

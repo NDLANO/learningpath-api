@@ -11,8 +11,7 @@ package no.ndla.learningpathapi.model.domain
 import com.sksamuel.elastic4s.http.RequestFailure
 import no.ndla.learningpathapi.model.api.ValidationMessage
 
-class ValidationException(message: String = "Validation Error",
-                          val errors: Seq[ValidationMessage])
+class ValidationException(message: String = "Validation Error", val errors: Seq[ValidationMessage])
     extends RuntimeException(message)
 class AccessDeniedException(message: String) extends RuntimeException(message)
 class OptimisticLockException(message: String) extends RuntimeException(message)
@@ -27,9 +26,6 @@ case class NdlaSearchException(rf: RequestFailure)
      |type: ${rf.error.`type`}
    """.stripMargin
     )
-case class ElasticIndexingException(message: String)
-    extends RuntimeException(message)
-class ResultWindowTooLargeException(message: String)
-    extends RuntimeException(message)
-case class LanguageNotSupportedException(message: String)
-    extends RuntimeException(message)
+case class ElasticIndexingException(message: String) extends RuntimeException(message)
+class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
+case class LanguageNotSupportedException(message: String) extends RuntimeException(message)

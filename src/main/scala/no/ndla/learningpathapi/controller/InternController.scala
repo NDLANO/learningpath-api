@@ -24,10 +24,7 @@ import org.scalatra._
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImportService
-    with SearchIndexServiceComponent
-    with LearningPathRepositoryComponent
-    with ReadServiceComponent =>
+  this: ImportService with SearchIndexServiceComponent with LearningPathRepositoryComponent with ReadServiceComponent =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -43,10 +40,8 @@ trait InternController {
       AuthUser.getClientId match {
         case Some(clientId) => clientId
         case None => {
-          logger.warn(
-            s"Request made to ${request.getRequestURI} without clientId")
-          throw new AccessDeniedException(
-            "You do not have access to the requested resource.")
+          logger.warn(s"Request made to ${request.getRequestURI} without clientId")
+          throw new AccessDeniedException("You do not have access to the requested resource.")
         }
       }
     }

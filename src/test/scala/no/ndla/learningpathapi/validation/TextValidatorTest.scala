@@ -38,8 +38,7 @@ class TextValidatorTest extends UnitSuite {
     val validationMessage = basicHtmlValidator.validate("path1.path2", text)
     validationMessage.isDefined should be(right = true)
     validationMessage.get.field should equal("path1.path2")
-    validationMessage.get.message should equal(
-      basicHtmlValidator.IllegalContentInBasicText)
+    validationMessage.get.message should equal(basicHtmlValidator.IllegalContentInBasicText)
   }
 
   test("That TextValidator does not allow any html in plain text") {
@@ -48,8 +47,7 @@ class TextValidatorTest extends UnitSuite {
       noHtmlValidator.validate("path1.path2", textWithHtml)
     validationMessage.isDefined should be(right = true)
     validationMessage.get.field should equal("path1.path2")
-    validationMessage.get.message should equal(
-      noHtmlValidator.IllegalContentInPlainText)
+    validationMessage.get.message should equal(noHtmlValidator.IllegalContentInPlainText)
   }
 
   test("That TextValidator allows plain text in plain text") {

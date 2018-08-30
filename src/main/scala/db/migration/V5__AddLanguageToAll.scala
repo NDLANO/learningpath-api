@@ -54,14 +54,10 @@ class V5__AddLanguageToAll extends JdbcMigration {
         val meta = read[V5_LearningPath](rs.string("document"))
         meta.copy(
           id = Some(rs.long("id")),
-          title = meta.title.map(t =>
-            V5_Title(t.title, Some(Language.languageOrUnknown(t.language)))),
-          description = meta.description.map(d =>
-            V5_Description(d.description,
-                           Some(Language.languageOrUnknown(d.language)))),
-          tags = meta.tags.map(t =>
-            V5_LearningPathTags(t.tags,
-                                Some(Language.languageOrUnknown(t.language))))
+          title = meta.title.map(t => V5_Title(t.title, Some(Language.languageOrUnknown(t.language)))),
+          description =
+            meta.description.map(d => V5_Description(d.description, Some(Language.languageOrUnknown(d.language)))),
+          tags = meta.tags.map(t => V5_LearningPathTags(t.tags, Some(Language.languageOrUnknown(t.language))))
         )
       })
       .list()
@@ -74,16 +70,11 @@ class V5__AddLanguageToAll extends JdbcMigration {
         val meta = read[V5_LearningStep](rs.string("document"))
         meta.copy(
           id = Some(rs.long("id")),
-          title = meta.title.map(t =>
-            V5_Title(t.title, Some(Language.languageOrUnknown(t.language)))),
-          description = meta.description.map(t =>
-            V5_Description(t.description,
-                           Some(Language.languageOrUnknown(t.language)))),
-          embedUrl = meta.embedUrl.map(
-            t =>
-              V5_EmbedUrl(t.url,
-                          Some(Language.languageOrUnknown(t.language)),
-                          t.embedType))
+          title = meta.title.map(t => V5_Title(t.title, Some(Language.languageOrUnknown(t.language)))),
+          description =
+            meta.description.map(t => V5_Description(t.description, Some(Language.languageOrUnknown(t.language)))),
+          embedUrl =
+            meta.embedUrl.map(t => V5_EmbedUrl(t.url, Some(Language.languageOrUnknown(t.language)), t.embedType))
         )
       })
       .list()
@@ -111,22 +102,21 @@ class V5__AddLanguageToAll extends JdbcMigration {
   }
 }
 
-case class V5_LearningPath(
-    id: Option[Long],
-    revision: Option[Int],
-    externalId: Option[String],
-    isBasedOn: Option[Long],
-    title: Seq[V5_Title],
-    description: Seq[V5_Description],
-    coverPhotoId: Option[String],
-    duration: Option[Int],
-    status: LearningPathStatus.Value,
-    verificationStatus: LearningPathVerificationStatus.Value,
-    lastUpdated: Date,
-    tags: Seq[V5_LearningPathTags],
-    owner: String,
-    copyright: Copyright,
-    learningsteps: Seq[LearningStep] = Nil)
+case class V5_LearningPath(id: Option[Long],
+                           revision: Option[Int],
+                           externalId: Option[String],
+                           isBasedOn: Option[Long],
+                           title: Seq[V5_Title],
+                           description: Seq[V5_Description],
+                           coverPhotoId: Option[String],
+                           duration: Option[Int],
+                           status: LearningPathStatus.Value,
+                           verificationStatus: LearningPathVerificationStatus.Value,
+                           lastUpdated: Date,
+                           tags: Seq[V5_LearningPathTags],
+                           owner: String,
+                           copyright: Copyright,
+                           learningsteps: Seq[LearningStep] = Nil)
 
 case class V5_LearningStep(id: Option[Long],
                            revision: Option[Int],
@@ -144,6 +134,4 @@ case class V5_LearningStep(id: Option[Long],
 case class V5_Title(title: String, language: Option[String])
 case class V5_Description(description: String, language: Option[String])
 case class V5_LearningPathTags(tags: Seq[String], language: Option[String])
-case class V5_EmbedUrl(url: String,
-                       language: Option[String],
-                       embedType: EmbedType.Value)
+case class V5_EmbedUrl(url: String, language: Option[String], embedType: EmbedType.Value)

@@ -14,10 +14,9 @@ import no.ndla.learningpathapi.model.api._
 
 class ApiModelsTest extends UnitSuite {
   val bush = Author("author", "Low Energy’ Jeb")
-  val license = License("publicdomain",
-                        Some("Public Domain"),
-                        Some("https://creativecommons.org/about/pdm"))
+  val license = License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
   val copyright = Copyright(license, List(bush))
+
   val testLearningPath = LearningPathV2(
     1,
     1,

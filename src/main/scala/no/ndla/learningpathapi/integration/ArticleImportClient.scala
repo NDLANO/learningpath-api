@@ -36,6 +36,4 @@ trait ArticleImportClient {
   }
 
 }
-case class ArticleImportStatus(messages: Seq[String],
-                               visitedNodes: Seq[String],
-                               articleId: Long)
+case class ArticleImportStatus(messages: Seq[String], visitedNodes: Seq[String], articleId: Long)

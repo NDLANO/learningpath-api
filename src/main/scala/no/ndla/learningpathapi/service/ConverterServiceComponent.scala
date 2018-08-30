@@ -29,18 +29,14 @@ import no.ndla.network.ApplicationUrl
 import scala.util.{Failure, Success, Try}
 
 trait ConverterServiceComponent {
-  this: ImageApiClientComponent
-    with LearningPathRepositoryComponent
-    with LanguageValidator =>
+  this: ImageApiClientComponent with LearningPathRepositoryComponent with LanguageValidator =>
 
   val converterService: ConverterService
 
   class ConverterService {
-    def asEmbedUrlV2(embedUrl: api.EmbedUrlV2,
-                     language: String): domain.EmbedUrl = {
-      domain.EmbedUrl(embedUrl.url,
-                      language,
-                      EmbedType.valueOfOrError(embedUrl.embedType))
+
+    def asEmbedUrlV2(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
+      domain.EmbedUrl(embedUrl.url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def asDescription(description: api.Description): domain.Description = {
@@ -51,19 +47,16 @@ trait ConverterServiceComponent {
       domain.Title(title.title, title.language)
     }
 
-    def asLearningPathTags(
-        tags: api.LearningPathTags): domain.LearningPathTags = {
+    def asLearningPathTags(tags: api.LearningPathTags): domain.LearningPathTags = {
       domain.LearningPathTags(tags.tags, tags.language)
     }
 
-    def asApiLearningPathTags(
-        tags: domain.LearningPathTags): api.LearningPathTags = {
+    def asApiLearningPathTags(tags: domain.LearningPathTags): api.LearningPathTags = {
       api.LearningPathTags(tags.tags, tags.language)
     }
 
     def asApiCopyright(copyright: domain.Copyright): api.Copyright = {
-      api.Copyright(asApiLicense(copyright.license),
-                    copyright.contributors.map(asApiAuthor))
+      api.Copyright(asApiLicense(copyright.license), copyright.contributors.map(asApiAuthor))
     }
 
     def asApiLicense(license: String): api.License =
@@ -94,18 +87,16 @@ trait ConverterServiceComponent {
     }
 
     def asCopyright(copyright: api.Copyright): domain.Copyright = {
-      domain.Copyright(copyright.license.license,
-                       copyright.contributors.map(asAuthor))
+      domain.Copyright(copyright.license.license, copyright.contributors.map(asAuthor))
     }
 
     def asAuthor(author: api.Author): domain.Author = {
       domain.Author(author.`type`, author.name)
     }
 
-    def asApiLearningpathV2(
-        lp: domain.LearningPath,
-        language: String,
-        user: Option[String]): Option[api.LearningPathV2] = {
+    def asApiLearningpathV2(lp: domain.LearningPath,
+                            language: String,
+                            user: Option[String]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
@@ -149,8 +140,7 @@ trait ConverterServiceComponent {
         ))
     }
 
-    def getApiIntroduction(
-        learningSteps: Seq[domain.LearningStep]): Seq[api.Introduction] = {
+    def getApiIntroduction(learningSteps: Seq[domain.LearningStep]): Seq[api.Introduction] = {
       learningSteps
         .find(_.`type` == domain.StepType.INTRODUCTION)
         .toList
@@ -158,31 +148,25 @@ trait ConverterServiceComponent {
         .map(x => api.Introduction(x.description, x.language))
     }
 
-    def languageIsNotSupported(supportedLanguages: Seq[String],
-                               language: String): Boolean = {
+    def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
       supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
     }
 
-    def asApiLearningpathSummaryV2(
-        learningpath: domain.LearningPath): Try[api.LearningPathSummaryV2] = {
+    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath): Try[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 
-      val title = findByLanguageOrBestEffort(learningpath.title,
-                                             Some(Language.AllLanguages))
+      val title = findByLanguageOrBestEffort(learningpath.title, Some(Language.AllLanguages))
         .map(asApiTitle)
         .getOrElse(api.Title("", DefaultLanguage))
-      val description = findByLanguageOrBestEffort(learningpath.description,
-                                                   Some(Language.AllLanguages))
+      val description = findByLanguageOrBestEffort(learningpath.description, Some(Language.AllLanguages))
         .map(asApiDescription)
         .getOrElse(api.Description("", DefaultLanguage))
-      val tags = findByLanguageOrBestEffort(learningpath.tags,
-                                            Some(Language.AllLanguages))
+      val tags = findByLanguageOrBestEffort(learningpath.tags, Some(Language.AllLanguages))
         .map(asApiLearningPathTags)
         .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
-      val introduction = findByLanguageOrBestEffort(
-        getApiIntroduction(learningpath.learningsteps),
-        Some(Language.AllLanguages))
-        .getOrElse(api.Introduction("", DefaultLanguage))
+      val introduction =
+        findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps), Some(Language.AllLanguages))
+          .getOrElse(api.Introduction("", DefaultLanguage))
 
       Success(
         api.LearningPathSummaryV2(
@@ -203,11 +187,10 @@ trait ConverterServiceComponent {
       )
     }
 
-    def asApiLearningStepV2(
-        ls: domain.LearningStep,
-        lp: domain.LearningPath,
-        language: String,
-        user: Option[String]): Option[api.LearningStepV2] = {
+    def asApiLearningStepV2(ls: domain.LearningStep,
+                            lp: domain.LearningPath,
+                            language: String,
+                            user: Option[String]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
@@ -239,10 +222,9 @@ trait ConverterServiceComponent {
         ))
     }
 
-    def asApiLearningStepSummaryV2(
-        ls: domain.LearningStep,
-        lp: domain.LearningPath,
-        language: String): Option[api.LearningStepSummaryV2] = {
+    def asApiLearningStepSummaryV2(ls: domain.LearningStep,
+                                   lp: domain.LearningPath,
+                                   language: String): Option[api.LearningStepSummaryV2] = {
       findByLanguageOrBestEffort(ls.title, Some(language)).map(
         title =>
           api.LearningStepSummaryV2(
@@ -254,10 +236,9 @@ trait ConverterServiceComponent {
         ))
     }
 
-    def asLearningStepContainerSummary(
-        status: StepStatus.Value,
-        learningPath: domain.LearningPath,
-        language: String): Option[api.LearningStepContainerSummary] = {
+    def asLearningStepContainerSummary(status: StepStatus.Value,
+                                       learningPath: domain.LearningPath,
+                                       language: String): Option[api.LearningStepContainerSummary] = {
       val learningSteps = learningPathRepository
         .learningStepsFor(learningPath.id.get)
         .filter(_.status == status)
@@ -282,9 +263,8 @@ trait ConverterServiceComponent {
         ))
     }
 
-    def asApiLearningPathTagsSummary(
-        allTags: List[api.LearningPathTags],
-        language: String): Option[api.LearningPathTagsSummary] = {
+    def asApiLearningPathTagsSummary(allTags: List[api.LearningPathTags],
+                                     language: String): Option[api.LearningPathTagsSummary] = {
       val supportedLanguages = allTags.map(_.language).distinct
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
@@ -315,23 +295,18 @@ trait ConverterServiceComponent {
       api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
     }
 
-    def asDomainEmbedUrl(embedUrl: api.EmbedUrlV2,
-                         language: String): domain.EmbedUrl = {
+    def asDomainEmbedUrl(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
       val url = embedUrl.url.host match {
         case Some(host) if NdlaFrontendHostNames.contains(host) =>
-          val pathAndQueryParams
-            : String = embedUrl.url.path ? embedUrl.url.queryString
+          val pathAndQueryParams: String = embedUrl.url.path ? embedUrl.url.queryString
           pathAndQueryParams
         case _ => embedUrl.url
       }
 
-      domain.EmbedUrl(url,
-                      language,
-                      EmbedType.valueOfOrError(embedUrl.embedType))
+      domain.EmbedUrl(url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
-    def createUrlToLearningStep(ls: domain.LearningStep,
-                                lp: domain.LearningPath): String = {
+    def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {
       s"${createUrlToLearningSteps(lp)}/${ls.id.get}"
     }
 
@@ -355,8 +330,7 @@ trait ConverterServiceComponent {
       embedUrlOrPath.url.host match {
         case Some(_) => embedUrlOrPath
         case None =>
-          embedUrlOrPath.copy(
-            url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
+          embedUrlOrPath.copy(url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
     }
 

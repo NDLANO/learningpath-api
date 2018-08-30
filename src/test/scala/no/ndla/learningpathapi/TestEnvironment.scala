@@ -10,10 +10,7 @@ package no.ndla.learningpathapi
 
 import javax.sql.DataSource
 
-import no.ndla.learningpathapi.controller.{
-  HealthController,
-  LearningpathControllerV2
-}
+import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._

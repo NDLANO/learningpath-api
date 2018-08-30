@@ -8,11 +8,7 @@
 
 package no.ndla.learningpathapi
 
-import no.ndla.learningpathapi.controller.{
-  HealthController,
-  InternController,
-  LearningpathControllerV2
-}
+import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -56,6 +52,7 @@ object ComponentRegistry
     with LearningPathValidator
     with LearningStepValidator
     with TitleValidator {
+
   def connectToDatabase(): Unit =
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -67,8 +64,7 @@ object ComponentRegistry
   dataSource.setDatabaseName(LearningpathApiProperties.MetaResource)
   dataSource.setServerName(LearningpathApiProperties.MetaServer)
   dataSource.setPortNumber(LearningpathApiProperties.MetaPort)
-  dataSource.setInitialConnections(
-    LearningpathApiProperties.MetaInitialConnections)
+  dataSource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
   dataSource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
 

@@ -16,6 +16,4 @@ import scala.annotation.meta.field
 @ApiModel(description = "Representation of an embeddable url")
 case class EmbedUrlV2(
     @(ApiModelProperty @field)(description = "The url") url: String,
-    @(ApiModelProperty @field)(
-      description = "Type of embed content",
-      allowableValues = "oembed,lti") embedType: String)
+    @(ApiModelProperty @field)(description = "Type of embed content", allowableValues = "oembed,lti") embedType: String)
