@@ -33,7 +33,7 @@ object ComponentRegistry
     with HealthController
     with LearningPathRepositoryComponent
     with ReadServiceComponent
-    with UpdateServiceComponent
+    with UpdateService
     with SearchConverterServiceComponent
     with SearchServiceComponent
     with SearchIndexServiceComponent

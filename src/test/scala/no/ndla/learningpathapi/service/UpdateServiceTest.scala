@@ -317,6 +317,26 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .deleteDocument(any[domain.LearningPath])
   }
 
+  test(
+    "That updateLearningPathStatusV2 updates the status when the given user is not the owner, but is publisher and the status is PUBLISHED") {
+    when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID))
+      .thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession]))
+      .thenReturn(PUBLISHED_LEARNINGPATH.copy(status = domain.LearningPathStatus.PRIVATE))
+    when(learningPathRepository.learningPathsWithIsBasedOn(PUBLISHED_ID))
+      .thenReturn(List())
+
+    assertResult("PRIVATE") {
+      service
+        .updateLearningPathStatusV2(PUBLISHED_ID, LearningPathStatus.PRIVATE, "not_the_owner", "nb", isPublisher = true)
+        .get
+        .status
+    }
+    verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
+    verify(searchIndexService, times(1))
+      .deleteDocument(any[domain.LearningPath])
+  }
+
   test("That updateLearningPathStatusV2 updates the status when the given user is the owner and the status is PRIVATE") {
     when(learningPathRepository.withIdIncludingDeleted(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))

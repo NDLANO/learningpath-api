@@ -43,6 +43,10 @@ case class LearningPath(id: Option[Long],
     status == LearningPathStatus.PUBLISHED
   }
 
+  def isUnlisted: Boolean = {
+    status == LearningPathStatus.UNLISTED
+  }
+
   def canEdit(user: Option[String]): Boolean = {
     user match {
       case Some(user) => user == owner
@@ -63,7 +67,7 @@ case class LearningPath(id: Option[Long],
   }
 
   def verifyOwnerOrPublic(loggedInUser: Option[String]) = {
-    if (isPrivate) {
+    if (isPrivate) { // TODO: I'm guesing this needs to include unlisted
       loggedInUser match {
         case Some(user) => verifyOwner(user)
         case None =>
@@ -90,7 +94,7 @@ case class LearningPath(id: Option[Long],
 }
 
 object LearningPathStatus extends Enumeration {
-  val PUBLISHED, PRIVATE, DELETED = Value
+  val PUBLISHED, PRIVATE, DELETED, UNLISTED = Value
 
   def valueOf(s: String): Option[LearningPathStatus.Value] = {
     LearningPathStatus.values.find(_.toString == s.toUpperCase)

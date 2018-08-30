@@ -28,7 +28,7 @@ trait TestEnvironment
     extends LearningpathControllerV2
     with LearningPathRepositoryComponent
     with ReadServiceComponent
-    with UpdateServiceComponent
+    with UpdateService
     with SearchConverterServiceComponent
     with SearchServiceComponent
     with SearchIndexServiceComponent

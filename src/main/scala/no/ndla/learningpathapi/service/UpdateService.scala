@@ -16,7 +16,9 @@ import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
 import com.netaporter.uri.dsl._
 
-trait UpdateServiceComponent {
+import scala.util.{Failure, Success, Try}
+
+trait UpdateService {
   this: LearningPathRepositoryComponent
     with ConverterServiceComponent
     with SearchIndexServiceComponent
@@ -198,10 +200,11 @@ trait UpdateServiceComponent {
     def updateLearningPathStatusV2(learningPathId: Long,
                                    status: LearningPathStatus.Value,
                                    owner: String,
-                                   language: String): Option[LearningPathV2] = {
-      withIdAndAccessGranted(learningPathId, owner, includeDeleted = true) match {
-        case None => None
-        case Some(existing) => {
+                                   language: String,
+                                   isPublisher: Boolean = false): Option[LearningPathV2] = {
+      withIdAndAccessGrantedSafe(learningPathId, owner, isPublisher = isPublisher, includeDeleted = true) match {
+        case Success(None) => None
+        case Success(Some(existing)) =>
           if (status == domain.LearningPathStatus.PUBLISHED) {
             existing.validateForPublishing()
           }
@@ -217,7 +220,7 @@ trait UpdateServiceComponent {
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, language, Option(owner))
-        }
+        case Failure(ex) => throw ex // TODO: We don't really want to do this do we?
       }
     }
 
@@ -461,6 +464,25 @@ trait UpdateServiceComponent {
       }
 
       accessGranted(learningPath, owner)
+    }
+
+    // TODO: Rename this function pls
+    private def withIdAndAccessGrantedSafe(learningPathId: Long,
+                                           owner: String,
+                                           isPublisher: Boolean = false,
+                                           includeDeleted: Boolean = false): Try[Option[domain.LearningPath]] = {
+      val learningPath = if (includeDeleted) {
+        learningPathRepository.withIdIncludingDeleted(learningPathId)
+      } else {
+        learningPathRepository.withId(learningPathId)
+      }
+
+      val isOwnerTry = Try(learningPath.map(lp => {
+        lp.verifyOwner(owner)
+        lp
+      }))
+
+      if (isPublisher) { Success(learningPath) } else { isOwnerTry }
     }
 
     private def accessGranted(learningPath: Option[domain.LearningPath], owner: String): Option[domain.LearningPath] = {

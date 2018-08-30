@@ -12,7 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain.{Language, LearningPathStatus, Sort, StepStatus}
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
-import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateServiceComponent}
+import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
@@ -29,7 +29,7 @@ import scala.util.Try
 trait LearningpathControllerV2 {
 
   this: ReadServiceComponent
-    with UpdateServiceComponent
+    with UpdateService
     with SearchServiceComponent
     with LanguageValidator
     with ConverterServiceComponent =>
@@ -558,7 +558,9 @@ trait LearningpathControllerV2 {
         LearningPathStatus.valueOfOrError(learningPathStatus.status)
       val pathId = long(this.learningpathId.paramName)
 
-      updateService.updateLearningPathStatusV2(pathId, pathStatus, requireUserId, Language.DefaultLanguage) match {
+      val isPublisher = AuthUser.getRoles.contains("learningpath:publish") // TODO: Putt det her et kult sted
+
+      updateService.updateLearningPathStatusV2(pathId, pathStatus, requireUserId, Language.DefaultLanguage, isPublisher) match {
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
         case Some(learningPath) =>
