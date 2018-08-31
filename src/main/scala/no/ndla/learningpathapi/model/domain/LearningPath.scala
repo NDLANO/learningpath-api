@@ -67,7 +67,7 @@ case class LearningPath(id: Option[Long],
   }
 
   def verifyOwnerOrPublic(loggedInUser: Option[String]) = {
-    if (isPrivate) { // TODO: I'm guesing this needs to include unlisted
+    if (isPrivate) {
       loggedInUser match {
         case Some(user) => verifyOwner(user)
         case None =>

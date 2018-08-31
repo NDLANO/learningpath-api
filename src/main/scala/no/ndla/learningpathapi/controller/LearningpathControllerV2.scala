@@ -14,6 +14,7 @@ import no.ndla.learningpathapi.model.domain.{Language, LearningPathStatus, Sort,
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
+import no.ndla.learningpathapi.LearningpathApiProperties.PublishRole
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
 import no.ndla.network.AuthUser
@@ -423,7 +424,7 @@ trait LearningpathControllerV2 {
 
     patch("/:learningpath_id", operation(updateLearningPath)) {
       val pathId = long(this.learningpathId.paramName)
-      val isPublisher = AuthUser.getRoles.contains("learningpath:publish") // TODO: Putt det her et kult sted
+      val isPublisher = AuthUser.hasRole(PublishRole)
       val updatedLearningPath =
         updateService.updateLearningPathV2(pathId,
                                            extract[UpdatedLearningPathV2](request.body),
@@ -561,8 +562,7 @@ trait LearningpathControllerV2 {
       val pathStatus =
         LearningPathStatus.valueOfOrError(learningPathStatus.status)
       val pathId = long(this.learningpathId.paramName)
-
-      val isPublisher = AuthUser.getRoles.contains("learningpath:publish") // TODO: Putt det her et kult sted
+      val isPublisher = AuthUser.hasRole(PublishRole)
 
       updateService.updateLearningPathStatusV2(pathId, pathStatus, requireUserId, Language.DefaultLanguage, isPublisher) match {
         case None =>

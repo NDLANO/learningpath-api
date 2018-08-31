@@ -195,7 +195,7 @@ trait UpdateService {
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, Option(owner))
-        case Failure(ex) => throw ex // TODO: Do we want to do this?
+        case Failure(ex) => throw ex
       }
     }
 
@@ -223,7 +223,7 @@ trait UpdateService {
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, language, Option(owner))
-        case Failure(ex) => throw ex // TODO: Do we want to do this?
+        case Failure(ex) => throw ex
       }
     }
 
@@ -478,16 +478,7 @@ trait UpdateService {
         if (includeDeleted) learningPathRepository.withIdIncludingDeleted(learningPathId)
         else learningPathRepository.withId(learningPathId)
 
-      val isOwner = learningPath.exists(_.canEdit(Some(owner))) // TODO: NPE is thrown after this breakpoint for some reason
-
-      // TODO: Decide if we want this and create missing exception and make users handle that.
-      // Or just use ifStatements instead of this match
-//      learningPath match {
-//        case Some(lp) if isPublisher => Success(lp)
-//        case Some(lp) if isOwner && status.contains(LearningPathStatus.PUBLISHED) => Success(lp)
-//        case None => Failure(N)
-//        case _ => Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
-//      }
+      val isOwner = learningPath.exists(_.canEdit(Some(owner)))
 
       if (learningPath.isEmpty)
         Success(None)
@@ -495,8 +486,10 @@ trait UpdateService {
         Success(learningPath)
       else if (isOwner && !status.contains(LearningPathStatus.PUBLISHED))
         Success(learningPath)
-      else
+      else if (status.contains(LearningPathStatus.PUBLISHED))
         Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
+      else
+        Failure(AccessDeniedException("You do not have access to the requested resource."))
     }
 
     private def accessGranted(learningPath: Option[domain.LearningPath], owner: String): Option[domain.LearningPath] = {
