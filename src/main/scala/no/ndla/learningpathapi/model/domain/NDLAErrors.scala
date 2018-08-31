@@ -13,7 +13,7 @@ import no.ndla.learningpathapi.model.api.ValidationMessage
 
 class ValidationException(message: String = "Validation Error", val errors: Seq[ValidationMessage])
     extends RuntimeException(message)
-class AccessDeniedException(message: String) extends RuntimeException(message)
+case class AccessDeniedException(message: String) extends RuntimeException(message)
 class OptimisticLockException(message: String) extends RuntimeException(message)
 class ImportException(message: String) extends RuntimeException(message)
 case class NdlaSearchException(rf: RequestFailure)

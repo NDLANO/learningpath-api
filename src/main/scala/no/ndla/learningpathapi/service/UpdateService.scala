@@ -8,6 +8,7 @@
 
 package no.ndla.learningpathapi.service
 
+import cats.instances.duration
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
@@ -140,7 +141,8 @@ trait UpdateService {
 
     def updateLearningPathV2(id: Long,
                              learningPathToUpdate: UpdatedLearningPathV2,
-                             owner: String): Option[LearningPathV2] = {
+                             owner: String,
+                             isPublisher: Boolean = false): Option[LearningPathV2] = {
       // Should not be able to submit with an illegal language
       learningPathValidator.validate(learningPathToUpdate)
 
@@ -162,9 +164,9 @@ trait UpdateService {
           Seq(domain.LearningPathTags(value, learningPathToUpdate.language))
       }
 
-      withIdAndAccessGranted(id, owner) match {
-        case None => None
-        case Some(existing) => {
+      getEditableLearningPath(id, owner, None, isPublisher) match {
+        case Success(None) => None
+        case Success(Some(existing)) =>
           val toUpdate = existing.copy(
             revision = Some(learningPathToUpdate.revision),
             title = mergeLanguageFields(existing.title, titles),
@@ -193,7 +195,7 @@ trait UpdateService {
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, Option(owner))
-        }
+        case Failure(ex) => throw ex // TODO: Do we want to do this?
       }
     }
 
@@ -202,7 +204,8 @@ trait UpdateService {
                                    owner: String,
                                    language: String,
                                    isPublisher: Boolean = false): Option[LearningPathV2] = {
-      withIdAndAccessGrantedSafe(learningPathId, owner, isPublisher = isPublisher, includeDeleted = true) match {
+
+      getEditableLearningPath(learningPathId, owner, Some(status), isPublisher = isPublisher, includeDeleted = true) match {
         case Success(None) => None
         case Success(Some(existing)) =>
           if (status == domain.LearningPathStatus.PUBLISHED) {
@@ -220,7 +223,7 @@ trait UpdateService {
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, language, Option(owner))
-        case Failure(ex) => throw ex // TODO: We don't really want to do this do we?
+        case Failure(ex) => throw ex // TODO: Do we want to do this?
       }
     }
 
@@ -466,23 +469,34 @@ trait UpdateService {
       accessGranted(learningPath, owner)
     }
 
-    // TODO: Rename this function pls
-    private def withIdAndAccessGrantedSafe(learningPathId: Long,
-                                           owner: String,
-                                           isPublisher: Boolean = false,
-                                           includeDeleted: Boolean = false): Try[Option[domain.LearningPath]] = {
-      val learningPath = if (includeDeleted) {
-        learningPathRepository.withIdIncludingDeleted(learningPathId)
-      } else {
-        learningPathRepository.withId(learningPathId)
-      }
+    private def getEditableLearningPath(learningPathId: Long,
+                                        owner: String,
+                                        status: Option[LearningPathStatus.Value],
+                                        isPublisher: Boolean = false,
+                                        includeDeleted: Boolean = false): Try[Option[domain.LearningPath]] = {
+      val learningPath =
+        if (includeDeleted) learningPathRepository.withIdIncludingDeleted(learningPathId)
+        else learningPathRepository.withId(learningPathId)
 
-      val isOwnerTry = Try(learningPath.map(lp => {
-        lp.verifyOwner(owner)
-        lp
-      }))
+      val isOwner = learningPath.exists(_.canEdit(Some(owner))) // TODO: NPE is thrown after this breakpoint for some reason
 
-      if (isPublisher) { Success(learningPath) } else { isOwnerTry }
+      // TODO: Decide if we want this and create missing exception and make users handle that.
+      // Or just use ifStatements instead of this match
+//      learningPath match {
+//        case Some(lp) if isPublisher => Success(lp)
+//        case Some(lp) if isOwner && status.contains(LearningPathStatus.PUBLISHED) => Success(lp)
+//        case None => Failure(N)
+//        case _ => Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
+//      }
+
+      if (learningPath.isEmpty)
+        Success(None)
+      else if (isPublisher)
+        Success(learningPath)
+      else if (isOwner && !status.contains(LearningPathStatus.PUBLISHED))
+        Success(learningPath)
+      else
+        Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
     }
 
     private def accessGranted(learningPath: Option[domain.LearningPath], owner: String): Option[domain.LearningPath] = {

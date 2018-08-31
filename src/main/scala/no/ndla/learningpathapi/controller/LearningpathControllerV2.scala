@@ -423,8 +423,12 @@ trait LearningpathControllerV2 {
 
     patch("/:learningpath_id", operation(updateLearningPath)) {
       val pathId = long(this.learningpathId.paramName)
+      val isPublisher = AuthUser.getRoles.contains("learningpath:publish") // TODO: Putt det her et kult sted
       val updatedLearningPath =
-        updateService.updateLearningPathV2(pathId, extract[UpdatedLearningPathV2](request.body), requireUserId)
+        updateService.updateLearningPathV2(pathId,
+                                           extract[UpdatedLearningPathV2](request.body),
+                                           requireUserId,
+                                           isPublisher)
       updatedLearningPath match {
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
