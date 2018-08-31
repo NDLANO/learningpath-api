@@ -285,10 +285,15 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .apply()
     }
 
-    def getLearningPathByPage(pageSize: Int, offset: Int)(
+    def getLearningPathByPage(pageSize: Int, offset: Int)( // TODO: This is a bug. With the limit we are bound to cut off steps from a learningpath when paginating
         implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
-      sql"select ${lp.result.*}, ${ls.result.*} from ${LearningPath.as(lp)} left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId} offset $offset limit $pageSize"
+      sql"""select ${lp.result.*}, ${ls.result.*}
+            from ${LearningPath.as(lp)}
+            left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId}
+            offset $offset
+            limit $pageSize
+        """
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
@@ -296,6 +301,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         }
         .list
         .apply()
+        .filter(_.status == LearningPathStatus.PUBLISHED)
     }
 
     def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {

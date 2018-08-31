@@ -13,7 +13,8 @@ import java.util.Date
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.tag.IntegrationTest
-import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
+import org.joda.time.DateTime
+import scalikejdbc._
 
 @IntegrationTest
 class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
@@ -34,7 +35,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     None,
     LearningPathStatus.PRIVATE,
     LearningPathVerificationStatus.EXTERNAL,
-    new Date(),
+    new DateTime().withMillisOfSecond(0).toDate,
     List(),
     "UNIT-TEST",
     copyright
@@ -55,11 +56,11 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     StepStatus.ACTIVE
   )
 
-  override def beforeEach() = {
+  override def beforeEach(): Unit = {
     repository = new LearningPathRepository()
   }
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     val datasource = getDataSource
     DBMigrator.migrate(datasource)
     ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
@@ -278,7 +279,32 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     repository.deletePath(learningPath.id.get)
   }
 
-  def deleteAllWithOwner(owner: String) = {
+  test("That getLearningPathByPage returns correct result when pageSize is smaller than amount of steps") {
+    // We need an empty database to test this predictably
+    DB autoCommit (implicit session => {
+      sql"delete from learningpathapi_test.learningpaths;".execute.apply()
+      sql"delete from learningpathapi_test.learningsteps;".execute.apply()
+    })
+
+    val steps = List(
+      DefaultLearningStep,
+      DefaultLearningStep,
+      DefaultLearningStep
+    )
+
+    val learningPath =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PUBLISHED))
+
+    val page1 = repository.getLearningPathByPage(2, 0)
+    val page2 = repository.getLearningPathByPage(2, 2)
+
+    page1 should be(List(learningPath))
+    page2 should be(List.empty)
+
+    repository.deletePath(learningPath.id.get)
+  }
+
+  def deleteAllWithOwner(owner: String): Unit = {
     inTransaction { implicit session =>
       repository
         .withOwner(owner)
