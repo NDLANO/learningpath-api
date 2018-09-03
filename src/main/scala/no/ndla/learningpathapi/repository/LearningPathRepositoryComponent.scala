@@ -285,23 +285,25 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .apply()
     }
 
-    def getLearningPathByPage(pageSize: Int, offset: Int)( // TODO: This is a bug. With the limit we are bound to cut off steps from a learningpath when paginating
-        implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
+    def getLearningPathByPage(pageSize: Int, offset: Int)(
+      implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
-      sql"""select ${lp.result.*}, ${ls.result.*}
-            from ${LearningPath.as(lp)}
-            left join ${LearningStep.as(ls)} on ${lp.id} = ${ls.learningPathId}
-            offset $offset
-            limit $pageSize
-        """
-        .one(LearningPath(lp.resultName))
-        .toMany(LearningStep.opt(ls.resultName))
-        .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
-        }
-        .list
-        .apply()
-        .filter(_.status == LearningPathStatus.PUBLISHED)
+      val lps = SubQuery.syntax("lps").include(lp)
+      sql"""
+            select ${lps.resultAll}, ${ls.resultAll} from (select ${lp.resultAll}
+                                                           from ${LearningPath.as(lp)}
+                                                           where document#>>'{status}' = ${LearningPathStatus.PUBLISHED.toString}
+                                                           limit $pageSize
+                                                           offset $offset) lps
+            left join ${LearningStep.as(ls)} on ${lps(lp).id} = ${ls.learningPathId}
+      """
+      .one(LearningPath(lps(lp).resultName))
+      .toMany(LearningStep.opt(ls.resultName))
+      .map { (learningpath, learningsteps) =>
+        learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
+      }
+      .list
+      .apply()
     }
 
     def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {

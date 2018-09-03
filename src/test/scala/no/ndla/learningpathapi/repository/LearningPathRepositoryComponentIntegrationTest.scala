@@ -280,11 +280,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That getLearningPathByPage returns correct result when pageSize is smaller than amount of steps") {
-    // We need an empty database to test this predictably
-    DB autoCommit (implicit session => {
-      sql"delete from learningpathapi_test.learningpaths;".execute.apply()
-      sql"delete from learningpathapi_test.learningsteps;".execute.apply()
-    })
+    emptyTestDatabase
 
     val steps = List(
       DefaultLearningStep,
@@ -302,6 +298,41 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     page2 should be(List.empty)
 
     repository.deletePath(learningPath.id.get)
+  }
+
+  test("That getLeraningPathByPage returns only published results") {
+    emptyTestDatabase
+
+    val steps = List(
+      DefaultLearningStep,
+      DefaultLearningStep,
+      DefaultLearningStep
+    )
+
+    val learningPath1 =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PRIVATE))
+    val learningPath2 =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PRIVATE))
+    val learningPath3 =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PUBLISHED))
+
+    val page1 = repository.getLearningPathByPage(2, 0)
+    val page2 = repository.getLearningPathByPage(2, 2)
+
+    page1 should be(List(learningPath3))
+    page2 should be(List.empty)
+
+    repository.deletePath(learningPath1.id.get)
+    repository.deletePath(learningPath2.id.get)
+    repository.deletePath(learningPath3.id.get)
+  }
+
+
+  def emptyTestDatabase = {
+    DB autoCommit (implicit session => {
+      sql"delete from learningpathapi_test.learningpaths;".execute.apply()(session)
+      sql"delete from learningpathapi_test.learningsteps;".execute.apply()(session)
+    })
   }
 
   def deleteAllWithOwner(owner: String): Unit = {
