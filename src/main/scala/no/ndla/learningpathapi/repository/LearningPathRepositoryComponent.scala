@@ -286,7 +286,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def getLearningPathByPage(pageSize: Int, offset: Int)(
-      implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
+        implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       val lps = SubQuery.syntax("lps").include(lp)
       sql"""
@@ -297,13 +297,13 @@ trait LearningPathRepositoryComponent extends LazyLogging {
                                                            offset $offset) lps
             left join ${LearningStep.as(ls)} on ${lps(lp).id} = ${ls.learningPathId}
       """
-      .one(LearningPath(lps(lp).resultName))
-      .toMany(LearningStep.opt(ls.resultName))
-      .map { (learningpath, learningsteps) =>
-        learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
-      }
-      .list
-      .apply()
+        .one(LearningPath(lps(lp).resultName))
+        .toMany(LearningStep.opt(ls.resultName))
+        .map { (learningpath, learningsteps) =>
+          learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
+        }
+        .list
+        .apply()
     }
 
     def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {

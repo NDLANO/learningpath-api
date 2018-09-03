@@ -327,7 +327,6 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     repository.deletePath(learningPath3.id.get)
   }
 
-
   def emptyTestDatabase = {
     DB autoCommit (implicit session => {
       sql"delete from learningpathapi_test.learningpaths;".execute.apply()(session)
