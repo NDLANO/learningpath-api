@@ -8,6 +8,7 @@
 
 package no.ndla.learningpathapi.repository
 
+import java.net.Socket
 import java.util.Date
 
 import no.ndla.learningpathapi._
@@ -15,6 +16,8 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
 import scalikejdbc._
+
+import scala.util.{Success, Try}
 
 @IntegrationTest
 class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
@@ -56,17 +59,33 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     StepStatus.ACTIVE
   )
 
+  def serverIsListenning: Boolean = {
+    Try(new Socket(LearningpathApiProperties.MetaServer, LearningpathApiProperties.MetaPort)) match {
+      case Success(c) =>
+        c.close()
+        true
+      case _ => false
+    }
+  }
+  def databaseIsAvailable: Boolean = Try(repository.learningPathCount).isSuccess
+
   override def beforeEach(): Unit = {
     repository = new LearningPathRepository()
+    if (databaseIsAvailable) {
+      emptyTestDatabase
+    }
   }
 
   override def beforeAll(): Unit = {
     val datasource = getDataSource
-    DBMigrator.migrate(datasource)
-    ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
+    if (serverIsListenning) {
+      DBMigrator.migrate(datasource)
+      ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
+    }
   }
 
   test("That insert, fetch and delete works happy-day") {
+    assume(databaseIsAvailable, "Database is unavailable")
     inTransaction { implicit session =>
       val inserted = repository.insert(DefaultLearningPath)
       inserted.id.isDefined should be(true)
@@ -80,6 +99,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That transaction is rolled back if exception is thrown") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val owner = s"unit-test-${System.currentTimeMillis()}"
     deleteAllWithOwner(owner)
 
@@ -98,6 +118,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That updating several times is not throwing optimistic locking exception") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val inserted = repository.insert(DefaultLearningPath)
     val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", "unknown"))))
     val secondUpdate = repository.update(firstUpdate.copy(title = List(Title("Second change", "unknown"))))
@@ -112,6 +133,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That trying to update a learningPath with old revision number throws optimistic locking exception") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val inserted = repository.insert(DefaultLearningPath)
     val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", "unknown"))))
 
@@ -126,6 +148,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That trying to update a learningStep with old revision throws optimistic locking exception") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val learningPath = repository.insert(DefaultLearningPath)
     val insertedStep = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
     val firstUpdate = repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", "unknown"))))
@@ -141,6 +164,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That learningPathsWithIsBasedOn returns all learningpaths that has one is based on id") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val learningPath1 = repository.insert(DefaultLearningPath)
     val learningPath2 = repository.insert(DefaultLearningPath)
 
@@ -172,6 +196,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That allPublishedTags returns only published tags") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath = repository.insert(
       DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
                                tags = List(LearningPathTags(Seq("aaa"), "nb"),
@@ -191,6 +216,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That allPublishedTags removes duplicates") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath1 = repository.insert(
       DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
                                tags = List(LearningPathTags(Seq("aaa"), "nb"), LearningPathTags(Seq("aaa"), "nn"))))
@@ -212,6 +238,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That allPublishedContributors returns only published contributors") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath = repository.insert(
       DefaultLearningPath.copy(
         status = LearningPathStatus.PUBLISHED,
@@ -237,6 +264,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That allPublishedContributors removes duplicates") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath1 = repository.insert(
       DefaultLearningPath.copy(
         status = LearningPathStatus.PUBLISHED,
@@ -263,6 +291,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That only learningsteps with status ACTIVE are returned together with a learningpath") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val learningPath = repository.insert(DefaultLearningPath)
     val activeStep1 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
     val activeStep2 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
@@ -280,8 +309,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That getLearningPathByPage returns correct result when pageSize is smaller than amount of steps") {
-    emptyTestDatabase
-
+    assume(databaseIsAvailable, "Database is unavailable")
     val steps = List(
       DefaultLearningStep,
       DefaultLearningStep,
@@ -301,8 +329,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   test("That getLeraningPathByPage returns only published results") {
-    emptyTestDatabase
-
+    assume(databaseIsAvailable, "Database is unavailable")
     val steps = List(
       DefaultLearningStep,
       DefaultLearningStep,
