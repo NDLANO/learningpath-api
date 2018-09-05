@@ -24,8 +24,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   val PUBLISHED_ID = 1
   val PRIVATE_ID = 2
 
-  val PUBLISHED_OWNER = "published_owner"
-  val PRIVATE_OWNER = "private_owner"
+  val PUBLISHED_OWNER = UserInfo("published_owner", Set.empty)
+  val PRIVATE_OWNER = UserInfo("private_owner", Set.empty)
   val cruz = Author("author", "Lyin' Ted")
   val license = "publicdomain"
   val copyright = Copyright(license, List(cruz))
@@ -43,7 +43,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     LearningPathVerificationStatus.EXTERNAL,
     new Date(),
     List(),
-    PUBLISHED_OWNER,
+    PUBLISHED_OWNER.userId,
     copyright
   )
 
@@ -60,7 +60,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     LearningPathVerificationStatus.EXTERNAL,
     new Date(),
     List(),
-    PRIVATE_OWNER,
+    PRIVATE_OWNER.userId,
     copyright
   )
 

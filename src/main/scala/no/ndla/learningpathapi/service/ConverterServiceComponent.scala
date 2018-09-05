@@ -96,7 +96,7 @@ trait ConverterServiceComponent {
 
     def asApiLearningpathV2(lp: domain.LearningPath,
                             language: String,
-                            user: Option[String]): Option[api.LearningPathV2] = {
+                            userInfo: Option[UserInfo]): Option[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 
@@ -135,7 +135,7 @@ trait ConverterServiceComponent {
           lp.lastUpdated,
           tags,
           asApiCopyright(lp.copyright),
-          lp.canEdit(user),
+          lp.canEdit(userInfo),
           supportedLanguages
         ))
     }
@@ -190,7 +190,7 @@ trait ConverterServiceComponent {
     def asApiLearningStepV2(ls: domain.LearningStep,
                             lp: domain.LearningPath,
                             language: String,
-                            user: Option[String]): Option[api.LearningStepV2] = {
+                            user: Option[UserInfo]): Option[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
       if (languageIsNotSupported(supportedLanguages, language)) return None
 

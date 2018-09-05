@@ -10,9 +10,11 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{StepStatus, ValidationException}
+import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo, ValidationException}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+
 import scala.math.max
+import scala.util.{Failure, Success}
 
 trait ReadServiceComponent {
   this: LearningPathRepositoryComponent with ConverterServiceComponent =>
@@ -34,19 +36,19 @@ trait ReadServiceComponent {
         .flatMap(value => converterService.asApiLearningpathSummaryV2(value).toOption)
     }
 
-    def withIdV2(learningPathId: Long, language: String, user: Option[String] = None): Option[LearningPathV2] = {
+    def withIdV2(learningPathId: Long, language: String, user: Option[UserInfo] = None): Option[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp =>
         converterService.asApiLearningpathV2(lp, language, user))
     }
 
-    def statusFor(learningPathId: Long, user: Option[String] = None): Option[LearningPathStatus] = {
+    def statusFor(learningPathId: Long, user: Option[UserInfo] = None): Option[LearningPathStatus] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
     def learningStepStatusForV2(learningPathId: Long,
                                 learningStepId: Long,
                                 language: String,
-                                user: Option[String] = None): Option[LearningStepStatus] = {
+                                user: Option[UserInfo] = None): Option[LearningStepStatus] = {
       learningstepV2For(learningPathId, learningStepId, language, user).map(ls =>
         LearningStepStatus(ls.status.toString))
     }
@@ -54,7 +56,7 @@ trait ReadServiceComponent {
     def learningstepsForWithStatusV2(learningPathId: Long,
                                      status: StepStatus.Value,
                                      language: String,
-                                     user: Option[String] = None): Option[LearningStepContainerSummary] = {
+                                     user: Option[UserInfo] = None): Option[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
           converterService.asLearningStepContainerSummary(status, lp, language)
@@ -65,7 +67,7 @@ trait ReadServiceComponent {
     def learningstepV2For(learningPathId: Long,
                           learningstepId: Long,
                           language: String,
-                          user: Option[String] = None): Option[LearningStepV2] = {
+                          user: Option[UserInfo] = None): Option[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
           learningPathRepository
@@ -75,10 +77,13 @@ trait ReadServiceComponent {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, user: Option[String]): Option[domain.LearningPath] = {
+    private def withIdAndAccessGranted(learningPathId: Long, user: Option[UserInfo]): Option[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
-      learningPath.foreach(_.verifyOwnerOrPublic(user))
-      learningPath
+      learningPath.map(_.isOwnerOrPublic(user)) match {
+        case Some(Success(lp)) => Some(lp)
+        case Some(Failure(ex)) => throw ex
+        case None              => None
+      }
     }
 
     def getLearningPathDomainDump(pageNo: Int, pageSize: Int): LearningPathDomainDump = {

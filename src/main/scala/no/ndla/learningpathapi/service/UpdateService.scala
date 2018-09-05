@@ -8,7 +8,6 @@
 
 package no.ndla.learningpathapi.service
 
-import cats.instances.duration
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
@@ -16,6 +15,7 @@ import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
 import com.netaporter.uri.dsl._
+import no.ndla.learningpathapi.model.domain.UserInfo
 
 import scala.util.{Failure, Success, Try}
 
@@ -30,11 +30,11 @@ trait UpdateService {
 
   class UpdateService {
 
-    def newFromExistingV2(id: Long, newLearningPath: NewCopyLearningPathV2, owner: String): Option[LearningPathV2] = {
-      learningPathRepository.withId(id) match {
-        case None => None
-        case Some(existing) => {
-          existing.verifyOwnerOrPublic(Some(owner))
+    def newFromExistingV2(id: Long, newLearningPath: NewCopyLearningPathV2, owner: UserInfo): Option[LearningPathV2] = {
+      learningPathRepository.withId(id).map(_.isOwnerOrPublic(Some(owner))) match {
+        case None              => None
+        case Some(Failure(ex)) => throw ex
+        case Some(Success(existing)) =>
           val oldTitle = Seq(domain.Title(newLearningPath.title, newLearningPath.language))
 
           val oldDescription = newLearningPath.description match {
@@ -72,7 +72,7 @@ trait UpdateService {
             status = LearningPathStatus.PRIVATE,
             verificationStatus = LearningPathVerificationStatus.EXTERNAL,
             lastUpdated = clock.now(),
-            owner = owner,
+            owner = owner.userId,
             copyright = copyright,
             learningsteps =
               existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
@@ -84,11 +84,10 @@ trait UpdateService {
           converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert),
                                                newLearningPath.language,
                                                Some(owner))
-        }
       }
     }
 
-    def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: String): Option[LearningPathV2] = {
+    def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: UserInfo): Option[LearningPathV2] = {
       val domainTags =
         if (newLearningPath.tags.isEmpty) Seq.empty
         else
@@ -107,7 +106,7 @@ trait UpdateService {
         LearningPathVerificationStatus.EXTERNAL,
         clock.now(),
         domainTags,
-        owner,
+        owner.userId,
         converterService.asCopyright(newLearningPath.copyright),
         List()
       )
@@ -141,8 +140,7 @@ trait UpdateService {
 
     def updateLearningPathV2(id: Long,
                              learningPathToUpdate: UpdatedLearningPathV2,
-                             owner: String,
-                             isPublisher: Boolean = false): Option[LearningPathV2] = {
+                             owner: UserInfo): Option[LearningPathV2] = {
       // Should not be able to submit with an illegal language
       learningPathValidator.validate(learningPathToUpdate)
 
@@ -164,9 +162,10 @@ trait UpdateService {
           Seq(domain.LearningPathTags(value, learningPathToUpdate.language))
       }
 
-      getEditableLearningPath(id, owner, None, isPublisher) match {
-        case Success(None) => None
-        case Success(Some(existing)) =>
+      withId(id).map(_.canEditLearningpath(owner)) match {
+        case Some(Failure(ex)) => throw ex
+        case None              => None
+        case Some(Success(existing)) =>
           val toUpdate = existing.copy(
             revision = Some(learningPathToUpdate.revision),
             title = mergeLanguageFields(existing.title, titles),
@@ -192,22 +191,23 @@ trait UpdateService {
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
             searchIndexService.indexDocument(updatedLearningPath)
+          } else {
+            deleteIsBasedOnReference(existing)
+            searchIndexService.deleteDocument(existing)
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, Option(owner))
-        case Failure(ex) => throw ex
       }
     }
 
     def updateLearningPathStatusV2(learningPathId: Long,
                                    status: LearningPathStatus.Value,
-                                   owner: String,
-                                   language: String,
-                                   isPublisher: Boolean = false): Option[LearningPathV2] = {
-
-      getEditableLearningPath(learningPathId, owner, Some(status), isPublisher = isPublisher, includeDeleted = true) match {
-        case Success(None) => None
-        case Success(Some(existing)) =>
+                                   owner: UserInfo,
+                                   language: String): Option[LearningPathV2] = {
+      withId(learningPathId, includeDeleted = true).map(_.canSetStatus(status, owner)) match {
+        case Some(Failure(ex)) => throw ex
+        case None              => None
+        case Some(Success(existing)) =>
           if (status == domain.LearningPathStatus.PUBLISHED) {
             existing.validateForPublishing()
           }
@@ -217,17 +217,16 @@ trait UpdateService {
 
           if (updatedLearningPath.isPublished) {
             searchIndexService.indexDocument(updatedLearningPath)
-          } else if (existing.isPublished) {
-            searchIndexService.deleteDocument(updatedLearningPath)
+          } else {
             deleteIsBasedOnReference(updatedLearningPath)
+            searchIndexService.deleteDocument(updatedLearningPath)
           }
 
           converterService.asApiLearningpathV2(updatedLearningPath, language, Option(owner))
-        case Failure(ex) => throw ex
       }
     }
 
-    private def deleteIsBasedOnReference(updatedLearningPath: domain.LearningPath) = {
+    private[service] def deleteIsBasedOnReference(updatedLearningPath: domain.LearningPath): Unit = {
       learningPathRepository
         .learningPathsWithIsBasedOn(updatedLearningPath.id.get)
         .foreach(lp => {
@@ -242,11 +241,12 @@ trait UpdateService {
 
     def addLearningStepV2(learningPathId: Long,
                           newLearningStep: NewLearningStepV2,
-                          owner: String): Option[LearningStepV2] = {
+                          owner: UserInfo): Option[LearningStepV2] = {
       optimisticLockRetries(10) {
-        withIdAndAccessGranted(learningPathId, owner) match {
-          case None => None
-          case Some(learningPath) => {
+        withId(learningPathId).map(_.canEditLearningpath(owner)) match {
+          case None              => None
+          case Some(Failure(ex)) => throw ex
+          case Some(Success(learningPath)) =>
             val description = newLearningStep.description
               .map(domain.Description(_, newLearningStep.language))
               .toSeq
@@ -254,10 +254,8 @@ trait UpdateService {
               .map(converterService.asDomainEmbedUrl(_, newLearningStep.language))
               .toSeq
 
-            val newSeqNo = learningPath.learningsteps.isEmpty match {
-              case true  => 0
-              case false => learningPath.learningsteps.map(_.seqNo).max + 1
-            }
+            val newSeqNo =
+              if (learningPath.learningsteps.isEmpty) 0 else learningPath.learningsteps.map(_.seqNo).max + 1
 
             val newStep = domain.LearningStep(
               None,
@@ -285,9 +283,11 @@ trait UpdateService {
             }
             if (updatedPath.isPublished) {
               searchIndexService.indexDocument(updatedPath)
+            } else {
+              deleteIsBasedOnReference(learningPath)
+              searchIndexService.deleteDocument(learningPath)
             }
             converterService.asApiLearningStepV2(insertedStep, updatedPath, newLearningStep.language, Option(owner))
-          }
         }
       }
     }
@@ -295,13 +295,14 @@ trait UpdateService {
     def updateLearningStepV2(learningPathId: Long,
                              learningStepId: Long,
                              learningStepToUpdate: UpdatedLearningStepV2,
-                             owner: String): Option[LearningStepV2] = {
-      withIdAndAccessGranted(learningPathId, owner) match {
-        case None => None
-        case Some(learningPath) => {
+                             owner: UserInfo): Option[LearningStepV2] = {
+      withId(learningPathId).map(_.canEditLearningpath(owner)) match {
+        case None              => None
+        case Some(Failure(ex)) => throw ex
+        case Some(Success(learningPath)) =>
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
-            case Some(existing) => {
+            case Some(existing) =>
               val titles = learningStepToUpdate.title match {
                 case None => existing.title
                 case Some(value) =>
@@ -347,28 +348,30 @@ trait UpdateService {
 
               if (updatedPath.isPublished) {
                 searchIndexService.indexDocument(updatedPath)
+              } else {
+                deleteIsBasedOnReference(updatedPath)
+                searchIndexService.deleteDocument(updatedPath)
               }
 
               converterService.asApiLearningStepV2(updatedStep,
                                                    updatedPath,
                                                    learningStepToUpdate.language,
                                                    Option(owner))
-            }
           }
-        }
       }
     }
 
     def updateLearningStepStatusV2(learningPathId: Long,
                                    learningStepId: Long,
                                    newStatus: StepStatus.Value,
-                                   owner: String): Option[LearningStepV2] = {
-      withIdAndAccessGranted(learningPathId, owner) match {
-        case None => None
-        case Some(learningPath) => {
+                                   owner: UserInfo): Option[LearningStepV2] = {
+      withId(learningPathId).map(_.canEditLearningpath(owner)) match {
+        case None              => None
+        case Some(Failure(ex)) => throw ex
+        case Some(Success(learningPath)) =>
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
-            case Some(learningStep) => {
+            case Some(learningStep) =>
               val stepToUpdate = learningStep.copy(status = newStatus)
               val stepsToChangeSeqNoOn = learningPathRepository
                 .learningStepsFor(learningPathId)
@@ -404,23 +407,24 @@ trait UpdateService {
 
               if (updatedPath.isPublished) {
                 searchIndexService.indexDocument(updatedPath)
+              } else {
+                deleteIsBasedOnReference(learningPath)
+                searchIndexService.deleteDocument(learningPath)
               }
 
               converterService.asApiLearningStepV2(updatedStep, updatedPath, Language.DefaultLanguage, Option(owner))
-            }
           }
-        }
       }
     }
 
     def updateSeqNo(learningPathId: Long,
                     learningStepId: Long,
                     seqNo: Int,
-                    owner: String): Option[LearningStepSeqNo] = {
+                    owner: UserInfo): Option[LearningStepSeqNo] = {
       optimisticLockRetries(10) {
-        withIdAndAccessGranted(learningPathId, owner) match {
+        withId(learningPathId) match {
           case None => None
-          case Some(learningPath) => {
+          case Some(learningPath) =>
             learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
               case None => None
               case Some(learningStep) => {
@@ -445,7 +449,6 @@ trait UpdateService {
                 Some(LearningStepSeqNo(seqNo))
               }
             }
-          }
         }
       }
     }
@@ -457,44 +460,12 @@ trait UpdateService {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long,
-                                       owner: String,
-                                       includeDeleted: Boolean = false): Option[domain.LearningPath] = {
-      val learningPath = includeDeleted match {
-        case false => learningPathRepository.withId(learningPathId)
-        case true =>
-          learningPathRepository.withIdIncludingDeleted(learningPathId)
+    private def withId(learningPathId: Long, includeDeleted: Boolean = false): Option[domain.LearningPath] = {
+      if (includeDeleted) {
+        learningPathRepository.withIdIncludingDeleted(learningPathId)
+      } else {
+        learningPathRepository.withId(learningPathId)
       }
-
-      accessGranted(learningPath, owner)
-    }
-
-    private def getEditableLearningPath(learningPathId: Long,
-                                        owner: String,
-                                        status: Option[LearningPathStatus.Value],
-                                        isPublisher: Boolean = false,
-                                        includeDeleted: Boolean = false): Try[Option[domain.LearningPath]] = {
-      val learningPath =
-        if (includeDeleted) learningPathRepository.withIdIncludingDeleted(learningPathId)
-        else learningPathRepository.withId(learningPathId)
-
-      val isOwner = learningPath.exists(_.canEdit(Some(owner)))
-
-      if (learningPath.isEmpty)
-        Success(None)
-      else if (isPublisher)
-        Success(learningPath)
-      else if (isOwner && !status.contains(LearningPathStatus.PUBLISHED))
-        Success(learningPath)
-      else if (status.contains(LearningPathStatus.PUBLISHED))
-        Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
-      else
-        Failure(AccessDeniedException("You do not have access to the requested resource."))
-    }
-
-    private def accessGranted(learningPath: Option[domain.LearningPath], owner: String): Option[domain.LearningPath] = {
-      learningPath.foreach(_.verifyOwner(owner))
-      learningPath
     }
 
     def optimisticLockRetries[T](n: Int)(fn: => T): T = {

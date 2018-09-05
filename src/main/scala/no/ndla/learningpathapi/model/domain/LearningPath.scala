@@ -8,6 +8,7 @@
 
 package no.ndla.learningpathapi.model.domain
 
+import java.nio.file
 import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
@@ -18,6 +19,8 @@ import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
+
+import scala.util.{Failure, Success, Try}
 
 case class LearningPath(id: Option[Long],
                         revision: Option[Int],
@@ -43,53 +46,63 @@ case class LearningPath(id: Option[Long],
     status == LearningPathStatus.PUBLISHED
   }
 
-  def isUnlisted: Boolean = {
-    status == LearningPathStatus.UNLISTED
-  }
-
-  def canEdit(user: Option[String]): Boolean = {
-    user match {
-      case Some(user) => user == owner
-      case None       => false
+  def canSetStatus(status: LearningPathStatus.Value, user: UserInfo): Try[LearningPath] = {
+    if (status == LearningPathStatus.PUBLISHED && !user.isAdmin) {
+      Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
+    } else if (user.userId != owner && !user.isAdmin) {
+      Failure(AccessDeniedException("You do not have access to the requested resource."))
+    } else {
+      Success(this)
     }
   }
 
-  def verifyOwner(loggedInUser: String) = {
-    if (loggedInUser != owner) {
-      throw new AccessDeniedException("You do not have access to the requested resource.")
+  def canEditLearningpath(user: UserInfo): Try[LearningPath] = {
+    if (user.userId == owner && status == LearningPathStatus.PUBLISHED && !user.isAdmin) {
+      Success(this.copy(status = LearningPathStatus.UNLISTED))
+    } else if (user.userId != owner && !user.isAdmin) {
+      Failure(AccessDeniedException("You do not have access to the requested resource."))
+    } else {
+      Success(this)
     }
   }
 
-  def verifyNotPrivate = {
+  def isOwnerOrPublic(user: Option[UserInfo]): Try[LearningPath] = {
     if (isPrivate) {
-      throw new AccessDeniedException("You do not have access to the requested resource.")
+      user
+        .map(canEditLearningpath)
+        .getOrElse(Failure(AccessDeniedException("You do not have access to the requested resource.")))
+    } else {
+      Success(this)
     }
   }
 
-  def verifyOwnerOrPublic(loggedInUser: Option[String]) = {
-    if (isPrivate) {
-      loggedInUser match {
-        case Some(user) => verifyOwner(user)
-        case None =>
-          throw new AccessDeniedException("You do not have access to the requested resource.")
-      }
-    }
+  def canEdit(userInfo: Option[UserInfo]): Boolean = {
+    userInfo.exists(u => canEditLearningpath(u).isSuccess)
   }
 
-  def validateSeqNo(seqNo: Int) = {
+  def validateSeqNo(seqNo: Int): Unit = {
     if (seqNo < 0 || seqNo > learningsteps.length - 1) {
       throw new ValidationException(
         errors = List(ValidationMessage("seqNo", s"seqNo must be between 0 and ${learningsteps.length - 1}")))
     }
   }
 
-  def validateForPublishing() = {
+  def validateForPublishing(): LearningPath = {
     val validationResult =
       new DurationValidator().validateRequired(duration).toList
     validationResult.isEmpty match {
       case true  => this
       case false => throw new ValidationException(errors = validationResult)
     }
+  }
+}
+
+object LearningPathRole extends Enumeration {
+  val ADMIN: LearningPathRole.Value = Value
+
+  def valueOf(s: String): Option[LearningPathRole.Value] = {
+    val lpRole = s.split("learningpath:")
+    LearningPathRole.values.find(_.toString == lpRole.lastOption.getOrElse("").toUpperCase)
   }
 }
 
