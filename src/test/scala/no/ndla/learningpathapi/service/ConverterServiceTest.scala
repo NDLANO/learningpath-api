@@ -129,6 +129,48 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test(
+    "asApiLearningpathV2 returns None if fallback is false and language is not supported") {
+    service.asApiLearningpathV2(domainLearningPath,
+                                "hurr-durr-lang",
+                                false,
+                                Some("me")) should equal(None)
+  }
+
+  test(
+    "asApiLearningpathV2 converts domain to api LearningPathV2 with fallback if true") {
+    val expected = Some(
+      api.LearningPathV2(
+        1,
+        1,
+        None,
+        api.Title("tittel", Language.DefaultLanguage),
+        api.Description("deskripsjon", Language.DefaultLanguage),
+        "null1",
+        List.empty,
+        "null1/learningsteps",
+        None,
+        Some(60),
+        LearningPathStatus.PRIVATE.toString,
+        LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
+        randomDate,
+        api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
+        api.Copyright(
+          api.License("by",
+                      Some("Creative Commons Attribution 2.0 Generic"),
+                      Some("https://creativecommons.org/licenses/by/2.0/")),
+          List.empty),
+        canEdit = true,
+        List("nb", "en")
+      ))
+    service.asApiLearningpathV2(
+      domainLearningPath.copy(
+        title = domainLearningPath.title :+ Title("test", "en")),
+      "hurr durr I'm a language",
+      true,
+      Some("me")) should equal(expected)
+  }
+
+  test(
     "asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
     val expected = Success(
       api.LearningPathSummaryV2(
@@ -181,6 +223,40 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test(
+    "asApiLearningStepV2 return None if fallback is false and language not supported") {
+    service.asApiLearningStepV2(domainLearningStep2,
+                                domainLearningPath,
+                                "hurr durr I'm a language",
+                                false,
+                                Some("me")) should equal(None)
+  }
+
+  test(
+    "asApiLearningStepV2 converts domain learningstep to api LearningStepV2 if fallback is true and language undefined") {
+    val learningstep = Some(
+      api.LearningStepV2(
+        1,
+        1,
+        1,
+        api.Title("tittel", Language.DefaultLanguage),
+        Some(api.Description("deskripsjon", Language.DefaultLanguage)),
+        None,
+        showTitle = false,
+        "INTRODUCTION",
+        None,
+        "null1/learningsteps/1",
+        canEdit = true,
+        "ACTIVE",
+        Seq(Language.DefaultLanguage)
+      ))
+    service.asApiLearningStepV2(domainLearningStep2,
+                                domainLearningPath,
+                                "hurr durr I'm a language",
+                                true,
+                                Some("me")) should equal(learningstep)
+  }
+
+  test(
     "asApiLearningStepSummaryV2 converts domain learningstep to LearningStepSummaryV2") {
     val expected = Some(
       api.LearningStepSummaryV2(
@@ -223,6 +299,24 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     service.asApiLearningPathTagsSummary(apiTags,
                                          Language.DefaultLanguage,
                                          false) should equal(expected)
+  }
+
+  test(
+    "asApiLearningPathTagsSummary returns None if fallback is false and language is unsupported") {
+    service.asApiLearningPathTagsSummary(apiTags,
+                                         "hurr durr I'm a language",
+                                         false) should equal(None)
+  }
+
+  test(
+    "asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary if language is undefined and fallback is true") {
+    val expected = Some(
+      api.LearningPathTagsSummary(Language.DefaultLanguage,
+                                  Seq(Language.DefaultLanguage),
+                                  Seq("tag")))
+    service.asApiLearningPathTagsSummary(apiTags,
+                                         "hurr durr I'm a language",
+                                         true) should equal(expected)
   }
 
   test(
