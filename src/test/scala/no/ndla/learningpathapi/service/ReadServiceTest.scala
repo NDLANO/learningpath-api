@@ -108,14 +108,14 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That withIdV2 returns None when id does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      service.withIdV2(PUBLISHED_ID, "nb")
+      service.withIdV2(PUBLISHED_ID, "nb", false)
     }
   }
 
   test("That withIdV2 returns a learningPath when the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID))
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    val learningPath = service.withIdV2(PUBLISHED_ID, "nb")
+    val learningPath = service.withIdV2(PUBLISHED_ID, "nb", false)
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
@@ -125,7 +125,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     "That withId returns a learningPath when the status is PUBLISHED and user is not the owner") {
     when(learningPathRepository.withId(PUBLISHED_ID))
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    val learningPath = service.withIdV2(PUBLISHED_ID, "nb", Some(PRIVATE_OWNER))
+    val learningPath =
+      service.withIdV2(PUBLISHED_ID, "nb", false, Some(PRIVATE_OWNER))
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
@@ -136,7 +137,9 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.withIdV2(PRIVATE_ID, "nb") }.getMessage
+      intercept[AccessDeniedException] {
+        service.withIdV2(PRIVATE_ID, "nb", false)
+      }.getMessage
     }
   }
 
@@ -146,7 +149,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.withIdV2(PRIVATE_ID, "nb", Some(PUBLISHED_OWNER))
+        service.withIdV2(PRIVATE_ID, "nb", false, Some(PUBLISHED_OWNER))
       }.getMessage
     }
   }
@@ -155,7 +158,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     "That withId returns a learningPath when the status is PRIVATE and user is the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    val learningPath = service.withIdV2(PRIVATE_ID, "nb", Some(PRIVATE_OWNER))
+    val learningPath =
+      service.withIdV2(PRIVATE_ID, "nb", false, Some(PRIVATE_OWNER))
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PRIVATE_ID)
     assert(learningPath.get.status == "PRIVATE")
@@ -212,7 +216,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     assertResult(None) {
       service.learningstepsForWithStatusV2(PUBLISHED_ID,
                                            StepStatus.ACTIVE,
-                                           "nb")
+                                           "nb",
+                                           false)
     }
   }
 
@@ -225,7 +230,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     assertResult(None) {
       service.learningstepsForWithStatusV2(PUBLISHED_ID,
                                            StepStatus.ACTIVE,
-                                           "nb")
+                                           "nb",
+                                           false)
     }
   }
 
@@ -237,7 +243,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
     val learningSteps = service.learningstepsForWithStatusV2(PUBLISHED_ID,
                                                              StepStatus.ACTIVE,
-                                                             "nb")
+                                                             "nb",
+                                                             false)
     learningSteps.isDefined should be(true)
     learningSteps.get.learningsteps.size should be(2)
     learningSteps.get.learningsteps.head.id should equal(STEP1.id.get)
@@ -252,7 +259,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
     val learningSteps = service.learningstepsForWithStatusV2(PUBLISHED_ID,
                                                              StepStatus.DELETED,
-                                                             "nb")
+                                                             "nb",
+                                                             false)
     learningSteps.isDefined should be(true)
     learningSteps.get.learningsteps.size should be(1)
     learningSteps.get.learningsteps.head.id should equal(STEP2.id.get)
@@ -266,7 +274,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       intercept[AccessDeniedException] {
         service.learningstepsForWithStatusV2(PRIVATE_ID,
                                              StepStatus.ACTIVE,
-                                             "nb")
+                                             "nb",
+                                             false)
       }.getMessage
     }
   }
@@ -280,6 +289,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
         service.learningstepsForWithStatusV2(PRIVATE_ID,
                                              StepStatus.ACTIVE,
                                              "nb",
+                                             false,
                                              Some(PUBLISHED_OWNER))
       }.getMessage
     }
@@ -296,6 +306,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
         .learningstepsForWithStatusV2(PRIVATE_ID,
                                       StepStatus.ACTIVE,
                                       "nb",
+                                      false,
                                       Some(PRIVATE_OWNER))
         .get
         .learningsteps

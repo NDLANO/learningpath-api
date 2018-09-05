@@ -38,9 +38,10 @@ trait ReadServiceComponent {
 
     def withIdV2(learningPathId: Long,
                  language: String,
+                 fallback: Boolean,
                  user: Option[String] = None): Option[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp =>
-        converterService.asApiLearningpathV2(lp, language, user))
+        converterService.asApiLearningpathV2(lp, language, fallback, user))
     }
 
     def statusFor(learningPathId: Long,
@@ -62,10 +63,14 @@ trait ReadServiceComponent {
         learningPathId: Long,
         status: StepStatus.Value,
         language: String,
+        fallback: Boolean,
         user: Option[String] = None): Option[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
-          converterService.asLearningStepContainerSummary(status, lp, language)
+          converterService.asLearningStepContainerSummary(status,
+                                                          lp,
+                                                          language,
+                                                          fallback)
         case None => None
       }
     }
@@ -79,8 +84,10 @@ trait ReadServiceComponent {
         case Some(lp) =>
           learningPathRepository
             .learningStepWithId(learningPathId, learningstepId)
-            .flatMap(ls =>
-              converterService.asApiLearningStepV2(ls, lp, language, user))
+            .flatMap(
+              ls =>
+                converterService
+                  .asApiLearningStepV2(ls, lp, language, false, user))
         case None => None
       }
     }

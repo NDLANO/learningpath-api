@@ -95,6 +95,7 @@ trait UpdateServiceComponent {
           converterService.asApiLearningpathV2(
             learningPathRepository.insert(toInsert),
             newLearningPath.language,
+            false,
             Some(owner))
         }
       }
@@ -133,6 +134,7 @@ trait UpdateServiceComponent {
       converterService.asApiLearningpathV2(
         learningPathRepository.insert(learningPath),
         newLearningPath.language,
+        false,
         Option(owner))
     }
 
@@ -219,6 +221,7 @@ trait UpdateServiceComponent {
 
           converterService.asApiLearningpathV2(updatedLearningPath,
                                                learningPathToUpdate.language,
+                                               false,
                                                Option(owner))
         }
       }
@@ -247,6 +250,7 @@ trait UpdateServiceComponent {
 
           converterService.asApiLearningpathV2(updatedLearningPath,
                                                language,
+                                               false,
                                                Option(owner))
         }
       }
@@ -319,6 +323,7 @@ trait UpdateServiceComponent {
             converterService.asApiLearningStepV2(insertedStep,
                                                  updatedPath,
                                                  newLearningStep.language,
+                                                 false,
                                                  Option(owner))
           }
         }
@@ -397,6 +402,7 @@ trait UpdateServiceComponent {
                 updatedStep,
                 updatedPath,
                 learningStepToUpdate.language,
+                false,
                 Option(owner))
             }
           }
@@ -461,6 +467,7 @@ trait UpdateServiceComponent {
               converterService.asApiLearningStepV2(updatedStep,
                                                    updatedPath,
                                                    Language.DefaultLanguage,
+                                                   false,
                                                    Option(owner))
             }
           }
