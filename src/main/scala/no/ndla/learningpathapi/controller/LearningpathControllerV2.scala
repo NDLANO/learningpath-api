@@ -21,10 +21,8 @@ import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
 import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.learningpathapi.LearningpathApiProperties.PublishRole
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
-import no.ndla.network.AuthUser
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.DataType.ValueDataType
@@ -435,7 +433,6 @@ trait LearningpathControllerV2 {
 
     patch("/:learningpath_id", operation(updateLearningPath)) {
       val pathId = long(this.learningpathId.paramName)
-      val isPublisher = AuthUser.hasRole(PublishRole)
       val userInfo = UserInfo(requireUserId)
       val updatedLearningPath =
         updateService.updateLearningPathV2(pathId, extract[UpdatedLearningPathV2](request.body), userInfo)

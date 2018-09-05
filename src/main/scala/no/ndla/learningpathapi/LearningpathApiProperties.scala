@@ -49,8 +49,6 @@ object LearningpathApiProperties extends LazyLogging {
     case _       => s"ndla-frontend.$Environment.api.ndla.no"
   }
 
-  val PublishRole = "learningpath:publish"
-
   val NdlaFrontendHostNames =
     Set("beta.ndla.no", s"ndla-frontend.$Environment.api.ndla.no", s"ndla-frontend.api.ndla.no")
 
