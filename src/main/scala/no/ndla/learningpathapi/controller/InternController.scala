@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.{Error, ImportReport}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.{ImportService, ReadServiceComponent}
+import no.ndla.learningpathapi.service.{ImportService, ReadService}
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
 import org.json4s.ext.EnumNameSerializer
@@ -24,10 +24,7 @@ import org.scalatra._
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImportService
-    with SearchIndexServiceComponent
-    with LearningPathRepositoryComponent
-    with ReadServiceComponent =>
+  this: ImportService with SearchIndexServiceComponent with LearningPathRepositoryComponent with ReadService =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -43,10 +40,8 @@ trait InternController {
       AuthUser.getClientId match {
         case Some(clientId) => clientId
         case None => {
-          logger.warn(
-            s"Request made to ${request.getRequestURI} without clientId")
-          throw new AccessDeniedException(
-            "You do not have access to the requested resource.")
+          logger.warn(s"Request made to ${request.getRequestURI} without clientId")
+          throw new AccessDeniedException("You do not have access to the requested resource.")
         }
       }
     }

@@ -8,16 +8,8 @@
 
 package no.ndla.learningpathapi.service.search
 
-import no.ndla.learningpathapi.model.domain.{
-  Description,
-  LearningPathTags,
-  Title
-}
-import no.ndla.learningpathapi.model.search.{
-  SearchableDescriptions,
-  SearchableLearningStep,
-  SearchableTitles
-}
+import no.ndla.learningpathapi.model.domain.{Description, LearningPathTags, Title}
+import no.ndla.learningpathapi.model.search.{SearchableDescriptions, SearchableLearningStep, SearchableTitles}
 import no.ndla.learningpathapi.{TestEnvironment, UnitSuite}
 
 class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
@@ -44,18 +36,14 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
     val titleList = service.asApiTitle(searchableTitle)
     titleList.size should be(9)
     titleList.find(_.language == "nb").map(_.title) should equal(Some("Bokmål"))
-    titleList.find(_.language == "nn").map(_.title) should equal(
-      Some("Nynorsk"))
-    titleList.find(_.language == "en").map(_.title) should equal(
-      Some("Engelsk"))
+    titleList.find(_.language == "nn").map(_.title) should equal(Some("Nynorsk"))
+    titleList.find(_.language == "en").map(_.title) should equal(Some("Engelsk"))
     titleList.find(_.language == "fr").map(_.title) should equal(Some("Fransk"))
     titleList.find(_.language == "de").map(_.title) should equal(Some("Tysk"))
     titleList.find(_.language == "es").map(_.title) should equal(Some("Spansk"))
     titleList.find(_.language == "se").map(_.title) should equal(Some("Samisk"))
-    titleList.find(_.language == "zh").map(_.title) should equal(
-      Some("Kinesisk"))
-    titleList.find(_.language == "unknown").map(_.title) should equal(
-      Some("Ukjent"))
+    titleList.find(_.language == "zh").map(_.title) should equal(Some("Kinesisk"))
+    titleList.find(_.language == "unknown").map(_.title) should equal(Some("Ukjent"))
 
   }
 
@@ -76,8 +64,7 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asSearchableTitles converts language to correct place") {
-    val searchableTitles = service.asSearchableTitles(
-      List(Title("Tittel", "nb"), Title("Title", "en")))
+    val searchableTitles = service.asSearchableTitles(List(Title("Tittel", "nb"), Title("Title", "en")))
 
     searchableTitles.nb should equal(Some("Tittel"))
     searchableTitles.en should equal(Some("Title"))
@@ -105,30 +92,21 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
     val descriptionList = service.asApiDescription(searchableDescriptions)
     descriptionList.size should be(9)
-    descriptionList.find(_.language == "nb").map(_.description) should equal(
-      Some("Bokmål"))
-    descriptionList.find(_.language == "nn").map(_.description) should equal(
-      Some("Nynorsk"))
-    descriptionList.find(_.language == "en").map(_.description) should equal(
-      Some("Engelsk"))
-    descriptionList.find(_.language == "fr").map(_.description) should equal(
-      Some("Fransk"))
-    descriptionList.find(_.language == "de").map(_.description) should equal(
-      Some("Tysk"))
-    descriptionList.find(_.language == "es").map(_.description) should equal(
-      Some("Spansk"))
-    descriptionList.find(_.language == "se").map(_.description) should equal(
-      Some("Samisk"))
-    descriptionList.find(_.language == "zh").map(_.description) should equal(
-      Some("Kinesisk"))
+    descriptionList.find(_.language == "nb").map(_.description) should equal(Some("Bokmål"))
+    descriptionList.find(_.language == "nn").map(_.description) should equal(Some("Nynorsk"))
+    descriptionList.find(_.language == "en").map(_.description) should equal(Some("Engelsk"))
+    descriptionList.find(_.language == "fr").map(_.description) should equal(Some("Fransk"))
+    descriptionList.find(_.language == "de").map(_.description) should equal(Some("Tysk"))
+    descriptionList.find(_.language == "es").map(_.description) should equal(Some("Spansk"))
+    descriptionList.find(_.language == "se").map(_.description) should equal(Some("Samisk"))
+    descriptionList.find(_.language == "zh").map(_.description) should equal(Some("Kinesisk"))
     descriptionList
       .find(_.language == "unknown")
       .map(_.description) should equal(Some("Ukjent"))
 
   }
 
-  test(
-    "That asApiDescription does not return empty titles for a supported language") {
+  test("That asApiDescription does not return empty titles for a supported language") {
     val searchableDescriptions =
       SearchableDescriptions(nb = Some("Beskrivelse"),
                              nn = None,
@@ -146,8 +124,8 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That asSearchableDescriptions converts language to correct place") {
-    val searchableDescriptions = service.asSearchableDescriptions(
-      List(Description("Beskrivelse", "nb"), Description("Description", "en")))
+    val searchableDescriptions =
+      service.asSearchableDescriptions(List(Description("Beskrivelse", "nb"), Description("Description", "en")))
 
     searchableDescriptions.nb should equal(Some("Beskrivelse"))
     searchableDescriptions.en should equal(Some("Description"))
@@ -180,8 +158,7 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
     searchableTags.zh should equal(None)
   }
 
-  test(
-    "That asApiIntroduction returns the step as an introduction in all available languages") {
+  test("That asApiIntroduction returns the step as an introduction in all available languages") {
     val searchableTitles =
       SearchableTitles(None, None, None, None, None, None, None, None, None)
     val searchableDescriptions = SearchableDescriptions(
@@ -195,36 +172,20 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
       None,
       None
     )
-    val learningStep = SearchableLearningStep("INTRODUCTION",
-                                              searchableTitles,
-                                              searchableDescriptions)
+    val learningStep = SearchableLearningStep("INTRODUCTION", searchableTitles, searchableDescriptions)
 
     val apiIntroductions = service.asApiIntroduction(Some(learningStep))
     apiIntroductions.size should be(3)
-    apiIntroductions.find(_.language == "nb").map(_.introduction) should be(
-      Some("Bokmål"))
-    apiIntroductions.find(_.language == "nn").map(_.introduction) should be(
-      Some("Nynorsk"))
-    apiIntroductions.find(_.language == "en").map(_.introduction) should be(
-      Some("English"))
+    apiIntroductions.find(_.language == "nb").map(_.introduction) should be(Some("Bokmål"))
+    apiIntroductions.find(_.language == "nn").map(_.introduction) should be(Some("Nynorsk"))
+    apiIntroductions.find(_.language == "en").map(_.introduction) should be(Some("English"))
   }
 
-  test(
-    "That asApiIntroduction returns no introduction if no descriptions are available") {
+  test("That asApiIntroduction returns no introduction if no descriptions are available") {
     val searchableTitles =
       SearchableTitles(None, None, None, None, None, None, None, None, None)
-    val searchableDescriptions = SearchableDescriptions(None,
-                                                        None,
-                                                        None,
-                                                        None,
-                                                        None,
-                                                        None,
-                                                        None,
-                                                        None,
-                                                        None)
-    val learningStep = SearchableLearningStep("INTRODUCTION",
-                                              searchableTitles,
-                                              searchableDescriptions)
+    val searchableDescriptions = SearchableDescriptions(None, None, None, None, None, None, None, None, None)
+    val learningStep = SearchableLearningStep("INTRODUCTION", searchableTitles, searchableDescriptions)
 
     val apiIntroductions = service.asApiIntroduction(Some(learningStep))
     apiIntroductions.size should be(0)

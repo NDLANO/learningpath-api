@@ -16,19 +16,13 @@ import com.sksamuel.elastic4s.aws._
 import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, RequestSuccess}
 import java.util.concurrent.Executors
 
-import no.ndla.learningpathapi.LearningpathApiProperties.{
-  RunWithSignedSearchRequests,
-  SearchServer
-}
+import no.ndla.learningpathapi.LearningpathApiProperties.{RunWithSignedSearchRequests, SearchServer}
 import no.ndla.learningpathapi.model.domain.NdlaSearchException
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.apache.http.protocol.HttpContext
 import org.apache.http.{HttpRequest, HttpRequestInterceptor}
-import org.elasticsearch.client.RestClientBuilder.{
-  HttpClientConfigCallback,
-  RequestConfigCallback
-}
+import org.elasticsearch.client.RestClientBuilder.{HttpClientConfigCallback, RequestConfigCallback}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Success, Try}
@@ -39,8 +33,7 @@ trait Elastic4sClient {
 
 case class NdlaE4sClient(httpClient: HttpClient) {
 
-  def execute[T, U](request: T)(
-      implicit exec: HttpExecutable[T, U]): Try[RequestSuccess[U]] = {
+  def execute[T, U](request: T)(implicit exec: HttpExecutable[T, U]): Try[RequestSuccess[U]] = {
     implicit val ec: ExecutionContextExecutor =
       ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor)
     val response = Await
@@ -71,20 +64,15 @@ object Elastic4sClientFactory {
     }
   }
 
-  private object RequestConfigCallbackWithTimeout
-      extends RequestConfigCallback {
-    override def customizeRequestConfig(
-        requestConfigBuilder: RequestConfig.Builder): RequestConfig.Builder = {
+  private object RequestConfigCallbackWithTimeout extends RequestConfigCallback {
+    override def customizeRequestConfig(requestConfigBuilder: RequestConfig.Builder): RequestConfig.Builder = {
       val elasticSearchRequestTimeoutMs = 10000
-      requestConfigBuilder.setConnectionRequestTimeout(
-        elasticSearchRequestTimeoutMs)
+      requestConfigBuilder.setConnectionRequestTimeout(elasticSearchRequestTimeoutMs)
     }
   }
 
-  private object HttpClientCallbackWithAwsInterceptor
-      extends HttpClientConfigCallback {
-    override def customizeHttpClient(
-        httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
+  private object HttpClientCallbackWithAwsInterceptor extends HttpClientConfigCallback {
+    override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
       httpClientBuilder.addInterceptorLast(new AwsHttpInterceptor)
     }
   }
@@ -103,8 +91,7 @@ object Elastic4sClientFactory {
   }
 
   private def getNonSigningClient(searchServer: String): HttpClient = {
-    val uri = ElasticsearchClientUri(searchServer.host.getOrElse("localhost"),
-                                     searchServer.port.getOrElse(9200))
+    val uri = ElasticsearchClientUri(searchServer.host.getOrElse("localhost"), searchServer.port.getOrElse(9200))
     HttpClient(uri, requestConfigCallback = RequestConfigCallbackWithTimeout)
   }
 

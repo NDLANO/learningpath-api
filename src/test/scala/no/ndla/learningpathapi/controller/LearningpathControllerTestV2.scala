@@ -21,15 +21,13 @@ import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
-class LearningpathControllerTestV2
-    extends UnitSuite
-    with TestEnvironment
-    with ScalatraFunSuite {
+class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
   implicit val formats = org.json4s.DefaultFormats
   implicit val swagger = new LearningpathSwagger
 
   val copyright = api.Copyright(api.License("by-sa", None, None), List())
+
   val DefaultLearningPathSummary = api.LearningPathSummaryV2(
     1,
     api.Title("Tittel", "nb"),
@@ -136,11 +134,7 @@ class LearningpathControllerTestV2
     val page = 22
     val pageSize = 111
 
-    val result = SearchResultV2(1,
-                                page,
-                                pageSize,
-                                language,
-                                Seq(DefaultLearningPathSummary))
+    val result = SearchResultV2(1, page, pageSize, language, Seq(DefaultLearningPathSummary))
 
     when(
       searchService.matchingQuery(eqTo(List(1, 2)),
@@ -163,8 +157,7 @@ class LearningpathControllerTestV2
     }
   }
 
-  test(
-    "That GET /licenses with filter sat to by only returns creative common licenses") {
+  test("That GET /licenses with filter sat to by only returns creative common licenses") {
     val creativeCommonlicenses = getLicenses
       .filter(_.license.startsWith("by"))
       .map(l => api.License(l.license, Option(l.description), l.url))
@@ -202,8 +195,7 @@ class LearningpathControllerTestV2
     controller.paramAsListOfLong(paramName)(request) should equal(List())
   }
 
-  test(
-    "That paramAsListOfLong returns List of longs for all ids specified in input") {
+  test("That paramAsListOfLong returns List of longs for all ids specified in input") {
     import scala.collection.JavaConverters._
     implicit val request = mock[HttpServletRequest]
     val expectedList = List(1, 2, 3, 5, 6, 7, 8)
@@ -214,8 +206,7 @@ class LearningpathControllerTestV2
     controller.paramAsListOfLong(paramName)(request) should equal(expectedList)
   }
 
-  test(
-    "That paramAsListOfLong returns validation error when list of ids contains a string") {
+  test("That paramAsListOfLong returns validation error when list of ids contains a string") {
     import scala.collection.JavaConverters._
     implicit val request = mock[HttpServletRequest]
     val paramName = "test"

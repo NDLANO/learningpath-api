@@ -11,12 +11,7 @@ package no.ndla.learningpathapi.integration
 import java.util.Date
 
 import com.netaporter.uri.dsl._
-import no.ndla.learningpathapi.LearningpathApiProperties.{
-  Environment,
-  MigrationHost,
-  MigrationPassword,
-  MigrationUser
-}
+import no.ndla.learningpathapi.LearningpathApiProperties.{Environment, MigrationHost, MigrationPassword, MigrationUser}
 import no.ndla.learningpathapi.caching.Memoize
 import no.ndla.network.NdlaClient
 
@@ -33,25 +28,19 @@ trait MigrationApiClient {
     private val LearningPathEndpoint = s"$MigrationHost/learningpaths/:node_id" ? (s"db-source" -> s"$DBSource")
 
     def getAllLearningPathIds: Try[Seq[String]] = {
-      ndlaClient.fetchWithBasicAuth[Seq[String]](Http(LearningPathsEndpoint),
-                                                 MigrationUser,
-                                                 MigrationPassword)
+      ndlaClient.fetchWithBasicAuth[Seq[String]](Http(LearningPathsEndpoint), MigrationUser, MigrationPassword)
     }
 
     def getLearningPath(nodeId: String): Try[MainPackageImport] = {
-      ndlaClient.fetchWithBasicAuth[MainPackageImport](
-        Http(LearningPathEndpoint.replace(":node_id", nodeId)),
-        MigrationUser,
-        MigrationPassword)
+      ndlaClient.fetchWithBasicAuth[MainPackageImport](Http(LearningPathEndpoint.replace(":node_id", nodeId)),
+                                                       MigrationUser,
+                                                       MigrationPassword)
     }
 
-    val getAllNodeIds
-      : Memoize[String, Set[ArticleMigrationContent]] = Memoize((nodeId: String) => {
+    val getAllNodeIds: Memoize[String, Set[ArticleMigrationContent]] = Memoize((nodeId: String) => {
       val url = s"$MigrationHost/contents/$nodeId" ? ("db-source" -> s"$DBSource")
       ndlaClient
-        .fetchWithBasicAuth[ArticleMigrationData](Http(url),
-                                                  MigrationUser,
-                                                  MigrationPassword)
+        .fetchWithBasicAuth[ArticleMigrationData](Http(url), MigrationUser, MigrationPassword)
         .toOption
         .map(_.contents)
         .getOrElse(Seq.empty)
@@ -78,6 +67,7 @@ case class Step(packageId: Long,
                 description: Option[String],
                 license: Option[String],
                 language: String) {
+
   def embedUrlToNdlaNo: Option[String] = {
     embedUrl.flatMap(url =>
       url.host.map(host => {

@@ -13,8 +13,7 @@ import no.ndla.learningpathapi.UnitSuite
 class V4__ConvertStatusNotListedToPrivateTest extends UnitSuite {
   val migration = new V4__ConvertStatusNotListedToPrivate()
 
-  test(
-    "That converting an learningPath status with NOT_LISTED is changed to PRIVATE") {
+  test("That converting an learningPath status with NOT_LISTED is changed to PRIVATE") {
     val before = """{"status":"NOT_LISTED"}"""
     val expectedAfter = """{"status":"PRIVATE"}"""
     val learningPath = V4_DBLearningPath(1, before)

@@ -11,12 +11,7 @@ package no.ndla.learningpathapi.controller
 import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.ComponentRegistry
-import no.ndla.learningpathapi.model.api.{
-  Error,
-  ImportReport,
-  ValidationError,
-  ValidationMessage
-}
+import no.ndla.learningpathapi.model.api.{Error, ImportReport, ValidationError, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.network.model.HttpRequestException
 import no.ndla.network.{ApplicationUrl, AuthUser}
@@ -53,9 +48,7 @@ abstract class NdlaController
     case a: AccessDeniedException =>
       halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
     case ole: OptimisticLockException =>
-      halt(status = 409,
-           body = Error(Error.RESOURCE_OUTDATED,
-                        Error.RESOURCE_OUTDATED_DESCRIPTION))
+      halt(status = 409, body = Error(Error.RESOURCE_OUTDATED, Error.RESOURCE_OUTDATED_DESCRIPTION))
     case hre: HttpRequestException =>
       halt(status = 502, body = Error(Error.REMOTE_ERROR, hre.getMessage))
     case i: ImportException =>
@@ -82,8 +75,7 @@ abstract class NdlaController
     } catch {
       case e: Exception => {
         logger.error(e.getMessage, e)
-        throw new ValidationException(
-          errors = List(ValidationMessage("body", e.getMessage)))
+        throw new ValidationException(errors = List(ValidationMessage("body", e.getMessage)))
       }
     }
   }
@@ -91,12 +83,9 @@ abstract class NdlaController
   def requireUserId(implicit request: HttpServletRequest): String = {
     AuthUser.get match {
       case Some(user) => user
-      case None => {
-        logger.warn(
-          s"Request made to ${request.getRequestURI} without authorization")
-        throw new AccessDeniedException(
-          "You do not have access to the requested resource.")
-      }
+      case None =>
+        logger.warn(s"Request made to ${request.getRequestURI} without authorization")
+        throw AccessDeniedException("You do not have access to the requested resource.")
     }
   }
 
@@ -106,53 +95,43 @@ abstract class NdlaController
       case true => paramValue.toLong
       case false =>
         throw new ValidationException(
-          errors = List(
-            ValidationMessage(
-              paramName,
-              s"Invalid value for $paramName. Only digits are allowed.")))
+          errors = List(ValidationMessage(paramName, s"Invalid value for $paramName. Only digits are allowed.")))
     }
   }
 
-  def optLong(paramName: String)(
-      implicit request: HttpServletRequest): Option[Long] = {
+  def optLong(paramName: String)(implicit request: HttpServletRequest): Option[Long] = {
     params.get(paramName).filter(_.forall(_.isDigit)).map(_.toLong)
   }
 
-  def paramOrNone(paramName: String)(
-      implicit request: HttpServletRequest): Option[String] = {
+  def paramOrNone(paramName: String)(implicit request: HttpServletRequest): Option[String] = {
     params.get(paramName).map(_.trim).filterNot(_.isEmpty())
   }
 
-  def paramOrDefault(paramName: String, default: String)(
-      implicit request: HttpServletRequest): String = {
+  def paramOrDefault(paramName: String, default: String)(implicit request: HttpServletRequest): String = {
     paramOrNone(paramName).getOrElse(default)
   }
 
-  def intOrNone(paramName: String)(
-      implicit request: HttpServletRequest): Option[Int] =
+  def intOrNone(paramName: String)(implicit request: HttpServletRequest): Option[Int] =
     paramOrNone(paramName).flatMap(p => Try(p.toInt).toOption)
 
   def intOrDefault(paramName: String, default: Int): Int =
     intOrNone(paramName).getOrElse(default)
 
-  def booleanOrNone(paramName: String)(
-      implicit request: HttpServletRequest): Option[Boolean] =
+  def booleanOrNone(paramName: String)(implicit request: HttpServletRequest): Option[Boolean] =
     paramOrNone(paramName).flatMap(p => Try(p.toBoolean).toOption)
 
-  def booleanOrDefault(paramName: String, default: Boolean)(
-      implicit request: HttpServletRequest): Boolean =
+  def booleanOrDefault(paramName: String, default: Boolean)(implicit request: HttpServletRequest): Boolean =
     booleanOrNone(paramName).getOrElse(default)
 
-  def paramAsListOfLong(paramName: String)(
-      implicit request: HttpServletRequest): List[Long] = {
+  def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {
     params.get(paramName) match {
       case None => List()
       case Some(param) => {
         val paramAsListOfStrings = param.split(",").toList.map(_.trim)
         if (!paramAsListOfStrings.forall(entry => entry.forall(_.isDigit))) {
-          throw new ValidationException(errors = List(ValidationMessage(
-            paramName,
-            s"Invalid value for $paramName. Only (list of) digits are allowed.")))
+          throw new ValidationException(
+            errors =
+              List(ValidationMessage(paramName, s"Invalid value for $paramName. Only (list of) digits are allowed.")))
         }
         paramAsListOfStrings.map(_.toLong)
 

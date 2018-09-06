@@ -20,6 +20,7 @@ trait KeywordsServiceComponent extends LazyLogging {
   val keywordsService: KeywordsService
 
   class KeywordsService {
+
     val TopicAPIUrl =
       "http://api.topic.ndla.no/rest/v1/keywords/?filter[node]=ndlanode_"
     val pattern = new Regex("http:\\/\\/psi\\..*\\/#(.+)")
@@ -34,8 +35,7 @@ trait KeywordsServiceComponent extends LazyLogging {
       val response = request.asString
       response.isError match {
         case true => {
-          logger.error(
-            s"Received error ${response.code} = ${response.statusLine} for url ${request.url}")
+          logger.error(s"Received error ${response.code} = ${response.statusLine} for url ${request.url}")
           List()
         }
         case false => {
@@ -47,13 +47,11 @@ trait KeywordsServiceComponent extends LazyLogging {
               .map(t => (getISO639(t._1), t._2.trim.toLowerCase))
               .groupBy(_._1)
               .map(entry => (entry._1, entry._2.map(_._2)))
-              .map(entr =>
-                LearningPathTags(entr._2, Language.languageOrUnknown(entr._1)))
+              .map(entr => LearningPathTags(entr._2, Language.languageOrUnknown(entr._1)))
               .toList
           } catch {
             case e: Exception => {
-              logger.error(
-                s"Could not extract tags for request = ${request.url}. Error was ${e.getMessage}")
+              logger.error(s"Could not extract tags for request = ${request.url}. Error was ${e.getMessage}")
               List()
             }
           }

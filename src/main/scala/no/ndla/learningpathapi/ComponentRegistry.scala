@@ -8,18 +8,14 @@
 
 package no.ndla.learningpathapi
 
-import no.ndla.learningpathapi.controller.{
-  HealthController,
-  InternController,
-  LearningpathControllerV2
-}
+import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{
   SearchConverterServiceComponent,
   SearchIndexServiceComponent,
-  SearchServiceComponent
+  SearchService
 }
 import no.ndla.learningpathapi.validation.{
   LanguageValidator,
@@ -36,17 +32,17 @@ object ComponentRegistry
     with InternController
     with HealthController
     with LearningPathRepositoryComponent
-    with ReadServiceComponent
-    with UpdateServiceComponent
+    with ReadService
+    with UpdateService
     with SearchConverterServiceComponent
-    with SearchServiceComponent
+    with SearchService
     with SearchIndexServiceComponent
     with TaxonomyApiClient
     with NdlaClient
     with ImageApiClientComponent
     with ArticleImportClient
     with MigrationApiClient
-    with ConverterServiceComponent
+    with ConverterService
     with Elastic4sClient
     with DatasourceComponent
     with ImportService
@@ -56,6 +52,7 @@ object ComponentRegistry
     with LearningPathValidator
     with LearningStepValidator
     with TitleValidator {
+
   def connectToDatabase(): Unit =
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
 
@@ -67,8 +64,7 @@ object ComponentRegistry
   dataSource.setDatabaseName(LearningpathApiProperties.MetaResource)
   dataSource.setServerName(LearningpathApiProperties.MetaServer)
   dataSource.setPortNumber(LearningpathApiProperties.MetaPort)
-  dataSource.setInitialConnections(
-    LearningpathApiProperties.MetaInitialConnections)
+  dataSource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
   dataSource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
   dataSource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
 

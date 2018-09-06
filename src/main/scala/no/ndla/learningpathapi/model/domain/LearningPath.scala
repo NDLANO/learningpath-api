@@ -8,37 +8,36 @@
 
 package no.ndla.learningpathapi.model.domain
 
+import java.nio.file
 import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.validation.{
-  DurationValidator,
-  LearningPathValidator,
-  LearningStepValidator
-}
+import no.ndla.learningpathapi.validation.{DurationValidator, LearningPathValidator, LearningStepValidator}
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
-case class LearningPath(
-    id: Option[Long],
-    revision: Option[Int],
-    externalId: Option[String],
-    isBasedOn: Option[Long],
-    title: Seq[Title],
-    description: Seq[Description],
-    coverPhotoId: Option[String],
-    duration: Option[Int],
-    status: LearningPathStatus.Value,
-    verificationStatus: LearningPathVerificationStatus.Value,
-    lastUpdated: Date,
-    tags: Seq[LearningPathTags],
-    owner: String,
-    copyright: Copyright,
-    learningsteps: Seq[LearningStep] = Nil) {
+import scala.util.{Failure, Success, Try}
+
+case class LearningPath(id: Option[Long],
+                        revision: Option[Int],
+                        externalId: Option[String],
+                        isBasedOn: Option[Long],
+                        title: Seq[Title],
+                        description: Seq[Description],
+                        coverPhotoId: Option[String],
+                        duration: Option[Int],
+                        status: LearningPathStatus.Value,
+                        verificationStatus: LearningPathVerificationStatus.Value,
+                        lastUpdated: Date,
+                        tags: Seq[LearningPathTags],
+                        owner: String,
+                        copyright: Copyright,
+                        learningsteps: Seq[LearningStep] = Nil) {
+
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE
   }
@@ -47,49 +46,42 @@ case class LearningPath(
     status == LearningPathStatus.PUBLISHED
   }
 
-  def canEdit(user: Option[String]): Boolean = {
-    user match {
-      case Some(user) => user == owner
-      case None       => false
+  def canSetStatus(status: LearningPathStatus.Value, user: UserInfo): Try[LearningPath] = {
+    if (status == LearningPathStatus.PUBLISHED && !user.isAdmin) {
+      Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
+    } else if (user.userId != owner && !user.isAdmin) {
+      Failure(AccessDeniedException("You do not have access to the requested resource."))
+    } else {
+      Success(this)
     }
   }
 
-  def verifyOwner(loggedInUser: String) = {
-    if (loggedInUser != owner) {
-      throw new AccessDeniedException(
-        "You do not have access to the requested resource.")
+  def canEditLearningpath(user: UserInfo): Try[LearningPath] = {
+    if (user.userId != owner && !user.isAdmin) {
+      Failure(AccessDeniedException("You do not have access to the requested resource."))
+    } else {
+      Success(this)
     }
   }
 
-  def verifyNotPrivate = {
+  def isOwnerOrPublic(user: UserInfo): Try[LearningPath] = {
     if (isPrivate) {
-      throw new AccessDeniedException(
-        "You do not have access to the requested resource.")
+      canEditLearningpath(user)
+    } else {
+      Success(this)
     }
   }
 
-  def verifyOwnerOrPublic(loggedInUser: Option[String]) = {
-    if (isPrivate) {
-      loggedInUser match {
-        case Some(user) => verifyOwner(user)
-        case None =>
-          throw new AccessDeniedException(
-            "You do not have access to the requested resource.")
-      }
-    }
-  }
+  def canEdit(userInfo: UserInfo): Boolean = canEditLearningpath(userInfo).isSuccess
 
-  def validateSeqNo(seqNo: Int) = {
+  def validateSeqNo(seqNo: Int): Unit = {
     if (seqNo < 0 || seqNo > learningsteps.length - 1) {
       throw new ValidationException(
-        errors = List(
-          ValidationMessage(
-            "seqNo",
-            s"seqNo must be between 0 and ${learningsteps.length - 1}")))
+        errors = List(ValidationMessage("seqNo", s"seqNo must be between 0 and ${learningsteps.length - 1}")))
     }
   }
 
-  def validateForPublishing() = {
+  def validateForPublishing(): LearningPath = {
     val validationResult =
       new DurationValidator().validateRequired(duration).toList
     validationResult.isEmpty match {
@@ -99,8 +91,17 @@ case class LearningPath(
   }
 }
 
+object LearningPathRole extends Enumeration {
+  val ADMIN: LearningPathRole.Value = Value
+
+  def valueOf(s: String): Option[LearningPathRole.Value] = {
+    val lpRole = s.split("learningpath:")
+    LearningPathRole.values.find(_.toString == lpRole.lastOption.getOrElse("").toUpperCase)
+  }
+}
+
 object LearningPathStatus extends Enumeration {
-  val PUBLISHED, PRIVATE, DELETED = Value
+  val PUBLISHED, PRIVATE, DELETED, UNLISTED = Value
 
   def valueOf(s: String): Option[LearningPathStatus.Value] = {
     LearningPathStatus.values.find(_.toString == s.toUpperCase)
@@ -111,9 +112,7 @@ object LearningPathStatus extends Enumeration {
       case Some(status) => status
       case None =>
         throw new ValidationException(
-          errors = List(
-            ValidationMessage("status",
-                              s"'$status' is not a valid publishingstatus.")))
+          errors = List(ValidationMessage("status", s"'$status' is not a valid publishingstatus.")))
     }
   }
 
@@ -135,15 +134,14 @@ object LearningPathVerificationStatus extends Enumeration {
 }
 
 object LearningPath extends SQLSyntaxSupport[LearningPath] {
-  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(
-    LearningPathStatus) + new EnumNameSerializer(LearningPathVerificationStatus)
+  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(LearningPathStatus) + new EnumNameSerializer(
+    LearningPathVerificationStatus)
   override val tableName = "learningpaths"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
-  def apply(lp: SyntaxProvider[LearningPath])(
-      rs: WrappedResultSet): LearningPath = apply(lp.resultName)(rs)
-  def apply(lp: ResultName[LearningPath])(
-      rs: WrappedResultSet): LearningPath = {
+  def apply(lp: SyntaxProvider[LearningPath])(rs: WrappedResultSet): LearningPath = apply(lp.resultName)(rs)
+
+  def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
     val meta = read[LearningPath](rs.string(lp.c("document")))
     LearningPath(
       Some(rs.long(lp.c("id"))),

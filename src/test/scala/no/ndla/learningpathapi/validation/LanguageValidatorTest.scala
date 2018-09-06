@@ -27,8 +27,7 @@ class LanguageValidatorTest extends UnitSuite with TestEnvironment {
     val errorMessage = validator.validate("path1.path2", "something", false)
     errorMessage.isDefined should be(true)
     errorMessage.get.field should equal("path1.path2")
-    errorMessage.get.message should equal(
-      "Language 'something' is not a supported value.")
+    errorMessage.get.message should equal("Language 'something' is not a supported value.")
   }
 
 }
