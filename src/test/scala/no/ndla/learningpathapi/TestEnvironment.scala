@@ -10,10 +10,7 @@ package no.ndla.learningpathapi
 
 import javax.sql.DataSource
 
-import no.ndla.learningpathapi.controller.{
-  HealthController,
-  LearningpathControllerV2
-}
+import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -31,7 +28,7 @@ trait TestEnvironment
     extends LearningpathControllerV2
     with LearningPathRepositoryComponent
     with ReadServiceComponent
-    with UpdateServiceComponent
+    with UpdateService
     with SearchConverterServiceComponent
     with SearchServiceComponent
     with SearchIndexServiceComponent
@@ -40,7 +37,7 @@ trait TestEnvironment
     with ImageApiClientComponent
     with ArticleImportClient
     with MigrationApiClient
-    with ConverterServiceComponent
+    with ConverterService
     with Elastic4sClient
     with DatasourceComponent
     with MockitoSugar

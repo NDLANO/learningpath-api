@@ -8,22 +8,25 @@
 
 package no.ndla.learningpathapi.repository
 
+import java.net.Socket
 import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.tag.IntegrationTest
-import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
+import org.joda.time.DateTime
+import scalikejdbc._
+
+import scala.util.{Success, Try}
 
 @IntegrationTest
-class LearningPathRepositoryComponentIntegrationTest
-    extends IntegrationSuite
-    with TestEnvironment {
+class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
   var repository: LearningPathRepository = _
 
   val clinton = Author("author", "Hilla the Hun")
   val license = "publicdomain"
   val copyright = Copyright(license, List(clinton))
+
   val DefaultLearningPath = LearningPath(
     None,
     None,
@@ -35,7 +38,7 @@ class LearningPathRepositoryComponentIntegrationTest
     None,
     LearningPathStatus.PRIVATE,
     LearningPathVerificationStatus.EXTERNAL,
-    new Date(),
+    new DateTime().withMillisOfSecond(0).toDate,
     List(),
     "UNIT-TEST",
     copyright
@@ -56,17 +59,33 @@ class LearningPathRepositoryComponentIntegrationTest
     StepStatus.ACTIVE
   )
 
-  override def beforeEach() = {
+  def serverIsListenning: Boolean = {
+    Try(new Socket(LearningpathApiProperties.MetaServer, LearningpathApiProperties.MetaPort)) match {
+      case Success(c) =>
+        c.close()
+        true
+      case _ => false
+    }
+  }
+  def databaseIsAvailable: Boolean = Try(repository.learningPathCount).isSuccess
+
+  override def beforeEach(): Unit = {
     repository = new LearningPathRepository()
+    if (databaseIsAvailable) {
+      emptyTestDatabase
+    }
   }
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     val datasource = getDataSource
-    DBMigrator.migrate(datasource)
-    ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
+    if (serverIsListenning) {
+      DBMigrator.migrate(datasource)
+      ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
+    }
   }
 
   test("That insert, fetch and delete works happy-day") {
+    assume(databaseIsAvailable, "Database is unavailable")
     inTransaction { implicit session =>
       val inserted = repository.insert(DefaultLearningPath)
       inserted.id.isDefined should be(true)
@@ -80,6 +99,7 @@ class LearningPathRepositoryComponentIntegrationTest
   }
 
   test("That transaction is rolled back if exception is thrown") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val owner = s"unit-test-${System.currentTimeMillis()}"
     deleteAllWithOwner(owner)
 
@@ -97,15 +117,12 @@ class LearningPathRepositoryComponentIntegrationTest
     }
   }
 
-  test(
-    "That updating several times is not throwing optimistic locking exception") {
+  test("That updating several times is not throwing optimistic locking exception") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val inserted = repository.insert(DefaultLearningPath)
-    val firstUpdate = repository.update(
-      inserted.copy(title = List(Title("First change", "unknown"))))
-    val secondUpdate = repository.update(
-      firstUpdate.copy(title = List(Title("Second change", "unknown"))))
-    val thirdUpdate = repository.update(
-      secondUpdate.copy(title = List(Title("Third change", "unknown"))))
+    val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", "unknown"))))
+    val secondUpdate = repository.update(firstUpdate.copy(title = List(Title("Second change", "unknown"))))
+    val thirdUpdate = repository.update(secondUpdate.copy(title = List(Title("Third change", "unknown"))))
 
     inserted.revision should equal(Some(1))
     firstUpdate.revision should equal(Some(2))
@@ -115,45 +132,39 @@ class LearningPathRepositoryComponentIntegrationTest
     repository.deletePath(thirdUpdate.id.get)
   }
 
-  test(
-    "That trying to update a learningPath with old revision number throws optimistic locking exception") {
+  test("That trying to update a learningPath with old revision number throws optimistic locking exception") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val inserted = repository.insert(DefaultLearningPath)
-    val firstUpdate = repository.update(
-      inserted.copy(title = List(Title("First change", "unknown"))))
+    val firstUpdate = repository.update(inserted.copy(title = List(Title("First change", "unknown"))))
 
     assertResult(
       s"Conflicting revision is detected for learningPath with id = ${inserted.id} and revision = ${inserted.revision}") {
       intercept[OptimisticLockException] {
-        repository.update(
-          inserted.copy(title =
-            List(Title("Second change, but with old revision", "unknown"))))
+        repository.update(inserted.copy(title = List(Title("Second change, but with old revision", "unknown"))))
       }.getMessage
     }
 
     repository.deletePath(inserted.id.get)
   }
 
-  test(
-    "That trying to update a learningStep with old revision throws optimistic locking exception") {
+  test("That trying to update a learningStep with old revision throws optimistic locking exception") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val learningPath = repository.insert(DefaultLearningPath)
-    val insertedStep = repository.insertLearningStep(
-      DefaultLearningStep.copy(learningPathId = learningPath.id))
-    val firstUpdate = repository.updateLearningStep(
-      insertedStep.copy(title = List(Title("First change", "unknown"))))
+    val insertedStep = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
+    val firstUpdate = repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", "unknown"))))
 
     assertResult(
       s"Conflicting revision is detected for learningStep with id = ${insertedStep.id} and revision = ${insertedStep.revision}") {
       intercept[OptimisticLockException] {
-        repository.updateLearningStep(
-          insertedStep.copy(title = List(Title("First change", "unknown"))))
+        repository.updateLearningStep(insertedStep.copy(title = List(Title("First change", "unknown"))))
       }.getMessage
     }
 
     repository.deletePath(learningPath.id.get)
   }
 
-  test(
-    "That learningPathsWithIsBasedOn returns all learningpaths that has one is based on id") {
+  test("That learningPathsWithIsBasedOn returns all learningpaths that has one is based on id") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val learningPath1 = repository.insert(DefaultLearningPath)
     val learningPath2 = repository.insert(DefaultLearningPath)
 
@@ -185,14 +196,14 @@ class LearningPathRepositoryComponentIntegrationTest
   }
 
   test("That allPublishedTags returns only published tags") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath = repository.insert(
       DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
                                tags = List(LearningPathTags(Seq("aaa"), "nb"),
                                            LearningPathTags(Seq("bbb"), "nn"),
                                            LearningPathTags(Seq("ccc"), "en"))))
 
-    val privatePath = repository.insert(
-      DefaultLearningPath.copy(tags = List(LearningPathTags(Seq("ddd"), "nb"))))
+    val privatePath = repository.insert(DefaultLearningPath.copy(tags = List(LearningPathTags(Seq("ddd"), "nb"))))
 
     val publicTags = repository.allPublishedTags
     publicTags should contain(LearningPathTags(Seq("aaa"), "nb"))
@@ -205,14 +216,13 @@ class LearningPathRepositoryComponentIntegrationTest
   }
 
   test("That allPublishedTags removes duplicates") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath1 = repository.insert(
       DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
-                               tags = List(LearningPathTags(Seq("aaa"), "nb"),
-                                           LearningPathTags(Seq("aaa"), "nn"))))
+                               tags = List(LearningPathTags(Seq("aaa"), "nb"), LearningPathTags(Seq("aaa"), "nn"))))
     val publicPath2 = repository.insert(
-      DefaultLearningPath.copy(
-        status = LearningPathStatus.PUBLISHED,
-        tags = List(LearningPathTags(Seq("aaa", "bbb"), "nb"))))
+      DefaultLearningPath.copy(status = LearningPathStatus.PUBLISHED,
+                               tags = List(LearningPathTags(Seq("aaa", "bbb"), "nb"))))
 
     val publicTags = repository.allPublishedTags
     publicTags should contain(LearningPathTags(Seq("aaa", "bbb"), "nb"))
@@ -228,6 +238,7 @@ class LearningPathRepositoryComponentIntegrationTest
   }
 
   test("That allPublishedContributors returns only published contributors") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath = repository.insert(
       DefaultLearningPath.copy(
         status = LearningPathStatus.PUBLISHED,
@@ -253,6 +264,7 @@ class LearningPathRepositoryComponentIntegrationTest
   }
 
   test("That allPublishedContributors removes duplicates") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val publicPath1 = repository.insert(
       DefaultLearningPath.copy(
         status = LearningPathStatus.PUBLISHED,
@@ -264,9 +276,7 @@ class LearningPathRepositoryComponentIntegrationTest
     val publicPath2 = repository.insert(
       DefaultLearningPath.copy(
         status = LearningPathStatus.PUBLISHED,
-        copyright = Copyright("by",
-                              List(Author("forfatter", "James Bond"),
-                                   Author("forfatter", "Test testesen")))))
+        copyright = Copyright("by", List(Author("forfatter", "James Bond"), Author("forfatter", "Test testesen")))))
 
     val publicContributors = repository.allPublishedContributors
     publicContributors should contain(Author("forfatter", "James Bond"))
@@ -280,16 +290,13 @@ class LearningPathRepositoryComponentIntegrationTest
     repository.deletePath(publicPath2.id.get)
   }
 
-  test(
-    "That only learningsteps with status ACTIVE are returned together with a learningpath") {
+  test("That only learningsteps with status ACTIVE are returned together with a learningpath") {
+    assume(databaseIsAvailable, "Database is unavailable")
     val learningPath = repository.insert(DefaultLearningPath)
-    val activeStep1 = repository.insertLearningStep(
-      DefaultLearningStep.copy(learningPathId = learningPath.id))
-    val activeStep2 = repository.insertLearningStep(
-      DefaultLearningStep.copy(learningPathId = learningPath.id))
+    val activeStep1 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
+    val activeStep2 = repository.insertLearningStep(DefaultLearningStep.copy(learningPathId = learningPath.id))
     val deletedStep = repository.insertLearningStep(
-      DefaultLearningStep.copy(learningPathId = learningPath.id,
-                               status = StepStatus.DELETED))
+      DefaultLearningStep.copy(learningPathId = learningPath.id, status = StepStatus.DELETED))
 
     learningPath.id.isDefined should be(true)
     val savedLearningPath = repository.withId(learningPath.id.get)
@@ -301,7 +308,60 @@ class LearningPathRepositoryComponentIntegrationTest
     repository.deletePath(learningPath.id.get)
   }
 
-  def deleteAllWithOwner(owner: String) = {
+  test("That getLearningPathByPage returns correct result when pageSize is smaller than amount of steps") {
+    assume(databaseIsAvailable, "Database is unavailable")
+    val steps = List(
+      DefaultLearningStep,
+      DefaultLearningStep,
+      DefaultLearningStep
+    )
+
+    val learningPath =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PUBLISHED))
+
+    val page1 = repository.getLearningPathByPage(2, 0)
+    val page2 = repository.getLearningPathByPage(2, 2)
+
+    page1 should be(List(learningPath))
+    page2 should be(List.empty)
+
+    repository.deletePath(learningPath.id.get)
+  }
+
+  test("That getLeraningPathByPage returns only published results") {
+    assume(databaseIsAvailable, "Database is unavailable")
+    val steps = List(
+      DefaultLearningStep,
+      DefaultLearningStep,
+      DefaultLearningStep
+    )
+
+    val learningPath1 =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PRIVATE))
+    val learningPath2 =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PRIVATE))
+    val learningPath3 =
+      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PUBLISHED))
+
+    val page1 = repository.getLearningPathByPage(2, 0)
+    val page2 = repository.getLearningPathByPage(2, 2)
+
+    page1 should be(List(learningPath3))
+    page2 should be(List.empty)
+
+    repository.deletePath(learningPath1.id.get)
+    repository.deletePath(learningPath2.id.get)
+    repository.deletePath(learningPath3.id.get)
+  }
+
+  def emptyTestDatabase = {
+    DB autoCommit (implicit session => {
+      sql"delete from learningpathapi_test.learningpaths;".execute.apply()(session)
+      sql"delete from learningpathapi_test.learningsteps;".execute.apply()(session)
+    })
+  }
+
+  def deleteAllWithOwner(owner: String): Unit = {
     inTransaction { implicit session =>
       repository
         .withOwner(owner)

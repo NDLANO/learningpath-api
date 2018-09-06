@@ -16,6 +16,7 @@ import org.scalatra.servlet.ScalatraListener
 import scala.io.Source
 
 object JettyLauncher extends LazyLogging {
+
   def main(args: Array[String]) {
     logger.info(
       Source
@@ -31,9 +32,7 @@ object JettyLauncher extends LazyLogging {
     servletContext.setContextPath("/")
     servletContext.addEventListener(new ScalatraListener)
     servletContext.addServlet(classOf[DefaultServlet], "/")
-    servletContext.setInitParameter(
-      "org.eclipse.jetty.servlet.Default.dirAllowed",
-      "false")
+    servletContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
 
     val server = new Server(port)
     server.setHandler(servletContext)

@@ -42,14 +42,15 @@ object LearningpathApiProperties extends LazyLogging {
   val ApiGatewayHost = "api-gateway.ndla-local"
   val ImageApiHost = propOrElse("IMAGE_API_HOST", "image-api.ndla-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
+
   val NdlaFrontendHost = Environment match {
     case "prod"  => "ndla.no"
     case "local" => "localhost:30017"
     case _       => s"ndla-frontend.$Environment.api.ndla.no"
   }
-  val NdlaFrontendHostNames = Set("beta.ndla.no",
-                                  s"ndla-frontend.$Environment.api.ndla.no",
-                                  s"ndla-frontend.api.ndla.no")
+
+  val NdlaFrontendHostNames =
+    Set("ndla.no", "beta.ndla.no", s"ndla-frontend.$Environment.api.ndla.no", s"ndla-frontend.api.ndla.no")
 
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
@@ -92,6 +93,7 @@ object LearningpathApiProperties extends LazyLogging {
   val SearchServer =
     propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
   val SearchRegion = propOrElse("SEARCH_REGION", "eu-central-1")
+
   val RunWithSignedSearchRequests =
     propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
@@ -102,9 +104,7 @@ object LearningpathApiProperties extends LazyLogging {
   lazy val secrets = readSecrets(SecretsFile) match {
     case Success(values) => values
     case Failure(exception) =>
-      throw new RuntimeException(
-        s"Unable to load remote secrets from $SecretsFile",
-        exception)
+      throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
   }
 
   def prop(key: String): String = {

@@ -14,8 +14,10 @@ import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
 
 class TextValidator(allowHtml: Boolean) {
+
   val IllegalContentInBasicText =
     s"The content contains illegal html-characters. Allowed characters are ${BasicHtmlTags.mkString(", ")}"
+
   val IllegalContentInPlainText =
     "The content contains illegal html-characters. No HTML is allowed."
   val FieldEmpty = "Required field is empty."
@@ -27,9 +29,7 @@ class TextValidator(allowHtml: Boolean) {
     }
   }
 
-  private def validateOnlyBasicHtmlTags(
-      fieldPath: String,
-      text: String): Option[ValidationMessage] = {
+  private def validateOnlyBasicHtmlTags(fieldPath: String, text: String): Option[ValidationMessage] = {
     text.isEmpty match {
       case true => Some(ValidationMessage(fieldPath, FieldEmpty))
       case false => {
@@ -42,8 +42,7 @@ class TextValidator(allowHtml: Boolean) {
     }
   }
 
-  private def validateNoHtmlTags(fieldPath: String,
-                                 text: String): Option[ValidationMessage] = {
+  private def validateNoHtmlTags(fieldPath: String, text: String): Option[ValidationMessage] = {
     Jsoup.isValid(text, Whitelist.none()) match {
       case true => None
       case false =>

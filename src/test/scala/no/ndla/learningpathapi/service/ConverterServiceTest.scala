@@ -26,10 +26,9 @@ import scala.util.Success
 
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
-  val license = api.License("publicdomain",
-                            Some("Public Domain"),
-                            Some("https://creativecommons.org/about/pdm"))
+  val license = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
   val copyright = api.Copyright(license, List(clinton))
+
   val apiLearningPath = api.LearningPathV2(
     1,
     1,
@@ -49,16 +48,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     true,
     List("nb")
   )
-  val domainLearningStep = LearningStep(None,
-                                        None,
-                                        None,
-                                        None,
-                                        1,
-                                        List(),
-                                        List(),
-                                        List(),
-                                        StepType.INTRODUCTION,
-                                        None)
+  val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
+
   val domainLearningStep2 = LearningStep(Some(1),
                                          Some(1),
                                          None,
@@ -73,6 +64,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
 
   val randomDate = DateTime.now().toDate
   var service: ConverterService = _
+
   val domainLearningPath = LearningPath(
     Some(1),
     Some(1),
@@ -112,23 +104,19 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
         randomDate,
         api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
-        api.Copyright(
-          api.License("by",
-                      Some("Creative Commons Attribution 2.0 Generic"),
-                      Some("https://creativecommons.org/licenses/by/2.0/")),
-          List.empty),
+        api.Copyright(api.License("by",
+                                  Some("Creative Commons Attribution 2.0 Generic"),
+                                  Some("https://creativecommons.org/licenses/by/2.0/")),
+                      List.empty),
         canEdit = true,
         List("nb", "en")
       ))
-    service.asApiLearningpathV2(
-      domainLearningPath.copy(
-        title = domainLearningPath.title :+ Title("test", "en")),
-      Language.DefaultLanguage,
-      Some("me")) should equal(expected)
+    service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")),
+                                Language.DefaultLanguage,
+                                UserInfo("me", Set.empty)) should equal(expected)
   }
 
-  test(
-    "asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
+  test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
     val expected = Success(
       api.LearningPathSummaryV2(
         1,
@@ -141,17 +129,14 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathStatus.PRIVATE.toString,
         randomDate,
         api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
-        api.Copyright(
-          api.License("by",
-                      Some("Creative Commons Attribution 2.0 Generic"),
-                      Some("https://creativecommons.org/licenses/by/2.0/")),
-          List.empty),
+        api.Copyright(api.License("by",
+                                  Some("Creative Commons Attribution 2.0 Generic"),
+                                  Some("https://creativecommons.org/licenses/by/2.0/")),
+                      List.empty),
         List("nb", "en"),
         None
       ))
-    service.asApiLearningpathSummaryV2(
-      domainLearningPath.copy(
-        title = domainLearningPath.title :+ Title("test", "en"))) should equal(
+    service.asApiLearningpathSummaryV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en"))) should equal(
       expected)
   }
 
@@ -175,11 +160,10 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     service.asApiLearningStepV2(domainLearningStep2,
                                 domainLearningPath,
                                 Language.DefaultLanguage,
-                                Some("me")) should equal(learningstep)
+                                UserInfo("me", Set.empty)) should equal(learningstep)
   }
 
-  test(
-    "asApiLearningStepSummaryV2 converts domain learningstep to LearningStepSummaryV2") {
+  test("asApiLearningStepSummaryV2 converts domain learningstep to LearningStepSummaryV2") {
     val expected = Some(
       api.LearningStepSummaryV2(
         1,
@@ -189,14 +173,11 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         "null1/learningsteps/1"
       ))
 
-    service.asApiLearningStepSummaryV2(domainLearningStep2,
-                                       domainLearningPath,
-                                       Language.DefaultLanguage) should equal(
+    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, Language.DefaultLanguage) should equal(
       expected)
   }
 
-  test(
-    "asApiLearningStepSummaryV2 returns what we have when not supported language is given") {
+  test("asApiLearningStepSummaryV2 returns what we have when not supported language is given") {
     val expected = Some(
       api.LearningStepSummaryV2(
         1,
@@ -206,24 +187,17 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         "null1/learningsteps/1"
       ))
 
-    service.asApiLearningStepSummaryV2(domainLearningStep2,
-                                       domainLearningPath,
-                                       "somerandomlanguage") should equal(
+    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, "somerandomlanguage") should equal(
       expected)
   }
 
-  test(
-    "asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
-    val expected = Some(
-      api.LearningPathTagsSummary(Language.DefaultLanguage,
-                                  Seq(Language.DefaultLanguage),
-                                  Seq("tag")))
-    service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage) should equal(
-      expected)
+  test("asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
+    val expected =
+      Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
+    service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage) should equal(expected)
   }
 
-  test(
-    "That createUrlToLearningPath does not include private in path for private learningpath") {
+  test("That createUrlToLearningPath does not include private in path for private learningpath") {
     val httpServletRequest = mock[HttpServletRequest]
     when(httpServletRequest.getServerPort).thenReturn(80)
     when(httpServletRequest.getScheme).thenReturn("http")
@@ -231,8 +205,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     when(httpServletRequest.getServletPath).thenReturn("/servlet")
 
     ApplicationUrl.set(httpServletRequest)
-    service.createUrlToLearningPath(apiLearningPath.copy(status = "PRIVATE")) should equal(
-      "http://localhost/servlet/1")
+    service.createUrlToLearningPath(apiLearningPath.copy(status = "PRIVATE")) should equal("http://localhost/servlet/1")
   }
 
   test("That asApiIntroduction returns an introduction for a given step") {
@@ -246,16 +219,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
           ))))
 
     introductions.size should be(3)
-    introductions.find(_.language.contains("nb")).map(_.introduction) should be(
-      Some("Introduksjon på bokmål"))
-    introductions.find(_.language.contains("nn")).map(_.introduction) should be(
-      Some("Introduksjon på nynorsk"))
-    introductions.find(_.language.contains("en")).map(_.introduction) should be(
-      Some("Introduction in english"))
+    introductions.find(_.language.contains("nb")).map(_.introduction) should be(Some("Introduksjon på bokmål"))
+    introductions.find(_.language.contains("nn")).map(_.introduction) should be(Some("Introduksjon på nynorsk"))
+    introductions.find(_.language.contains("en")).map(_.introduction) should be(Some("Introduction in english"))
   }
 
-  test(
-    "That asApiIntroduction returns empty list if no descriptions are available") {
+  test("That asApiIntroduction returns empty list if no descriptions are available") {
     val introductions = service.getApiIntroduction(Seq(domainLearningStep))
     introductions.size should be(0)
   }
@@ -272,21 +241,18 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLicense returns a default license object for an invalid license") {
-    service.asApiLicense("invalid") should equal(
-      api.License("invalid", Option("Invalid license"), None))
+    service.asApiLicense("invalid") should equal(api.License("invalid", Option("Invalid license"), None))
   }
 
   test("asEmbedUrl returns embedUrl if embedType is oembed") {
-    service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "oembed"),
-                         "nb") should equal(
+    service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "oembed"), "nb") should equal(
       EmbedUrl("http://test.no/2/oembed/", "nb", EmbedType.OEmbed))
   }
 
   test("asEmbedUrl throws error if an not allowed value for embedType is used") {
     assertResult("Validation Error") {
       intercept[ValidationException] {
-        service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "test"),
-                             "nb")
+        service.asEmbedUrlV2(api.EmbedUrlV2("http://test.no/2/oembed/", "test"), "nb")
       }.getMessage()
     }
   }
@@ -307,8 +273,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     result should equal(expectedResult)
   }
 
-  test(
-    "asDomainEmbed should only use context path if hostname is ndla-frontend but full url when not") {
+  test("asDomainEmbed should only use context path if hostname is ndla-frontend but full url when not") {
     val url = "https://beta.ndla.no/subjects/resource:1234?a=test"
     service.asDomainEmbedUrl(api.EmbedUrlV2(url, "oembed"), "nb") should equal(
       EmbedUrl(s"/subjects/resource:1234/?a=test", "nb", EmbedType.OEmbed))
@@ -316,6 +281,58 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     val externalUrl = "https://youtube.com/watch?v=8992BFHks"
     service.asDomainEmbedUrl(api.EmbedUrlV2(externalUrl, "oembed"), "nb") should equal(
       EmbedUrl(externalUrl, "nb", EmbedType.OEmbed))
+  }
+
+  test("That mergeLanguageFields returns original list when updated is empty") {
+    val existing = Seq(Title("Tittel 1", "nb"), Title("Tittel 2", "nn"), Title("Tittel 3", "unknown"))
+    service.mergeLanguageFields(existing, Seq()) should equal(existing)
+  }
+
+  test("That mergeLanguageFields updated the english title only when specified") {
+    val tittel1 = Title("Tittel 1", "nb")
+    val tittel2 = Title("Tittel 2", "nn")
+    val tittel3 = Title("Tittel 3", "en")
+    val oppdatertTittel3 = Title("Title 3 in english", "en")
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(oppdatertTittel3)
+
+    service.mergeLanguageFields(existing, updated) should equal(Seq(tittel1, tittel2, oppdatertTittel3))
+  }
+
+  test("That mergeLanguageFields removes a title that is empty") {
+    val tittel1 = Title("Tittel 1", "nb")
+    val tittel2 = Title("Tittel 2", "nn")
+    val tittel3 = Title("Tittel 3", "en")
+    val tittelToRemove = Title("", "nn")
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(tittelToRemove)
+
+    service.mergeLanguageFields(existing, updated) should equal(Seq(tittel1, tittel3))
+  }
+
+  test("That mergeLanguageFields updates the title with no language specified") {
+    val tittel1 = Title("Tittel 1", "nb")
+    val tittel2 = Title("Tittel 2", "unknown")
+    val tittel3 = Title("Tittel 3", "en")
+    val oppdatertTittel2 = Title("Tittel 2 er oppdatert", "unknown")
+
+    val existing = Seq(tittel1, tittel2, tittel3)
+    val updated = Seq(oppdatertTittel2)
+
+    service.mergeLanguageFields(existing, updated) should equal(Seq(tittel1, tittel3, oppdatertTittel2))
+  }
+
+  test("That mergeLanguageFields also updates the correct description") {
+    val desc1 = Description("Beskrivelse 1", "nb")
+    val desc2 = Description("Beskrivelse 2", "unknown")
+    val desc3 = Description("Beskrivelse 3", "en")
+    val oppdatertDesc2 = Description("Beskrivelse 2 er oppdatert", "unknown")
+
+    val existing = Seq(desc1, desc2, desc3)
+    val updated = Seq(oppdatertDesc2)
+    service.mergeLanguageFields(existing, updated) should equal(Seq(desc1, desc3, oppdatertDesc2))
   }
 
 }

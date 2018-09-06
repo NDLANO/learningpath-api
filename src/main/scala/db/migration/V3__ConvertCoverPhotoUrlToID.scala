@@ -37,8 +37,7 @@ class V3__ConvertCoverPhotoUrlToID extends JdbcMigration {
       .apply()
   }
 
-  def convertCoverPhotoUrl(
-      learningPath: V3_DBLearningPath): Option[V3_DBLearningPath] = {
+  def convertCoverPhotoUrl(learningPath: V3_DBLearningPath): Option[V3_DBLearningPath] = {
     val oldDocument = parse(learningPath.document)
 
     oldDocument.extractOpt[V3_DBCoverPhoto] match {

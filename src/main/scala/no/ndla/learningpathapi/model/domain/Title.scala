@@ -8,7 +8,6 @@
 
 package no.ndla.learningpathapi.model.domain
 
-case class Title(title: String, language: String)
-    extends LanguageField[String] {
+case class Title(title: String, language: String) extends LanguageField[String] {
   override def value: String = title
 }

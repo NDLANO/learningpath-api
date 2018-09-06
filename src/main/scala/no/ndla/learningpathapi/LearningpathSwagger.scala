@@ -11,15 +11,14 @@ package no.ndla.learningpathapi
 import org.scalatra.ScalatraServlet
 import org.scalatra.swagger._
 
-class ResourcesApp(implicit val swagger: Swagger)
-    extends ScalatraServlet
-    with NativeSwaggerBase {
+class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with NativeSwaggerBase {
   get("/") {
     renderSwagger2(swagger.docs.toList)
   }
 }
 
 object LearningpathApiInfo {
+
   val apiInfo = ApiInfo(
     "Learningpath API",
     "Services for accessing learningpaths",
@@ -30,12 +29,7 @@ object LearningpathApiInfo {
   )
 }
 
-class LearningpathSwagger
-    extends Swagger("2.0", "1.0", LearningpathApiInfo.apiInfo) {
+class LearningpathSwagger extends Swagger("2.0", "1.0", LearningpathApiInfo.apiInfo) {
   addAuthorization(
-    OAuth(List(),
-          List(
-            ImplicitGrant(
-              LoginEndpoint(LearningpathApiProperties.Auth0LoginEndpoint),
-              "access_token"))))
+    OAuth(List(), List(ImplicitGrant(LoginEndpoint(LearningpathApiProperties.Auth0LoginEndpoint), "access_token"))))
 }

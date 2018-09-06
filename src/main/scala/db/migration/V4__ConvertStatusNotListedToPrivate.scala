@@ -36,8 +36,7 @@ class V4__ConvertStatusNotListedToPrivate extends JdbcMigration {
       .apply()
   }
 
-  def convertLearningPathStatus(
-      learningPath: V4_DBLearningPath): V4_DBLearningPath = {
+  def convertLearningPathStatus(learningPath: V4_DBLearningPath): V4_DBLearningPath = {
     val oldDocument = parse(learningPath.document)
     val updatedDocument = oldDocument mapField {
       case ("status", JString(oldStatus)) => ("status", JString("PRIVATE"))

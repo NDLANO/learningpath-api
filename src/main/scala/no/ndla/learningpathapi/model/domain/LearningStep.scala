@@ -42,9 +42,7 @@ object StepStatus extends Enumeration {
     valueOf(status) match {
       case Some(s) => s
       case None =>
-        throw new ValidationException(
-          errors = List(
-            ValidationMessage("status", s"'$status' is not a valid status.")))
+        throw new ValidationException(errors = List(ValidationMessage("status", s"'$status' is not a valid status.")))
     }
   }
 
@@ -64,9 +62,7 @@ object StepType extends Enumeration {
     valueOf(s) match {
       case Some(stepType) => stepType
       case None =>
-        throw new ValidationException(
-          errors =
-            List(ValidationMessage("type", s"'$s' is not a valid steptype.")))
+        throw new ValidationException(errors = List(ValidationMessage("type", s"'$s' is not a valid steptype.")))
     }
   }
 
@@ -76,6 +72,7 @@ object StepType extends Enumeration {
 }
 
 object LearningStep extends SQLSyntaxSupport[LearningStep] {
+
   val JSonSerializer = FieldSerializer[LearningStep](
     serializer =
       ignore("id") orElse
@@ -83,17 +80,14 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
         ignore("externalId") orElse
         ignore("revision"))
 
-  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(
-    StepType) + new EnumNameSerializer(StepStatus) + new EnumNameSerializer(
-    EmbedType) + JSonSerializer
+  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(StepType) + new EnumNameSerializer(
+    StepStatus) + new EnumNameSerializer(EmbedType) + JSonSerializer
   override val tableName = "learningsteps"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
-  def apply(ls: SyntaxProvider[LearningStep])(
-      rs: WrappedResultSet): LearningStep = apply(ls.resultName)(rs)
+  def apply(ls: SyntaxProvider[LearningStep])(rs: WrappedResultSet): LearningStep = apply(ls.resultName)(rs)
 
-  def apply(ls: ResultName[LearningStep])(
-      rs: WrappedResultSet): LearningStep = {
+  def apply(ls: ResultName[LearningStep])(rs: WrappedResultSet): LearningStep = {
     val meta = read[LearningStep](rs.string(ls.c("document")))
     LearningStep(
       Some(rs.long(ls.c("id"))),
@@ -111,7 +105,6 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
     )
   }
 
-  def opt(ls: ResultName[LearningStep])(
-      rs: WrappedResultSet): Option[LearningStep] =
+  def opt(ls: ResultName[LearningStep])(rs: WrappedResultSet): Option[LearningStep] =
     rs.longOpt(ls.c("id")).map(_ => LearningStep(ls)(rs))
 }

@@ -12,6 +12,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.model.HttpRequestException
+import org.json4s.Formats
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 
@@ -34,50 +35,29 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
                       language = "",
                       license = None)
 
-  val testNode = Node(nid = 1,
-                      tnid = 1,
-                      language = "",
-                      title = "",
-                      packageId = 1,
-                      imageNid = None,
-                      description = "")
+  val testNode = Node(nid = 1, tnid = 1, language = "", title = "", packageId = 1, imageNid = None, description = "")
 
-  val mainPackage = MainPackageImport(Package(1,
-                                              1,
-                                              "nb",
-                                              "Title",
-                                              None,
-                                              "Description",
-                                              1,
-                                              new Date(),
-                                              1,
-                                              "PackageTitle",
-                                              1,
-                                              1,
-                                              Seq(),
-                                              "by-sa",
-                                              Seq()),
-                                      Seq())
+  val mainPackage = MainPackageImport(
+    Package(1, 1, "nb", "Title", None, "Description", 1, new Date(), 1, "PackageTitle", 1, 1, Seq(), "by-sa", Seq()),
+    Seq())
 
   test("That failure is returned when ndlaClient returns a failure") {
     val exception = new HttpRequestException("This is an error")
     when(
-      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest],
-                                                       any[String],
-                                                       any[String])(
-        any[Manifest[MainPackageImport]])).thenReturn(Failure(exception))
+      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest], any[String], any[String])(
+        any[Manifest[MainPackageImport]],
+        any[Formats])).thenReturn(Failure(exception))
 
     val result = migrationApiClient.getLearningPath("abc")
-    result should be a 'failure
+    result.isFailure should be(true)
     result.failure.exception.getMessage should equal(exception.getMessage)
   }
 
   test("That a MainPackageImport is returned when ndlaClient returns a success") {
     when(
-      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest],
-                                                       any[String],
-                                                       any[String])(
-        any[Manifest[MainPackageImport]])).thenReturn(Success(mainPackage))
+      ndlaClient.fetchWithBasicAuth[MainPackageImport](any[HttpRequest], any[String], any[String])(
+        any[Manifest[MainPackageImport]],
+        any[Formats])).thenReturn(Success(mainPackage))
 
     val result = migrationApiClient.getLearningPath("abc")
     result should be a 'success
