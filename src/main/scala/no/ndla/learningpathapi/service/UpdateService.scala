@@ -10,14 +10,12 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
+import no.ndla.learningpathapi.model.domain.{LearningPathStatus, UserInfo, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
-import com.netaporter.uri.dsl._
-import no.ndla.learningpathapi.model.domain.UserInfo
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 trait UpdateService {
   this: LearningPathRepositoryComponent

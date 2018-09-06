@@ -8,8 +8,8 @@
 
 package no.ndla.learningpathapi.validation
 
-import no.ndla.learningpathapi.model.api.ValidationMessage
 import com.netaporter.uri.dsl._
+import no.ndla.learningpathapi.model.api.ValidationMessage
 
 class UrlValidator() {
   val noHtmlTextValidator = new TextValidator(allowHtml = false)

@@ -10,23 +10,21 @@ package no.ndla.learningpathapi.service.search
 
 import java.util.concurrent.Executors
 
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchResponse
+import com.sksamuel.elastic4s.searches.ScoreMode
+import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
+import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.api.{Copyright, Error, LearningPathSummaryV2, License, SearchResultV2}
 import no.ndla.learningpathapi.model.domain.{Sort, _}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
-import no.ndla.network.ApplicationUrl
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.searches.ScoreMode
-import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
-import com.sksamuel.elastic4s.searches.sort.SortOrder
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
 import org.json4s.native.Serialization._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 

@@ -8,14 +8,14 @@
 
 package no.ndla.learningpathapi.integration
 
+import java.util.concurrent.Executors
+
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.regions.{Region, Regions}
 import com.netaporter.uri.dsl._
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.aws._
 import com.sksamuel.elastic4s.http.{HttpClient, HttpExecutable, RequestSuccess}
-import java.util.concurrent.Executors
-
 import no.ndla.learningpathapi.LearningpathApiProperties.{RunWithSignedSearchRequests, SearchServer}
 import no.ndla.learningpathapi.model.domain.NdlaSearchException
 import org.apache.http.client.config.RequestConfig
@@ -23,6 +23,7 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.apache.http.protocol.HttpContext
 import org.apache.http.{HttpRequest, HttpRequestInterceptor}
 import org.elasticsearch.client.RestClientBuilder.{HttpClientConfigCallback, RequestConfigCallback}
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Success, Try}

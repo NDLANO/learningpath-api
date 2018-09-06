@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo, ValidationException}
+import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 import scala.math.max

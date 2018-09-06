@@ -10,7 +10,6 @@ package no.ndla.learningpathapi.model.domain
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.validation.LearningStepValidator
 import org.json4s.FieldSerializer._
 import org.json4s._
 import org.json4s.ext.EnumNameSerializer

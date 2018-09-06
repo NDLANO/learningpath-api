@@ -10,6 +10,7 @@ package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{
   Author => _,
   LearningPathStatus => _,
@@ -17,7 +18,6 @@ import no.ndla.learningpathapi.model.domain.{
   License => _,
   _
 }
-import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.service.search.SearchService
 import no.ndla.learningpathapi.service.{ConverterService, ReadService, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator

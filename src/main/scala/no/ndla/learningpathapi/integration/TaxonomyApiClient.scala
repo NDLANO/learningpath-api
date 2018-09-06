@@ -11,9 +11,9 @@ import no.ndla.learningpathapi.LearningpathApiProperties.ApiGatewayHost
 import no.ndla.network.NdlaClient
 import no.ndla.network.model.HttpRequestException
 import org.json4s.native.Serialization.write
+import scalaj.http.Http
 
 import scala.util.{Failure, Success, Try}
-import scalaj.http.Http
 
 trait TaxonomyApiClient {
   this: NdlaClient =>

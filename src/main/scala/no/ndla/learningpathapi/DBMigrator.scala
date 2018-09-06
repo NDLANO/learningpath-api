@@ -9,7 +9,6 @@
 package no.ndla.learningpathapi
 
 import javax.sql.DataSource
-
 import org.flywaydb.core.Flyway
 
 object DBMigrator {

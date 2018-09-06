@@ -11,7 +11,6 @@ package no.ndla.learningpathapi.service.search
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import com.sksamuel.elastic4s.Indexes
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.RequestSuccess
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition

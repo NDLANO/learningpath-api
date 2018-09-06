@@ -8,12 +8,11 @@
 
 package no.ndla.learningpathapi.model.domain
 
-import java.nio.file
 import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ValidationMessage
-import no.ndla.learningpathapi.validation.{DurationValidator, LearningPathValidator, LearningStepValidator}
+import no.ndla.learningpathapi.validation.DurationValidator
 import org.json4s.FieldSerializer
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer

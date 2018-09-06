@@ -8,8 +8,8 @@
 
 package no.ndla.learningpathapi.controller
 
-import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
+import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.{Error, ImportReport, ValidationError, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._

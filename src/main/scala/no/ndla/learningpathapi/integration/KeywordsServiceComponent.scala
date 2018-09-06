@@ -9,12 +9,12 @@
 package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import org.json4s.native.Serialization._
-
-import scala.util.matching.Regex
-import scalaj.http.{Http, HttpRequest}
 import no.ndla.learningpathapi.model.domain.{Language, LearningPathTags}
 import no.ndla.mapping.ISO639.get6391CodeFor6392Code
+import org.json4s.native.Serialization._
+import scalaj.http.{Http, HttpRequest}
+
+import scala.util.matching.Regex
 
 trait KeywordsServiceComponent extends LazyLogging {
   val keywordsService: KeywordsService

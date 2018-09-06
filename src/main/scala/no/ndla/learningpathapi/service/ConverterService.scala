@@ -374,10 +374,6 @@ trait ConverterService {
         .map(x => api.Introduction(x.description, x.language))
     }
 
-    def languageIsNotSupported(supportedLanguages: Seq[String], language: String): Boolean = {
-      supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
-    }
-
     def asApiLearningpathSummaryV2(learningpath: domain.LearningPath): Try[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 

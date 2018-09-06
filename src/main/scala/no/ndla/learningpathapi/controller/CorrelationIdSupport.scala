@@ -9,8 +9,8 @@
 package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.network.CorrelationID
 import no.ndla.learningpathapi.LearningpathApiProperties.{CorrelationIdHeader, CorrelationIdKey}
+import no.ndla.network.CorrelationID
 import org.apache.logging.log4j.ThreadContext
 import org.scalatra.CoreDsl
 
