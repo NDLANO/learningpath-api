@@ -31,7 +31,7 @@ trait UpdateService {
   class UpdateService {
 
     def newFromExistingV2(id: Long, newLearningPath: NewCopyLearningPathV2, owner: UserInfo): Option[LearningPathV2] = {
-      learningPathRepository.withId(id).map(_.isOwnerOrPublic(Some(owner))) match {
+      learningPathRepository.withId(id).map(_.isOwnerOrPublic(owner)) match {
         case None              => None
         case Some(Failure(ex)) => throw ex
         case Some(Success(existing)) =>
@@ -81,9 +81,7 @@ trait UpdateService {
             duration = duration
           )
           learningPathValidator.validate(toInsert, allowUnknownLanguage = true)
-          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert),
-                                               newLearningPath.language,
-                                               Some(owner))
+          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, owner)
       }
     }
 
@@ -112,9 +110,7 @@ trait UpdateService {
       )
       learningPathValidator.validate(learningPath)
 
-      converterService.asApiLearningpathV2(learningPathRepository.insert(learningPath),
-                                           newLearningPath.language,
-                                           Option(owner))
+      converterService.asApiLearningpathV2(learningPathRepository.insert(learningPath), newLearningPath.language, owner)
     }
 
     private def extractImageId(url: String): Option[String] = {
@@ -196,7 +192,7 @@ trait UpdateService {
             searchIndexService.deleteDocument(existing)
           }
 
-          converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, Option(owner))
+          converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, owner)
       }
     }
 
@@ -222,7 +218,7 @@ trait UpdateService {
             searchIndexService.deleteDocument(updatedLearningPath)
           }
 
-          converterService.asApiLearningpathV2(updatedLearningPath, language, Option(owner))
+          converterService.asApiLearningpathV2(updatedLearningPath, language, owner)
       }
     }
 
@@ -287,7 +283,7 @@ trait UpdateService {
               deleteIsBasedOnReference(learningPath)
               searchIndexService.deleteDocument(learningPath)
             }
-            converterService.asApiLearningStepV2(insertedStep, updatedPath, newLearningStep.language, Option(owner))
+            converterService.asApiLearningStepV2(insertedStep, updatedPath, newLearningStep.language, owner)
         }
       }
     }
@@ -353,10 +349,7 @@ trait UpdateService {
                 searchIndexService.deleteDocument(updatedPath)
               }
 
-              converterService.asApiLearningStepV2(updatedStep,
-                                                   updatedPath,
-                                                   learningStepToUpdate.language,
-                                                   Option(owner))
+              converterService.asApiLearningStepV2(updatedStep, updatedPath, learningStepToUpdate.language, owner)
           }
       }
     }
@@ -412,7 +405,7 @@ trait UpdateService {
                 searchIndexService.deleteDocument(learningPath)
               }
 
-              converterService.asApiLearningStepV2(updatedStep, updatedPath, Language.DefaultLanguage, Option(owner))
+              converterService.asApiLearningStepV2(updatedStep, updatedPath, Language.DefaultLanguage, owner)
           }
       }
     }

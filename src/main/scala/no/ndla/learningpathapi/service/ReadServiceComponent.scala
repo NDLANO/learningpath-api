@@ -36,19 +36,19 @@ trait ReadServiceComponent {
         .flatMap(value => converterService.asApiLearningpathSummaryV2(value).toOption)
     }
 
-    def withIdV2(learningPathId: Long, language: String, user: Option[UserInfo] = None): Option[LearningPathV2] = {
+    def withIdV2(learningPathId: Long, language: String, user: UserInfo = UserInfo.get): Option[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp =>
         converterService.asApiLearningpathV2(lp, language, user))
     }
 
-    def statusFor(learningPathId: Long, user: Option[UserInfo] = None): Option[LearningPathStatus] = {
+    def statusFor(learningPathId: Long, user: UserInfo = UserInfo.get): Option[LearningPathStatus] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
     def learningStepStatusForV2(learningPathId: Long,
                                 learningStepId: Long,
                                 language: String,
-                                user: Option[UserInfo] = None): Option[LearningStepStatus] = {
+                                user: UserInfo = UserInfo.get): Option[LearningStepStatus] = {
       learningstepV2For(learningPathId, learningStepId, language, user).map(ls =>
         LearningStepStatus(ls.status.toString))
     }
@@ -56,7 +56,7 @@ trait ReadServiceComponent {
     def learningstepsForWithStatusV2(learningPathId: Long,
                                      status: StepStatus.Value,
                                      language: String,
-                                     user: Option[UserInfo] = None): Option[LearningStepContainerSummary] = {
+                                     user: UserInfo = UserInfo.get): Option[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
           converterService.asLearningStepContainerSummary(status, lp, language)
@@ -67,7 +67,7 @@ trait ReadServiceComponent {
     def learningstepV2For(learningPathId: Long,
                           learningstepId: Long,
                           language: String,
-                          user: Option[UserInfo] = None): Option[LearningStepV2] = {
+                          user: UserInfo = UserInfo.get): Option[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
           learningPathRepository
@@ -77,7 +77,7 @@ trait ReadServiceComponent {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, user: Option[UserInfo]): Option[domain.LearningPath] = {
+    private def withIdAndAccessGranted(learningPathId: Long, user: UserInfo): Option[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.map(_.isOwnerOrPublic(user)) match {
         case Some(Success(lp)) => Some(lp)

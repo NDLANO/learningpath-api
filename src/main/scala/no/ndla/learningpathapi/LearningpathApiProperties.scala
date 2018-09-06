@@ -50,7 +50,7 @@ object LearningpathApiProperties extends LazyLogging {
   }
 
   val NdlaFrontendHostNames =
-    Set("beta.ndla.no", s"ndla-frontend.$Environment.api.ndla.no", s"ndla-frontend.api.ndla.no")
+    Set("ndla.no", "beta.ndla.no", s"ndla-frontend.$Environment.api.ndla.no", s"ndla-frontend.api.ndla.no")
 
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"

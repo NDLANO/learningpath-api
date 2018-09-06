@@ -127,7 +127,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That withId returns a learningPath when the status is PUBLISHED and user is not the owner") {
     when(learningPathRepository.withId(PUBLISHED_ID))
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
-    val learningPath = service.withIdV2(PUBLISHED_ID, "nb", Some(PRIVATE_OWNER))
+    val learningPath = service.withIdV2(PUBLISHED_ID, "nb", PRIVATE_OWNER)
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
@@ -146,7 +146,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.withIdV2(PRIVATE_ID, "nb", Some(PUBLISHED_OWNER))
+        service.withIdV2(PRIVATE_ID, "nb", PUBLISHED_OWNER)
       }.getMessage
     }
   }
@@ -154,7 +154,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That withId returns a learningPath when the status is PRIVATE and user is the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    val learningPath = service.withIdV2(PRIVATE_ID, "nb", Some(PRIVATE_OWNER))
+    val learningPath = service.withIdV2(PRIVATE_ID, "nb", PRIVATE_OWNER)
     assert(learningPath.isDefined)
     assert(learningPath.get.id == PRIVATE_ID)
     assert(learningPath.get.status == "PRIVATE")
@@ -188,7 +188,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.statusFor(2, Some(PUBLISHED_OWNER))
+        service.statusFor(2, PUBLISHED_OWNER)
       }.getMessage
     }
   }
@@ -197,7 +197,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("PRIVATE") {
-      service.statusFor(PRIVATE_ID, Some(PRIVATE_OWNER)).map(_.status).get
+      service.statusFor(PRIVATE_ID, PRIVATE_OWNER).map(_.status).get
     }
   }
 
@@ -256,7 +256,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", Some(PUBLISHED_OWNER))
+        service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", PUBLISHED_OWNER)
       }.getMessage
     }
   }
@@ -269,7 +269,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(List(STEP1, STEP2))
     assertResult(2) {
       service
-        .learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", Some(PRIVATE_OWNER))
+        .learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", PRIVATE_OWNER)
         .get
         .learningsteps
         .length
@@ -310,7 +310,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(STEP1))
     assertResult(STEP1.id.get) {
       service
-        .learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", Some(PRIVATE_OWNER))
+        .learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", PRIVATE_OWNER)
         .get
         .id
     }
@@ -331,7 +331,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", Some(PUBLISHED_OWNER))
+        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", PUBLISHED_OWNER)
       }.getMessage
     }
   }

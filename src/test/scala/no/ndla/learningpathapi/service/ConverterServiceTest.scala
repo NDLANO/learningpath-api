@@ -113,7 +113,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       ))
     service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")),
                                 Language.DefaultLanguage,
-                                Some(UserInfo("me", Set.empty))) should equal(expected)
+                                UserInfo("me", Set.empty)) should equal(expected)
   }
 
   test("asApiLearningpathSummaryV2 converts domain to api LearningpathSummaryV2") {
@@ -160,7 +160,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     service.asApiLearningStepV2(domainLearningStep2,
                                 domainLearningPath,
                                 Language.DefaultLanguage,
-                                Some(UserInfo("me", Set.empty))) should equal(learningstep)
+                                UserInfo("me", Set.empty)) should equal(learningstep)
   }
 
   test("asApiLearningStepSummaryV2 converts domain learningstep to LearningStepSummaryV2") {

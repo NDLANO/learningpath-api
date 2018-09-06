@@ -313,7 +313,7 @@ trait LearningpathControllerV2 {
       val id = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
 
-      readService.learningstepsForWithStatusV2(id, StepStatus.DELETED, language, Some(userInfo)) match {
+      readService.learningstepsForWithStatusV2(id, StepStatus.DELETED, language, userInfo) match {
         case Some(x) => x
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $id not found"))

@@ -13,6 +13,7 @@ case class UserInfo(userId: String, roles: Set[LearningPathRole.Value]) {
 }
 
 object UserInfo {
+  val PublicReadUser = UserInfo("PublicReadUser", Set.empty)
 
   def apply(name: String): UserInfo = {
     new UserInfo(
@@ -21,8 +22,5 @@ object UserInfo {
     )
   }
 
-  def get: Option[UserInfo] = apply(AuthUser.get)
-
-  def apply(name: Option[String]): Option[UserInfo] = name.map(apply)
-
+  def get: UserInfo = AuthUser.get.map(UserInfo.apply).getOrElse(PublicReadUser)
 }

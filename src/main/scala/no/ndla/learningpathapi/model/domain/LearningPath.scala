@@ -66,19 +66,15 @@ case class LearningPath(id: Option[Long],
     }
   }
 
-  def isOwnerOrPublic(user: Option[UserInfo]): Try[LearningPath] = {
+  def isOwnerOrPublic(user: UserInfo): Try[LearningPath] = {
     if (isPrivate) {
-      user
-        .map(canEditLearningpath)
-        .getOrElse(Failure(AccessDeniedException("You do not have access to the requested resource.")))
+      canEditLearningpath(user)
     } else {
       Success(this)
     }
   }
 
-  def canEdit(userInfo: Option[UserInfo]): Boolean = {
-    userInfo.exists(u => canEditLearningpath(u).isSuccess)
-  }
+  def canEdit(userInfo: UserInfo): Boolean = canEditLearningpath(userInfo).isSuccess
 
   def validateSeqNo(seqNo: Int): Unit = {
     if (seqNo < 0 || seqNo > learningsteps.length - 1) {
