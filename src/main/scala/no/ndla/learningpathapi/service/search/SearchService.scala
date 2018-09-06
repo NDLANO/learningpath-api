@@ -21,7 +21,7 @@ import no.ndla.learningpathapi.model.api.{
   License,
   SearchResultV2
 }
-import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.{Sort, _}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import no.ndla.network.ApplicationUrl
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -75,15 +75,15 @@ trait SearchServiceComponent extends LazyLogging {
     def allV2(withIdIn: List[Long],
               taggedWith: Option[String],
               sort: Sort.Value,
-              language: Option[String],
+              searchLanguage: String,
               page: Option[Int],
-              pageSize: Option[Int]): SearchResultV2 = {
-      val searchLanguage = language match {
-        case None | Some(Language.AllLanguages) => "*"
-        case Some(lang)                         => lang
-      }
+              pageSize: Option[Int],
+              fallback: Boolean): SearchResultV2 = {
+      val language =
+        if (searchLanguage == Language.AllLanguages || fallback) "*"
+        else searchLanguage
 
-      val fullQuery = searchLanguage match {
+      val fullQuery = language match {
         case "*" => boolQuery()
         case lang => {
           val titleSearch = existsQuery(s"titles.$lang")
@@ -102,33 +102,34 @@ trait SearchServiceComponent extends LazyLogging {
         withIdIn,
         taggedWith,
         sort,
-        searchLanguage,
+        language,
         page,
-        pageSize
+        pageSize,
+        fallback
       )
     }
 
     def matchingQuery(withIdIn: List[Long],
                       query: String,
                       taggedWith: Option[String],
-                      language: Option[String],
+                      searchLanguage: String,
                       sort: Sort.Value,
                       page: Option[Int],
-                      pageSize: Option[Int]): SearchResultV2 = {
-      val searchLanguage = language match {
-        case None | Some(Language.AllLanguages) => "*"
-        case Some(lang)                         => lang
-      }
+                      pageSize: Option[Int],
+                      fallback: Boolean): SearchResultV2 = {
+      val language =
+        if (searchLanguage == Language.AllLanguages || fallback) "*"
+        else searchLanguage
 
       val titleSearch =
-        simpleStringQuery(query).field(s"titles.$searchLanguage", 2)
+        simpleStringQuery(query).field(s"titles.$language", 2)
       val descSearch =
-        simpleStringQuery(query).field(s"descriptions.$searchLanguage", 2)
+        simpleStringQuery(query).field(s"descriptions.$language", 2)
       val stepTitleSearch = simpleStringQuery(query)
-        .field(s"learningsteps.titles.$searchLanguage", 1)
+        .field(s"learningsteps.titles.$language", 1)
       val stepDescSearch = simpleStringQuery(query)
-        .field(s"learningsteps.descriptions.$searchLanguage", 1)
-      val tagSearch = simpleStringQuery(query).field(s"tags.$searchLanguage", 2)
+        .field(s"learningsteps.descriptions.$language", 1)
+      val tagSearch = simpleStringQuery(query).field(s"tags.$language", 2)
       val authorSearch = simpleStringQuery(query).field("author", 1)
 
       val hi = highlight("*").preTag("").postTag("").numberOfFragments(0)
@@ -166,18 +167,20 @@ trait SearchServiceComponent extends LazyLogging {
                     withIdIn,
                     taggedWith,
                     sort,
-                    searchLanguage,
+                    language,
                     page,
-                    pageSize)
+                    pageSize,
+                    fallback)
     }
 
-    def executeSearch(queryBuilder: BoolQueryDefinition,
-                      withIdIn: List[Long],
-                      taggedWith: Option[String],
-                      sort: Sort.Value,
-                      language: String,
-                      page: Option[Int],
-                      pageSize: Option[Int]): SearchResultV2 = {
+    private def executeSearch(queryBuilder: BoolQueryDefinition,
+                              withIdIn: List[Long],
+                              taggedWith: Option[String],
+                              sort: Sort.Value,
+                              language: String,
+                              page: Option[Int],
+                              pageSize: Option[Int],
+                              fallback: Boolean): SearchResultV2 = {
       val tagFilter = taggedWith match {
         case None => None
         case Some(tag) =>
@@ -187,7 +190,19 @@ trait SearchServiceComponent extends LazyLogging {
       }
       val idFilter = if (withIdIn.isEmpty) None else Some(idsQuery(withIdIn))
 
-      val filters = List(tagFilter, idFilter)
+      val (languageFilter, searchLanguage) = language match {
+        case "" | Language.AllLanguages =>
+          (None, "*")
+        case lang =>
+          fallback match {
+            case true => (None, "*")
+            case false =>
+              (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))),
+               lang)
+          }
+      }
+
+      val filters = List(tagFilter, idFilter, languageFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
@@ -199,13 +214,14 @@ trait SearchServiceComponent extends LazyLogging {
           Error.WindowTooLargeError.description)
       }
 
-      e4sClient.execute {
-        search(LearningpathApiProperties.SearchIndex)
-          .size(numResults)
-          .from(startAt)
-          .query(filteredSearch)
-          .sortBy(getSortDefinition(sort, language))
-      } match {
+      val searchToExec = search(LearningpathApiProperties.SearchIndex)
+        .size(numResults)
+        .from(startAt)
+        .query(filteredSearch)
+        .highlighting(highlight("*"))
+        .sortBy(getSortDefinition(sort, searchLanguage))
+
+      e4sClient.execute(searchToExec) match {
         case Success(response) =>
           SearchResultV2(
             response.result.totalHits,

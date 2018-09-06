@@ -118,31 +118,35 @@ trait LearningpathControllerV2 {
                 paramType = ParamType.Form)
 
     def search(query: Option[String],
-               language: Option[String],
+               searchLanguage: String,
                tag: Option[String],
                idList: List[Long],
                sort: Option[String],
                pageSize: Option[Int],
-               page: Option[Int]): SearchResultV2 = {
+               page: Option[Int],
+               fallback: Boolean): SearchResultV2 = {
       query match {
         case Some(q) =>
           searchService.matchingQuery(
             query = q,
             withIdIn = idList,
             taggedWith = tag,
-            language = language,
+            searchLanguage = searchLanguage,
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
+            pageSize = pageSize,
             page = page,
-            pageSize = pageSize
+            fallback = fallback
           )
         case None =>
-          searchService.allV2(withIdIn = idList,
-                              taggedWith = tag,
-                              sort =
-                                Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
-                              language = language,
-                              page = page,
-                              pageSize = pageSize)
+          searchService.allV2(
+            withIdIn = idList,
+            taggedWith = tag,
+            searchLanguage = searchLanguage,
+            sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
+            page = page,
+            pageSize = pageSize,
+            fallback = fallback
+          )
       }
     }
 
@@ -157,7 +161,8 @@ trait LearningpathControllerV2 {
         asQueryParam[Option[String]](language),
         asQueryParam[Option[Int]](pageNo),
         asQueryParam[Option[Int]](pageSize),
-        asQueryParam[Option[String]](sort))
+        asQueryParam[Option[String]](sort),
+        asQueryParam[Option[Boolean]](fallback))
         responseMessages (response400, response500)
         authorizations "oauth2")
 
@@ -165,23 +170,28 @@ trait LearningpathControllerV2 {
       val query = paramOrNone(this.query.paramName)
       val tag = paramOrNone(this.tag.paramName)
       val idList = paramAsListOfLong(this.learningpathIds.paramName)
-      val language = paramOrNone(this.language.paramName)
+      val language =
+        paramOrDefault(this.language.paramName, Language.AllLanguages)
       val sort = paramOrNone(this.sort.paramName)
       val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps =>
         Try(ps.toInt).toOption)
       val page = paramOrNone(this.pageNo.paramName).flatMap(idx =>
         Try(idx.toInt).toOption)
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
+
       logger.info(
-        "GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}",
+        "GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={} fallback={}",
         query,
         language,
         tag,
         page,
         pageSize,
         sort,
-        idList)
+        idList,
+        fallback.toString
+      )
 
-      search(query, language, tag, idList, sort, pageSize, page)
+      search(query, language, tag, idList, sort, pageSize, page, fallback)
     }
 
     val getLearningpathsPost =
@@ -201,21 +211,24 @@ trait LearningpathControllerV2 {
       val query = searchParams.query
       val tag = searchParams.tag
       val idList = searchParams.ids
-      val language = searchParams.language
+      val language = searchParams.language.getOrElse(Language.AllLanguages)
       val sort = searchParams.sort
       val pageSize = searchParams.pageSize
       val page = searchParams.page
+      val fallback = searchParams.fallback.getOrElse(false)
       logger.info(
-        "POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}",
+        "POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={} fallback={}",
         query,
         language,
         tag,
         page,
         pageSize,
         sort,
-        idList)
+        idList,
+        fallback.toString
+      )
 
-      search(query, language, tag, idList, sort, pageSize, page)
+      search(query, language, tag, idList, sort, pageSize, page, fallback)
     }
 
     val getLearningpath =

@@ -144,6 +144,32 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       Some(LearningpathApiProperties.SearchIndex))
   }
 
+  test(
+    "all learningpaths should be returned if fallback is enabled in all-search") {
+    val res = searchService.allV2(List.empty,
+                                  None,
+                                  Sort.ByIdDesc,
+                                  "hurr durr I'm a language",
+                                  Some(1),
+                                  None,
+                                  true)
+    res.results.length should be(res.totalCount)
+    res.totalCount should be(5)
+  }
+
+  test(
+    "no learningpaths should be returned if fallback is disabled with an unsupported language in all-search") {
+    val res = searchService.allV2(List.empty,
+                                  None,
+                                  Sort.ByIdDesc,
+                                  "hurr durr I'm a language",
+                                  Some(1),
+                                  None,
+                                  false)
+    res.results.length should be(res.totalCount)
+    res.totalCount should be(0)
+  }
+
   test("That getStartAtAndNumResults returns default values for None-input") {
     searchService.getStartAtAndNumResults(None, None) should equal(
       (0, DefaultPageSize))
@@ -176,9 +202,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.allV2(List(),
                                            None,
                                            Sort.ByTitleDesc,
-                                           Some("nb"),
+                                           "nb",
                                            None,
-                                           None)
+                                           None,
+                                           false)
     val hits = searchResult.results
     searchResult.totalCount should be(4)
 
@@ -191,7 +218,13 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by title ascending") {
     val searchResult =
-      searchService.allV2(List(), None, Sort.ByTitleAsc, Some("nb"), None, None)
+      searchService.allV2(List(),
+                          None,
+                          Sort.ByTitleAsc,
+                          "nb",
+                          None,
+                          None,
+                          false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -203,7 +236,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by id descending") {
     val searchResult =
-      searchService.allV2(List(), None, Sort.ByIdDesc, Some("nb"), None, None)
+      searchService.allV2(List(), None, Sort.ByIdDesc, "nb", None, None, false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -215,7 +248,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by id ascending") {
     val searchResult =
-      searchService.allV2(List(), None, Sort.ByIdAsc, Some("all"), None, None)
+      searchService.allV2(List(), None, Sort.ByIdAsc, "all", None, None, false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(5)
@@ -230,9 +263,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.allV2(List(),
                                            None,
                                            Sort.ByDurationDesc,
-                                           Some("nb"),
+                                           "nb",
                                            None,
-                                           None)
+                                           None,
+                                           false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -243,9 +277,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.allV2(List(),
                                            None,
                                            Sort.ByDurationAsc,
-                                           Some("nb"),
+                                           "nb",
                                            None,
-                                           None)
+                                           None,
+                                           false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -257,9 +292,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.allV2(List(),
                                            None,
                                            Sort.ByLastUpdatedDesc,
-                                           Some("nb"),
+                                           "nb",
                                            None,
-                                           None)
+                                           None,
+                                           false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -272,9 +308,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.allV2(List(),
                                            None,
                                            Sort.ByLastUpdatedAsc,
-                                           Some("nb"),
+                                           "nb",
                                            None,
-                                           None)
+                                           None,
+                                           false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -284,7 +321,13 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all filtered by id only returns learningpaths with the given ids") {
     val searchResult =
-      searchService.allV2(List(1, 2), None, Sort.ByTitleAsc, None, None, None)
+      searchService.allV2(List(1, 2),
+                          None,
+                          Sort.ByTitleAsc,
+                          Language.AllLanguages,
+                          None,
+                          None,
+                          false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -292,14 +335,45 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     hits.last.id should be(PenguinId)
   }
 
+  test(
+    "That searching returns matching documents with unmatching language if fallback is enabled") {
+    val searchResult = searchService.matchingQuery(List(),
+                                                   "Pingvinen",
+                                                   None,
+                                                   "en",
+                                                   Sort.ByTitleAsc,
+                                                   None,
+                                                   None,
+                                                   true)
+    val hits = searchResult.results
+
+    searchResult.totalCount should be(1)
+  }
+
+  test(
+    "That searching returns no matching documents with unmatching language if fallback is disabled ") {
+    val searchResult = searchService.matchingQuery(List(),
+                                                   "Pingvinen",
+                                                   None,
+                                                   "en",
+                                                   Sort.ByTitleAsc,
+                                                   None,
+                                                   None,
+                                                   false)
+    val hits = searchResult.results
+
+    searchResult.totalCount should be(0)
+  }
+
   test("That searching only returns documents matching the query") {
     val searchResult = searchService.matchingQuery(List(),
                                                    "heltene",
                                                    None,
-                                                   Some("nb"),
+                                                   "nb",
                                                    Sort.ByTitleAsc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -311,10 +385,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(3),
                                                    "morsom",
                                                    None,
-                                                   None,
+                                                   Language.AllLanguages,
                                                    Sort.ByTitleAsc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -326,10 +401,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(),
                                                    "guy",
                                                    None,
-                                                   Some("en"),
+                                                   "en",
                                                    Sort.ByTitleAsc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -340,9 +416,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.allV2(List(),
                                            Some("superhelt"),
                                            Sort.ByTitleAsc,
-                                           Some("nb"),
+                                           "nb",
                                            None,
-                                           None)
+                                           None,
+                                           false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -355,10 +432,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(),
                                                    "heltene",
                                                    Some("kanfly"),
-                                                   Some("nb"),
+                                                   "nb",
                                                    Sort.ByTitleAsc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -370,10 +448,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(),
                                                    "tøff rar",
                                                    None,
-                                                   Some("nb"),
+                                                   "nb",
                                                    Sort.ByRelevanceDesc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -386,10 +465,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(),
                                                    "and flaggermus fugl",
                                                    None,
-                                                   Some("nb"),
+                                                   "nb",
                                                    Sort.ByRelevanceDesc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(3)
@@ -403,10 +483,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(),
                                                    "and flaggermus fugl",
                                                    Some("kanfly"),
-                                                   Some("nb"),
+                                                   "nb",
                                                    Sort.ByRelevanceDesc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -419,10 +500,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult = searchService.matchingQuery(List(),
                                                    "and flaggremsu",
                                                    None,
-                                                   Some("nb"),
+                                                   "nb",
                                                    Sort.ByRelevanceDesc,
                                                    None,
-                                                   None)
+                                                   None,
+                                                   false)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -433,19 +515,21 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult1 = searchService.matchingQuery(List(),
                                                     "kjeltring + batman",
                                                     None,
-                                                    Some("nb"),
+                                                    "nb",
                                                     Sort.ByRelevanceAsc,
                                                     None,
-                                                    None)
+                                                    None,
+                                                    false)
     searchResult1.totalCount should be(0)
 
     val searchResult2 = searchService.matchingQuery(List(),
                                                     "tøff + morsom + -and",
                                                     None,
-                                                    Some("nb"),
+                                                    "nb",
                                                     Sort.ByRelevanceAsc,
                                                     None,
-                                                    None)
+                                                    None,
+                                                    false)
     val hits2 = searchResult2.results
 
     searchResult2.totalCount should be(1)
@@ -454,10 +538,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchResult3 = searchService.matchingQuery(List(),
                                                     "tøff | morsom | kjeltring",
                                                     None,
-                                                    Some("nb"),
+                                                    "nb",
                                                     Sort.ByRelevanceAsc,
                                                     None,
-                                                    None)
+                                                    None,
+                                                    false)
     val hits3 = searchResult3.results
 
     searchResult3.totalCount should be(3)
@@ -471,17 +556,19 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val searchNb = searchService.matchingQuery(List(),
                                                "Urelatert",
                                                None,
-                                               Some("all"),
+                                               "all",
                                                Sort.ByTitleAsc,
                                                None,
-                                               None)
+                                               None,
+                                               false)
     val searchEn = searchService.matchingQuery(List(),
                                                "Unrelated",
                                                None,
-                                               Some("all"),
+                                               "all",
                                                Sort.ByTitleAsc,
                                                None,
-                                               None)
+                                               None,
+                                               false)
 
     searchEn.totalCount should be(1)
     searchEn.results.head.id should be(UnrelatedId)
@@ -503,9 +590,10 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val search = searchService.allV2(List(),
                                      None,
                                      Sort.ByTitleAsc,
-                                     Some("all"),
+                                     "all",
                                      None,
-                                     None)
+                                     None,
+                                     false)
 
     search.totalCount should be(5)
     search.results(0).id should be(BatmanId)
@@ -521,10 +609,11 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val search = searchService.matchingQuery(List(),
                                              "Batman",
                                              None,
-                                             Some("all"),
+                                             "all",
                                              Sort.ByTitleAsc,
                                              None,
-                                             None)
+                                             None,
+                                             false)
     search.results.head.supportedLanguages should be(Seq("nb", "en"))
   }
 

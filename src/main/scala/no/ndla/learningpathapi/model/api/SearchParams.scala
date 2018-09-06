@@ -32,4 +32,7 @@ case class SearchParams(
       String],
     @(ApiModelProperty @field)(description =
       "The sorting used on results. Default is by -relevance.") sort: Option[
-      String])
+      String],
+    @(ApiModelProperty @field)(description =
+      "Return all matched learningpaths whether they exist on selected language or not.") fallback: Option[
+      Boolean])
