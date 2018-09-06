@@ -57,6 +57,9 @@ object Language {
     findFirstLanguageMatching(sequence, lang.toList :+ DefaultLanguage)
   }
 
+  def getLanguageOrDefaultIfUnsupported(language: String): String =
+    supportedLanguages.find(_ == language.toLowerCase()).getOrElse(AllLanguages)
+
   def languageOrUnknown(language: String): String =
     languageOrUnknown(Option(language))
 

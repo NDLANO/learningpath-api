@@ -117,7 +117,7 @@ trait LearningpathControllerV2 {
             query = q,
             withIdIn = idList,
             taggedWith = tag,
-            searchLanguage = searchLanguage,
+            searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
             pageSize = pageSize,
             page = page,
@@ -127,7 +127,7 @@ trait LearningpathControllerV2 {
           searchService.allV2(
             withIdIn = idList,
             taggedWith = tag,
-            searchLanguage = searchLanguage,
+            searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
             page = page,
             pageSize = pageSize,
