@@ -57,9 +57,7 @@ case class LearningPath(id: Option[Long],
   }
 
   def canEditLearningpath(user: UserInfo): Try[LearningPath] = {
-    if (user.userId == owner && status == LearningPathStatus.PUBLISHED && !user.isAdmin) {
-      Success(this.copy(status = LearningPathStatus.UNLISTED))
-    } else if (user.userId != owner && !user.isAdmin) {
+    if (user.userId != owner && !user.isAdmin) {
       Failure(AccessDeniedException("You do not have access to the requested resource."))
     } else {
       Success(this)

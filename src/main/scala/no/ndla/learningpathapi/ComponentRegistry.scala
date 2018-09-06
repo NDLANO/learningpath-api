@@ -42,7 +42,7 @@ object ComponentRegistry
     with ImageApiClientComponent
     with ArticleImportClient
     with MigrationApiClient
-    with ConverterServiceComponent
+    with ConverterService
     with Elastic4sClient
     with DatasourceComponent
     with ImportService

@@ -17,19 +17,23 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
   NdlaFrontendHostNames
 }
 import no.ndla.learningpathapi.integration._
-import no.ndla.learningpathapi.model.api.{CoverPhoto, EmbedUrlV2}
+import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
 import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.validation.LanguageValidator
+import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator}
 import no.ndla.mapping.License.getLicense
 import no.ndla.network.ApplicationUrl
 
 import scala.util.{Failure, Success, Try}
 
-trait ConverterServiceComponent {
-  this: ImageApiClientComponent with LearningPathRepositoryComponent with LanguageValidator =>
+trait ConverterService {
+  this: ImageApiClientComponent
+    with LearningPathRepositoryComponent
+    with LanguageValidator
+    with LearningPathValidator
+    with Clock =>
 
   val converterService: ConverterService
 
@@ -138,6 +142,226 @@ trait ConverterServiceComponent {
           lp.canEdit(userInfo),
           supportedLanguages
         ))
+    }
+
+    private[service] def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
+      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
+      (toKeep ++ updated).filterNot(_.value.isEmpty)
+    }
+
+    private def extractImageId(url: String): Option[String] = {
+      learningPathValidator.validateCoverPhoto(url) match {
+        case Some(err) => throw new ValidationException(errors = Seq(err))
+        case _         =>
+      }
+
+      val pattern = """.*/images/(\d+)""".r
+      pattern.findFirstMatchIn(url.path).map(_.group(1))
+    }
+
+    private def mergeLearningPathTags(existing: Seq[domain.LearningPathTags],
+                                      updated: Seq[domain.LearningPathTags]): Seq[domain.LearningPathTags] = {
+      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
+      (toKeep ++ updated).filterNot(_.tags.isEmpty)
+    }
+
+    private def mergeStatus(existing: LearningPath, user: UserInfo): LearningPathStatus.Value = {
+      existing.status match {
+        case LearningPathStatus.PUBLISHED if existing.canSetStatus(LearningPathStatus.PUBLISHED, user).isFailure =>
+          LearningPathStatus.UNLISTED
+        case existingStatus => existingStatus
+      }
+    }
+
+    def mergeLearningPaths(existing: LearningPath, updated: UpdatedLearningPathV2, userInfo: UserInfo): LearningPath = {
+      val status = mergeStatus(existing, userInfo)
+
+      val titles = updated.title match {
+        case None => Seq.empty
+        case Some(value) =>
+          Seq(domain.Title(value, updated.language))
+      }
+
+      val descriptions = updated.description match {
+        case None => Seq.empty
+        case Some(value) =>
+          Seq(domain.Description(value, updated.language))
+      }
+
+      val tags = updated.tags match {
+        case None => Seq.empty
+        case Some(value) =>
+          Seq(domain.LearningPathTags(value, updated.language))
+      }
+
+      existing.copy(
+        revision = Some(updated.revision),
+        title = mergeLanguageFields(existing.title, titles),
+        description = mergeLanguageFields(existing.description, descriptions),
+        coverPhotoId = updated.coverPhotoMetaUrl
+          .map(extractImageId)
+          .getOrElse(existing.coverPhotoId),
+        duration =
+          if (updated.duration.isDefined)
+            updated.duration
+          else existing.duration,
+        tags = mergeLearningPathTags(existing.tags, tags),
+        status = status,
+        copyright =
+          if (updated.copyright.isDefined)
+            converterService.asCopyright(updated.copyright.get)
+          else existing.copyright,
+        lastUpdated = clock.now()
+      )
+    }
+
+    def asDomainLearningStep(newLearningStep: NewLearningStepV2, learningPath: LearningPath): LearningStep = {
+      val description = newLearningStep.description
+        .map(domain.Description(_, newLearningStep.language))
+        .toSeq
+      val embedUrl = newLearningStep.embedUrl
+        .map(converterService.asDomainEmbedUrl(_, newLearningStep.language))
+        .toSeq
+
+      val newSeqNo =
+        if (learningPath.learningsteps.isEmpty) 0 else learningPath.learningsteps.map(_.seqNo).max + 1
+
+      domain.LearningStep(
+        None,
+        None,
+        None,
+        learningPath.id,
+        newSeqNo,
+        Seq(domain.Title(newLearningStep.title, newLearningStep.language)),
+        description,
+        embedUrl,
+        StepType.valueOfOrError(newLearningStep.`type`),
+        newLearningStep.license,
+        newLearningStep.showTitle
+      )
+    }
+
+    def insertLearningSteps(learningPath: LearningPath, steps: Seq[LearningStep], user: UserInfo): LearningPath = {
+      steps.foldLeft(learningPath) { (lp, ls) =>
+        insertLearningStep(lp, ls, user)
+      }
+    }
+
+    def insertLearningStep(learningPath: LearningPath, updatedStep: LearningStep, user: UserInfo): LearningPath = {
+      val status = mergeStatus(learningPath, user)
+      val existingLearningSteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id)
+      val steps =
+        if (StepStatus.ACTIVE == updatedStep.status) existingLearningSteps :+ updatedStep else existingLearningSteps
+
+      learningPath.copy(learningsteps = steps, status = status, lastUpdated = clock.now())
+    }
+
+    def mergeLearningSteps(existing: LearningStep, updated: UpdatedLearningStepV2): LearningStep = {
+      val titles = updated.title match {
+        case None => existing.title
+        case Some(value) =>
+          converterService.mergeLanguageFields(existing.title, Seq(domain.Title(value, updated.language)))
+      }
+
+      val descriptions = updated.description match {
+        case None => existing.description
+        case Some(value) =>
+          converterService.mergeLanguageFields(existing.description, Seq(domain.Description(value, updated.language)))
+      }
+
+      val embedUrls = updated.embedUrl match {
+        case None => existing.embedUrl
+        case Some(value) =>
+          converterService.mergeLanguageFields(existing.embedUrl,
+                                               Seq(converterService.asDomainEmbedUrl(value, updated.language)))
+      }
+
+      existing.copy(
+        revision = Some(updated.revision),
+        title = titles,
+        description = descriptions,
+        embedUrl = embedUrls,
+        showTitle = updated.showTitle.getOrElse(existing.showTitle),
+        `type` = updated.`type`
+          .map(domain.StepType.valueOfOrError)
+          .getOrElse(existing.`type`),
+        license = updated.license
+      )
+    }
+
+    def newFromExistingLearningPath(existing: LearningPath,
+                                    newLearningPath: NewCopyLearningPathV2,
+                                    user: UserInfo): LearningPath = {
+      val oldTitle = Seq(domain.Title(newLearningPath.title, newLearningPath.language))
+
+      val oldDescription = newLearningPath.description match {
+        case None => Seq.empty
+        case Some(value) =>
+          Seq(domain.Description(value, newLearningPath.language))
+      }
+
+      val oldTags = newLearningPath.tags match {
+        case None => Seq.empty
+        case Some(value) =>
+          Seq(domain.LearningPathTags(value, newLearningPath.language))
+      }
+
+      val title = converterService.mergeLanguageFields(existing.title, oldTitle)
+      val description = converterService.mergeLanguageFields(existing.description, oldDescription)
+      val tags = converterService.mergeLearningPathTags(existing.tags, oldTags)
+      val coverPhotoId = newLearningPath.coverPhotoMetaUrl
+        .map(converterService.extractImageId)
+        .getOrElse(existing.coverPhotoId)
+      val duration =
+        if (newLearningPath.duration.nonEmpty) newLearningPath.duration
+        else existing.duration
+      val copyright = newLearningPath.copyright
+        .map(converterService.asCopyright)
+        .getOrElse(existing.copyright)
+
+      existing.copy(
+        id = None,
+        revision = None,
+        externalId = None,
+        isBasedOn = if (existing.isPrivate) None else existing.id,
+        title = title,
+        description = description,
+        status = LearningPathStatus.PRIVATE,
+        verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+        lastUpdated = clock.now(),
+        owner = user.userId,
+        copyright = copyright,
+        learningsteps =
+          existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
+        tags = tags,
+        coverPhotoId = coverPhotoId,
+        duration = duration
+      )
+    }
+
+    def newLearningPath(newLearningPath: NewLearningPathV2, user: UserInfo): LearningPath = {
+      val domainTags =
+        if (newLearningPath.tags.isEmpty) Seq.empty
+        else
+          Seq(domain.LearningPathTags(newLearningPath.tags, newLearningPath.language))
+
+      domain.LearningPath(
+        None,
+        None,
+        None,
+        None,
+        Seq(domain.Title(newLearningPath.title, newLearningPath.language)),
+        Seq(domain.Description(newLearningPath.description, newLearningPath.language)),
+        newLearningPath.coverPhotoMetaUrl.flatMap(converterService.extractImageId),
+        newLearningPath.duration,
+        domain.LearningPathStatus.PRIVATE,
+        LearningPathVerificationStatus.EXTERNAL,
+        clock.now(),
+        domainTags,
+        user.userId,
+        converterService.asCopyright(newLearningPath.copyright),
+        List()
+      )
     }
 
     def getApiIntroduction(learningSteps: Seq[domain.LearningStep]): Seq[api.Introduction] = {

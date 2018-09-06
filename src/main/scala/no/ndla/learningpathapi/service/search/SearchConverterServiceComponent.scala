@@ -15,11 +15,11 @@ import no.ndla.learningpathapi.model._
 import no.ndla.learningpathapi.model.domain.Language.{DefaultLanguage, findByLanguageOrBestEffort}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search._
-import no.ndla.learningpathapi.service.ConverterServiceComponent
+import no.ndla.learningpathapi.service.ConverterService
 import no.ndla.network.ApplicationUrl
 
 trait SearchConverterServiceComponent {
-  this: ConverterServiceComponent with ImageApiClientComponent =>
+  this: ConverterService with ImageApiClientComponent =>
   val searchConverterService: SearchConverterService
 
   class SearchConverterService {

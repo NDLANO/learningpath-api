@@ -19,7 +19,7 @@ import no.ndla.learningpathapi.model.domain.{
 }
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.service.search.SearchServiceComponent
-import no.ndla.learningpathapi.service.{ConverterServiceComponent, ReadServiceComponent, UpdateService}
+import no.ndla.learningpathapi.service.{ConverterService, ReadServiceComponent, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
@@ -38,7 +38,7 @@ trait LearningpathControllerV2 {
     with UpdateService
     with SearchServiceComponent
     with LanguageValidator
-    with ConverterServiceComponent =>
+    with ConverterService =>
   val learningpathControllerV2: LearningpathControllerV2
 
   class LearningpathControllerV2(implicit val swagger: Swagger)

@@ -17,7 +17,7 @@ import scala.math.max
 import scala.util.{Failure, Success}
 
 trait ReadServiceComponent {
-  this: LearningPathRepositoryComponent with ConverterServiceComponent =>
+  this: LearningPathRepositoryComponent with ConverterService =>
   val readService: ReadService
 
   class ReadService {

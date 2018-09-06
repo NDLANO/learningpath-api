@@ -25,7 +25,7 @@ trait ImportService {
     with ImageApiClientComponent
     with MigrationApiClient
     with SearchIndexServiceComponent
-    with ConverterServiceComponent
+    with ConverterService
     with ArticleImportClient
     with TaxonomyApiClient =>
   val importService: ImportService

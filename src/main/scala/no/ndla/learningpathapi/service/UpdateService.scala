@@ -21,7 +21,7 @@ import scala.util.{Failure, Success, Try}
 
 trait UpdateService {
   this: LearningPathRepositoryComponent
-    with ConverterServiceComponent
+    with ConverterService
     with SearchIndexServiceComponent
     with Clock
     with LearningStepValidator
@@ -35,103 +35,17 @@ trait UpdateService {
         case None              => None
         case Some(Failure(ex)) => throw ex
         case Some(Success(existing)) =>
-          val oldTitle = Seq(domain.Title(newLearningPath.title, newLearningPath.language))
-
-          val oldDescription = newLearningPath.description match {
-            case None => Seq.empty
-            case Some(value) =>
-              Seq(domain.Description(value, newLearningPath.language))
-          }
-
-          val oldTags = newLearningPath.tags match {
-            case None => Seq.empty
-            case Some(value) =>
-              Seq(domain.LearningPathTags(value, newLearningPath.language))
-          }
-
-          val title = mergeLanguageFields[Title](existing.title, oldTitle)
-          val description =
-            mergeLanguageFields(existing.description, oldDescription)
-          val tags = mergeLearningPathTags(existing.tags, oldTags)
-          val coverPhotoId = newLearningPath.coverPhotoMetaUrl
-            .map(extractImageId)
-            .getOrElse(existing.coverPhotoId)
-          val duration =
-            if (newLearningPath.duration.nonEmpty) newLearningPath.duration
-            else existing.duration
-          val copyright = newLearningPath.copyright
-            .map(converterService.asCopyright)
-            .getOrElse(existing.copyright)
-          val toInsert = existing.copy(
-            id = None,
-            revision = None,
-            externalId = None,
-            isBasedOn = if (existing.isPrivate) None else existing.id,
-            title = title,
-            description = description,
-            status = LearningPathStatus.PRIVATE,
-            verificationStatus = LearningPathVerificationStatus.EXTERNAL,
-            lastUpdated = clock.now(),
-            owner = owner.userId,
-            copyright = copyright,
-            learningsteps =
-              existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
-            tags = tags,
-            coverPhotoId = coverPhotoId,
-            duration = duration
-          )
+          val toInsert = converterService.newFromExistingLearningPath(existing, newLearningPath, owner)
           learningPathValidator.validate(toInsert, allowUnknownLanguage = true)
           converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, owner)
       }
     }
 
     def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: UserInfo): Option[LearningPathV2] = {
-      val domainTags =
-        if (newLearningPath.tags.isEmpty) Seq.empty
-        else
-          Seq(domain.LearningPathTags(newLearningPath.tags, newLearningPath.language))
-
-      val learningPath = domain.LearningPath(
-        None,
-        None,
-        None,
-        None,
-        Seq(domain.Title(newLearningPath.title, newLearningPath.language)),
-        Seq(domain.Description(newLearningPath.description, newLearningPath.language)),
-        newLearningPath.coverPhotoMetaUrl.flatMap(extractImageId),
-        newLearningPath.duration,
-        domain.LearningPathStatus.PRIVATE,
-        LearningPathVerificationStatus.EXTERNAL,
-        clock.now(),
-        domainTags,
-        owner.userId,
-        converterService.asCopyright(newLearningPath.copyright),
-        List()
-      )
+      val learningPath = converterService.newLearningPath(newLearningPath, owner)
       learningPathValidator.validate(learningPath)
 
       converterService.asApiLearningpathV2(learningPathRepository.insert(learningPath), newLearningPath.language, owner)
-    }
-
-    private def extractImageId(url: String): Option[String] = {
-      learningPathValidator.validateCoverPhoto(url) match {
-        case Some(err) => throw new ValidationException(errors = Seq(err))
-        case _         =>
-      }
-
-      val pattern = """.*/images/(\d+)""".r
-      pattern.findFirstMatchIn(url.path).map(_.group(1))
-    }
-
-    def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
-      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
-      (toKeep ++ updated).filterNot(_.value.isEmpty)
-    }
-
-    def mergeLearningPathTags(existing: Seq[domain.LearningPathTags],
-                              updated: Seq[domain.LearningPathTags]): Seq[domain.LearningPathTags] = {
-      val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
-      (toKeep ++ updated).filterNot(_.tags.isEmpty)
     }
 
     def updateLearningPathV2(id: Long,
@@ -140,46 +54,12 @@ trait UpdateService {
       // Should not be able to submit with an illegal language
       learningPathValidator.validate(learningPathToUpdate)
 
-      val titles = learningPathToUpdate.title match {
-        case None => Seq.empty
-        case Some(value) =>
-          Seq(domain.Title(value, learningPathToUpdate.language))
-      }
-
-      val descriptions = learningPathToUpdate.description match {
-        case None => Seq.empty
-        case Some(value) =>
-          Seq(domain.Description(value, learningPathToUpdate.language))
-      }
-
-      val tags = learningPathToUpdate.tags match {
-        case None => Seq.empty
-        case Some(value) =>
-          Seq(domain.LearningPathTags(value, learningPathToUpdate.language))
-      }
-
       withId(id).map(_.canEditLearningpath(owner)) match {
         case Some(Failure(ex)) => throw ex
         case None              => None
         case Some(Success(existing)) =>
-          val toUpdate = existing.copy(
-            revision = Some(learningPathToUpdate.revision),
-            title = mergeLanguageFields(existing.title, titles),
-            description = mergeLanguageFields(existing.description, descriptions),
-            coverPhotoId = learningPathToUpdate.coverPhotoMetaUrl
-              .map(extractImageId)
-              .getOrElse(existing.coverPhotoId),
-            duration =
-              if (learningPathToUpdate.duration.isDefined)
-                learningPathToUpdate.duration
-              else existing.duration,
-            tags = mergeLearningPathTags(existing.tags, tags),
-            copyright =
-              if (learningPathToUpdate.copyright.isDefined)
-                converterService.asCopyright(learningPathToUpdate.copyright.get)
-              else existing.copyright,
-            lastUpdated = clock.now()
-          )
+          val toUpdate = converterService.mergeLearningPaths(existing, learningPathToUpdate, owner)
+
           // Imported learningpaths may contain fields with language=unknown.
           // We should still be able to update it, but not add new fields with language=unknown.
           learningPathValidator.validate(toUpdate, allowUnknownLanguage = true)
@@ -243,37 +123,14 @@ trait UpdateService {
           case None              => None
           case Some(Failure(ex)) => throw ex
           case Some(Success(learningPath)) =>
-            val description = newLearningStep.description
-              .map(domain.Description(_, newLearningStep.language))
-              .toSeq
-            val embedUrl = newLearningStep.embedUrl
-              .map(converterService.asDomainEmbedUrl(_, newLearningStep.language))
-              .toSeq
-
-            val newSeqNo =
-              if (learningPath.learningsteps.isEmpty) 0 else learningPath.learningsteps.map(_.seqNo).max + 1
-
-            val newStep = domain.LearningStep(
-              None,
-              None,
-              None,
-              learningPath.id,
-              newSeqNo,
-              Seq(domain.Title(newLearningStep.title, newLearningStep.language)),
-              description,
-              embedUrl,
-              StepType.valueOfOrError(newLearningStep.`type`),
-              newLearningStep.license,
-              newLearningStep.showTitle
-            )
+            val newStep = converterService.asDomainLearningStep(newLearningStep, learningPath)
             learningStepValidator.validate(newStep)
 
             val (insertedStep, updatedPath) = inTransaction { implicit session =>
               val insertedStep =
                 learningPathRepository.insertLearningStep(newStep)
-              val updatedPath = learningPathRepository.update(
-                learningPath.copy(learningsteps = learningPath.learningsteps :+ insertedStep,
-                                  lastUpdated = clock.now()))
+              val toUpdate = converterService.insertLearningStep(learningPath, insertedStep, owner)
+              val updatedPath = learningPathRepository.update(toUpdate)
 
               (insertedStep, updatedPath)
             }
@@ -299,45 +156,14 @@ trait UpdateService {
           learningPathRepository.learningStepWithId(learningPathId, learningStepId) match {
             case None => None
             case Some(existing) =>
-              val titles = learningStepToUpdate.title match {
-                case None => existing.title
-                case Some(value) =>
-                  mergeLanguageFields(existing.title, Seq(domain.Title(value, learningStepToUpdate.language)))
-              }
-
-              val descriptions = learningStepToUpdate.description match {
-                case None => existing.description
-                case Some(value) =>
-                  mergeLanguageFields(existing.description,
-                                      Seq(domain.Description(value, learningStepToUpdate.language)))
-              }
-
-              val embedUrls = learningStepToUpdate.embedUrl match {
-                case None => existing.embedUrl
-                case Some(value) =>
-                  mergeLanguageFields(existing.embedUrl,
-                                      Seq(converterService.asDomainEmbedUrl(value, learningStepToUpdate.language)))
-              }
-
-              val toUpdate = existing.copy(
-                revision = Some(learningStepToUpdate.revision),
-                title = titles,
-                description = descriptions,
-                embedUrl = embedUrls,
-                showTitle = learningStepToUpdate.showTitle.getOrElse(existing.showTitle),
-                `type` = learningStepToUpdate.`type`
-                  .map(domain.StepType.valueOfOrError)
-                  .getOrElse(existing.`type`),
-                license = learningStepToUpdate.license
-              )
+              val toUpdate = converterService.mergeLearningSteps(existing, learningStepToUpdate)
               learningStepValidator.validate(toUpdate)
+
               val (updatedStep, updatedPath) = inTransaction { implicit session =>
                 val updatedStep =
                   learningPathRepository.updateLearningStep(toUpdate)
-                val updatedPath = learningPathRepository.update(
-                  learningPath.copy(
-                    learningsteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id) :+ updatedStep,
-                    lastUpdated = clock.now()))
+                val pathToUpdate = converterService.insertLearningStep(learningPath, updatedStep, owner)
+                val updatedPath = learningPathRepository.update(pathToUpdate)
 
                 (updatedStep, updatedPath)
               }
@@ -378,9 +204,7 @@ trait UpdateService {
               }
 
               val (updatedPath, updatedStep) = inTransaction { implicit session =>
-                val updatedStep =
-                  learningPathRepository.updateLearningStep(stepToUpdate)
-                stepsWithChangedSeqNo.foreach(learningPathRepository.updateLearningStep)
+                val updatedStep = learningPathRepository.updateLearningStep(stepToUpdate)
 
                 val newLearningSteps = learningPath.learningsteps.filterNot(
                   step =>
@@ -388,12 +212,10 @@ trait UpdateService {
                       .map(_.id)
                       .contains(step.id)) ++ stepsWithChangedSeqNo
 
-                val updatedPath = learningPathRepository.update(
-                  learningPath.copy(learningsteps =
-                                      if (StepStatus.ACTIVE == updatedStep.status)
-                                        newLearningSteps :+ updatedStep
-                                      else newLearningSteps,
-                                    lastUpdated = clock.now()))
+                val lp = converterService.insertLearningSteps(learningPath, newLearningSteps, owner)
+                val updatedPath = learningPathRepository.update(lp)
+
+                stepsWithChangedSeqNo.foreach(learningPathRepository.updateLearningStep)
 
                 (updatedPath, updatedStep)
               }
