@@ -28,7 +28,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
-import org.scalatra.{BadRequest, NotFound, Ok, ScalatraServlet}
+import org.scalatra.{BadRequest, Ok, ScalatraServlet}
 
 import scala.util.{Failure, Success, Try}
 
@@ -135,7 +135,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getLearningpaths =
+    private val getLearningpaths =
       (apiOperation[SearchResultV2]("getLearningpaths")
         summary "Find public learningpaths"
         notes "Show public learningpaths."
@@ -170,7 +170,7 @@ trait LearningpathControllerV2 {
       search(query, language, tag, idList, sort, pageSize, page)
     }
 
-    val getLearningpathsPost =
+    private val getLearningpathsPost =
       (apiOperation[List[SearchResultV2]]("searchArticles")
         summary "Find public learningpaths"
         notes "Show public learningpaths"
@@ -203,7 +203,7 @@ trait LearningpathControllerV2 {
       search(query, language, tag, idList, sort, pageSize, page)
     }
 
-    val getLearningpath =
+    private val getLearningpath =
       (apiOperation[LearningPathV2]("getLearningpath")
         summary "Fetch details about the specified learningpath"
         notes "Shows all information about the specified learningpath."
@@ -227,7 +227,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getLearningpathStatus =
+    private val getLearningpathStatus =
       (apiOperation[LearningPathStatus]("getLearningpathStatus")
         summary "Show status information for the learningpath"
         notes "Shows publishingstatus for the learningpath"
@@ -246,7 +246,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getLearningsteps =
+    private val getLearningsteps =
       (apiOperation[List[LearningStepSummaryV2]]("getLearningsteps")
         summary "Fetch learningsteps for given learningpath"
         notes "Show all learningsteps for given learningpath id"
@@ -271,7 +271,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getLearningstep =
+    private val getLearningstep =
       (apiOperation[LearningStepV2]("getLearningstep")
         summary "Fetch details about the specified learningstep"
         notes "Show the given learningstep for the given learningpath"
@@ -298,7 +298,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getLearningStepsInTrash =
+    private val getLearningStepsInTrash =
       (apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
         summary "Fetch deleted learningsteps for given learningpath"
         notes "Show all learningsteps for the given learningpath that are marked as deleted"
@@ -321,7 +321,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getLearningStepStatus =
+    private val getLearningStepStatus =
       (apiOperation[LearningStepStatus]("getLearningStepStatus")
         summary "Show status information for learningstep"
         notes "Shows status for the learningstep"
@@ -344,13 +344,11 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getMyLearningpaths =
+    private val getMyLearningpaths =
       (apiOperation[List[LearningPathSummaryV2]]("getMyLearningpaths")
         summary "Fetch all learningspaths you have created"
         notes "Shows your learningpaths."
-        parameters (
-          asHeaderParam[Option[String]](correlationId)
-        )
+        parameters asHeaderParam[Option[String]](correlationId)
         responseMessages (response403, response500)
         authorizations "oauth2")
 
@@ -358,7 +356,7 @@ trait LearningpathControllerV2 {
       readService.withOwnerV2(owner = requireUserId)
     }
 
-    val getLicenses =
+    private val getLicenses =
       (apiOperation[List[License]]("getLicenses")
         summary "Show all valid licenses"
         notes "Shows all valid licenses"
@@ -378,7 +376,7 @@ trait LearningpathControllerV2 {
       licenses.map(x => License(x.license, Option(x.description), x.url))
     }
 
-    val addNewLearningpath =
+    private val addNewLearningpath =
       (apiOperation[LearningPathV2]("addLearningpath")
         summary "Store new learningpath"
         notes "Adds the given learningpath"
@@ -399,7 +397,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val copyLearningpath =
+    private val copyLearningpath =
       (apiOperation[LearningPathV2]("copyLearningpath")
         summary "Copy given learningpath and store it as a new learningpath"
         notes "Copies the given learningpath, with the option to override some fields"
@@ -422,7 +420,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val updateLearningPath =
+    private val updateLearningPath =
       (apiOperation[LearningPathV2]("updateLearningPath")
         summary "Update given learningpath"
         notes "Updates the given learningPath"
@@ -446,7 +444,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val addNewLearningStep =
+    private val addNewLearningStep =
       (apiOperation[LearningStepV2]("addLearningStep")
         summary "Add new learningstep to learningpath"
         notes "Adds the given LearningStep"
@@ -471,7 +469,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val updateLearningStep =
+    private val updateLearningStep =
       (apiOperation[LearningStepV2]("updateLearningStep")
         summary "Update given learningstep"
         notes "Update the given learningStep"
@@ -501,7 +499,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val updateLearningstepSeqNo =
+    private val updateLearningstepSeqNo =
       (apiOperation[LearningStepSeqNo]("updatetLearningstepSeqNo")
         summary "Store new sequence number for learningstep."
         notes "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this."
@@ -527,7 +525,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val updateLearningStepStatus =
+    private val updateLearningStepStatus =
       (apiOperation[LearningStepV2]("updateLearningStepStatus")
         summary "Update status of given learningstep"
         notes "Updates the status of the given learningstep"
@@ -558,7 +556,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val updateLearningPathStatus =
+    private val updateLearningPathStatus =
       (apiOperation[LearningPathStatus]("updateLearningPathStatus")
         summary "Update status of given learningpath"
         notes "Updates the status of the given learningPath"
@@ -586,7 +584,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val deleteLearningPath =
+    private val deleteLearningPath =
       (apiOperation[LearningPathV2]("deleteLearningPath")
         summary "Delete given learningpath"
         notes "Deletes the given learningPath"
@@ -612,7 +610,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val deleteLearningStep =
+    private val deleteLearningStep =
       (apiOperation[Void]("deleteLearningStep")
         summary "Delete given learningstep"
         notes "Deletes the given learningStep"
@@ -638,7 +636,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getTags =
+    private val getTags =
       (apiOperation[List[LearningPathTags]]("getTags")
         summary "Fetch all previously used tags in learningpaths"
         notes "Retrieves a list of all previously used tags in learningpaths"
@@ -659,7 +657,7 @@ trait LearningpathControllerV2 {
       }
     }
 
-    val getContributors =
+    private val getContributors =
       (apiOperation[List[Author]]("getContributors")
         summary "Fetch all previously used contributors in learningpaths"
         notes "Retrieves a list of all previously used contributors in learningpaths"
@@ -671,7 +669,7 @@ trait LearningpathControllerV2 {
       readService.contributors
     }
 
-    val withStatus =
+    private val withStatus: SwaggerSupportSyntax.OperationBuilder =
       (apiOperation[List[LearningPathV2]]("withStatus")
         summary "Fetch all learningpaths with specified status"
         notes "Fetch all learningpaths with specified status"
