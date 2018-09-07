@@ -20,6 +20,7 @@ import no.ndla.learningpathapi.model.api.{
   UpdatedLearningStepV2
 }
 import no.ndla.learningpathapi.model.domain._
+import org.joda.time.DateTime
 import org.mockito.Matchers
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
@@ -501,6 +502,42 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
         service.updateLearningPathStatusV2(PUBLISHED_ID, LearningPathStatus.PRIVATE, PRIVATE_OWNER, "nb")
       }.getMessage
     }
+  }
+
+  test("That updateLearningPathStatusV2 ignores message if not admin") {
+    when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
+      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+    when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
+
+    service.updateLearningPathStatusV2(PUBLISHED_ID,
+                                       LearningPathStatus.PRIVATE,
+                                       PUBLISHED_OWNER,
+                                       "nb",
+                                       Some("new message"))
+    verify(learningPathRepository, times(1)).update(
+      PUBLISHED_LEARNINGPATH.copy(message = None, status = LearningPathStatus.PRIVATE, lastUpdated = clock.now())
+    )
+  }
+
+  test("That updateLearningPathStatusV2 adds message if admin") {
+    when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
+    when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
+      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+    when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
+    when(clock.now()).thenReturn(new Date(0))
+
+    service.updateLearningPathStatusV2(PUBLISHED_ID,
+                                       LearningPathStatus.PRIVATE,
+                                       PRIVATE_OWNER.copy(roles = Set(LearningPathRole.ADMIN)),
+                                       "nb",
+                                       Some("new message"))
+    verify(learningPathRepository, times(1)).update(
+      PUBLISHED_LEARNINGPATH.copy(message =
+                                    Some(Message("new message", PRIVATE_OWNER.userId, new DateTime(clock.now()))),
+                                  status = LearningPathStatus.PRIVATE,
+                                  lastUpdated = clock.now())
+    )
   }
 
   test("That addLearningStepV2 returns None when the given learningpath does not exist") {

@@ -26,7 +26,7 @@ case class LearningPathSummaryV2(
     @(ApiModelProperty @field)(description = "Url to where a cover photo can be found") coverPhotoUrl: Option[String],
     @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration: Option[Int],
     @(ApiModelProperty @field)(description = "The publishing status of the learningpath.",
-                               allowableValues = "PUBLISHED,PRIVATE,UNLISTED") status: String,
+                               allowableValues = "PUBLISHED,PRIVATE,UNLISTED,SUBMITTED") status: String,
     @(ApiModelProperty @field)(description = "The date when this learningpath was last updated.") lastUpdated: Date,
     @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags: LearningPathTags,
     @(ApiModelProperty @field)(description = "The contributors of this learningpath") copyright: Copyright,

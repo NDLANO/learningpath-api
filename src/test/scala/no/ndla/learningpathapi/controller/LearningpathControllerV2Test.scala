@@ -9,19 +9,23 @@
 package no.ndla.learningpathapi.controller
 
 import java.util.Date
-import javax.servlet.http.HttpServletRequest
 
+import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.native.Serialization._
+import org.mockito.Matchers
 import org.mockito.Matchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
-class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with ScalatraFunSuite {
+import scala.collection.JavaConverters._
+import scala.util.{Failure, Success}
+
+class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
   implicit val formats = org.json4s.DefaultFormats
   implicit val swagger = new LearningpathSwagger
@@ -183,7 +187,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns empty list when empty param") {
-    import scala.collection.JavaConverters._
     implicit val request = mock[HttpServletRequest]
     val paramName = "test"
     val parameterMap = Map("someOther" -> Array(""))
@@ -193,7 +196,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns List of longs for all ids specified in input") {
-    import scala.collection.JavaConverters._
     implicit val request = mock[HttpServletRequest]
     val expectedList = List(1, 2, 3, 5, 6, 7, 8)
     val paramName = "test"
@@ -204,7 +206,6 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns validation error when list of ids contains a string") {
-    import scala.collection.JavaConverters._
     implicit val request = mock[HttpServletRequest]
     val paramName = "test"
     val parameterMap = Map(paramName -> Array("1,2,abc,3"))
@@ -219,6 +220,28 @@ class LearningpathControllerTestV2 extends UnitSuite with TestEnvironment with S
     validationException.errors.head.field should equal(paramName)
     validationException.errors.head.message should equal(
       s"Invalid value for $paramName. Only (list of) digits are allowed.")
+
+  }
+
+  test("That /with-status returns 400 if invalid status is specified") {
+    when(readService.learningPathWithStatus(any[Option[String]], any[UserInfo]))
+      .thenReturn(Failure(InvalidStatusException("Bad status")))
+
+    get("/with-status/",
+        Map(
+          "status" -> "invalidStatusHurrDurr"
+        )) {
+      status should equal(400)
+    }
+
+    when(readService.learningPathWithStatus(any[Option[String]], any[UserInfo]))
+      .thenReturn(Success(List.empty))
+    get("/with-status/",
+        Map(
+          "status" -> "unlisted"
+        )) {
+      status should equal(200)
+    }
 
   }
 }

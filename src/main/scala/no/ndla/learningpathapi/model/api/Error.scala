@@ -34,6 +34,7 @@ object Error {
   val WINDOW_TOO_LARGE = "RESULT WINDOW TOO LARGE"
   val IMPORT_FAILED = "IMPORT_FAILED"
   val DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
+  val MISSING_STATUS = "MISSING_STATUS"
 
   val GENERIC_DESCRIPTION =
     s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
@@ -51,4 +52,5 @@ object Error {
   )
   val IndexMissingError = Error(INDEX_MISSING, INDEX_MISSING_DESCRIPTION)
   val DatabaseUnavailableError = Error(DATABASE_UNAVAILABLE, s"Database seems to be unavailable, retrying connection.")
+  val MISSING_STATUS_ERROR = "Query parameter status was missing from request"
 }

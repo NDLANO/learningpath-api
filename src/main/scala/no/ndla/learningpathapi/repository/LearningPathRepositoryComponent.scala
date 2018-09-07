@@ -306,6 +306,10 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .apply()
     }
 
+    def learningPathsWithStatus(status: LearningPathStatus.Value)(implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
+      learningPathsWhere(sqls"document#>>'{status}' = ${status.toString}")
+    }
+
     def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       sql"select count(*) from ${LearningPath.as(lp)} left join ${LearningStep

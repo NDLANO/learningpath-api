@@ -28,9 +28,9 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
-import org.scalatra.{Ok, ScalatraServlet}
+import org.scalatra.{BadRequest, NotFound, Ok, ScalatraServlet}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait LearningpathControllerV2 {
 
@@ -91,6 +91,7 @@ trait LearningpathControllerV2 {
       "Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,).")
     private val licenseFilter =
       Param("filter", "Query for filtering licenses. Only licenses containing filter-string are returned.")
+    private val learningPathStatus = Param("status", "Status of LearningPaths")
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param) =
       queryParam[T](param.paramName).description(param.description)
@@ -574,7 +575,9 @@ trait LearningpathControllerV2 {
       val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
 
-      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage) match {
+      val message = paramOrNone("message")
+
+      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, message) match {
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
         case Some(learningPath) =>
@@ -660,12 +663,30 @@ trait LearningpathControllerV2 {
       (apiOperation[List[Author]]("getContributors")
         summary "Fetch all previously used contributors in learningpaths"
         notes "Retrieves a list of all previously used contributors in learningpaths"
-        parameters (asHeaderParam[Option[String]](correlationId))
+        parameters asHeaderParam[Option[String]](correlationId)
         responseMessages response500
         authorizations "oauth2")
 
     get("/contributors/", operation(getContributors)) {
       readService.contributors
+    }
+
+    val withStatus =
+      (apiOperation[List[LearningPathV2]]("withStatus")
+        summary "Fetch all learningpaths with specified status"
+        notes "Fetch all learningpaths with specified status"
+        parameters (asHeaderParam[Option[String]](correlationId),
+        asQueryParam[String](learningPathStatus))
+        responseMessages (response500, response400)
+        authorizations "oauth2")
+    get("/with-status/", operation(withStatus)) {
+      val pathStatus = paramOrNone(this.learningPathStatus.paramName)
+
+      readService.learningPathWithStatus(pathStatus, UserInfo.get) match {
+        case Success(lps) => lps
+        case Failure(ex) => errorHandler(ex)
+      }
+
     }
 
   }
