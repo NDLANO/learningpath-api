@@ -679,14 +679,11 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
     get("/with-status/", operation(withStatus)) {
       val pathStatus = paramOrNone(this.learningPathStatus.paramName)
-
       readService.learningPathWithStatus(pathStatus, UserInfo.get) match {
         case Success(lps) => lps
-        case Failure(ex) => errorHandler(ex)
+        case Failure(ex)  => errorHandler(ex)
       }
 
     }
-
   }
-
 }

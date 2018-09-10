@@ -99,9 +99,10 @@ trait ReadServiceComponent {
       if (user.isAdmin) {
         status.flatMap(domain.LearningPathStatus.valueOf) match {
           case Some(ps) =>
-            Success(learningPathRepository
-              .learningPathsWithStatus(ps)
-              .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", user)))
+            Success(
+              learningPathRepository
+                .learningPathsWithStatus(ps)
+                .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", user)))
           case _ => Failure(InvalidStatusException(Error.MISSING_STATUS_ERROR))
         }
       } else {

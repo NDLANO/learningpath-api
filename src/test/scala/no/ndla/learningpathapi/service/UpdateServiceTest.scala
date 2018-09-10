@@ -220,10 +220,10 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   val NEW_COPIED_LEARNINGPATHV2 = NewCopyLearningPathV2("Tittel", Some("Beskrivelse"), "nb", None, Some(1), None, None)
 
   val UPDATED_PRIVATE_LEARNINGPATHV2 =
-    UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright))
+    UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright), None)
 
   val UPDATED_PUBLISHED_LEARNINGPATHV2 =
-    UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright))
+    UpdatedLearningPathV2(1, None, "nb", None, None, Some(1), None, Some(apiCopyright), None)
 
   override def beforeEach() = {
     service = new UpdateService
@@ -1097,7 +1097,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(clock.now()).thenReturn(newDate)
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
 
-    val lpToUpdate = UpdatedLearningPathV2(1, Some("YapThisUpdated"), "nb", None, None, None, None, None)
+    val lpToUpdate = UpdatedLearningPathV2(1, Some("YapThisUpdated"), "nb", None, None, None, None, None, None)
     service.updateLearningPathV2(PUBLISHED_ID, lpToUpdate, PUBLISHED_OWNER)
 
     val expectedUpdatedPath = PUBLISHED_LEARNINGPATH.copy(
@@ -1327,5 +1327,30 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(learningPathRepository, times(1))
       .insert(eqTo(expectedNewLearningPath))
 
+  }
+
+  test("That delete message field deletes admin message") {
+    val newDate = new Date()
+    val originalLearningPath =
+      PUBLISHED_LEARNINGPATH.copy(message = Some(Message("You need to fix some stuffs", "kari", new DateTime())))
+    when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(originalLearningPath))
+    when(learningPathRepository.learningStepWithId(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession]))
+      .thenReturn(Some(STEP1))
+    when(learningPathRepository.learningStepsFor(eqTo(PUBLISHED_ID))(any[DBSession])).thenReturn(List())
+    when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
+      i.getArgumentAt(0, originalLearningPath.getClass))
+    when(clock.now()).thenReturn(newDate)
+    when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
+
+    val lpToUpdate = UpdatedLearningPathV2(1, None, "nb", None, None, None, None, None, Some(true))
+    service.updateLearningPathV2(PUBLISHED_ID, lpToUpdate, PUBLISHED_OWNER)
+
+    val expectedUpdatedPath = PUBLISHED_LEARNINGPATH.copy(
+      status = LearningPathStatus.UNLISTED,
+      lastUpdated = newDate,
+      message = None
+    )
+
+    verify(learningPathRepository, times(1)).update(Matchers.eq(expectedUpdatedPath))(any[DBSession])
   }
 }
