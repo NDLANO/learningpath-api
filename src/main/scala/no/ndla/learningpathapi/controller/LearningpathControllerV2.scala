@@ -91,7 +91,7 @@ trait LearningpathControllerV2 {
       "Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,).")
     private val licenseFilter =
       Param("filter", "Query for filtering licenses. Only licenses containing filter-string are returned.")
-    private val learningPathStatus = Param("status", "Status of LearningPaths")
+    private val learningPathStatus = Param("STATUS", "Status of LearningPaths")
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param) =
       queryParam[T](param.paramName).description(param.description)
@@ -584,6 +584,22 @@ trait LearningpathControllerV2 {
       }
     }
 
+    private val withStatus: SwaggerSupportSyntax.OperationBuilder =
+      (apiOperation[List[LearningPathV2]]("withStatus")
+        summary "Fetch all learningpaths with specified status"
+        notes "Fetch all learningpaths with specified status"
+        parameters (asHeaderParam[Option[String]](correlationId),
+        asPathParam[String](learningPathStatus))
+        responseMessages (response500, response400)
+        authorizations "oauth2")
+    get(s"/status/:${this.learningPathStatus.paramName}", operation(withStatus)) {
+      val pathStatus = params(this.learningPathStatus.paramName)
+      readService.learningPathWithStatus(pathStatus, UserInfo.get) match {
+        case Success(lps) => lps
+        case Failure(ex)  => errorHandler(ex)
+      }
+    }
+
     private val deleteLearningPath =
       (apiOperation[LearningPathV2]("deleteLearningPath")
         summary "Delete given learningpath"
@@ -667,23 +683,6 @@ trait LearningpathControllerV2 {
 
     get("/contributors/", operation(getContributors)) {
       readService.contributors
-    }
-
-    private val withStatus: SwaggerSupportSyntax.OperationBuilder =
-      (apiOperation[List[LearningPathV2]]("withStatus")
-        summary "Fetch all learningpaths with specified status"
-        notes "Fetch all learningpaths with specified status"
-        parameters (asHeaderParam[Option[String]](correlationId),
-        asQueryParam[String](learningPathStatus))
-        responseMessages (response500, response400)
-        authorizations "oauth2")
-    get("/with-status/", operation(withStatus)) {
-      val pathStatus = paramOrNone(this.learningPathStatus.paramName)
-      readService.learningPathWithStatus(pathStatus, UserInfo.get) match {
-        case Success(lps) => lps
-        case Failure(ex)  => errorHandler(ex)
-      }
-
     }
   }
 }

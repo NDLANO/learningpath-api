@@ -224,22 +224,16 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That /with-status returns 400 if invalid status is specified") {
-    when(readService.learningPathWithStatus(any[Option[String]], any[UserInfo]))
+    when(readService.learningPathWithStatus(any[String], any[UserInfo]))
       .thenReturn(Failure(InvalidStatusException("Bad status")))
 
-    get("/with-status/",
-        Map(
-          "status" -> "invalidStatusHurrDurr"
-        )) {
+    get("/status/invalidStatusHurrDurr") {
       status should equal(400)
     }
 
-    when(readService.learningPathWithStatus(any[Option[String]], any[UserInfo]))
+    when(readService.learningPathWithStatus(any[String], any[UserInfo]))
       .thenReturn(Success(List.empty))
-    get("/with-status/",
-        Map(
-          "status" -> "unlisted"
-        )) {
+    get("/status/unlisted") {
       status should equal(200)
     }
 

@@ -95,21 +95,17 @@ trait ReadServiceComponent {
       LearningPathDomainDump(learningPathRepository.learningPathCount, safePageNo, safePageSize, results)
     }
 
-    def learningPathWithStatus(status: Option[String], user: UserInfo): Try[List[LearningPathV2]] = {
+    def learningPathWithStatus(status: String, user: UserInfo): Try[List[LearningPathV2]] = {
       if (user.isAdmin) {
-        status.flatMap(domain.LearningPathStatus.valueOf) match {
+        domain.LearningPathStatus.valueOf(status) match {
           case Some(ps) =>
             Success(
               learningPathRepository
                 .learningPathsWithStatus(ps)
                 .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", user)))
-          case _ => Failure(InvalidStatusException(Error.MISSING_STATUS_ERROR))
+          case _ => Failure(InvalidStatusException(s"Parameter '$status' is not a valid status"))
         }
-      } else {
-        Failure(domain.AccessDeniedException("You do not have access to this resource."))
-
-      }
+      } else { Failure(domain.AccessDeniedException("You do not have access to this resource.")) }
     }
-
   }
 }
