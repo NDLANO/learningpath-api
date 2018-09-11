@@ -63,6 +63,8 @@ abstract class NdlaController
     case _: PSQLException =>
       ComponentRegistry.connectToDatabase()
       InternalServerError(Error.DatabaseUnavailableError)
+    case mse: InvalidStatusException =>
+      BadRequest(Error(Error.MISSING_STATUS, mse.getMessage))
     case t: Throwable =>
       t.printStackTrace()
       logger.error(t.getMessage)

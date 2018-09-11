@@ -46,7 +46,9 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     api.LearningPathTags(List(), "nb"),
     copyright,
     true,
-    List("nb")
+    List("nb"),
+    None,
+    None
   )
   val domainLearningStep = LearningStep(None, None, None, None, 1, List(), List(), List(), StepType.INTRODUCTION, None)
 
@@ -109,7 +111,9 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
                                   Some("https://creativecommons.org/licenses/by/2.0/")),
                       List.empty),
         canEdit = true,
-        List("nb", "en")
+        List("nb", "en"),
+        None,
+        None
       ))
     service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")),
                                 Language.DefaultLanguage,
@@ -333,6 +337,14 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     val existing = Seq(desc1, desc2, desc3)
     val updated = Seq(oppdatertDesc2)
     service.mergeLanguageFields(existing, updated) should equal(Seq(desc1, desc3, oppdatertDesc2))
+  }
+
+  test("That a apiLearningPath should only contain ownerId if admin") {
+    val noAdmin = service.asApiLearningpathV2(domainLearningPath, "nb", UserInfo(domainLearningPath.owner, Set.empty))
+    val admin = service.asApiLearningpathV2(domainLearningPath, "nb", UserInfo("kwakk", Set(LearningPathRole.ADMIN)))
+
+    noAdmin.get.ownerId should be(None)
+    admin.get.ownerId.get should be(domainLearningPath.owner)
   }
 
 }
