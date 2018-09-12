@@ -32,4 +32,8 @@ case class LearningPathSummaryV2(
     @(ApiModelProperty @field)(description = "The contributors of this learningpath") copyright: Copyright,
     @(ApiModelProperty @field)(description = "A list of available languages for this audio") supportedLanguages: Seq[
       String],
-    @(ApiModelProperty @field)(description = "The id this learningpath is based on, if any") isBasedOn: Option[Long])
+    @(ApiModelProperty @field)(description = "The id this learningpath is based on, if any") isBasedOn: Option[Long],
+    @(ApiModelProperty @field)(description =
+      "Message that admins can place on a LearningPath for notifying a owner of issues with the LearningPath") message: Option[
+      String]
+)

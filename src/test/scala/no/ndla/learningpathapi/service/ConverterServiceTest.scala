@@ -138,6 +138,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
                                   Some("https://creativecommons.org/licenses/by/2.0/")),
                       List.empty),
         List("nb", "en"),
+        None,
         None
       ))
     service.asApiLearningpathSummaryV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en"))) should equal(

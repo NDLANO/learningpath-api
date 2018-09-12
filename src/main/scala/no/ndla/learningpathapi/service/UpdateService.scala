@@ -92,7 +92,7 @@ trait UpdateService {
 
           val newMessage = message match {
             case Some(msg) if owner.isAdmin =>
-              Some(domain.Message(msg, owner.userId, new DateTime(clock.now())))
+              Some(domain.Message(msg, owner.userId, clock.now()))
             case _ => existing.message
           }
 

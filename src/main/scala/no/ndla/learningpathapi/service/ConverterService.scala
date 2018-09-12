@@ -386,7 +386,8 @@ trait ConverterService {
       supportedLanguages.isEmpty || (!supportedLanguages.contains(language) && language != AllLanguages)
     }
 
-    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath): Try[api.LearningPathSummaryV2] = {
+    def asApiLearningpathSummaryV2(learningpath: domain.LearningPath,
+                                   user: UserInfo = UserInfo.get): Try[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 
       val title = findByLanguageOrBestEffort(learningpath.title, Some(Language.AllLanguages))
@@ -402,6 +403,8 @@ trait ConverterService {
         findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps), Some(Language.AllLanguages))
           .getOrElse(api.Introduction("", DefaultLanguage))
 
+      val message = learningpath.message.filter(_ => learningpath.canEdit(user)).map(_.message)
+
       Success(
         api.LearningPathSummaryV2(
           learningpath.id.get,
@@ -416,7 +419,8 @@ trait ConverterService {
           tags,
           asApiCopyright(learningpath.copyright),
           supportedLanguages,
-          learningpath.isBasedOn
+          learningpath.isBasedOn,
+          message
         )
       )
     }

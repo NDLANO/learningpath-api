@@ -7,6 +7,6 @@
 
 package no.ndla.learningpathapi.model.domain
 
-import org.joda.time.DateTime
+import java.util.Date
 
-case class Message(message: String, adminName: String, date: DateTime)
+case class Message(message: String, adminName: String, date: Date)

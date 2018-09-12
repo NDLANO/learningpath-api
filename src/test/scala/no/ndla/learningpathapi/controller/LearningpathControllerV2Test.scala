@@ -45,6 +45,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     api.LearningPathTags(Seq(), "nb"),
     copyright,
     List("nb"),
+    None,
     None
   )
 

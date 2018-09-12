@@ -113,7 +113,8 @@ trait SearchConverterServiceComponent {
           .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage)),
         searchableLearningPath.copyright,
         supportedLanguages,
-        searchableLearningPath.isBasedOn
+        searchableLearningPath.isBasedOn,
+        message = None
       )
     }
 
