@@ -92,6 +92,9 @@ trait LearningpathControllerV2 {
     private val licenseFilter =
       Param("filter", "Query for filtering licenses. Only licenses containing filter-string are returned.")
     private val learningPathStatus = Param("STATUS", "Status of LearningPaths")
+    private val adminMessage = Param(
+      "message",
+      "Message that admins can place on a LearningPath for notifying a owner of issues with LearningPath")
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param) =
       queryParam[T](param.paramName).description(param.description)
@@ -562,7 +565,8 @@ trait LearningpathControllerV2 {
         notes "Updates the status of the given learningPath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
-        bodyParam[LearningPathStatus])
+        bodyParam[LearningPathStatus],
+        asQueryParam[Option[String]](adminMessage))
         responseMessages (response400, response403, response404, response500)
         authorizations "oauth2")
 
@@ -572,8 +576,7 @@ trait LearningpathControllerV2 {
         domain.LearningPathStatus.valueOfOrError(learningPathStatus.status)
       val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
-
-      val message = paramOrNone("message")
+      val message = paramOrNone(this.adminMessage.paramName)
 
       updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, message) match {
         case None =>
