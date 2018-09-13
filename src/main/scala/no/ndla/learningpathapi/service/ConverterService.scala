@@ -408,6 +408,7 @@ trait ConverterService {
       Success(
         api.LearningPathSummaryV2(
           learningpath.id.get,
+          revision = learningpath.revision,
           title,
           description,
           introduction,

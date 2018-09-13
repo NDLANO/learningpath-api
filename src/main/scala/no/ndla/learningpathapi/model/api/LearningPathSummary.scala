@@ -18,6 +18,7 @@ import scala.annotation.meta.field
 @ApiModel(description = "Summary of meta information for a learningpath")
 case class LearningPathSummaryV2(
     @(ApiModelProperty @field)(description = "The unique id of the learningpath") id: Long,
+    @(ApiModelProperty @field)(description = "The revision number for this learningpath") revision: Option[Int],
     @(ApiModelProperty @field)(description = "The titles of the learningpath") title: Title,
     @(ApiModelProperty @field)(description = "The descriptions of the learningpath") description: Description,
     @(ApiModelProperty @field)(description = "The introductions of the learningpath") introduction: Introduction,
@@ -35,5 +36,4 @@ case class LearningPathSummaryV2(
     @(ApiModelProperty @field)(description = "The id this learningpath is based on, if any") isBasedOn: Option[Long],
     @(ApiModelProperty @field)(description =
       "Message that admins can place on a LearningPath for notifying a owner of issues with the LearningPath") message: Option[
-      String]
-)
+      String])

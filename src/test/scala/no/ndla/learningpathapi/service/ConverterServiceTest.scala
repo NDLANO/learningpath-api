@@ -124,6 +124,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     val expected = Success(
       api.LearningPathSummaryV2(
         1,
+        Some(1),
         api.Title("tittel", Language.DefaultLanguage),
         api.Description("deskripsjon", Language.DefaultLanguage),
         api.Introduction("", Language.DefaultLanguage),
