@@ -35,7 +35,8 @@ case class LearningPath(id: Option[Long],
                         tags: Seq[LearningPathTags],
                         owner: String,
                         copyright: Copyright,
-                        learningsteps: Seq[LearningStep] = Nil) {
+                        learningsteps: Seq[LearningStep] = Nil,
+                        message: Option[Message] = None) {
 
   def isPrivate: Boolean = {
     status == LearningPathStatus.PRIVATE
@@ -100,7 +101,7 @@ object LearningPathRole extends Enumeration {
 }
 
 object LearningPathStatus extends Enumeration {
-  val PUBLISHED, PRIVATE, DELETED, UNLISTED = Value
+  val PUBLISHED, PRIVATE, DELETED, UNLISTED, SUBMITTED = Value
 
   def valueOf(s: String): Option[LearningPathStatus.Value] = {
     LearningPathStatus.values.find(_.toString == s.toUpperCase)

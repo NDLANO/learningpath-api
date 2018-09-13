@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait SearchService extends LazyLogging {
-  this: SearchIndexServiceComponent with Elastic4sClient with SearchConverterServiceComponent =>
+  this: SearchIndexService with Elastic4sClient with SearchConverterServiceComponent =>
   val searchService: SearchService
 
   class SearchService {

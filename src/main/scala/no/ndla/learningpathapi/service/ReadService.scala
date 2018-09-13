@@ -8,13 +8,16 @@
 
 package no.ndla.learningpathapi.service
 
+import java.nio.file.AccessDeniedException
+
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.model.domain.{Author => _, LearningPathStatus => _, LearningPathTags => _, _}
 import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 import scala.math.max
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 trait ReadService {
   this: LearningPathRepositoryComponent with ConverterService =>
@@ -100,5 +103,17 @@ trait ReadService {
       LearningPathDomainDump(learningPathRepository.learningPathCount, safePageNo, safePageSize, results)
     }
 
+    def learningPathWithStatus(status: String, user: UserInfo): Try[List[LearningPathV2]] = {
+      if (user.isAdmin) {
+        domain.LearningPathStatus.valueOf(status) match {
+          case Some(ps) =>
+            Success(
+              learningPathRepository
+                .learningPathsWithStatus(ps)
+                .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", true, user)))
+          case _ => Failure(InvalidStatusException(s"Parameter '$status' is not a valid status"))
+        }
+      } else { Failure(domain.AccessDeniedException("You do not have access to this resource.")) }
+    }
   }
 }

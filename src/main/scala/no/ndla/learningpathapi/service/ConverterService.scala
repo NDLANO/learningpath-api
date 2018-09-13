@@ -122,6 +122,8 @@ trait ConverterService {
           .toList
           .sortBy(_.seqNo)
 
+        val message = lp.message.filter(_ => lp.canEdit(userInfo)).map(asApiMessage)
+        val owner = Some(lp.owner).filter(_ => userInfo.isAdmin)
         Some(
           api.LearningPathV2(
             lp.id.get,
@@ -140,11 +142,16 @@ trait ConverterService {
             tags,
             asApiCopyright(lp.copyright),
             lp.canEdit(userInfo),
-            supportedLanguages
+            supportedLanguages,
+            owner,
+            message
           ))
       } else
         None
     }
+
+    private def asApiMessage(message: domain.Message): api.Message =
+      api.Message(message.message, message.date)
 
     private[service] def mergeLanguageFields[A <: LanguageField[String]](existing: Seq[A], updated: Seq[A]): Seq[A] = {
       val toKeep = existing.filterNot(item => updated.map(_.language).contains(item.language))
@@ -196,6 +203,8 @@ trait ConverterService {
           Seq(domain.LearningPathTags(value, updated.language))
       }
 
+      val message = existing.message.filterNot(_ => updated.deleteMessage.getOrElse(false))
+
       existing.copy(
         revision = Some(updated.revision),
         title = mergeLanguageFields(existing.title, titles),
@@ -213,7 +222,8 @@ trait ConverterService {
           if (updated.copyright.isDefined)
             converterService.asCopyright(updated.copyright.get)
           else existing.copyright,
-        lastUpdated = clock.now()
+        lastUpdated = clock.now(),
+        message = message
       )
     }
 

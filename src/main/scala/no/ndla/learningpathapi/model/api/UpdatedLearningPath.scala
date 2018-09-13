@@ -24,4 +24,7 @@ case class UpdatedLearningPathV2(
       Int],
     @(ApiModelProperty @field)(description = "Searchable tags for the learningpath") tags: Option[Seq[String]],
     @(ApiModelProperty @field)(description = "Describes the copyright information for the learningpath") copyright: Option[
-      Copyright])
+      Copyright],
+    @(ApiModelProperty @field)(description =
+      "Whether to delete a message connected to a learningpath by an administrator.") deleteMessage: Option[Boolean]
+)

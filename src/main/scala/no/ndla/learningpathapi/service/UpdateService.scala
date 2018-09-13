@@ -12,15 +12,18 @@ import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, UserInfo, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
+import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
+import com.netaporter.uri.dsl._
+import no.ndla.learningpathapi.model.domain.UserInfo
+import org.joda.time.DateTime
 
 import scala.util.{Failure, Success}
 
 trait UpdateService {
   this: LearningPathRepositoryComponent
     with ConverterService
-    with SearchIndexServiceComponent
+    with SearchIndexService
     with Clock
     with LearningStepValidator
     with LearningPathValidator =>
@@ -83,7 +86,8 @@ trait UpdateService {
     def updateLearningPathStatusV2(learningPathId: Long,
                                    status: LearningPathStatus.Value,
                                    owner: UserInfo,
-                                   language: String): Option[LearningPathV2] = {
+                                   language: String,
+                                   message: Option[String] = None): Option[LearningPathV2] = {
       withId(learningPathId, includeDeleted = true).map(_.canSetStatus(status, owner)) match {
         case Some(Failure(ex)) => throw ex
         case None              => None
@@ -92,8 +96,15 @@ trait UpdateService {
             existing.validateForPublishing()
           }
 
+          val newMessage = message match {
+            case Some(msg) if owner.isAdmin =>
+              Some(domain.Message(msg, owner.userId, new DateTime(clock.now())))
+            case _ => existing.message
+          }
+
           val updatedLearningPath =
-            learningPathRepository.update(existing.copy(status = status, lastUpdated = clock.now()))
+            learningPathRepository.update(
+              existing.copy(message = newMessage, status = status, lastUpdated = clock.now()))
 
           if (updatedLearningPath.isPublished) {
             searchIndexService.indexDocument(updatedLearningPath)

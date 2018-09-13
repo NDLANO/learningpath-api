@@ -12,8 +12,8 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
 import no.ndla.learningpathapi.service.{ImportService, ReadService}
+import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.network.AuthUser
 import org.json4s.Formats
 import org.json4s.ext.EnumNameSerializer
@@ -22,7 +22,7 @@ import org.scalatra._
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImportService with SearchIndexServiceComponent with LearningPathRepositoryComponent with ReadService =>
+  this: ImportService with SearchIndexService with LearningPathRepositoryComponent with ReadService =>
   val internController: InternController
 
   class InternController extends NdlaController {

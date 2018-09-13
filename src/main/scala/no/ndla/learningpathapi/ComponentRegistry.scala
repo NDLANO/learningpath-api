@@ -12,11 +12,7 @@ import no.ndla.learningpathapi.controller.{HealthController, InternController, L
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{
-  SearchConverterServiceComponent,
-  SearchIndexServiceComponent,
-  SearchService
-}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexService, SearchService}
 import no.ndla.learningpathapi.validation.{
   LanguageValidator,
   LearningPathValidator,
@@ -36,7 +32,7 @@ object ComponentRegistry
     with UpdateService
     with SearchConverterServiceComponent
     with SearchService
-    with SearchIndexServiceComponent
+    with SearchIndexService
     with TaxonomyApiClient
     with NdlaClient
     with ImageApiClientComponent
@@ -51,7 +47,8 @@ object ComponentRegistry
     with LanguageValidator
     with LearningPathValidator
     with LearningStepValidator
-    with TitleValidator {
+    with TitleValidator
+    with SearchApiClient {
 
   def connectToDatabase(): Unit =
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
@@ -94,4 +91,5 @@ object ComponentRegistry
   lazy val learningPathValidator = new LearningPathValidator
   lazy val learningStepValidator = new LearningStepValidator
   lazy val e4sClient = Elastic4sClientFactory.getClient()
+  lazy val searchApiClient = new SearchApiClient
 }

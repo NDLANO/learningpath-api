@@ -16,7 +16,7 @@ import com.sksamuel.elastic4s.http.RequestSuccess
 import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
-import no.ndla.learningpathapi.integration.Elastic4sClient
+import no.ndla.learningpathapi.integration.{Elastic4sClient, SearchApiClient}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain.{ElasticIndexingException, LearningPath, ReindexResult}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -24,8 +24,11 @@ import org.json4s.native.Serialization._
 
 import scala.util.{Failure, Success, Try}
 
-trait SearchIndexServiceComponent {
-  this: Elastic4sClient with SearchConverterServiceComponent with LearningPathRepositoryComponent =>
+trait SearchIndexService {
+  this: Elastic4sClient
+    with SearchConverterServiceComponent
+    with LearningPathRepositoryComponent
+    with SearchApiClient =>
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
@@ -75,23 +78,29 @@ trait SearchIndexServiceComponent {
             case Failure(ex) => Failure(ex)
           }
         }
+        _ <- searchApiClient.indexLearningPathDocument(learningPath)
       } yield indexed
     }
 
     def deleteDocument(learningPath: LearningPath): Try[_] = {
-      for {
-        _ <- searchIndexService.aliasTarget.map {
-          case Some(index) => Success(index)
-          case None =>
-            createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
-        }
-        deleted <- {
-          e4sClient.execute {
-            delete(s"${learningPath.id.get}")
-              .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
-          }
-        }
-      } yield deleted
+      learningPath.id
+        .map(id => {
+          for {
+            _ <- searchIndexService.aliasTarget.map {
+              case Some(index) => Success(index)
+              case None =>
+                createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
+            }
+            deleted <- {
+              e4sClient.execute {
+                delete(id.toString)
+                  .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+              }
+            }
+            _ <- searchApiClient.deleteLearningPathDocument(id)
+          } yield deleted
+        })
+        .getOrElse(Success(learningPath))
     }
 
     def createIndexWithGeneratedName(): Try[String] = {

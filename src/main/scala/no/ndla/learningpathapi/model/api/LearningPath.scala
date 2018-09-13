@@ -32,7 +32,7 @@ case class LearningPathV2(
       CoverPhoto],
     @(ApiModelProperty @field)(description = "The duration of the learningpath in minutes") duration: Option[Int],
     @(ApiModelProperty @field)(description = "The publishing status of the learningpath",
-                               allowableValues = "PUBLISHED,PRIVATE,UNLISTED") status: String,
+                               allowableValues = "PUBLISHED,PRIVATE,UNLISTED,SUBMITTED") status: String,
     @(ApiModelProperty @field)(
       description = "Verification status",
       allowableValues = "CREATED_BY_NDLA,VERIFIED_BY_NDLA,EXTERNAL") verificationStatus: String,
@@ -41,9 +41,8 @@ case class LearningPathV2(
     @(ApiModelProperty @field)(description = "Describes the copyright information for the learningpath") copyright: Copyright,
     @(ApiModelProperty @field)(description = "True if authenticated user may edit this learningpath") canEdit: Boolean,
     @(ApiModelProperty @field)(description = "The supported languages for this learningpath") supportedLanguages: Seq[
-      String]) {
-
-  def isPrivate: Boolean = {
-    status == domain.LearningPathStatus.PRIVATE.toString
-  }
-}
+      String],
+    @(ApiModelProperty @field)(description = "Visible if administrator or owner of LearningPath") ownerId: Option[
+      String],
+    @(ApiModelProperty @field)(description =
+      "Message set by administrator. Visible if administrator or owner of LearningPath") message: Option[Message])

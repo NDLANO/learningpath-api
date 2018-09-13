@@ -14,7 +14,7 @@ import no.ndla.learningpathapi.model.api.{ImportReport, ImportStatus, LearningPa
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.search.SearchIndexServiceComponent
+import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.mapping.License._
 
 import scala.util.{Failure, Success, Try}
@@ -24,7 +24,7 @@ trait ImportService {
     with KeywordsServiceComponent
     with ImageApiClientComponent
     with MigrationApiClient
-    with SearchIndexServiceComponent
+    with SearchIndexService
     with ConverterService
     with ArticleImportClient
     with TaxonomyApiClient =>

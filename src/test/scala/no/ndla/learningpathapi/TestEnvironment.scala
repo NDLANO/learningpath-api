@@ -13,11 +13,7 @@ import no.ndla.learningpathapi.controller.{HealthController, LearningpathControl
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{
-  SearchConverterServiceComponent,
-  SearchIndexServiceComponent,
-  SearchService
-}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexService, SearchService}
 import no.ndla.learningpathapi.validation._
 import no.ndla.network.NdlaClient
 import org.mockito.Mockito
@@ -30,7 +26,8 @@ trait TestEnvironment
     with UpdateService
     with SearchConverterServiceComponent
     with SearchService
-    with SearchIndexServiceComponent
+    with SearchIndexService
+    with SearchApiClient
     with TaxonomyApiClient
     with NdlaClient
     with ImageApiClientComponent
@@ -73,6 +70,7 @@ trait TestEnvironment
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
   val e4sClient = mock[NdlaE4sClient]
+  val searchApiClient = mock[SearchApiClient]
 
   def resetMocks() = {
     Mockito.reset(
