@@ -420,9 +420,9 @@ trait ConverterService {
     }
 
     def languageIsSupported(supportedLangs: Seq[String], language: String): Boolean = {
-      val isLanguageNeutral = supportedLanguages.contains(UnknownLanguage) && supportedLanguages.length == 1
+      val isLanguageNeutral = supportedLangs.contains(UnknownLanguage) && supportedLangs.length == 1
 
-      supportedLanguages.contains(language) || language == AllLanguages || isLanguageNeutral
+      supportedLangs.contains(language) || language == AllLanguages || isLanguageNeutral
     }
 
     def asApiLearningStepV2(ls: domain.LearningStep,
