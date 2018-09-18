@@ -533,8 +533,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
                                        "nb",
                                        Some("new message"))
     verify(learningPathRepository, times(1)).update(
-      PUBLISHED_LEARNINGPATH.copy(message =
-                                    Some(Message("new message", PRIVATE_OWNER.userId, new DateTime(clock.now()))),
+      PUBLISHED_LEARNINGPATH.copy(message = Some(Message("new message", PRIVATE_OWNER.userId, clock.now())),
                                   status = LearningPathStatus.PRIVATE,
                                   lastUpdated = clock.now())
     )
@@ -1332,7 +1331,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That delete message field deletes admin message") {
     val newDate = new Date()
     val originalLearningPath =
-      PUBLISHED_LEARNINGPATH.copy(message = Some(Message("You need to fix some stuffs", "kari", new DateTime())))
+      PUBLISHED_LEARNINGPATH.copy(message = Some(Message("You need to fix some stuffs", "kari", clock.now())))
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(originalLearningPath))
     when(learningPathRepository.learningStepWithId(eqTo(PUBLISHED_ID), eqTo(STEP1.id.get))(any[DBSession]))
       .thenReturn(Some(STEP1))

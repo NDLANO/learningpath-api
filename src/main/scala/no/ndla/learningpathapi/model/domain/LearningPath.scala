@@ -134,8 +134,9 @@ object LearningPathVerificationStatus extends Enumeration {
 }
 
 object LearningPath extends SQLSyntaxSupport[LearningPath] {
-  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(LearningPathStatus) + new EnumNameSerializer(
-    LearningPathVerificationStatus)
+  implicit val formats = org.json4s.DefaultFormats +
+    new EnumNameSerializer(LearningPathStatus) +
+    new EnumNameSerializer(LearningPathVerificationStatus)
   override val tableName = "learningpaths"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
@@ -143,21 +144,10 @@ object LearningPath extends SQLSyntaxSupport[LearningPath] {
 
   def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
     val meta = read[LearningPath](rs.string(lp.c("document")))
-    LearningPath(
-      Some(rs.long(lp.c("id"))),
-      Some(rs.int(lp.c("revision"))),
-      rs.stringOpt(lp.c("external_id")),
-      meta.isBasedOn,
-      meta.title,
-      meta.description,
-      meta.coverPhotoId,
-      meta.duration,
-      meta.status,
-      meta.verificationStatus,
-      meta.lastUpdated,
-      meta.tags,
-      meta.owner,
-      meta.copyright
+    meta.copy(
+      id = Some(rs.long(lp.c("id"))),
+      revision = Some(rs.int(lp.c("revision"))),
+      externalId = rs.stringOpt(lp.c("external_id"))
     )
   }
 

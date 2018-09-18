@@ -98,6 +98,7 @@ trait SearchConverterServiceComponent {
 
       LearningPathSummaryV2(
         searchableLearningPath.id,
+        revision = None,
         findByLanguageOrBestEffort(titles, Some(language))
           .getOrElse(api.Title("", DefaultLanguage)),
         findByLanguageOrBestEffort(descriptions, Some(language))
@@ -113,7 +114,8 @@ trait SearchConverterServiceComponent {
           .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage)),
         searchableLearningPath.copyright,
         supportedLanguages,
-        searchableLearningPath.isBasedOn
+        searchableLearningPath.isBasedOn,
+        message = None
       )
     }
 

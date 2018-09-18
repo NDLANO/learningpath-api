@@ -162,6 +162,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     val expected = Success(
       api.LearningPathSummaryV2(
         1,
+        Some(1),
         api.Title("tittel", Language.DefaultLanguage),
         api.Description("deskripsjon", Language.DefaultLanguage),
         api.Introduction("", Language.DefaultLanguage),
@@ -176,6 +177,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
                                   Some("https://creativecommons.org/licenses/by/2.0/")),
                       List.empty),
         List("nb", "en"),
+        None,
         None
       ))
     service.asApiLearningpathSummaryV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en"))) should equal(

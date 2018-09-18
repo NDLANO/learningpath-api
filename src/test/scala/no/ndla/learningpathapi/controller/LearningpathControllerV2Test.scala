@@ -34,6 +34,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
 
   val DefaultLearningPathSummary = api.LearningPathSummaryV2(
     1,
+    None,
     api.Title("Tittel", "nb"),
     api.Description("", "nb"),
     api.Introduction("", "nb"),
@@ -45,6 +46,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     api.LearningPathTags(Seq(), "nb"),
     copyright,
     List("nb"),
+    None,
     None
   )
 

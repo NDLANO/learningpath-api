@@ -354,6 +354,28 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     repository.deletePath(learningPath3.id.get)
   }
 
+  test("That inserted and fetched entry stays the same") {
+    assume(databaseIsAvailable, "Database is unavailable")
+    val steps = Vector(
+      DefaultLearningStep,
+      DefaultLearningStep,
+      DefaultLearningStep
+    )
+
+    val path = DefaultLearningPath.copy(
+      learningsteps = steps,
+      status = LearningPathStatus.PRIVATE,
+      owner = "123",
+      message = Some(Message("this is message", "kwawk", clock.now()))
+    )
+
+    val inserted = repository.insert(path)
+    val fetched = repository.withId(inserted.id.get)
+
+    inserted should be(fetched.get)
+    repository.deletePath(inserted.id.get)
+  }
+
   def emptyTestDatabase = {
     DB autoCommit (implicit session => {
       sql"delete from learningpathapi_test.learningpaths;".execute.apply()(session)

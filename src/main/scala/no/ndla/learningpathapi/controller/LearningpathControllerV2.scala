@@ -89,9 +89,6 @@ trait LearningpathControllerV2 {
       Param("filter", "Query for filtering licenses. Only licenses containing filter-string are returned.")
     private val fallback = Param("fallback", "Fallback to existing language if language is specified.")
     private val learningPathStatus = Param("STATUS", "Status of LearningPaths")
-    private val adminMessage = Param(
-      "message",
-      "Message that admins can place on a LearningPath for notifying a owner of issues with LearningPath")
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param) =
       queryParam[T](param.paramName).description(param.description)
@@ -379,7 +376,7 @@ trait LearningpathControllerV2 {
         authorizations "oauth2")
 
     get("/mine/", operation(getMyLearningpaths)) {
-      readService.withOwnerV2(owner = requireUserId)
+      readService.withOwnerV2(UserInfo(requireUserId))
     }
 
     private val getLicenses =
@@ -583,25 +580,22 @@ trait LearningpathControllerV2 {
     }
 
     private val updateLearningPathStatus =
-      (apiOperation[LearningPathStatus]("updateLearningPathStatus")
+      (apiOperation[LearningPathV2]("updateLearningPathStatus")
         summary "Update status of given learningpath"
         notes "Updates the status of the given learningPath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
-        bodyParam[LearningPathStatus],
-        asQueryParam[Option[String]](adminMessage))
+        bodyParam[UpdateLearningPathStatus])
         responseMessages (response400, response403, response404, response500)
         authorizations "oauth2")
 
     put("/:learningpath_id/status/", operation(updateLearningPathStatus)) {
-      val learningPathStatus = extract[LearningPathStatus](request.body)
-      val pathStatus =
-        domain.LearningPathStatus.valueOfOrError(learningPathStatus.status)
+      val toUpdate = extract[UpdateLearningPathStatus](request.body)
+      val pathStatus = domain.LearningPathStatus.valueOfOrError(toUpdate.status)
       val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
-      val message = paramOrNone(this.adminMessage.paramName)
 
-      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, message) match {
+      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, toUpdate.message) match {
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
         case Some(learningPath) =>

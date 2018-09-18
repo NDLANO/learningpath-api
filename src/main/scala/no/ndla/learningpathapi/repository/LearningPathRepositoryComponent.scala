@@ -38,7 +38,8 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       LearningStep.JSonSerializer +
       new EnumNameSerializer(LearningPathStatus) +
       new EnumNameSerializer(LearningPathVerificationStatus) +
-      new EnumNameSerializer(StepType)
+      new EnumNameSerializer(StepType) ++
+      org.json4s.ext.JodaTimeSerializers.all
 
     def withId(id: Long)(implicit session: DBSession = AutoSession): Option[LearningPath] = {
       learningPathWhere(sqls"lp.id = $id AND lp.document->>'status' <> ${LearningPathStatus.DELETED.toString}")
