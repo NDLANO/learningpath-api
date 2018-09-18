@@ -71,10 +71,11 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       searchService.matchingQuery(eqTo(List(1, 2)),
                                   eqTo(query),
                                   eqTo(Some(tag)),
-                                  eqTo(Some(language)),
+                                  eqTo(language),
                                   eqTo(Sort.ByDurationDesc),
                                   eqTo(Some(page)),
-                                  eqTo(Some(pageSize)))).thenReturn(result)
+                                  eqTo(Some(pageSize)),
+                                  eqTo(false))).thenReturn(result)
     //when(searchService.getHitsV2(searchResult, language)).thenReturn(Seq(DefaultLearningPathSummary))
 
     get("/",
@@ -108,9 +109,10 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       searchService.allV2(any[List[Long]],
                           any[Option[String]],
                           any[Sort.Value],
-                          any[Option[String]],
+                          any[String],
                           any[Option[Int]],
-                          any[Option[Int]])).thenReturn(result)
+                          any[Option[Int]],
+                          eqTo(false))).thenReturn(result)
 
     get("/",
         Map(
@@ -142,10 +144,11 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       searchService.matchingQuery(eqTo(List(1, 2)),
                                   eqTo(query),
                                   eqTo(Some(tag)),
-                                  eqTo(Some(language)),
+                                  eqTo(language),
                                   eqTo(Sort.ByDurationDesc),
                                   eqTo(Some(page)),
-                                  eqTo(Some(pageSize)))).thenReturn(result)
+                                  eqTo(Some(pageSize)),
+                                  eqTo(false))).thenReturn(result)
 
     post(
       "/search/",

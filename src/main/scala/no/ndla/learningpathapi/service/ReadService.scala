@@ -13,12 +13,13 @@ import java.nio.file.AccessDeniedException
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{Author => _, LearningPathStatus => _, LearningPathTags => _, _}
+import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 
 import scala.math.max
 import scala.util.{Failure, Success, Try}
 
-trait ReadServiceComponent {
+trait ReadService {
   this: LearningPathRepositoryComponent with ConverterService =>
   val readService: ReadService
 
@@ -38,9 +39,12 @@ trait ReadServiceComponent {
         .flatMap(value => converterService.asApiLearningpathSummaryV2(value).toOption)
     }
 
-    def withIdV2(learningPathId: Long, language: String, user: UserInfo = UserInfo.get): Option[LearningPathV2] = {
+    def withIdV2(learningPathId: Long,
+                 language: String,
+                 fallback: Boolean,
+                 user: UserInfo = UserInfo.get): Option[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp =>
-        converterService.asApiLearningpathV2(lp, language, user))
+        converterService.asApiLearningpathV2(lp, language, fallback, user))
     }
 
     def statusFor(learningPathId: Long, user: UserInfo = UserInfo.get): Option[LearningPathStatus] = {
@@ -58,10 +62,11 @@ trait ReadServiceComponent {
     def learningstepsForWithStatusV2(learningPathId: Long,
                                      status: StepStatus.Value,
                                      language: String,
+                                     fallback: Boolean,
                                      user: UserInfo = UserInfo.get): Option[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
-          converterService.asLearningStepContainerSummary(status, lp, language)
+          converterService.asLearningStepContainerSummary(status, lp, language, fallback)
         case None => None
       }
     }
@@ -74,7 +79,10 @@ trait ReadServiceComponent {
         case Some(lp) =>
           learningPathRepository
             .learningStepWithId(learningPathId, learningstepId)
-            .flatMap(ls => converterService.asApiLearningStepV2(ls, lp, language, user))
+            .flatMap(
+              ls =>
+                converterService
+                  .asApiLearningStepV2(ls, lp, language, false, user))
         case None => None
       }
     }
@@ -102,7 +110,7 @@ trait ReadServiceComponent {
             Success(
               learningPathRepository
                 .learningPathsWithStatus(ps)
-                .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", user)))
+                .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", true, user)))
           case _ => Failure(InvalidStatusException(s"Parameter '$status' is not a valid status"))
         }
       } else { Failure(domain.AccessDeniedException("You do not have access to this resource.")) }

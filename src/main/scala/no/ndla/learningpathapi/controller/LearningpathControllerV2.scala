@@ -10,6 +10,7 @@ package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{
   Author => _,
   LearningPathStatus => _,
@@ -17,9 +18,8 @@ import no.ndla.learningpathapi.model.domain.{
   License => _,
   _
 }
-import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.service.search.SearchServiceComponent
-import no.ndla.learningpathapi.service.{ConverterService, ReadServiceComponent, UpdateService}
+import no.ndla.learningpathapi.service.search.SearchService
+import no.ndla.learningpathapi.service.{ConverterService, ReadService, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
@@ -34,11 +34,7 @@ import scala.util.{Failure, Success, Try}
 
 trait LearningpathControllerV2 {
 
-  this: ReadServiceComponent
-    with UpdateService
-    with SearchServiceComponent
-    with LanguageValidator
-    with ConverterService =>
+  this: ReadService with UpdateService with SearchService with LanguageValidator with ConverterService =>
   val learningpathControllerV2: LearningpathControllerV2
 
   class LearningpathControllerV2(implicit val swagger: Swagger)
@@ -91,6 +87,7 @@ trait LearningpathControllerV2 {
       "Return only Learningpaths that have one of the provided ids. To provide multiple ids, separate by comma (,).")
     private val licenseFilter =
       Param("filter", "Query for filtering licenses. Only licenses containing filter-string are returned.")
+    private val fallback = Param("fallback", "Fallback to existing language if language is specified.")
     private val learningPathStatus = Param("STATUS", "Status of LearningPaths")
     private val adminMessage = Param(
       "message",
@@ -111,30 +108,35 @@ trait LearningpathControllerV2 {
                 paramType = ParamType.Form)
 
     def search(query: Option[String],
-               language: Option[String],
+               searchLanguage: String,
                tag: Option[String],
                idList: List[Long],
                sort: Option[String],
                pageSize: Option[Int],
-               page: Option[Int]): SearchResultV2 = {
+               page: Option[Int],
+               fallback: Boolean): SearchResultV2 = {
       query match {
         case Some(q) =>
           searchService.matchingQuery(
             query = q,
             withIdIn = idList,
             taggedWith = tag,
-            language = language,
+            searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
+            pageSize = pageSize,
             page = page,
-            pageSize = pageSize
+            fallback = fallback
           )
         case None =>
-          searchService.allV2(withIdIn = idList,
-                              taggedWith = tag,
-                              sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
-                              language = language,
-                              page = page,
-                              pageSize = pageSize)
+          searchService.allV2(
+            withIdIn = idList,
+            taggedWith = tag,
+            searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
+            sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
+            page = page,
+            pageSize = pageSize,
+            fallback = fallback
+          )
       }
     }
 
@@ -149,7 +151,8 @@ trait LearningpathControllerV2 {
         asQueryParam[Option[String]](language),
         asQueryParam[Option[Int]](pageNo),
         asQueryParam[Option[Int]](pageSize),
-        asQueryParam[Option[String]](sort))
+        asQueryParam[Option[String]](sort),
+        asQueryParam[Option[Boolean]](fallback))
         responseMessages (response400, response500)
         authorizations "oauth2")
 
@@ -157,20 +160,26 @@ trait LearningpathControllerV2 {
       val query = paramOrNone(this.query.paramName)
       val tag = paramOrNone(this.tag.paramName)
       val idList = paramAsListOfLong(this.learningpathIds.paramName)
-      val language = paramOrNone(this.language.paramName)
+      val language =
+        paramOrDefault(this.language.paramName, Language.AllLanguages)
       val sort = paramOrNone(this.sort.paramName)
       val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps => Try(ps.toInt).toOption)
       val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
-      logger.info("GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}",
-                  query,
-                  language,
-                  tag,
-                  page,
-                  pageSize,
-                  sort,
-                  idList)
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      search(query, language, tag, idList, sort, pageSize, page)
+      logger.info(
+        "GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={} fallback={}",
+        query,
+        language,
+        tag,
+        page,
+        pageSize,
+        sort,
+        idList,
+        fallback.toString
+      )
+
+      search(query, language, tag, idList, sort, pageSize, page, fallback)
     }
 
     private val getLearningpathsPost =
@@ -190,29 +199,36 @@ trait LearningpathControllerV2 {
       val query = searchParams.query
       val tag = searchParams.tag
       val idList = searchParams.ids
-      val language = searchParams.language
+      val language = searchParams.language.getOrElse(Language.AllLanguages)
       val sort = searchParams.sort
       val pageSize = searchParams.pageSize
       val page = searchParams.page
-      logger.info("POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={}",
-                  query,
-                  language,
-                  tag,
-                  page,
-                  pageSize,
-                  sort,
-                  idList)
+      val fallback = searchParams.fallback.getOrElse(false)
+      logger.info(
+        "POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={} fallback={}",
+        query,
+        language,
+        tag,
+        page,
+        pageSize,
+        sort,
+        idList,
+        fallback.toString
+      )
 
-      search(query, language, tag, idList, sort, pageSize, page)
+      search(query, language, tag, idList, sort, pageSize, page, fallback)
     }
 
     private val getLearningpath =
       (apiOperation[LearningPathV2]("getLearningpath")
         summary "Fetch details about the specified learningpath"
         notes "Shows all information about the specified learningpath."
-        parameters (asHeaderParam[Option[String]](correlationId),
-        asPathParam[String](learningpathId),
-        asQueryParam[Option[String]](language))
+        parameters (
+          asHeaderParam[Option[String]](correlationId),
+          asPathParam[String](learningpathId),
+          asQueryParam[Option[String]](language),
+          asQueryParam[Option[Boolean]](fallback)
+      )
         responseMessages (response403, response404, response500)
         authorizations "oauth2")
 
@@ -221,8 +237,9 @@ trait LearningpathControllerV2 {
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val id = long(this.learningpathId.paramName)
       val userInfo = UserInfo.get
+      val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
-      readService.withIdV2(id, language, userInfo) match {
+      readService.withIdV2(id, language, fallback, userInfo) match {
         case Some(x) => x
         case None =>
           halt(status = 404,
@@ -256,7 +273,8 @@ trait LearningpathControllerV2 {
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asPathParam[String](learningpathId),
-          asQueryParam[Option[String]](language)
+          asQueryParam[Option[String]](language),
+          asQueryParam[Option[Boolean]](fallback)
       )
         responseMessages (response403, response404, response500)
         authorizations "oauth2")
@@ -265,8 +283,9 @@ trait LearningpathControllerV2 {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val id = long(this.learningpathId.paramName)
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      readService.learningstepsForWithStatusV2(id, StepStatus.ACTIVE, language, UserInfo.get) match {
+      readService.learningstepsForWithStatusV2(id, StepStatus.ACTIVE, language, fallback, UserInfo.get) match {
         case Some(x) => x
         case None =>
           halt(status = 404,
@@ -305,9 +324,12 @@ trait LearningpathControllerV2 {
       (apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
         summary "Fetch deleted learningsteps for given learningpath"
         notes "Show all learningsteps for the given learningpath that are marked as deleted"
-        parameters (asHeaderParam[Option[String]](correlationId),
-        asPathParam[String](learningpathId),
-        asQueryParam[Option[String]](language))
+        parameters (
+          asHeaderParam[Option[String]](correlationId),
+          asPathParam[String](learningpathId),
+          asQueryParam[Option[String]](language),
+          asQueryParam[Option[Boolean]](fallback)
+      )
         responseMessages (response403, response404, response500)
         authorizations "oauth2")
 
@@ -316,8 +338,9 @@ trait LearningpathControllerV2 {
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val id = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      readService.learningstepsForWithStatusV2(id, StepStatus.DELETED, language, userInfo) match {
+      readService.learningstepsForWithStatusV2(id, StepStatus.DELETED, language, fallback, userInfo) match {
         case Some(x) => x
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $id not found"))
@@ -659,8 +682,11 @@ trait LearningpathControllerV2 {
       (apiOperation[List[LearningPathTags]]("getTags")
         summary "Fetch all previously used tags in learningpaths"
         notes "Retrieves a list of all previously used tags in learningpaths"
-        parameters (asHeaderParam[Option[String]](correlationId),
-        asQueryParam[Option[String]](language))
+        parameters (
+          asHeaderParam[Option[String]](correlationId),
+          asQueryParam[Option[String]](language),
+          asQueryParam[Option[Boolean]](fallback)
+      )
         responseMessages response500
         authorizations "oauth2")
 
@@ -668,8 +694,9 @@ trait LearningpathControllerV2 {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val allTags = readService.tags
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      converterService.asApiLearningPathTagsSummary(allTags, language) match {
+      converterService.asApiLearningPathTagsSummary(allTags, language, fallback) match {
         case Some(s) => s
         case None =>
           halt(status = 404, body = Error(Error.NOT_FOUND, s"Tags with language '$language' not found"))

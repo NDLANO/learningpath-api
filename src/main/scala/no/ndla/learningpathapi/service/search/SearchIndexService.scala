@@ -281,7 +281,7 @@ trait SearchIndexService {
 
     }
 
-    private def indexWithNameExists(indexName: String): Try[Boolean] = {
+    def indexWithNameExists(indexName: String): Try[Boolean] = {
       val response = e4sClient.execute {
         indexExists(indexName)
       }

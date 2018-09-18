@@ -10,10 +10,9 @@ package no.ndla.learningpathapi.integration
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.ArticleImportHost
 import no.ndla.network.NdlaClient
-import no.ndla.network.model.HttpRequestException
-
-import scala.util.{Failure, Success, Try}
 import scalaj.http.{Http, HttpRequest}
+
+import scala.util.Try
 
 trait ArticleImportClient {
   this: NdlaClient =>
