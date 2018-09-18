@@ -11,12 +11,12 @@ package no.ndla.learningpathapi.integration
 import java.util.Date
 
 import com.netaporter.uri.dsl._
-import no.ndla.learningpathapi.LearningpathApiProperties.{Environment, MigrationHost, MigrationPassword, MigrationUser}
+import no.ndla.learningpathapi.LearningpathApiProperties.{MigrationHost, MigrationPassword, MigrationUser}
 import no.ndla.learningpathapi.caching.Memoize
 import no.ndla.network.NdlaClient
+import scalaj.http.Http
 
 import scala.util.Try
-import scalaj.http.Http
 
 trait MigrationApiClient {
   this: NdlaClient =>

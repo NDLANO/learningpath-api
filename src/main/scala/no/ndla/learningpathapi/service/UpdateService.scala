@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{LearningPathStatus, Title, LearningPath => _, LearningStep => _, _}
+import no.ndla.learningpathapi.model.domain.{LearningPathStatus, UserInfo, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
@@ -18,7 +18,7 @@ import com.netaporter.uri.dsl._
 import no.ndla.learningpathapi.model.domain.UserInfo
 import org.joda.time.DateTime
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 trait UpdateService {
   this: LearningPathRepositoryComponent
@@ -38,7 +38,10 @@ trait UpdateService {
         case Some(Success(existing)) =>
           val toInsert = converterService.newFromExistingLearningPath(existing, newLearningPath, owner)
           learningPathValidator.validate(toInsert, allowUnknownLanguage = true)
-          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert), newLearningPath.language, owner)
+          converterService.asApiLearningpathV2(learningPathRepository.insert(toInsert),
+                                               newLearningPath.language,
+                                               true,
+                                               owner)
       }
     }
 
@@ -46,7 +49,10 @@ trait UpdateService {
       val learningPath = converterService.newLearningPath(newLearningPath, owner)
       learningPathValidator.validate(learningPath)
 
-      converterService.asApiLearningpathV2(learningPathRepository.insert(learningPath), newLearningPath.language, owner)
+      converterService.asApiLearningpathV2(learningPathRepository.insert(learningPath),
+                                           newLearningPath.language,
+                                           true,
+                                           owner)
     }
 
     def updateLearningPathV2(id: Long,
@@ -73,7 +79,7 @@ trait UpdateService {
             searchIndexService.deleteDocument(existing)
           }
 
-          converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, owner)
+          converterService.asApiLearningpathV2(updatedLearningPath, learningPathToUpdate.language, true, owner)
       }
     }
 
@@ -107,7 +113,7 @@ trait UpdateService {
             searchIndexService.deleteDocument(updatedLearningPath)
           }
 
-          converterService.asApiLearningpathV2(updatedLearningPath, language, owner)
+          converterService.asApiLearningpathV2(updatedLearningPath, language, true, owner)
       }
     }
 
@@ -149,7 +155,7 @@ trait UpdateService {
               deleteIsBasedOnReference(learningPath)
               searchIndexService.deleteDocument(learningPath)
             }
-            converterService.asApiLearningStepV2(insertedStep, updatedPath, newLearningStep.language, owner)
+            converterService.asApiLearningStepV2(insertedStep, updatedPath, newLearningStep.language, true, owner)
         }
       }
     }
@@ -184,7 +190,7 @@ trait UpdateService {
                 searchIndexService.deleteDocument(updatedPath)
               }
 
-              converterService.asApiLearningStepV2(updatedStep, updatedPath, learningStepToUpdate.language, owner)
+              converterService.asApiLearningStepV2(updatedStep, updatedPath, learningStepToUpdate.language, true, owner)
           }
       }
     }
@@ -236,7 +242,7 @@ trait UpdateService {
                 searchIndexService.deleteDocument(learningPath)
               }
 
-              converterService.asApiLearningStepV2(updatedStep, updatedPath, Language.DefaultLanguage, owner)
+              converterService.asApiLearningStepV2(updatedStep, updatedPath, Language.DefaultLanguage, true, owner)
           }
       }
     }

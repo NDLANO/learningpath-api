@@ -8,8 +8,8 @@
 
 package no.ndla.learningpathapi.controller
 
-import javax.servlet.http.HttpServletRequest
 import com.typesafe.scalalogging.LazyLogging
+import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.ComponentRegistry
 import no.ndla.learningpathapi.model.api.{Error, ImportReport, ValidationError, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
@@ -118,6 +118,12 @@ abstract class NdlaController
 
   def intOrDefault(paramName: String, default: Int): Int =
     intOrNone(paramName).getOrElse(default)
+
+  def booleanOrNone(paramName: String)(implicit request: HttpServletRequest): Option[Boolean] =
+    paramOrNone(paramName).flatMap(p => Try(p.toBoolean).toOption)
+
+  def booleanOrDefault(paramName: String, default: Boolean)(implicit request: HttpServletRequest): Boolean =
+    booleanOrNone(paramName).getOrElse(default)
 
   def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {
     params.get(paramName) match {

@@ -117,6 +117,44 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       ))
     service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")),
                                 Language.DefaultLanguage,
+                                false,
+                                UserInfo("me", Set.empty)) should equal(expected)
+  }
+
+  test("asApiLearningpathV2 returns None if fallback is false and language is not supported") {
+    service.asApiLearningpathV2(domainLearningPath, "hurr-durr-lang", false, UserInfo("me", Set.empty)) should equal(
+      None)
+  }
+
+  test("asApiLearningpathV2 converts domain to api LearningPathV2 with fallback if true") {
+    val expected = Some(
+      api.LearningPathV2(
+        1,
+        1,
+        None,
+        api.Title("tittel", Language.DefaultLanguage),
+        api.Description("deskripsjon", Language.DefaultLanguage),
+        "null1",
+        List.empty,
+        "null1/learningsteps",
+        None,
+        Some(60),
+        LearningPathStatus.PRIVATE.toString,
+        LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
+        randomDate,
+        api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
+        api.Copyright(api.License("by",
+                                  Some("Creative Commons Attribution 2.0 Generic"),
+                                  Some("https://creativecommons.org/licenses/by/2.0/")),
+                      List.empty),
+        true,
+        List("nb", "en"),
+        None,
+        None
+      ))
+    service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")),
+                                "hurr durr I'm a language",
+                                true,
                                 UserInfo("me", Set.empty)) should equal(expected)
   }
 
@@ -166,6 +204,40 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     service.asApiLearningStepV2(domainLearningStep2,
                                 domainLearningPath,
                                 Language.DefaultLanguage,
+                                false,
+                                UserInfo("me", Set.empty)) should equal(learningstep)
+  }
+
+  test("asApiLearningStepV2 return None if fallback is false and language not supported") {
+    service.asApiLearningStepV2(domainLearningStep2,
+                                domainLearningPath,
+                                "hurr durr I'm a language",
+                                false,
+                                UserInfo("me", Set.empty)) should equal(None)
+  }
+
+  test(
+    "asApiLearningStepV2 converts domain learningstep to api LearningStepV2 if fallback is true and language undefined") {
+    val learningstep = Some(
+      api.LearningStepV2(
+        1,
+        1,
+        1,
+        api.Title("tittel", Language.DefaultLanguage),
+        Some(api.Description("deskripsjon", Language.DefaultLanguage)),
+        None,
+        showTitle = false,
+        "INTRODUCTION",
+        None,
+        "null1/learningsteps/1",
+        canEdit = true,
+        "ACTIVE",
+        Seq(Language.DefaultLanguage)
+      ))
+    service.asApiLearningStepV2(domainLearningStep2,
+                                domainLearningPath,
+                                "hurr durr I'm a language",
+                                true,
                                 UserInfo("me", Set.empty)) should equal(learningstep)
   }
 
@@ -200,7 +272,18 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   test("asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
     val expected =
       Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
-    service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage) should equal(expected)
+    service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage, false) should equal(expected)
+  }
+
+  test("asApiLearningPathTagsSummary returns None if fallback is false and language is unsupported") {
+    service.asApiLearningPathTagsSummary(apiTags, "hurr durr I'm a language", false) should equal(None)
+  }
+
+  test(
+    "asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary if language is undefined and fallback is true") {
+    val expected =
+      Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
+    service.asApiLearningPathTagsSummary(apiTags, "hurr durr I'm a language", true) should equal(expected)
   }
 
   test("That createUrlToLearningPath does not include private in path for private learningpath") {
@@ -342,8 +425,10 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That a apiLearningPath should only contain ownerId if admin") {
-    val noAdmin = service.asApiLearningpathV2(domainLearningPath, "nb", UserInfo(domainLearningPath.owner, Set.empty))
-    val admin = service.asApiLearningpathV2(domainLearningPath, "nb", UserInfo("kwakk", Set(LearningPathRole.ADMIN)))
+    val noAdmin =
+      service.asApiLearningpathV2(domainLearningPath, "nb", false, UserInfo(domainLearningPath.owner, Set.empty))
+    val admin =
+      service.asApiLearningpathV2(domainLearningPath, "nb", false, UserInfo("kwakk", Set(LearningPathRole.ADMIN)))
 
     noAdmin.get.ownerId should be(None)
     admin.get.ownerId.get should be(domainLearningPath.owner)

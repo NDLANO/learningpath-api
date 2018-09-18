@@ -40,7 +40,7 @@ object Language {
     LanguageAnalyzer(UnknownLanguage, NorwegianLanguageAnalyzer)
   )
 
-  val supportedLanguages = languageAnalyzers.map(_.lang)
+  private val supportedLanguages = languageAnalyzers.map(_.lang)
 
   def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], lang: Option[String]): Option[P] = {
     def findFirstLanguageMatching(sequence: Seq[P], lang: Seq[String]): Option[P] = {
@@ -56,6 +56,9 @@ object Language {
 
     findFirstLanguageMatching(sequence, lang.toList :+ DefaultLanguage)
   }
+
+  def getLanguageOrDefaultIfUnsupported(language: String): String =
+    supportedLanguages.find(_ == language.toLowerCase()).getOrElse(AllLanguages)
 
   def languageOrUnknown(language: String): String =
     languageOrUnknown(Option(language))

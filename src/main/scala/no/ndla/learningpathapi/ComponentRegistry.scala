@@ -12,11 +12,7 @@ import no.ndla.learningpathapi.controller.{HealthController, InternController, L
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{
-  SearchConverterServiceComponent,
-  SearchIndexService,
-  SearchServiceComponent
-}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexService, SearchService}
 import no.ndla.learningpathapi.validation.{
   LanguageValidator,
   LearningPathValidator,
@@ -32,10 +28,10 @@ object ComponentRegistry
     with InternController
     with HealthController
     with LearningPathRepositoryComponent
-    with ReadServiceComponent
+    with ReadService
     with UpdateService
     with SearchConverterServiceComponent
-    with SearchServiceComponent
+    with SearchService
     with SearchIndexService
     with TaxonomyApiClient
     with NdlaClient

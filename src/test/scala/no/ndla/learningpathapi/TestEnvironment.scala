@@ -9,16 +9,11 @@
 package no.ndla.learningpathapi
 
 import javax.sql.DataSource
-
 import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
-import no.ndla.learningpathapi.service.search.{
-  SearchConverterServiceComponent,
-  SearchIndexService,
-  SearchServiceComponent
-}
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexService, SearchService}
 import no.ndla.learningpathapi.validation._
 import no.ndla.network.NdlaClient
 import org.mockito.Mockito
@@ -27,10 +22,10 @@ import org.scalatest.mockito.MockitoSugar
 trait TestEnvironment
     extends LearningpathControllerV2
     with LearningPathRepositoryComponent
-    with ReadServiceComponent
+    with ReadService
     with UpdateService
     with SearchConverterServiceComponent
-    with SearchServiceComponent
+    with SearchService
     with SearchIndexService
     with SearchApiClient
     with TaxonomyApiClient

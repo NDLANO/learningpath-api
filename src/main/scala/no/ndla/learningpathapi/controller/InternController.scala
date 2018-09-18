@@ -9,22 +9,20 @@
 package no.ndla.learningpathapi.controller
 
 import javax.servlet.http.HttpServletRequest
-import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.model.api.{Error, ImportReport}
+import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.{ImportService, ReadServiceComponent}
+import no.ndla.learningpathapi.service.{ImportService, ReadService}
 import no.ndla.learningpathapi.service.search.SearchIndexService
-import no.ndla.network.{ApplicationUrl, AuthUser, CorrelationID}
+import no.ndla.network.AuthUser
+import org.json4s.Formats
 import org.json4s.ext.EnumNameSerializer
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json.NativeJsonSupport
 import org.scalatra._
 
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImportService with SearchIndexService with LearningPathRepositoryComponent with ReadServiceComponent =>
+  this: ImportService with SearchIndexService with LearningPathRepositoryComponent with ReadService =>
   val internController: InternController
 
   class InternController extends NdlaController {

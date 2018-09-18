@@ -10,9 +10,9 @@ package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.Language
+import no.ndla.network.Domains
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
-import no.ndla.network.Domains
 
 import scala.util.Properties._
 import scala.util.{Failure, Success}

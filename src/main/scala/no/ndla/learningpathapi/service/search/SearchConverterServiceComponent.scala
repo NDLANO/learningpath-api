@@ -10,8 +10,8 @@ package no.ndla.learningpathapi.service.search
 
 import com.sksamuel.elastic4s.http.search.SearchHit
 import no.ndla.learningpathapi.integration.ImageApiClientComponent
-import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model.domain.Language.{DefaultLanguage, findByLanguageOrBestEffort}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search._

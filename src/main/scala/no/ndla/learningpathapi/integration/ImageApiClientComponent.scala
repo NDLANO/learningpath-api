@@ -12,9 +12,9 @@ import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.network.NdlaClient
 import no.ndla.network.model.HttpRequestException
+import scalaj.http.{Http, HttpRequest}
 
 import scala.util.{Failure, Success}
-import scalaj.http.{Http, HttpRequest}
 
 trait ImageApiClientComponent {
   this: NdlaClient =>
