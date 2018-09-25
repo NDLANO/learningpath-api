@@ -5,7 +5,7 @@ val Scalatraversion = "2.5.1"
 val ScalaLoggingVersion = "3.5.0"
 val Log4JVersion = "2.9.1"
 val Jettyversion = "9.4.11.v20180605"
-val AwsSdkversion = "1.11.46"
+val AwsSdkversion = "1.11.297"
 val ScalaTestVersion = "3.0.1"
 val MockitoVersion = "1.10.19"
 val Elastic4sVersion = "6.1.4"
@@ -59,6 +59,10 @@ lazy val learningpath_api = (project in file("."))
       "org.apache.lucene" % "lucene-test-framework" % "6.4.1" % "test",
       "com.netaporter" %% "scala-uri" % "0.4.16",
       "org.jsoup" % "jsoup" % "1.11.3",
+      "log4j" % "log4j" % "1.2.16",
+      "net.bull.javamelody" % "javamelody-core" % "1.73.1",
+      "org.jrobin" % "jrobin" % "1.5.9",
+      "com.amazonaws" % "aws-java-sdk-cloudwatch" % AwsSdkversion,
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
       "org.mockito" % "mockito-all" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % "4.0"
@@ -115,7 +119,7 @@ docker / dockerfile := {
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("openjdk:8-jre-alpine")
-
+    run("apk", "--no-cache", "add", "ttf-dejavu")
     add(artifact, artifactTargetPath)
     entryPoint("java", "-Dorg.scalatra.environment=production", "-jar", artifactTargetPath)
   }

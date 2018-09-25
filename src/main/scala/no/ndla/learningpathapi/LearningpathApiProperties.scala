@@ -18,6 +18,7 @@ import scala.util.Properties._
 import scala.util.{Failure, Success}
 
 object LearningpathApiProperties extends LazyLogging {
+  val ApplicationName = "learningpath-api"
   val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
 
   val SecretsFile = "learningpath-api.secrets"
