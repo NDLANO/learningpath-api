@@ -165,8 +165,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
 
   test("That GET /licenses with filter sat to by only returns creative common licenses") {
     val creativeCommonlicenses = getLicenses
-      .filter(_.license.startsWith("by"))
-      .map(l => api.License(l.license, Option(l.description), l.url))
+      .filter(_.license.toString.startsWith("by"))
+      .map(l => api.License(l.license.toString, Option(l.description), l.url))
       .toSet
 
     get("/licenses/",
@@ -181,7 +181,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
 
   test("That GET /licenses with filter not specified returns all licenses") {
     val allLicenses = getLicenses
-      .map(l => api.License(l.license, Option(l.description), l.url))
+      .map(l => api.License(l.license.toString, Option(l.description), l.url))
       .toSet
 
     get("/licenses/", Map()) {

@@ -12,6 +12,7 @@ import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.service.Clock
+import no.ndla.mapping.License.PublicDomain
 import org.mockito.Mockito._
 
 class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironment {
@@ -27,7 +28,7 @@ class LearningPathValidatorTest extends UnitSuite with Clock with TestEnvironmen
   }
 
   val trump = Author("author", "Donald Drumpf")
-  val license = "pd"
+  val license = PublicDomain.toString
   val copyright = Copyright(license, List(trump))
 
   val ValidLearningPath = LearningPath(

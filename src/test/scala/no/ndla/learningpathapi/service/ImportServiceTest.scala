@@ -23,14 +23,13 @@ import no.ndla.learningpathapi.integration.{
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.model.HttpRequestException
-import org.mockito.Matchers.{eq => eqTo, _}
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
 import scalikejdbc.DBSession
+import no.ndla.mapping.License.{CC0, PublicDomain, CC_BY_SA}
 
 import scala.util.{Failure, Success}
-import scalaj.http.HttpResponse
 
 class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
@@ -316,12 +315,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That oldToNewLicenseKey converts correctly") {
-    importService.oldToNewLicenseKey("nolaw") should be("cc0")
-    importService.oldToNewLicenseKey("noc") should be("pd")
+    importService.oldToNewLicenseKey("nolaw").get.license should be(CC0)
+    importService.oldToNewLicenseKey("noc").get.license should be(PublicDomain)
   }
 
   test("That oldToNewLicenseKey does not convert an license that should not be converted") {
-    importService.oldToNewLicenseKey("by-sa") should be("by-sa")
+    importService.oldToNewLicenseKey("by-sa").get.license should be(CC_BY_SA)
   }
 
   test("upload should import all articles handle taxonomy with different translations") {

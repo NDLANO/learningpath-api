@@ -64,7 +64,7 @@ trait ConverterService {
 
     def asApiLicense(license: String): api.License =
       getLicense(license) match {
-        case Some(l) => api.License(l.license, Option(l.description), l.url)
+        case Some(l) => api.License(l.license.toString, Option(l.description), l.url)
         case None    => api.License(license, Some("Invalid license"), None)
       }
 
