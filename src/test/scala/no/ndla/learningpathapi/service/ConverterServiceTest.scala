@@ -17,6 +17,7 @@ import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.CoverPhoto
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
+import no.ndla.mapping.License.CC_BY
 import no.ndla.network.ApplicationUrl
 import org.joda.time.DateTime
 import org.mockito.Mockito._
@@ -81,7 +82,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     randomDate,
     List(LearningPathTags(List("tag"), Language.DefaultLanguage)),
     "me",
-    Copyright("by", List.empty),
+    Copyright(CC_BY.toString, List.empty),
     List.empty
   )
 
@@ -106,9 +107,9 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
         randomDate,
         api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
-        api.Copyright(api.License("by",
-                                  Some("Creative Commons Attribution 2.0 Generic"),
-                                  Some("https://creativecommons.org/licenses/by/2.0/")),
+        api.Copyright(api.License(CC_BY.toString,
+                                  Some("Creative Commons Attribution 4.0 International"),
+                                  Some("https://creativecommons.org/licenses/by/4.0/")),
                       List.empty),
         canEdit = true,
         List("nb", "en"),
@@ -143,9 +144,9 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
         randomDate,
         api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
-        api.Copyright(api.License("by",
-                                  Some("Creative Commons Attribution 2.0 Generic"),
-                                  Some("https://creativecommons.org/licenses/by/2.0/")),
+        api.Copyright(api.License(CC_BY.toString,
+                                  Some("Creative Commons Attribution 4.0 International"),
+                                  Some("https://creativecommons.org/licenses/by/4.0/")),
                       List.empty),
         true,
         List("nb", "en"),
@@ -172,9 +173,9 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathStatus.PRIVATE.toString,
         randomDate,
         api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
-        api.Copyright(api.License("by",
-                                  Some("Creative Commons Attribution 2.0 Generic"),
-                                  Some("https://creativecommons.org/licenses/by/2.0/")),
+        api.Copyright(api.License(CC_BY.toString,
+                                  Some("Creative Commons Attribution 4.0 International"),
+                                  Some("https://creativecommons.org/licenses/by/4.0/")),
                       List.empty),
         List("nb", "en"),
         None,
@@ -323,10 +324,10 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLicense returns a License object for a given valid license") {
-    service.asApiLicense("by") should equal(
-      api.License("by",
-                  Option("Creative Commons Attribution 2.0 Generic"),
-                  Some("https://creativecommons.org/licenses/by/2.0/")))
+    service.asApiLicense("CC-BY-4.0") should equal(
+      api.License(CC_BY.toString,
+                  Option("Creative Commons Attribution 4.0 International"),
+                  Some("https://creativecommons.org/licenses/by/4.0/")))
   }
 
   test("asApiLicense returns a default license object for an invalid license") {

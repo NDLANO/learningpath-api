@@ -393,10 +393,10 @@ trait LearningpathControllerV2 {
         paramOrNone(this.licenseFilter.paramName) match {
           case None => mapping.License.getLicenses
           case Some(filter) =>
-            mapping.License.getLicenses.filter(_.license.contains(filter))
+            mapping.License.getLicenses.filter(_.license.toString.contains(filter))
         }
 
-      licenses.map(x => License(x.license, Option(x.description), x.url))
+      licenses.map(x => License(x.license.toString, Option(x.description), x.url))
     }
 
     private val addNewLearningpath =

@@ -16,6 +16,7 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.mapping.License._
+import no.ndla.mapping.LicenseDefinition
 
 import scala.util.{Failure, Success, Try}
 
@@ -188,10 +189,28 @@ trait ImportService {
       }
     }
 
-    private[service] def oldToNewLicenseKey(license: String): String = {
-      val licenses = Map("nolaw" -> "cc0", "noc" -> "pd")
-      val newLicense = licenses.getOrElse(license, license)
-      if (getLicense(newLicense).isEmpty) {
+    private[service] def oldToNewLicenseKey(license: String): Option[LicenseDefinition] = {
+      val licenses = Map(
+        "by" -> "CC-BY-4.0",
+        "by-sa" -> "CC-BY-SA-4.0",
+        "by-nc" -> "CC-BY-NC-4.0",
+        "by-nd" -> "CC-BY-ND-4.0",
+        "by-nc-sa" -> "CC-BY-NC-SA-4.0",
+        "by-nc-nd" -> "CC-BY-NC-ND-4.0",
+        "by-3.0" -> "CC-BY-4.0",
+        "by-sa-3.0" -> "CC-BY-SA-4.0",
+        "by-nc-3.0" -> "CC-BY-NC-4.0",
+        "by-nd-3.0" -> "CC-BY-ND-4.0",
+        "by-nc-sa-3.0" -> "CC-BY-NC-SA-4.0",
+        "by-nc-nd-3.0" -> "CC-BY-NC-ND-4.0",
+        "copyrighted" -> "COPYRIGHTED",
+        "cc0" -> "CC0-1.0",
+        "pd" -> "PD",
+        "nolaw" -> "CC0-1.0",
+        "noc" -> "PD"
+      )
+      val newLicense = getLicense(licenses.getOrElse(license, license))
+      if (newLicense.isEmpty) {
         throw new ImportException(s"License $license is not supported.")
       }
       newLicense
@@ -311,7 +330,7 @@ trait ImportService {
       val embedUrls = embedUrlsAsList(step, translations)
       val showTitle = descriptions.nonEmpty
 
-      val license = step.license.filter(_.trim.nonEmpty).map(oldToNewLicenseKey)
+      val license = step.license.filter(_.trim.nonEmpty).flatMap(oldToNewLicenseKey).map(_.license.toString)
 
       LearningStep(
         None,
