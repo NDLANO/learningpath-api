@@ -33,7 +33,7 @@ lazy val learningpath_api = (project in file("."))
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-deprecation"),
     libraryDependencies ++= Seq(
-      "ndla" %% "network" % "0.31",
+      "ndla" %% "network" % "0.32",
       "ndla" %% "mapping" % "0.10",
       "joda-time" % "joda-time" % "2.8.2",
       "org.scalatra" %% "scalatra" % Scalatraversion,
