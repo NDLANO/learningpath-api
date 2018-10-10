@@ -261,6 +261,21 @@ trait ImportService {
       }
     }
 
+    /**
+      * Gets and merges tags for for nodeIds specified languages.
+      * @param nodeIds nodeIds to get tags for
+      * @param languages languages to get tags for
+      * @return Fetched tags
+      */
+    private def getTags(nodeIds: Seq[Long], languages: Seq[String]): Seq[LearningPathTags] = {
+      nodeIds
+        .flatMap(keywordsService.forNodeId)
+        .groupBy(_.language)
+        .map { case (lang, t) => LearningPathTags(t.flatMap(_.tags).distinct, lang) }
+        .filter(t => languages.contains(t.language)) // Only include relevant tags in relevant languages
+        .toSeq
+    }
+
     private[service] def asLearningPath(mainImport: MainPackageImport,
                                         imageUrl: Option[ImageMetaInformation],
                                         clientId: String): LearningPath = {
@@ -278,8 +293,8 @@ trait ImportService {
       val titles = Seq(Title(mainImport.mainPackage.title, languageOrUnknown(mainImport.mainPackage.language))) ++
         mainImport.translations.map(tr => Title(tr.title, languageOrUnknown(tr.language)))
 
-      val tags = keywordsService.forNodeId(mainImport.mainPackage.nid) ++
-        mainImport.translations.flatMap(tr => keywordsService.forNodeId(tr.nid))
+      val tags = getTags(mainImport.mainPackage.nid +: mainImport.translations.map(_.nid),
+                         Language.findSupportedLanguages(titles, descriptions))
 
       val learningSteps = mainImport.mainPackage.steps.map(step =>
         asLearningStep(step, mainImport.translations.flatMap(_.steps).filter(_.pos == step.pos)))

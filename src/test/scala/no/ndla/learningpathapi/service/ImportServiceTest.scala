@@ -453,6 +453,25 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     learningPath.learningsteps.head.license should be(None)
   }
 
+  test("That imported learningPaths only include tags in relevant languages") {
+    val pack1 = packageWithNodeId(1)
+    val pack2 = packageWithNodeId(2).copy(tnid = 1, language = "en")
+
+    val nbTags = LearningPathTags(Seq("hei", "norge", "knekkebrød"), "nb")
+    val nbTags2 = LearningPathTags(Seq("brunost", "også"), "nb")
+    val nbMerged = LearningPathTags(nbTags.tags ++ nbTags2.tags, "nb")
+
+    val enTags = LearningPathTags(Seq("hello", "englang", "chips"), "en")
+    val zhTags = LearningPathTags(Seq("我不懂中文", "亨里克"), "zh")
+    val pakke = MainPackageImport(pack1, Seq(pack2))
+
+    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq(nbTags, enTags, zhTags)).thenReturn(Seq(nbTags2))
+
+    val learningPath = importService.asLearningPath(pakke, None, CLIENT_ID)
+
+    learningPath.tags should be(Seq(enTags, nbMerged))
+  }
+
   private def packageWithNodeId(nid: Long): Package =
     Package(
       nid,
