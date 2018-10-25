@@ -297,7 +297,8 @@ trait LearningpathControllerV2 {
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId),
-        asQueryParam[Option[String]](language))
+        asQueryParam[Option[String]](language),
+        asQueryParam[Option[Boolean]](fallback))
         responseMessages (response403, response404, response500, response502)
         authorizations "oauth2")
 
@@ -306,8 +307,9 @@ trait LearningpathControllerV2 {
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val pathId = long(this.learningpathId.paramName)
       val stepId = long(this.learningstepId.paramName)
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      readService.learningstepV2For(pathId, stepId, language, UserInfo.get) match {
+      readService.learningstepV2For(pathId, stepId, language, fallback, UserInfo.get) match {
         case Some(x) => x
         case None =>
           halt(status = 404,
@@ -350,15 +352,17 @@ trait LearningpathControllerV2 {
         notes "Shows status for the learningstep"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
-        asPathParam[String](learningstepId))
+        asPathParam[String](learningstepId),
+        asQueryParam[Option[Boolean]](fallback))
         responseMessages (response403, response404, response500)
         authorizations "oauth2")
 
     get("/:learningpath_id/learningsteps/:learningstep_id/status/", operation(getLearningStepStatus)) {
       val pathId = long(this.learningpathId.paramName)
       val stepId = long(this.learningstepId.paramName)
+      val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, UserInfo.get) match {
+      readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, fallback, UserInfo.get) match {
         case Some(x) => x
         case None =>
           halt(

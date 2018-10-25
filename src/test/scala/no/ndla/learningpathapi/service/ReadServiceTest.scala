@@ -281,7 +281,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That learningstepV2For returns None when the learningPath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
     assertResult(None) {
-      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb")
+      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false)
     }
   }
 
@@ -291,7 +291,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get))
       .thenReturn(None)
     assertResult(None) {
-      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb")
+      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false)
     }
   }
 
@@ -301,7 +301,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get))
       .thenReturn(Some(STEP1))
     assertResult(STEP1.id.get) {
-      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb").get.id
+      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false).get.id
     }
   }
 
@@ -312,7 +312,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(STEP1))
     assertResult(STEP1.id.get) {
       service
-        .learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", PRIVATE_OWNER)
+        .learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false, PRIVATE_OWNER)
         .get
         .id
     }
@@ -323,7 +323,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb")
+        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false)
       }.getMessage
     }
   }
@@ -333,7 +333,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     assertResult("You do not have access to the requested resource.") {
       intercept[AccessDeniedException] {
-        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", PUBLISHED_OWNER)
+        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false, PUBLISHED_OWNER)
       }.getMessage
     }
   }

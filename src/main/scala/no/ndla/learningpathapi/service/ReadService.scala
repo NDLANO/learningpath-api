@@ -54,8 +54,9 @@ trait ReadService {
     def learningStepStatusForV2(learningPathId: Long,
                                 learningStepId: Long,
                                 language: String,
+                                fallback: Boolean,
                                 user: UserInfo = UserInfo.get): Option[LearningStepStatus] = {
-      learningstepV2For(learningPathId, learningStepId, language, user).map(ls =>
+      learningstepV2For(learningPathId, learningStepId, language, fallback, user).map(ls =>
         LearningStepStatus(ls.status.toString))
     }
 
@@ -74,6 +75,7 @@ trait ReadService {
     def learningstepV2For(learningPathId: Long,
                           learningstepId: Long,
                           language: String,
+                          fallback: Boolean,
                           user: UserInfo = UserInfo.get): Option[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Some(lp) =>
@@ -82,7 +84,7 @@ trait ReadService {
             .flatMap(
               ls =>
                 converterService
-                  .asApiLearningStepV2(ls, lp, language, false, user))
+                  .asApiLearningStepV2(ls, lp, language, fallback, user))
         case None => None
       }
     }
