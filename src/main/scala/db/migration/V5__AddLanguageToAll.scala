@@ -7,11 +7,10 @@
 
 package db.migration
 
-import java.sql.Connection
 import java.util.Date
 
 import no.ndla.learningpathapi.model.domain._
-import org.flywaydb.core.api.migration.jdbc.JdbcMigration
+import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
 import org.json4s.FieldSerializer.ignore
 import org.json4s._
 import org.json4s.ext.EnumNameSerializer
@@ -19,7 +18,7 @@ import org.json4s.native.Serialization.{read, write}
 import org.postgresql.util.PGobject
 import scalikejdbc.{DB, DBSession, _}
 
-class V5__AddLanguageToAll extends JdbcMigration {
+class V5__AddLanguageToAll extends BaseJavaMigration {
 
   implicit val formats =
     org.json4s.DefaultFormats +
@@ -38,8 +37,8 @@ class V5__AddLanguageToAll extends JdbcMigration {
       new EnumNameSerializer(StepType) +
       new EnumNameSerializer(EmbedType)
 
-  override def migrate(connection: Connection) = {
-    val db = DB(connection)
+  override def migrate(context: Context) = {
+    val db = DB(context.getConnection)
     db.autoClose(false)
 
     db.withinTx { implicit session =>

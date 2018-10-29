@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.repository
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.integration.DatasourceComponent
+import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.JsonMethods._
@@ -18,7 +18,7 @@ import org.postgresql.util.PGobject
 import scalikejdbc._
 
 trait LearningPathRepositoryComponent extends LazyLogging {
-  this: DatasourceComponent =>
+  this: DataSource =>
   val learningPathRepository: LearningPathRepository
 
   def inTransaction[A](work: DBSession => A)(implicit session: DBSession = null): A = {

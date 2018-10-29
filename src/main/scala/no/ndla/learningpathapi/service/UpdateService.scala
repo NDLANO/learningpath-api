@@ -14,9 +14,6 @@ import no.ndla.learningpathapi.model.domain.{LearningPathStatus, UserInfo, Learn
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
-import com.netaporter.uri.dsl._
-import no.ndla.learningpathapi.model.domain.UserInfo
-import org.joda.time.DateTime
 
 import scala.util.{Failure, Success}
 

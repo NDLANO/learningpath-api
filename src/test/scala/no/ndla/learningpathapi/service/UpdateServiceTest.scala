@@ -21,8 +21,8 @@ import no.ndla.learningpathapi.model.api.{
 }
 import no.ndla.learningpathapi.model.domain._
 import org.joda.time.DateTime
-import org.mockito.Matchers
-import org.mockito.Matchers.{eq => eqTo, _}
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import scalikejdbc.DBSession
@@ -507,7 +507,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatusV2 ignores message if not admin") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      i.getArgument[LearningPath](0))
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
 
     service.updateLearningPathStatusV2(PUBLISHED_ID,
@@ -523,7 +523,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updateLearningPathStatusV2 adds message if admin") {
     when(learningPathRepository.withIdIncludingDeleted(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.update(any[LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      i.getArgument[LearningPath](0))
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
     when(clock.now()).thenReturn(new Date(0))
 
@@ -574,7 +574,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.insertLearningStep(any[LearningStep])(any[DBSession])).thenReturn(STEP2)
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession]))
-      .thenAnswer((i: InvocationOnMock) => i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      .thenAnswer((i: InvocationOnMock) => i.getArgument[domain.LearningPath](0))
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
     assertResult(STEP2.id.get) {
       service
@@ -735,7 +735,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession]))
       .thenReturn(STEP1.copy(status = StepStatus.DELETED))
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      i.getArgument[domain.LearningPath](0))
     val updatedDate = new Date(0)
     when(clock.now()).thenReturn(updatedDate)
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
@@ -748,7 +748,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(learningPathRepository, times(1))
       .updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])
     verify(learningPathRepository, times(1)).update(
-      Matchers.eq(
+      eqTo(
         PUBLISHED_LEARNINGPATH.copy(
           learningsteps = PUBLISHED_LEARNINGPATH.learningsteps,
           status = LearningPathStatus.UNLISTED,
@@ -1067,7 +1067,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepsFor(eqTo(PUBLISHED_ID))(any[DBSession])).thenReturn(List())
     when(learningPathRepository.updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])).thenReturn(stepWithBadTitle)
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      i.getArgument[domain.LearningPath](0))
     when(clock.now()).thenReturn(newDate)
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
 
@@ -1080,7 +1080,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     )
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
-    verify(learningPathRepository, times(1)).update(Matchers.eq(updatedPath))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(eqTo(updatedPath))(any[DBSession])
     verify(searchIndexService, times(0)).indexDocument(updatedPath)
     verify(searchIndexService, times(1)).deleteDocument(updatedPath)
   }
@@ -1092,7 +1092,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(STEP1))
     when(learningPathRepository.learningStepsFor(eqTo(PUBLISHED_ID))(any[DBSession])).thenReturn(List())
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      i.getArgument[LearningPath](0))
     when(clock.now()).thenReturn(newDate)
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
 
@@ -1105,7 +1105,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       lastUpdated = newDate
     )
 
-    verify(learningPathRepository, times(1)).update(Matchers.eq(expectedUpdatedPath))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(eqTo(expectedUpdatedPath))(any[DBSession])
     verify(searchIndexService, times(0)).indexDocument(expectedUpdatedPath)
     verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
   }
@@ -1120,7 +1120,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepsFor(eqTo(PRIVATE_ID))(any[DBSession])).thenReturn(List())
     when(learningPathRepository.updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])).thenReturn(stepWithBadTitle)
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PRIVATE_LEARNINGPATH.getClass))
+      i.getArgument[LearningPath](0))
     when(clock.now()).thenReturn(newDate)
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
 
@@ -1132,7 +1132,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     )
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
-    verify(learningPathRepository, times(1)).update(Matchers.eq(updatedPath))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(eqTo(updatedPath))(any[DBSession])
     verify(searchIndexService, times(0)).indexDocument(updatedPath)
     verify(searchIndexService, times(1)).deleteDocument(updatedPath)
   }
@@ -1147,7 +1147,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepsFor(eqTo(PUBLISHED_ID))(any[DBSession])).thenReturn(List())
     when(learningPathRepository.updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])).thenReturn(stepWithBadTitle)
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, PUBLISHED_LEARNINGPATH.getClass))
+      i.getArgument[LearningPath](0))
     when(clock.now()).thenReturn(newDate)
 
     val updatedLs = UpdatedLearningStepV2(1, Some("Dårlig tittel"), "nb", None, None, None, None, None)
@@ -1161,7 +1161,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     )
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
-    verify(learningPathRepository, times(1)).update(Matchers.eq(updatedPath))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(eqTo(updatedPath))(any[DBSession])
     verify(searchIndexService, times(1)).indexDocument(updatedPath)
   }
 
@@ -1337,7 +1337,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(STEP1))
     when(learningPathRepository.learningStepsFor(eqTo(PUBLISHED_ID))(any[DBSession])).thenReturn(List())
     when(learningPathRepository.update(any[domain.LearningPath])(any[DBSession])).thenAnswer((i: InvocationOnMock) =>
-      i.getArgumentAt(0, originalLearningPath.getClass))
+      i.getArgument[LearningPath](0))
     when(clock.now()).thenReturn(newDate)
     when(learningPathRepository.learningPathsWithIsBasedOn(any[Long])).thenReturn(List.empty)
 
@@ -1350,6 +1350,6 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       message = None
     )
 
-    verify(learningPathRepository, times(1)).update(Matchers.eq(expectedUpdatedPath))(any[DBSession])
+    verify(learningPathRepository, times(1)).update(eqTo(expectedUpdatedPath))(any[DBSession])
   }
 }

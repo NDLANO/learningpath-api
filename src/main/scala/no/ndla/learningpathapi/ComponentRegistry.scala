@@ -40,7 +40,7 @@ object ComponentRegistry
     with MigrationApiClient
     with ConverterService
     with Elastic4sClient
-    with DatasourceComponent
+    with DataSource
     with ImportService
     with KeywordsServiceComponent
     with Clock
@@ -50,22 +50,11 @@ object ComponentRegistry
     with TitleValidator
     with SearchApiClient {
 
-  def connectToDatabase(): Unit =
-    ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
+  def connectToDatabase(): Unit = ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
+  lazy val dataSource = DataSource.getHikariDataSource
+  connectToDatabase()
 
   implicit val swagger = new LearningpathSwagger
-
-  lazy val dataSource = new PGPoolingDataSource()
-  dataSource.setUser(LearningpathApiProperties.MetaUserName)
-  dataSource.setPassword(LearningpathApiProperties.MetaPassword)
-  dataSource.setDatabaseName(LearningpathApiProperties.MetaResource)
-  dataSource.setServerName(LearningpathApiProperties.MetaServer)
-  dataSource.setPortNumber(LearningpathApiProperties.MetaPort)
-  dataSource.setInitialConnections(LearningpathApiProperties.MetaInitialConnections)
-  dataSource.setMaxConnections(LearningpathApiProperties.MetaMaxConnections)
-  dataSource.setCurrentSchema(LearningpathApiProperties.MetaSchema)
-
-  connectToDatabase()
 
   lazy val learningPathRepository = new LearningPathRepository
   lazy val readService = new ReadService

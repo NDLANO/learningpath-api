@@ -140,7 +140,7 @@ trait LearningpathControllerV2 {
     private val getLearningpaths =
       (apiOperation[SearchResultV2]("getLearningpaths")
         summary "Find public learningpaths"
-        notes "Show public learningpaths."
+        description "Show public learningpaths."
         parameters (asHeaderParam[Option[String]](correlationId),
         asQueryParam[Option[String]](query),
         asQueryParam[Option[String]](tag),
@@ -182,7 +182,7 @@ trait LearningpathControllerV2 {
     private val getLearningpathsPost =
       (apiOperation[List[SearchResultV2]]("searchArticles")
         summary "Find public learningpaths"
-        notes "Show public learningpaths"
+        description "Show public learningpaths"
         parameters (
           asHeaderParam[Option[String]](correlationId),
           bodyParam[SearchParams]
@@ -219,7 +219,7 @@ trait LearningpathControllerV2 {
     private val getLearningpath =
       (apiOperation[LearningPathV2]("getLearningpath")
         summary "Fetch details about the specified learningpath"
-        notes "Shows all information about the specified learningpath."
+        description "Shows all information about the specified learningpath."
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asPathParam[String](learningpathId),
@@ -247,7 +247,7 @@ trait LearningpathControllerV2 {
     private val getLearningpathStatus =
       (apiOperation[LearningPathStatus]("getLearningpathStatus")
         summary "Show status information for the learningpath"
-        notes "Shows publishingstatus for the learningpath"
+        description "Shows publishingstatus for the learningpath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId))
         responseMessages (response403, response404, response500)
@@ -266,7 +266,7 @@ trait LearningpathControllerV2 {
     private val getLearningsteps =
       (apiOperation[List[LearningStepSummaryV2]]("getLearningsteps")
         summary "Fetch learningsteps for given learningpath"
-        notes "Show all learningsteps for given learningpath id"
+        description "Show all learningsteps for given learningpath id"
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asPathParam[String](learningpathId),
@@ -293,7 +293,7 @@ trait LearningpathControllerV2 {
     private val getLearningstep =
       (apiOperation[LearningStepV2]("getLearningstep")
         summary "Fetch details about the specified learningstep"
-        notes "Show the given learningstep for the given learningpath"
+        description "Show the given learningstep for the given learningpath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId),
@@ -322,7 +322,7 @@ trait LearningpathControllerV2 {
     private val getLearningStepsInTrash =
       (apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
         summary "Fetch deleted learningsteps for given learningpath"
-        notes "Show all learningsteps for the given learningpath that are marked as deleted"
+        description "Show all learningsteps for the given learningpath that are marked as deleted"
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asPathParam[String](learningpathId),
@@ -349,7 +349,7 @@ trait LearningpathControllerV2 {
     private val getLearningStepStatus =
       (apiOperation[LearningStepStatus]("getLearningStepStatus")
         summary "Show status information for learningstep"
-        notes "Shows status for the learningstep"
+        description "Shows status for the learningstep"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId),
@@ -374,7 +374,7 @@ trait LearningpathControllerV2 {
     private val getMyLearningpaths =
       (apiOperation[List[LearningPathSummaryV2]]("getMyLearningpaths")
         summary "Fetch all learningspaths you have created"
-        notes "Shows your learningpaths."
+        description "Shows your learningpaths."
         parameters asHeaderParam[Option[String]](correlationId)
         responseMessages (response403, response500)
         authorizations "oauth2")
@@ -386,7 +386,7 @@ trait LearningpathControllerV2 {
     private val getLicenses =
       (apiOperation[List[License]]("getLicenses")
         summary "Show all valid licenses"
-        notes "Shows all valid licenses"
+        description "Shows all valid licenses"
         parameters (asHeaderParam[Option[String]](correlationId),
         asQueryParam[Option[String]](licenseFilter))
         responseMessages (response403, response500)
@@ -406,7 +406,7 @@ trait LearningpathControllerV2 {
     private val addNewLearningpath =
       (apiOperation[LearningPathV2]("addLearningpath")
         summary "Store new learningpath"
-        notes "Adds the given learningpath"
+        description "Adds the given learningpath"
         parameters (asHeaderParam[Option[String]](correlationId),
         bodyParam[NewLearningPathV2])
         responseMessages (response400, response403, response404, response500)
@@ -427,7 +427,7 @@ trait LearningpathControllerV2 {
     private val copyLearningpath =
       (apiOperation[LearningPathV2]("copyLearningpath")
         summary "Copy given learningpath and store it as a new learningpath"
-        notes "Copies the given learningpath, with the option to override some fields"
+        description "Copies the given learningpath, with the option to override some fields"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         bodyParam[NewCopyLearningPathV2])
@@ -450,7 +450,7 @@ trait LearningpathControllerV2 {
     private val updateLearningPath =
       (apiOperation[LearningPathV2]("updateLearningPath")
         summary "Update given learningpath"
-        notes "Updates the given learningPath"
+        description "Updates the given learningPath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         bodyParam[UpdatedLearningPathV2])
@@ -474,7 +474,7 @@ trait LearningpathControllerV2 {
     private val addNewLearningStep =
       (apiOperation[LearningStepV2]("addLearningStep")
         summary "Add new learningstep to learningpath"
-        notes "Adds the given LearningStep"
+        description "Adds the given LearningStep"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         bodyParam[NewLearningStepV2])
@@ -499,7 +499,7 @@ trait LearningpathControllerV2 {
     private val updateLearningStep =
       (apiOperation[LearningStepV2]("updateLearningStep")
         summary "Update given learningstep"
-        notes "Update the given learningStep"
+        description "Update the given learningStep"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId),
@@ -529,7 +529,7 @@ trait LearningpathControllerV2 {
     private val updateLearningstepSeqNo =
       (apiOperation[LearningStepSeqNo]("updatetLearningstepSeqNo")
         summary "Store new sequence number for learningstep."
-        notes "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this."
+        description "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this."
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId),
@@ -555,7 +555,7 @@ trait LearningpathControllerV2 {
     private val updateLearningStepStatus =
       (apiOperation[LearningStepV2]("updateLearningStepStatus")
         summary "Update status of given learningstep"
-        notes "Updates the status of the given learningstep"
+        description "Updates the status of the given learningstep"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId),
@@ -586,7 +586,7 @@ trait LearningpathControllerV2 {
     private val updateLearningPathStatus =
       (apiOperation[LearningPathV2]("updateLearningPathStatus")
         summary "Update status of given learningpath"
-        notes "Updates the status of the given learningPath"
+        description "Updates the status of the given learningPath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         bodyParam[UpdateLearningPathStatus])
@@ -611,7 +611,7 @@ trait LearningpathControllerV2 {
     private val withStatus: SwaggerSupportSyntax.OperationBuilder =
       (apiOperation[List[LearningPathV2]]("withStatus")
         summary "Fetch all learningpaths with specified status"
-        notes "Fetch all learningpaths with specified status"
+        description "Fetch all learningpaths with specified status"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningPathStatus))
         responseMessages (response500, response400)
@@ -627,7 +627,7 @@ trait LearningpathControllerV2 {
     private val deleteLearningPath =
       (apiOperation[LearningPathV2]("deleteLearningPath")
         summary "Delete given learningpath"
-        notes "Deletes the given learningPath"
+        description "Deletes the given learningPath"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId))
         responseMessages (response403, response404, response500)
@@ -653,7 +653,7 @@ trait LearningpathControllerV2 {
     private val deleteLearningStep =
       (apiOperation[Void]("deleteLearningStep")
         summary "Delete given learningstep"
-        notes "Deletes the given learningStep"
+        description "Deletes the given learningStep"
         parameters (asHeaderParam[Option[String]](correlationId),
         asPathParam[String](learningpathId),
         asPathParam[String](learningstepId))
@@ -679,7 +679,7 @@ trait LearningpathControllerV2 {
     private val getTags =
       (apiOperation[List[LearningPathTags]]("getTags")
         summary "Fetch all previously used tags in learningpaths"
-        notes "Retrieves a list of all previously used tags in learningpaths"
+        description "Retrieves a list of all previously used tags in learningpaths"
         parameters (
           asHeaderParam[Option[String]](correlationId),
           asQueryParam[Option[String]](language),
@@ -704,7 +704,7 @@ trait LearningpathControllerV2 {
     private val getContributors =
       (apiOperation[List[Author]]("getContributors")
         summary "Fetch all previously used contributors in learningpaths"
-        notes "Retrieves a list of all previously used contributors in learningpaths"
+        description "Retrieves a list of all previously used contributors in learningpaths"
         parameters asHeaderParam[Option[String]](correlationId)
         responseMessages response500
         authorizations "oauth2")

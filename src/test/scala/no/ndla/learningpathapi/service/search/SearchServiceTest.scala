@@ -8,23 +8,24 @@
 
 package no.ndla.learningpathapi.service.search
 
+import java.nio.file.{Files, Path}
+
+import com.sksamuel.elastic4s.embedded.{InternalLocalNode, LocalNode}
 import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.learningpathapi.integration.Elastic4sClientFactory
+import no.ndla.learningpathapi.integration.NdlaE4sClient
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
-import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
-import org.mockito.Matchers.{eq => eqTo, _}
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 
-@IntegrationTest
 class SearchServiceTest extends UnitSuite with TestEnvironment {
+  val tmpDir: Path = Files.createTempDirectory(this.getClass.getName)
+  val localNodeSettings: Map[String, String] = LocalNode.requiredSettings(this.getClass.getName, tmpDir.toString)
+  val localNode: InternalLocalNode = LocalNode(localNodeSettings)
+  override val e4sClient: NdlaE4sClient = NdlaE4sClient(localNode.client(true))
 
-  val esPort = 9200
-
-  override val e4sClient =
-    Elastic4sClientFactory.getClient(searchServer = s"http://localhost:$esPort")
   override val searchConverterService: SearchConverterService =
     new SearchConverterService
   override val searchIndexService: SearchIndexService = new SearchIndexService
@@ -60,9 +61,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   override def beforeAll() = {
     searchIndexService.createIndexWithName(LearningpathApiProperties.SearchIndex)
 
-    doReturn(api.Author("Forfatter", "En eier"))
-      .when(converterService)
-      .asAuthor(any[NdlaUserName])
+    doReturn(api.Author("Forfatter", "En eier"), Nil: _*).when(converterService).asAuthor(any[NdlaUserName])
 
     val today = new DateTime().toDate
     val yesterday = new DateTime().minusDays(1).toDate

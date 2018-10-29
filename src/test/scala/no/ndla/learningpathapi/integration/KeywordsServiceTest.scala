@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi.integration
 
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
-import org.mockito.Matchers.{eq => eqTo}
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito._
 
 import scalaj.http.{HttpRequest, HttpResponse}

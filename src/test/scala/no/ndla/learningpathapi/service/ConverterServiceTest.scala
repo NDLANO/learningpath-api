@@ -10,8 +10,6 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
-
-import com.netaporter.uri.dsl._
 import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.CoverPhoto
@@ -21,7 +19,7 @@ import no.ndla.mapping.License.CC_BY
 import no.ndla.network.ApplicationUrl
 import org.joda.time.DateTime
 import org.mockito.Mockito._
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 
 import scala.util.Success
 
@@ -366,7 +364,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   test("asDomainEmbed should only use context path if hostname is ndla-frontend but full url when not") {
     val url = "https://beta.ndla.no/subjects/resource:1234?a=test"
     service.asDomainEmbedUrl(api.EmbedUrlV2(url, "oembed"), "nb") should equal(
-      EmbedUrl(s"/subjects/resource:1234/?a=test", "nb", EmbedType.OEmbed))
+      EmbedUrl(s"/subjects/resource:1234?a=test", "nb", EmbedType.OEmbed))
 
     val externalUrl = "https://youtube.com/watch?v=8992BFHks"
     service.asDomainEmbedUrl(api.EmbedUrlV2(externalUrl, "oembed"), "nb") should equal(

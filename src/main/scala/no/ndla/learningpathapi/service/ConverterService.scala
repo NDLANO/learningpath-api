@@ -8,7 +8,8 @@
 
 package no.ndla.learningpathapi.service
 
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.{QueryString, UrlPath}
+import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.LearningpathApiProperties.{
   Domain,
   InternalImageApiUrl,
@@ -165,7 +166,7 @@ trait ConverterService {
       }
 
       val pattern = """.*/images/(\d+)""".r
-      pattern.findFirstMatchIn(url.path).map(_.group(1))
+      pattern.findFirstMatchIn(url.path.toString).map(_.group(1))
     }
 
     private def mergeLearningPathTags(existing: Seq[domain.LearningPathTags],
@@ -551,9 +552,9 @@ trait ConverterService {
     }
 
     def asDomainEmbedUrl(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
-      val url = embedUrl.url.host match {
-        case Some(host) if NdlaFrontendHostNames.contains(host) =>
-          val pathAndQueryParams: String = embedUrl.url.path ? embedUrl.url.queryString
+      val url = embedUrl.url.hostOption match {
+        case Some(host) if NdlaFrontendHostNames.contains(host.toString) =>
+          val pathAndQueryParams: String = embedUrl.url.path.toString.withQueryString(embedUrl.url.query)
           pathAndQueryParams
         case _ => embedUrl.url
       }
@@ -582,12 +583,11 @@ trait ConverterService {
     }
 
     def createEmbedUrl(embedUrlOrPath: EmbedUrlV2): EmbedUrlV2 = {
-      embedUrlOrPath.url.host match {
+      embedUrlOrPath.url.hostOption match {
         case Some(_) => embedUrlOrPath
         case None =>
           embedUrlOrPath.copy(url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
     }
-
   }
 }

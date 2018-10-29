@@ -17,8 +17,7 @@ import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.native.Serialization._
-import org.mockito.Matchers
-import org.mockito.Matchers.{eq => eqTo, _}
+import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
@@ -78,7 +77,6 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                                   eqTo(Some(page)),
                                   eqTo(Some(pageSize)),
                                   eqTo(false))).thenReturn(result)
-    //when(searchService.getHitsV2(searchResult, language)).thenReturn(Seq(DefaultLearningPathSummary))
 
     get("/",
         Map(

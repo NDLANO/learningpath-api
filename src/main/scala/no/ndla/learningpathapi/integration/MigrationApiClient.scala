@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.integration
 
 import java.util.Date
 
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.LearningpathApiProperties.{MigrationHost, MigrationPassword, MigrationUser}
 import no.ndla.learningpathapi.caching.Memoize
 import no.ndla.network.NdlaClient
@@ -70,11 +70,11 @@ case class Step(packageId: Long,
 
   def embedUrlToNdlaNo: Option[String] = {
     embedUrl.flatMap(url =>
-      url.host.map(host => {
-        if (host == "red.ndla.no") {
-          s"https://ndla.no${url.path}"
+      url.hostOption.map(host => {
+        if (host.toString == "red.ndla.no") {
+          s"https://ndla.no${url.path.toAbsolute}"
         } else {
-          url.copy(scheme = Some("https"))
+          url.withScheme("https")
         }
       }))
 
