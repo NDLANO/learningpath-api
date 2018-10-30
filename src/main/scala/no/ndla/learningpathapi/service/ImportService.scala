@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi.service
 
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
 import no.ndla.learningpathapi.model.api.{ImportReport, ImportStatus, LearningPathSummaryV2}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
@@ -135,10 +135,10 @@ trait ImportService {
     }
 
     private def importArticles(embedUrls: Seq[String]): Seq[(String, Try[String])] = {
-      def getNodeIdFromUrl = (url: String) => url.path.split("/").lastOption
+      def getNodeIdFromUrl = (url: String) => url.path.parts.lastOption
       val mainNodeIds = embedUrls
         .map(url => {
-          if (NdlaDomains.contains(url.host.getOrElse(""))) {
+          if (NdlaDomains.contains(url.hostOption.map(_.toString).getOrElse(""))) {
             url -> getNodeIdFromUrl(url).map(migrationApiClient.getAllNodeIds)
           } else {
             url -> None
@@ -256,7 +256,7 @@ trait ImportService {
     private[service] def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
       (Seq(step) ++ translations).collect {
         case Step(_, _, _, _, _, _, Some(embedUrl), _, _, language)
-            if NdlaDomains.contains(embedUrl.host.getOrElse("")) =>
+            if NdlaDomains.contains(embedUrl.hostOption.map(_.toString).getOrElse("")) =>
           EmbedUrl(embedUrl, languageOrUnknown(language), EmbedType.OEmbed)
       }
     }

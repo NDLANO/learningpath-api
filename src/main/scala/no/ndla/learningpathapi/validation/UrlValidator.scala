@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi.validation
 
-import com.netaporter.uri.dsl._
+import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.model.api.ValidationMessage
 
 class UrlValidator() {
@@ -35,7 +35,7 @@ class UrlValidator() {
   }
 
   private def urlIsValid(fieldPath: String, url: String): Seq[ValidationMessage] = {
-    if (url.path.nonEmpty && url.scheme.isEmpty && url.host.isEmpty)
+    if (url.path.nonEmpty && url.schemeOption.isEmpty && url.hostOption.isEmpty)
       List.empty
     else if (!url.startsWith("https"))
       List(ValidationMessage(fieldPath, "Illegal Url. All Urls must start with https."))

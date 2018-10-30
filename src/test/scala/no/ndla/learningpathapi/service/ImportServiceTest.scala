@@ -23,7 +23,7 @@ import no.ndla.learningpathapi.integration.{
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.network.model.HttpRequestException
-import org.mockito.Matchers._
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import scalikejdbc.DBSession
@@ -43,7 +43,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     reset(articleImportClient, taxononyApiClient, learningPathRepository)
     when(learningPathRepository.update(any[LearningPath])(any[DBSession]))
       .thenAnswer((invocation: InvocationOnMock) => {
-        invocation.getArgumentAt(0, classOf[LearningPath])
+        invocation.getArgument[LearningPath](0)
       })
   }
 

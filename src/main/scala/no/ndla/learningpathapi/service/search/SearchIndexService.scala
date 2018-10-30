@@ -13,7 +13,7 @@ import java.util.Calendar
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.RequestSuccess
-import com.sksamuel.elastic4s.mappings.NestedFieldDefinition
+import com.sksamuel.elastic4s.mappings.NestedField
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.{Elastic4sClient, SearchApiClient}
@@ -260,7 +260,7 @@ trait SearchIndexService {
     }
 
     private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
-      val languageSupportedField = NestedFieldDefinition(fieldName).fields(
+      val languageSupportedField = NestedField(fieldName).fields(
         keepRaw match {
           case true =>
             languageAnalyzers.map(

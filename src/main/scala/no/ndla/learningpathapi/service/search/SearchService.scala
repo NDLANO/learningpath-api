@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.searches.ScoreMode
-import com.sksamuel.elastic4s.searches.queries.BoolQueryDefinition
+import com.sksamuel.elastic4s.searches.queries.BoolQuery
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
@@ -152,7 +152,7 @@ trait SearchService extends LazyLogging {
       executeSearch(fullQuery, withIdIn, taggedWith, sort, language, page, pageSize, fallback)
     }
 
-    private def executeSearch(queryBuilder: BoolQueryDefinition,
+    private def executeSearch(queryBuilder: BoolQuery,
                               withIdIn: List[Long],
                               taggedWith: Option[String],
                               sort: Sort.Value,

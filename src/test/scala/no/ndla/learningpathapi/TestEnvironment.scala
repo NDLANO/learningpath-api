@@ -8,7 +8,7 @@
 
 package no.ndla.learningpathapi
 
-import javax.sql.DataSource
+import com.zaxxer.hikari.HikariDataSource
 import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -35,7 +35,7 @@ trait TestEnvironment
     with MigrationApiClient
     with ConverterService
     with Elastic4sClient
-    with DatasourceComponent
+    with DataSource
     with MockitoSugar
     with KeywordsServiceComponent
     with ImportService
@@ -46,7 +46,7 @@ trait TestEnvironment
     with LearningStepValidator
     with TitleValidator {
 
-  val dataSource = mock[DataSource]
+  val dataSource = mock[HikariDataSource]
 
   val learningPathRepository = mock[LearningPathRepository]
   val readService = mock[ReadService]

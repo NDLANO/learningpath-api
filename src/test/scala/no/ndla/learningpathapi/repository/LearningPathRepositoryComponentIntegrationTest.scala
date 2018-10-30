@@ -12,6 +12,7 @@ import java.net.Socket
 import java.util.Date
 
 import no.ndla.learningpathapi._
+import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
@@ -77,7 +78,7 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
   }
 
   override def beforeAll(): Unit = {
-    val datasource = getDataSource
+    val datasource = DataSource.getHikariDataSource
     if (serverIsListenning) {
       DBMigrator.migrate(datasource)
       ConnectionPool.singleton(new DataSourceConnectionPool(datasource))

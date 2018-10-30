@@ -8,7 +8,8 @@
 
 package no.ndla.learningpathapi.validation
 
-import com.netaporter.uri.Uri._
+import io.lemonlabs.uri.Url
+import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.model.api.{UpdatedLearningPathV2, ValidationMessage}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.mapping.License.getLicense
@@ -78,16 +79,16 @@ trait LearningPathValidator {
     }
 
     def validateCoverPhoto(coverPhotoMetaUrl: String): Option[ValidationMessage] = {
-      val parsedUrl = parse(coverPhotoMetaUrl)
-      val host = parsedUrl.host
+      val parsedUrl = Url.parse(coverPhotoMetaUrl)
+      val host = parsedUrl.hostOption.map(_.toString)
 
       val hostCorrect = host.getOrElse("").endsWith("ndla.no")
-      val pathCorrect = parsedUrl.path.startsWith("/image-api/v")
+      val pathCorrect = parsedUrl.path.toString.startsWith("/image-api/v")
 
-      hostCorrect && pathCorrect match {
-        case true => None
-        case false =>
-          Some(ValidationMessage("coverPhotoMetaUrl", INVALID_COVER_PHOTO))
+      if (hostCorrect && pathCorrect) {
+        None
+      } else {
+        Some(ValidationMessage("coverPhotoMetaUrl", INVALID_COVER_PHOTO))
       }
     }
 
