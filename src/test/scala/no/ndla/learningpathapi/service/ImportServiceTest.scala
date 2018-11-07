@@ -472,6 +472,21 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     learningPath.tags should be(Seq(enTags, nbMerged))
   }
 
+  test("That imported learningPath gets unknown language if language is unsupported") {
+    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq.empty)
+
+    val title1 = "Oh no pls"
+    val title2 = ""
+    val title3 = "C"
+    val pack1 = packageWithNodeId(1).copy(tnid = 1, language = " ", title = title1)
+    val pack2 = packageWithNodeId(2).copy(tnid = 1, language = "apowdajfiogwe", title = title2)
+    val pack3 = packageWithNodeId(3).copy(tnid = 1, language = "", title = title3)
+
+    val learningPath = importService.asLearningPath(MainPackageImport(pack1, Seq(pack2, pack3)), None, CLIENT_ID)
+
+    learningPath.title should be(Seq(Title(title1, "unknown"), Title(title2, "unknown"), Title(title3, "unknown")))
+  }
+
   private def packageWithNodeId(nid: Long): Package =
     Package(
       nid,
