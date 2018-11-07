@@ -64,9 +64,9 @@ object Language {
     languageOrUnknown(Option(language))
 
   def languageOrUnknown(language: Option[String]): String = {
-    language.filter(_.nonEmpty) match {
-      case Some(x) => x
-      case None    => UnknownLanguage
+    language match {
+      case Some(lang) if ISO639.languagePriority.contains(lang) => lang
+      case _                                                    => UnknownLanguage
     }
   }
 
