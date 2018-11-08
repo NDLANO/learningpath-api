@@ -8,14 +8,14 @@
 package no.ndla.learningpathapi.integration
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.network.NdlaClient
-import scalaj.http.{Http, HttpRequest}
+import scalaj.http.{Http, HttpRequest, HttpResponse}
 import no.ndla.learningpathapi.LearningpathApiProperties.SearchApiHost
 import no.ndla.learningpathapi.model.domain._
 import org.json4s.Formats
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization.write
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait SearchApiClient {
   this: NdlaClient =>
@@ -23,6 +23,7 @@ trait SearchApiClient {
 
   class SearchApiClient extends LazyLogging {
     private val IndexTimeout = 90 * 1000 // 90 seconds
+    private val SearchApiBaseUrl = s"http://$SearchApiHost"
     implicit val formats: Formats =
       org.json4s.DefaultFormats +
         new EnumNameSerializer(LearningPathStatus) +
@@ -36,7 +37,7 @@ trait SearchApiClient {
         .method("DELETE")
         .timeout(IndexTimeout, IndexTimeout)
 
-      ndlaClient.fetch[Any](req)
+      doRawRequest(req)
     }
 
     def indexLearningPathDocument(document: LearningPath): Try[_] = {
@@ -48,8 +49,23 @@ trait SearchApiClient {
         .postData(body)
         .timeout(IndexTimeout, IndexTimeout)
 
-      ndlaClient.fetch[Any](req)
+      doRawRequest(req)
     }
+
+    private def doRawRequest(request: HttpRequest): Try[HttpResponse[String]] = {
+      ndlaClient.fetchRawWithForwardedAuth(request) match {
+        case Success(r) =>
+          if (r.is2xx)
+            Success(r)
+          else
+            Failure(
+              SearchException(
+                s"Got status code '${r.code}' when attempting to request search-api. Body was: '${r.body}'"))
+        case Failure(ex) => Failure(ex)
+
+      }
+    }
+
   }
 
 }

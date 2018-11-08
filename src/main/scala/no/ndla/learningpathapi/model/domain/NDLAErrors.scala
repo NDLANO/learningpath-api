@@ -30,3 +30,4 @@ case class ElasticIndexingException(message: String) extends RuntimeException(me
 class ResultWindowTooLargeException(message: String) extends RuntimeException(message)
 case class LanguageNotSupportedException(message: String) extends RuntimeException(message)
 case class InvalidStatusException(message: String) extends RuntimeException(message)
+case class SearchException(message: String) extends RuntimeException(message)
