@@ -38,6 +38,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   override val importService = new ImportService
   val CLIENT_ID = "Klient1"
+  val IMPORT_ID = "68875044-50ee-427e-bcd5-eadb52861f65"
 
   override def beforeEach: Unit = {
     reset(articleImportClient, taxononyApiClient, learningPathRepository)
@@ -128,12 +129,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String])).thenReturn(None)
 
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
 
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
@@ -141,9 +142,9 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Success(taxonomyResource))
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize(memoizeFunc))
 
-    importService.convert("1", mainImport, CLIENT_ID)
+    importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
 
-    verify(articleImportClient, times(1)).importArticle(nodeId)
+    verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
 
@@ -176,12 +177,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(
       learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(
         any[DBSession])).thenReturn(None)
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
 
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
@@ -190,13 +191,13 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
     when(migrationApiClient.getAllNodeIds)
       .thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
-    val res = importService.convert("1", mainImport, CLIENT_ID)
+    val res = importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
     res.isSuccess should be(true)
 
     res.get.learningsteps.head.embedUrl should equal(
       Seq(EmbedUrl(s"/nb/subjects${taxonomyResource.path}", "nb", EmbedType.OEmbed)))
 
-    verify(articleImportClient, times(1)).importArticle(nodeId)
+    verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
 
@@ -230,21 +231,21 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(
         any[DBSession])).thenReturn(None)
 
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
 
     when(migrationApiClient.getAllNodeIds)
       .thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Failure(new HttpRequestException("Received error 422. H5P is not imported to new service", None)))
 
-    val Failure(res) = importService.convert("1", mainImport, CLIENT_ID)
+    val Failure(res) = importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
     res.getMessage.contains("Received error 422. H5P is not imported to new service") should be(true)
 
     verify(learningPathRepository, times(0)).update(any[LearningPath])
-    verify(articleImportClient, times(1)).importArticle(nodeId)
+    verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
   }
 
   test("That importNode falls back on direct article link if taxonomy lookup fails") {
@@ -276,21 +277,21 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(
       learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(
         any[DBSession])).thenReturn(None)
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
 
     when(migrationApiClient.getAllNodeIds)
       .thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Failure(new HttpRequestException("Received error 404 when looking up resource")))
     when(migrationApiClient.getAllNodeIds)
       .thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
 
-    val Success(res) = importService.convert("1", mainImport, CLIENT_ID)
+    val Success(res) = importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
     res.learningsteps.head.embedUrl should equal(Seq(EmbedUrl("/nb/article/1", "nb", EmbedType.OEmbed)))
   }
 
@@ -352,12 +353,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(
       learningPathRepository.learningStepWithExternalIdAndForLearningPath(any[Option[String]], any[Option[Long]])(
         any[DBSession])).thenReturn(None)
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
 
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
@@ -368,12 +369,12 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(migrationApiClient.getAllNodeIds).thenReturn(Memoize[String, Set[ArticleMigrationContent]]((_: String) =>
       articleNids))
 
-    importService.convert("1", mainImport, CLIENT_ID)
+    importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
 
     verify(taxononyApiClient, times(1)).getResource(articleNids.head.nid)
     verify(taxononyApiClient, times(1)).getResource(articleNids.last.nid)
 
-    verify(articleImportClient, times(1)).importArticle(articleNids.head.nid)
+    verify(articleImportClient, times(1)).importArticle(articleNids.head.nid, IMPORT_ID)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
   }
 
@@ -421,7 +422,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.getIdFromExternalId(any[String])(any[DBSession]))
       .thenReturn(Some(1: Long))
 
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Success(ArticleImportStatus(Seq.empty, Seq.empty, 1)))
     when(taxononyApiClient.getResource(any[String]))
       .thenReturn(Success(taxonomyResource))
@@ -430,16 +431,16 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
     when(migrationApiClient.getLearningPath("1"))
       .thenReturn(Success(mainImport))
-    when(articleImportClient.importArticle(any[String]))
+    when(articleImportClient.importArticle(any[String], any[String]))
       .thenReturn(Failure(new HttpRequestException("Received error 422. H5P is not imported to new service", None)))
 
-    val Failure(res) = importService.doImport("1", CLIENT_ID)
+    val Failure(res) = importService.doImport("1", CLIENT_ID, IMPORT_ID)
     res.getMessage.contains("Received error 422. H5P is not imported to new service") should be(true)
 
     verify(learningPathRepository, times(0)).update(any[LearningPath])
     verify(learningPathRepository, times(1)).deletePath(1)
     verify(learningPathRepository, times(1)).deleteStep(234)
-    verify(articleImportClient, times(1)).importArticle(nodeId)
+    verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
   }
 
   test("That empty licenses are turned to None") {

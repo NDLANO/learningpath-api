@@ -8,6 +8,8 @@
 
 package no.ndla.learningpathapi.repository
 
+import java.util.UUID
+
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain._
@@ -16,6 +18,8 @@ import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization._
 import org.postgresql.util.PGobject
 import scalikejdbc._
+
+import scala.util.Try
 
 trait LearningPathRepositoryComponent extends LazyLogging {
   this: DataSource =>
@@ -118,6 +122,37 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningpath.copy(id = Some(learningPathId), revision = Some(startRevision), learningsteps = learningSteps)
     }
 
+    def insertWithNodeId(learningpath: LearningPath, importId: String)(
+        implicit session: DBSession = AutoSession): LearningPath = {
+      val startRevision = 1
+      val dataObject = new PGobject()
+      dataObject.setType("jsonb")
+      dataObject.setValue(write(learningpath))
+
+      val importIdUUID = Try(UUID.fromString(importId)).toOption
+      val learningPathId: Long =
+        sql"insert into learningpaths(external_id, document, revision, import_id) values(${learningpath.externalId}, $dataObject, $startRevision, $importIdUUID)"
+          .updateAndReturnGeneratedKey()
+          .apply
+      val learningSteps = learningpath.learningsteps.map(learningStep => {
+        insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
+      })
+
+      logger.info(s"Inserted learningpath with id $learningPathId")
+      learningpath.copy(id = Some(learningPathId), revision = Some(startRevision), learningsteps = learningSteps)
+    }
+
+    def idAndimportIdOfLearningpath(externalId: String)(
+        implicit session: DBSession = AutoSession): Option[(Long, Option[String])] = {
+      val lp = LearningPath.syntax("lp")
+      sql"""select id, import_id
+            from ${LearningPath.as(lp)}
+            where lp.document is not NULL and lp.external_id = $externalId"""
+        .map(rs => (rs.long("id"), rs.stringOpt("import_id")))
+        .single
+        .apply()
+    }
+
     def insertLearningStep(learningStep: LearningStep)(implicit session: DBSession = AutoSession): LearningStep = {
       val startRevision = 1
       val stepObject = new PGobject()
@@ -144,6 +179,34 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val newRevision = learningpath.revision.getOrElse(0) + 1
       val count =
         sql"update learningpaths set document = $dataObject, revision = ${newRevision} where id = ${learningpath.id} and revision = ${learningpath.revision}"
+          .update()
+          .apply
+
+      if (count != 1) {
+        val msg =
+          s"Conflicting revision is detected for learningPath with id = ${learningpath.id} and revision = ${learningpath.revision}"
+        logger.warn(msg)
+        throw new OptimisticLockException(msg)
+      }
+
+      logger.info(s"Updated learningpath with id ${learningpath.id}")
+      learningpath.copy(revision = Some(newRevision))
+    }
+
+    def updateWithImportId(learningpath: LearningPath, importId: String)(
+        implicit session: DBSession = AutoSession): LearningPath = {
+      if (learningpath.id.isEmpty) {
+        throw new RuntimeException("A non-persisted learningpath cannot be updated without being saved first.")
+      }
+
+      val dataObject = new PGobject()
+      dataObject.setType("jsonb")
+      dataObject.setValue(write(learningpath))
+
+      val importIdUUID = Try(UUID.fromString(importId)).toOption
+      val newRevision = learningpath.revision.getOrElse(0) + 1
+      val count =
+        sql"update learningpaths set document = $dataObject, revision = ${newRevision}, import_id = $importIdUUID where id = ${learningpath.id} and revision = ${learningpath.revision}"
           .update()
           .apply
 
