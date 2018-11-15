@@ -164,18 +164,6 @@ trait LearningpathControllerV2 {
       val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
       val fallback = booleanOrDefault(this.fallback.paramName, false)
 
-      logger.info(
-        "GET / with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={} fallback={}",
-        query,
-        language,
-        tag,
-        page,
-        pageSize,
-        sort,
-        idList,
-        fallback.toString
-      )
-
       search(query, language, tag, idList, sort, pageSize, page, fallback)
     }
 
@@ -201,17 +189,6 @@ trait LearningpathControllerV2 {
       val pageSize = searchParams.pageSize
       val page = searchParams.page
       val fallback = searchParams.fallback.getOrElse(false)
-      logger.info(
-        "POST /search with params query='{}', language={}, tag={}, page={}, page-size={}, sort={}, ids={} fallback={}",
-        query,
-        language,
-        tag,
-        page,
-        pageSize,
-        sort,
-        idList,
-        fallback.toString
-      )
 
       search(query, language, tag, idList, sort, pageSize, page, fallback)
     }
