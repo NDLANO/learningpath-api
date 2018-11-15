@@ -122,7 +122,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       learningpath.copy(id = Some(learningPathId), revision = Some(startRevision), learningsteps = learningSteps)
     }
 
-    def insertWithNodeId(learningpath: LearningPath, importId: String)(
+    def insertWithImportId(learningpath: LearningPath, importId: String)(
         implicit session: DBSession = AutoSession): LearningPath = {
       val startRevision = 1
       val dataObject = new PGobject()

@@ -40,9 +40,10 @@ trait ImportService {
 
       learningPathRepository.idAndimportIdOfLearningpath(packageId) match {
         case Some((lpId, Some(existingImportId))) if existingImportId == importId =>
-          logger.info(
-            s"Learningpath with node id $nodeId has already imported (same import id) and will not be re-imported")
-          Success(ImportReport(nodeId, ImportStatus.OK, Seq.empty, Some(lpId)))
+          val msg =
+            s"Learningpath with node id $nodeId has already imported (same import id) and will not be re-imported"
+          logger.info(msg)
+          Success(ImportReport(nodeId, ImportStatus.OK, Seq(msg), Some(lpId)))
         case _ =>
           val learningpathSummary = for {
             data <- metaData
@@ -114,7 +115,7 @@ trait ImportService {
 
     private def upload(learningpath: LearningPath, importId: String): Try[LearningPath] = {
       learningpath.externalId.flatMap(learningPathRepository.withExternalId) match {
-        case None => Try(learningPathRepository.insertWithNodeId(learningpath, importId))
+        case None => Try(learningPathRepository.insertWithImportId(learningpath, importId))
         case Some(existingLearningPath) =>
           val updatedLp = Try(
             learningPathRepository.updateWithImportId(asLearningPath(existingLearningPath, learningpath), importId))

@@ -443,6 +443,20 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
   }
 
+  test("A learningpath should not be imported if import-id already exists in the database") {
+    val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
+
+    when(migrationApiClient.getLearningPath("1"))
+      .thenReturn(Success(mainImport))
+    when(learningPathRepository.idAndimportIdOfLearningpath(mainImport.mainPackage.packageId.toString))
+      .thenReturn(Some((1: Long, Some(IMPORT_ID))))
+
+    val Success(res) = importService.doImport("1", CLIENT_ID, IMPORT_ID)
+    res.messages.length should be(1)
+    res.messages.head should equal(
+      s"Learningpath with node id 1 has already imported (same import id) and will not be re-imported")
+  }
+
   test("That empty licenses are turned to None") {
     val pakke = MainPackageImport(packageWithNodeId(1).copy(
                                     steps = Seq(stepWithDescriptionAndLanguage(Some("Heisann"), "nb")
