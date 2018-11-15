@@ -36,9 +36,9 @@ abstract class NdlaController
     ApplicationUrl.set(request)
     AuthUser.set(request)
     logger.info("{} {}{}",
-      request.getMethod,
-      request.getRequestURI,
-      Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
+                request.getMethod,
+                request.getRequestURI,
+                Option(request.getQueryString).map(s => s"?$s").getOrElse(""))
   }
 
   after() {
