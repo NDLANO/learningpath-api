@@ -435,7 +435,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     search.results(3).id should be(UnrelatedId)
     search.results(4).id should be(EnglandoId)
 
-    search.results.map(_.id) should be(Seq(1,2,3,4,5))
+    search.results.map(_.id) should be(Seq(1, 2, 3, 4, 5))
     search.results.map(_.title.language) should be(Seq("nb", "en", "en", "en", "en"))
   }
 
