@@ -66,10 +66,7 @@ trait SearchService extends LazyLogging {
               page: Option[Int],
               pageSize: Option[Int],
               fallback: Boolean): SearchResultV2 = {
-      val language =
-        if (searchLanguage == Language.AllLanguages || fallback) "*"
-        else searchLanguage
-
+      val language = if (searchLanguage == Language.AllLanguages || fallback) "*" else searchLanguage
       val fullQuery = language match {
         case "*" => boolQuery()
         case lang => {
@@ -89,7 +86,7 @@ trait SearchService extends LazyLogging {
         withIdIn,
         taggedWith,
         sort,
-        language,
+        searchLanguage,
         page,
         pageSize,
         fallback
@@ -108,43 +105,22 @@ trait SearchService extends LazyLogging {
         if (searchLanguage == Language.AllLanguages || fallback) "*"
         else searchLanguage
 
-      val titleSearch =
-        simpleStringQuery(query).field(s"titles.$language", 2)
-      val descSearch =
-        simpleStringQuery(query).field(s"descriptions.$language", 2)
-      val stepTitleSearch = simpleStringQuery(query)
-        .field(s"learningsteps.titles.$language", 1)
-      val stepDescSearch = simpleStringQuery(query)
-        .field(s"learningsteps.descriptions.$language", 1)
+      val titleSearch = simpleStringQuery(query).field(s"titles.$language", 2)
+      val descSearch = simpleStringQuery(query).field(s"descriptions.$language", 2)
+      val stepTitleSearch = simpleStringQuery(query).field(s"learningsteps.titles.$language", 1)
+      val stepDescSearch = simpleStringQuery(query).field(s"learningsteps.descriptions.$language", 1)
       val tagSearch = simpleStringQuery(query).field(s"tags.$language", 2)
       val authorSearch = simpleStringQuery(query).field("author", 1)
-
-      val hi = highlight("*").preTag("").postTag("").numberOfFragments(0)
 
       val fullQuery = boolQuery()
         .must(
           boolQuery()
             .should(
-              nestedQuery("titles", titleSearch)
-                .scoreMode(ScoreMode.Avg)
-                .boost(1)
-                .inner(innerHits("titles").highlighting(hi)),
-              nestedQuery("descriptions", descSearch)
-                .scoreMode(ScoreMode.Avg)
-                .boost(1)
-                .inner(innerHits("descriptions").highlighting(hi)),
-              nestedQuery("learningsteps.titles", stepTitleSearch)
-                .scoreMode(ScoreMode.Avg)
-                .boost(1)
-                .inner(innerHits("learningsteps.titles").highlighting(hi)),
-              nestedQuery("learningsteps.descriptions", stepDescSearch)
-                .scoreMode(ScoreMode.Avg)
-                .boost(1)
-                .inner(innerHits("learningsteps.descriptions").highlighting(hi)),
-              nestedQuery("tags", tagSearch)
-                .scoreMode(ScoreMode.Avg)
-                .boost(1)
-                .inner(innerHits("tags").highlighting(hi)),
+              nestedQuery("titles", titleSearch),
+              nestedQuery("descriptions", descSearch),
+              nestedQuery("learningsteps.titles", stepTitleSearch),
+              nestedQuery("learningsteps.descriptions", stepDescSearch),
+              nestedQuery("tags", tagSearch),
               authorSearch
             )
         )
@@ -173,11 +149,7 @@ trait SearchService extends LazyLogging {
         case "" | Language.AllLanguages =>
           (None, "*")
         case lang =>
-          fallback match {
-            case true => (None, "*")
-            case false =>
-              (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
-          }
+          if (fallback) (None, "*") else (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
       }
 
       val filters = List(tagFilter, idFilter, languageFilter)

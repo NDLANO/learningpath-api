@@ -425,6 +425,20 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     search.results.head.supportedLanguages should be(Seq("nb", "en"))
   }
 
+  test("That searching with fallback still returns searched language if specified") {
+    val search = searchService.allV2(List(), None, Sort.ByIdAsc, "en", None, None, fallback = true)
+
+    search.totalCount should be(5)
+    search.results(0).id should be(PenguinId)
+    search.results(1).id should be(BatmanId)
+    search.results(2).id should be(DonaldId)
+    search.results(3).id should be(UnrelatedId)
+    search.results(4).id should be(EnglandoId)
+
+    search.results.map(_.id) should be(Seq(1, 2, 3, 4, 5))
+    search.results.map(_.title.language) should be(Seq("nb", "en", "en", "en", "en"))
+  }
+
   def blockUntil(predicate: () => Boolean) = {
     var backoff = 0
     var done = false
