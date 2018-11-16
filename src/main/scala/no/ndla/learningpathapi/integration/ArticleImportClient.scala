@@ -24,10 +24,11 @@ trait ArticleImportClient {
     private val importArticleEndpoint =
       s"http://$ArticleImportHost/intern/import/$ExternalId"
 
-    def importArticle(externalId: String): Try[ArticleImportStatus] =
+    def importArticle(externalId: String, importId: String): Try[ArticleImportStatus] =
       doRequest(
         Http(importArticleEndpoint.replace(ExternalId, externalId))
           .timeout(ArticleImportTimeout, ArticleImportTimeout)
+          .param("importId", importId)
           .method("POST"))
 
     private def doRequest(httpRequest: HttpRequest): Try[ArticleImportStatus] =

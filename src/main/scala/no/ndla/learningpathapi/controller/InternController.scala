@@ -8,6 +8,8 @@
 
 package no.ndla.learningpathapi.controller
 
+import java.util.UUID
+
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
@@ -66,7 +68,11 @@ trait InternController {
     }
 
     post("/import/:node_id") {
-      importService.doImport(params("node_id"), requireClientId) match {
+      val importId = paramOrDefault("importId", UUID.randomUUID().toString)
+      val nodeId = params("node_id")
+      val clientId = requireClientId
+
+      importService.doImport(nodeId, clientId, importId) match {
         case Success(report)           => report
         case Failure(ex: ImportReport) => errorHandler(ex)
         case Failure(ex)               => errorHandler(ex)
