@@ -10,7 +10,7 @@ package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.Language
-import no.ndla.network.Domains
+import no.ndla.network.{AuthUser, Domains}
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
 
@@ -18,15 +18,13 @@ import scala.util.Properties._
 import scala.util.{Failure, Success}
 
 object LearningpathApiProperties extends LazyLogging {
+  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val ApplicationName = "learningpath-api"
-  val Auth0LoginEndpoint = "https://ndla.eu.auth0.com/authorize"
-
-  val SecretsFile = "learningpath-api.secrets"
+  val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
 
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
   val ContactEmail = "christergundersen@ndla.no"
 
-  val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val Domain = Domains.get(Environment)
 
   val MetaInitialConnections = 3
@@ -103,10 +101,13 @@ object LearningpathApiProperties extends LazyLogging {
   val MigrationUser = prop("MIGRATION_USER")
   val MigrationPassword = prop("MIGRATION_PASSWORD")
 
-  lazy val secrets = readSecrets(SecretsFile) match {
-    case Success(values) => values
-    case Failure(exception) =>
-      throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+  lazy val secrets = {
+    val SecretsFile = "learningpath-api.secrets"
+    readSecrets(SecretsFile) match {
+      case Success(values) => values
+      case Failure(exception) =>
+        throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
+    }
   }
 
   def prop(key: String): String = {
