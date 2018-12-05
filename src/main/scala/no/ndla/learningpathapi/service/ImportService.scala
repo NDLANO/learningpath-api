@@ -90,7 +90,8 @@ trait ImportService {
         Failure(ImportReport(nodeId, ImportStatus.ERROR, messages, None))
       } else {
         val embedUrlMap = articleImports.map {
-          case (oldUrl, taxonomyResource) if NdlaDomains.contains(oldUrl.hostOption.map(_.toString).getOrElse("")) => oldUrl -> Option(taxonomyResource.get.path.toString)
+          case (oldUrl, taxonomyResource) if NdlaDomains.contains(oldUrl.hostOption.map(_.toString).getOrElse("")) =>
+            oldUrl -> Option(taxonomyResource.get.path.toString)
           case (oldUrl, _) => oldUrl -> None
         }.toMap
 
