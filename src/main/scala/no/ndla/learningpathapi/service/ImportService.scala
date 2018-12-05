@@ -10,7 +10,7 @@ package no.ndla.learningpathapi.service
 
 import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.integration.{KeywordsServiceComponent, _}
-import no.ndla.learningpathapi.model.api.{ImportReport, ImportStatus, LearningPathSummaryV2}
+import no.ndla.learningpathapi.model.api.{ImportReport, ImportStatus}
 import no.ndla.learningpathapi.model.domain.Language.languageOrUnknown
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -90,7 +90,9 @@ trait ImportService {
         Failure(ImportReport(nodeId, ImportStatus.ERROR, messages, None))
       } else {
         val embedUrlMap = articleImports.map {
-          case (oldUrl, taxonomyResource) => oldUrl -> taxonomyResource.get.path
+          case (oldUrl, taxonomyResource) if NdlaDomains.contains(oldUrl.hostOption.map(_.toString).getOrElse("")) =>
+            oldUrl -> Option(taxonomyResource.get.path.toString)
+          case (oldUrl, _) => oldUrl -> None
         }.toMap
 
         val coverPhoto =
@@ -102,8 +104,8 @@ trait ImportService {
           case l: LearningStep if l.embedUrl.nonEmpty =>
             val embedUrls = l.embedUrl.map(embed => {
               val path =
-                embedUrlMap.get(embed.url).map(p => s"/${embed.language}$p")
-              embed.copy(url = path.getOrElse(embed.url)) // Fall back on old ndla url if article could not be imported. Should never happen.
+                embedUrlMap.get(embed.url).flatten.map(p => s"/${embed.language}$p")
+              embed.copy(url = path.getOrElse(embed.url)) // Fall back on old url if not ndla-url
             })
             l.copy(embedUrl = embedUrls)
           case l => l
@@ -160,7 +162,7 @@ trait ImportService {
         val nodeIdsForArticle =
           mainNodeIds.get(embedUrl).flatten.getOrElse(Set.empty)
         val taxonomyResourceForArticle =
-          nodeIdsToTaxonomyResourceMap(nodeIdsForArticle)
+          nodeIdsToTaxonomyResourceMap.getOrElse(nodeIdsForArticle, Success(embedUrl))
         embedUrl -> taxonomyResourceForArticle
       })
     }
@@ -260,8 +262,7 @@ trait ImportService {
 
     private[service] def embedUrlsAsList(step: Step, translations: Seq[Step]): Seq[EmbedUrl] = {
       (Seq(step) ++ translations).collect {
-        case Step(_, _, _, _, _, _, Some(embedUrl), _, _, language)
-            if NdlaDomains.contains(embedUrl.hostOption.map(_.toString).getOrElse("")) =>
+        case Step(_, _, _, _, _, _, Some(embedUrl), _, _, language) =>
           EmbedUrl(embedUrl, languageOrUnknown(language), EmbedType.OEmbed)
       }
     }
