@@ -9,7 +9,7 @@
 package no.ndla.learningpathapi
 
 import com.zaxxer.hikari.HikariDataSource
-import no.ndla.learningpathapi.controller.{HealthController, LearningpathControllerV2}
+import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathControllerV2}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service._
@@ -44,11 +44,13 @@ trait TestEnvironment
     with LanguageValidator
     with LearningPathValidator
     with LearningStepValidator
-    with TitleValidator {
+    with TitleValidator
+    with InternController {
 
   val dataSource = mock[HikariDataSource]
 
   val learningPathRepository = mock[LearningPathRepository]
+  val learningPathRepositoryComponent = mock[LearningPathRepositoryComponent]
   val readService = mock[ReadService]
   val updateService = mock[UpdateService]
   val searchConverterService = mock[SearchConverterService]
@@ -66,6 +68,7 @@ trait TestEnvironment
   val languageValidator = mock[LanguageValidator]
   val learningpathControllerV2 = mock[LearningpathControllerV2]
   val healthController = mock[HealthController]
+  val internController = mock[InternController]
   val learningStepValidator = mock[LearningStepValidator]
   val learningPathValidator = mock[LearningPathValidator]
   val titleValidator = mock[TitleValidator]
