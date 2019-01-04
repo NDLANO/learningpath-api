@@ -131,7 +131,7 @@ trait LearningpathControllerV2 {
       * @param orFunction Function to execute if no scrollId in parameters (Usually searching)
       * @return A Try with scroll result, or the return of the orFunction (Usually a try with a search result).
       */
-    private def scrollOr(orFunction: => Any): Any = {
+    private def scrollSearchOr(orFunction: => Any): Any = {
       val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
 
       paramOrNone(this.scrollId.paramName) match {
@@ -207,7 +207,7 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response500)
           authorizations "oauth2")
     ) {
-      scrollOr {
+      scrollSearchOr {
         val query = paramOrNone(this.query.paramName)
         val tag = paramOrNone(this.tag.paramName)
         val idList = paramAsListOfLong(this.learningpathIds.paramName)
@@ -236,7 +236,7 @@ trait LearningpathControllerV2 {
           authorizations "oauth2"
           responseMessages (response400, response500))
     ) {
-      scrollOr {
+      scrollSearchOr {
         val searchParams = extract[SearchParams](request.body)
 
         val query = searchParams.query
