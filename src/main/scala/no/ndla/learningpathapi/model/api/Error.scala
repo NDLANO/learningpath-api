@@ -35,6 +35,7 @@ object Error {
   val IMPORT_FAILED = "IMPORT_FAILED"
   val DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
   val MISSING_STATUS = "INVALID_STATUS"
+  val INVALID_SEARCH_CONTEXT = "INVALID_SEARCH_CONTEXT"
 
   val GENERIC_DESCRIPTION =
     s"Ooops. Something we didn't anticipate occured. We have logged the error, and will look into it. But feel free to contact ${LearningpathApiProperties.ContactEmail} if the error persists."
@@ -48,9 +49,13 @@ object Error {
 
   val WindowTooLargeError = Error(
     WINDOW_TOO_LARGE,
-    s"The result window is too large. Fetching pages above ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow} results are unsupported."
+    s"The result window is too large. Fetching pages above ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow} results requires scrolling, see query-parameter 'search-context'."
   )
   val IndexMissingError = Error(INDEX_MISSING, INDEX_MISSING_DESCRIPTION)
   val DatabaseUnavailableError = Error(DATABASE_UNAVAILABLE, s"Database seems to be unavailable, retrying connection.")
   val MISSING_STATUS_ERROR = "Parameter was not a valid status."
+
+  val InvalidSearchContext = Error(
+    INVALID_SEARCH_CONTEXT,
+    "The search-context specified was not expected. Please create one by searching from page 1.")
 }

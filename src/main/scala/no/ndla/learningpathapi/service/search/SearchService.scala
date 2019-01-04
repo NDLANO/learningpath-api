@@ -17,22 +17,45 @@ import com.sksamuel.elastic4s.searches.queries.BoolQuery
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
+import no.ndla.learningpathapi.LearningpathApiProperties.{
+  ElasticSearchIndexMaxResultWindow,
+  ElasticSearchScrollKeepAlive
+}
 import no.ndla.learningpathapi.integration.Elastic4sClient
-import no.ndla.learningpathapi.model.api.{Copyright, Error, LearningPathSummaryV2, License, SearchResultV2}
+import no.ndla.learningpathapi.model.api.{Copyright, Error, LearningPathSummaryV2, License}
 import no.ndla.learningpathapi.model.domain.{Sort, _}
 import no.ndla.learningpathapi.model.search.SearchableLearningPath
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
+import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
+import scala.util.{Failure, Success, Try}
 
 trait SearchService extends LazyLogging {
   this: SearchIndexService with Elastic4sClient with SearchConverterServiceComponent =>
   val searchService: SearchService
 
   class SearchService {
+
+    def scroll(scrollId: String, language: String): Try[SearchResult] =
+      e4sClient
+        .execute {
+          searchScroll(scrollId, ElasticSearchScrollKeepAlive)
+        }
+        .map(response => {
+          val hits = getHitsV2(response.result, language)
+
+          SearchResult(
+            totalCount = response.result.totalHits,
+            page = None,
+            pageSize = response.result.hits.hits.length,
+            language = if (language == "*") Language.AllLanguages else language,
+            results = hits,
+            scrollId = response.result.scrollId
+          )
+        })
 
     def getHitsV2(response: SearchResponse, language: String): Seq[LearningPathSummaryV2] = {
       response.totalHits match {
@@ -55,7 +78,7 @@ trait SearchService extends LazyLogging {
     }
 
     def hitAsLearningPathSummaryV2(hitString: String, language: String): LearningPathSummaryV2 = {
-      implicit val formats = org.json4s.DefaultFormats
+      implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
       searchConverterService.asApiLearningPathSummaryV2(read[SearchableLearningPath](hitString), language)
     }
 
@@ -65,11 +88,11 @@ trait SearchService extends LazyLogging {
               searchLanguage: String,
               page: Option[Int],
               pageSize: Option[Int],
-              fallback: Boolean): SearchResultV2 = {
+              fallback: Boolean): Try[SearchResult] = {
       val language = if (searchLanguage == Language.AllLanguages || fallback) "*" else searchLanguage
       val fullQuery = language match {
         case "*" => boolQuery()
-        case lang => {
+        case lang =>
           val titleSearch = existsQuery(s"titles.$lang")
           val descSearch = existsQuery(s"descriptions.$lang")
 
@@ -78,7 +101,6 @@ trait SearchService extends LazyLogging {
               nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg),
               nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg)
             )
-        }
       }
 
       executeSearch(
@@ -100,7 +122,7 @@ trait SearchService extends LazyLogging {
                       sort: Sort.Value,
                       page: Option[Int],
                       pageSize: Option[Int],
-                      fallback: Boolean): SearchResultV2 = {
+                      fallback: Boolean): Try[SearchResult] = {
       val language =
         if (searchLanguage == Language.AllLanguages || fallback) "*"
         else searchLanguage
@@ -135,7 +157,7 @@ trait SearchService extends LazyLogging {
                               language: String,
                               page: Option[Int],
                               pageSize: Option[Int],
-                              fallback: Boolean): SearchResultV2 = {
+                              fallback: Boolean): Try[SearchResult] = {
       val tagFilter = taggedWith match {
         case None => None
         case Some(tag) =>
@@ -157,28 +179,37 @@ trait SearchService extends LazyLogging {
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
       val requestedResultWindow = page.getOrElse(1) * numResults
-      if (requestedResultWindow > LearningpathApiProperties.ElasticSearchIndexMaxResultWindow) {
+      if (requestedResultWindow > ElasticSearchIndexMaxResultWindow) {
         logger.info(
-          s"Max supported results are ${LearningpathApiProperties.ElasticSearchIndexMaxResultWindow}, user requested $requestedResultWindow")
-        throw new ResultWindowTooLargeException(Error.WindowTooLargeError.description)
-      }
+          s"Max supported results are $ElasticSearchIndexMaxResultWindow, user requested $requestedResultWindow")
+        Failure(new ResultWindowTooLargeException(Error.WindowTooLargeError.description))
+      } else {
+        val searchToExecute = search(LearningpathApiProperties.SearchIndex)
+          .size(numResults)
+          .from(startAt)
+          .query(filteredSearch)
+          .highlighting(highlight("*"))
+          .sortBy(getSortDefinition(sort, searchLanguage))
 
-      val searchToExec = search(LearningpathApiProperties.SearchIndex)
-        .size(numResults)
-        .from(startAt)
-        .query(filteredSearch)
-        .highlighting(highlight("*"))
-        .sortBy(getSortDefinition(sort, searchLanguage))
+        // Only add scroll param if it is first page
+        val searchWithScroll =
+          if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }
 
-      e4sClient.execute(searchToExec) match {
-        case Success(response) =>
-          SearchResultV2(response.result.totalHits,
-                         page.getOrElse(1),
-                         numResults,
-                         if (language == "*") Language.AllLanguages else language,
-                         getHitsV2(response.result, language))
-        case Failure(ex) =>
-          errorHandler(Failure(ex))
+        e4sClient.execute(searchWithScroll) match {
+          case Success(response) =>
+            Success(
+              SearchResult(
+                response.result.totalHits,
+                Some(page.getOrElse(1)),
+                numResults,
+                if (language == "*") Language.AllLanguages else language,
+                getHitsV2(response.result, language),
+                response.result.scrollId
+              ))
+          case Failure(ex) =>
+            errorHandler(ex)
+        }
+
       }
     }
 
@@ -193,14 +224,14 @@ trait SearchService extends LazyLogging {
       }
     }
 
-    def getSortDefinition(sort: Sort.Value, language: String) = {
+    private def getSortDefinition(sort: Sort.Value, language: String) = {
       val sortLanguage = language match {
         case Language.NoLanguage => Language.DefaultLanguage
         case _                   => language
       }
 
       sort match {
-        case (Sort.ByTitleAsc) =>
+        case Sort.ByTitleAsc =>
           language match {
             case "*" | Language.AllLanguages =>
               fieldSort("defaultTitle").order(SortOrder.ASC).missing("_last")
@@ -210,7 +241,7 @@ trait SearchService extends LazyLogging {
                 .order(SortOrder.ASC)
                 .missing("_last")
           }
-        case (Sort.ByTitleDesc) =>
+        case Sort.ByTitleDesc =>
           language match {
             case "*" | Language.AllLanguages =>
               fieldSort("defaultTitle").order(SortOrder.DESC).missing("_last")
@@ -220,19 +251,19 @@ trait SearchService extends LazyLogging {
                 .order(SortOrder.DESC)
                 .missing("_last")
           }
-        case (Sort.ByDurationAsc) =>
+        case Sort.ByDurationAsc =>
           fieldSort("duration").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByDurationDesc) =>
+        case Sort.ByDurationDesc =>
           fieldSort("duration").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByLastUpdatedAsc) =>
+        case Sort.ByLastUpdatedAsc =>
           fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByLastUpdatedDesc) =>
+        case Sort.ByLastUpdatedDesc =>
           fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case (Sort.ByRelevanceAsc)  => fieldSort("_score").order(SortOrder.ASC)
-        case (Sort.ByRelevanceDesc) => fieldSort("_score").order(SortOrder.DESC)
-        case (Sort.ByIdAsc) =>
+        case Sort.ByRelevanceAsc  => fieldSort("_score").order(SortOrder.ASC)
+        case Sort.ByRelevanceDesc => fieldSort("_score").order(SortOrder.DESC)
+        case Sort.ByIdAsc =>
           fieldSort("id").order(SortOrder.ASC).missing("_last")
-        case (Sort.ByIdDesc) =>
+        case Sort.ByIdDesc =>
           fieldSort("id").order(SortOrder.DESC).missing("_last")
       }
     }
@@ -253,30 +284,28 @@ trait SearchService extends LazyLogging {
       (startAt, numResults)
     }
 
-    private def errorHandler[T](failure: Failure[T]) = {
-      failure match {
-        case Failure(e: NdlaSearchException) => {
+    private def errorHandler[T](exception: Throwable): Failure[T] = {
+      exception match {
+        case e: NdlaSearchException =>
           e.rf.status match {
-            case notFound: Int if notFound == 404 => {
+            case notFound: Int if notFound == 404 =>
               logger.error(s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex.")
               scheduleIndexDocuments()
-              throw new IndexNotFoundException(
-                s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex")
-            }
-            case _ => {
+              Failure(
+                new IndexNotFoundException(
+                  s"Index ${LearningpathApiProperties.SearchIndex} not found. Scheduling a reindex"))
+            case _ =>
               logger.error(e.getMessage)
-              throw new ElasticsearchException(s"Unable to execute search in ${LearningpathApiProperties.SearchIndex}",
-                                               e.getMessage)
-            }
+              Failure(
+                new ElasticsearchException(s"Unable to execute search in ${LearningpathApiProperties.SearchIndex}",
+                                           e.getMessage))
           }
-
-        }
-        case Failure(t: Throwable) => throw t
+        case t => Failure(t)
       }
     }
 
     private def scheduleIndexDocuments(): Unit = {
-      implicit val ec =
+      implicit val ec: ExecutionContextExecutorService =
         ExecutionContext.fromExecutorService(Executors.newSingleThreadExecutor)
       val f = Future {
         searchIndexService.indexDocuments

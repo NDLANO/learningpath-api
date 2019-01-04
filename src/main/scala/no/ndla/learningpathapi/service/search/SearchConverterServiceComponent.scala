@@ -11,7 +11,7 @@ package no.ndla.learningpathapi.service.search
 import com.sksamuel.elastic4s.http.search.SearchHit
 import no.ndla.learningpathapi.integration.ImageApiClientComponent
 import no.ndla.learningpathapi.model._
-import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2}
+import no.ndla.learningpathapi.model.api.{Author, Introduction, LearningPathSummaryV2, SearchResultV2}
 import no.ndla.learningpathapi.model.domain.Language.{DefaultLanguage, findByLanguageOrBestEffort}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.search._
@@ -71,7 +71,7 @@ trait SearchConverterServiceComponent {
     def asApiIntroduction(learningStep: Option[SearchableLearningStep]): Seq[Introduction] = {
       learningStep.map(_.descriptions) match {
         case None => List()
-        case Some(descriptions) => {
+        case Some(descriptions) =>
           List(
             (descriptions.zh, Language.CHINESE),
             (descriptions.en, Language.ENGLISH),
@@ -84,7 +84,6 @@ trait SearchConverterServiceComponent {
             (descriptions.unknown, Language.UNKNOWN)
           ).filter(_._1.isDefined)
             .map(tuple => Introduction(tuple._1.get, tuple._2))
-        }
       }
     }
 
@@ -233,6 +232,16 @@ trait SearchConverterServiceComponent {
           keyToLanguage(result.sourceAsMap.keys)
       }
     }
+
+    def asApiSearchResult(searchResult: SearchResult): SearchResultV2 =
+      SearchResultV2(
+        searchResult.totalCount,
+        searchResult.page,
+        searchResult.pageSize,
+        searchResult.language,
+        searchResult.results
+      )
+
   }
 
 }
