@@ -18,9 +18,13 @@ import no.ndla.learningpathapi.model.domain.{
   License => _,
   _
 }
-import no.ndla.learningpathapi.service.search.SearchService
+import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchService}
 import no.ndla.learningpathapi.service.{ConverterService, ReadService, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
+import no.ndla.learningpathapi.LearningpathApiProperties.{
+  ElasticSearchIndexMaxResultWindow,
+  ElasticSearchScrollKeepAlive
+}
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
 import org.json4s.{DefaultFormats, Formats}
@@ -34,7 +38,12 @@ import scala.util.{Failure, Success, Try}
 
 trait LearningpathControllerV2 {
 
-  this: ReadService with UpdateService with SearchService with LanguageValidator with ConverterService =>
+  this: ReadService
+    with UpdateService
+    with SearchService
+    with LanguageValidator
+    with ConverterService
+    with SearchConverterServiceComponent =>
   val learningpathControllerV2: LearningpathControllerV2
 
   class LearningpathControllerV2(implicit val swagger: Swagger)
@@ -91,6 +100,15 @@ trait LearningpathControllerV2 {
                             "Query for filtering licenses. Only licenses containing filter-string are returned.")
     private val fallback = Param[Option[Boolean]]("fallback", "Fallback to existing language if language is specified.")
     private val learningPathStatus = Param[String]("STATUS", "Status of LearningPaths")
+    private val scrollId = Param[Option[String]](
+      "search-context",
+      s"""A search context retrieved from the response header of a previous search.
+         |If search-context is specified, all other query parameters, except '${this.language.paramName}' is ignored.
+         |For the rest of the parameters the original search of the search-context is used.
+         |The search context may change between scrolls. Always use the most recent one (The context if unused dies after $ElasticSearchScrollKeepAlive).
+         |Used to enable scrolling past $ElasticSearchIndexMaxResultWindow results.
+      """.stripMargin
+    )
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param[T]) =
       queryParam[T](param.paramName).description(param.description)
@@ -106,15 +124,37 @@ trait LearningpathControllerV2 {
                 description = Some(param.description),
                 paramType = ParamType.Form)
 
-    def search(query: Option[String],
-               searchLanguage: String,
-               tag: Option[String],
-               idList: List[Long],
-               sort: Option[String],
-               pageSize: Option[Int],
-               page: Option[Int],
-               fallback: Boolean): SearchResultV2 = {
-      query match {
+    /**
+      * Does a scroll with [[SearchService]]
+      * If no scrollId is specified execute the function @orFunction in the second parameter list.
+      *
+      * @param orFunction Function to execute if no scrollId in parameters (Usually searching)
+      * @return A Try with scroll result, or the return of the orFunction (Usually a try with a search result).
+      */
+    private def scrollOr(orFunction: => Any): Any = {
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+
+      paramOrNone(this.scrollId.paramName) match {
+        case Some(scroll) =>
+          searchService.scroll(scroll, language) match {
+            case Success(scrollResult) =>
+              val responseHeader = scrollResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+              Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
+            case Failure(ex) => errorHandler(ex)
+          }
+        case None => orFunction
+      }
+    }
+
+    private def search(query: Option[String],
+                       searchLanguage: String,
+                       tag: Option[String],
+                       idList: List[Long],
+                       sort: Option[String],
+                       pageSize: Option[Int],
+                       page: Option[Int],
+                       fallback: Boolean) = {
+      val result = query match {
         case Some(q) =>
           searchService.matchingQuery(
             query = q,
@@ -137,6 +177,13 @@ trait LearningpathControllerV2 {
             fallback = fallback
           )
       }
+
+      result match {
+        case Success(searchResult) =>
+          val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+          Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
+        case Failure(ex) => errorHandler(ex)
+      }
     }
 
     get(
@@ -154,22 +201,25 @@ trait LearningpathControllerV2 {
             asQueryParam(pageNo),
             asQueryParam(pageSize),
             asQueryParam(sort),
-            asQueryParam(fallback)
+            asQueryParam(fallback),
+            asQueryParam(scrollId)
         )
           responseMessages (response400, response500)
           authorizations "oauth2")
     ) {
-      val query = paramOrNone(this.query.paramName)
-      val tag = paramOrNone(this.tag.paramName)
-      val idList = paramAsListOfLong(this.learningpathIds.paramName)
-      val language =
-        paramOrDefault(this.language.paramName, Language.AllLanguages)
-      val sort = paramOrNone(this.sort.paramName)
-      val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps => Try(ps.toInt).toOption)
-      val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
-      val fallback = booleanOrDefault(this.fallback.paramName, default = false)
+      scrollOr {
+        val query = paramOrNone(this.query.paramName)
+        val tag = paramOrNone(this.tag.paramName)
+        val idList = paramAsListOfLong(this.learningpathIds.paramName)
+        val language =
+          paramOrDefault(this.language.paramName, Language.AllLanguages)
+        val sort = paramOrNone(this.sort.paramName)
+        val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps => Try(ps.toInt).toOption)
+        val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
+        val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
-      search(query, language, tag, idList, sort, pageSize, page, fallback)
+        search(query, language, tag, idList, sort, pageSize, page, fallback)
+      }
     }
 
     post(
@@ -180,39 +230,43 @@ trait LearningpathControllerV2 {
           description "Show public learningpaths"
           parameters (
             asHeaderParam(correlationId),
-            bodyParam[SearchParams]
+            bodyParam[SearchParams],
+            asQueryParam(scrollId)
         )
           authorizations "oauth2"
           responseMessages (response400, response500))
     ) {
-      val searchParams = extract[SearchParams](request.body)
+      scrollOr {
+        val searchParams = extract[SearchParams](request.body)
 
-      val query = searchParams.query
-      val tag = searchParams.tag
-      val idList = searchParams.ids
-      val language = searchParams.language.getOrElse(Language.AllLanguages)
-      val sort = searchParams.sort
-      val pageSize = searchParams.pageSize
-      val page = searchParams.page
-      val fallback = searchParams.fallback.getOrElse(false)
+        val query = searchParams.query
+        val tag = searchParams.tag
+        val idList = searchParams.ids
+        val language = searchParams.language.getOrElse(Language.AllLanguages)
+        val sort = searchParams.sort
+        val pageSize = searchParams.pageSize
+        val page = searchParams.page
+        val fallback = searchParams.fallback.getOrElse(false)
 
-      search(query, language, tag, idList, sort, pageSize, page, fallback)
+        search(query, language, tag, idList, sort, pageSize, page, fallback)
+      }
     }
 
-    private val getLearningpath =
-      (apiOperation[LearningPathV2]("getLearningpath")
-        summary "Fetch details about the specified learningpath"
-        description "Shows all information about the specified learningpath."
-        parameters (
-          asHeaderParam(correlationId),
-          asPathParam(learningpathId),
-          asQueryParam[Option[String]](language),
-          asQueryParam[Option[Boolean]](fallback)
-      )
-        responseMessages (response403, response404, response500)
-        authorizations "oauth2")
-
-    get("/:learningpath_id", operation(getLearningpath)) {
+    get(
+      "/:learningpath_id",
+      operation(
+        apiOperation[LearningPathV2]("getLearningpath")
+          summary "Fetch details about the specified learningpath"
+          description "Shows all information about the specified learningpath."
+          parameters (
+            asHeaderParam(correlationId),
+            asPathParam(learningpathId),
+            asQueryParam(language),
+            asQueryParam(fallback)
+        )
+          responseMessages (response403, response404, response500)
+          authorizations "oauth2")
+    ) {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val id = long(this.learningpathId.paramName)
@@ -354,7 +408,7 @@ trait LearningpathControllerV2 {
     ) {
       val pathId = long(this.learningpathId.paramName)
       val stepId = long(this.learningstepId.paramName)
-      val fallback = booleanOrDefault(this.fallback.paramName, false)
+      val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
       readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, fallback, UserInfo.get) match {
         case Some(x) => x

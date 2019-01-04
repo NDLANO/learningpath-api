@@ -16,6 +16,7 @@ import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
+import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
@@ -26,8 +27,8 @@ import scala.util.{Failure, Success}
 
 class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with ScalatraFunSuite {
 
-  implicit val formats = org.json4s.DefaultFormats
-  implicit val swagger = new LearningpathSwagger
+  implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
+  implicit val swagger: LearningpathSwagger = new LearningpathSwagger
 
   val copyright = api.Copyright(api.License("by-sa", None, None), List())
 
@@ -52,7 +53,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   lazy val controller = new LearningpathControllerV2
   addServlet(controller, "/*")
 
-  override def beforeEach() = {
+  override def beforeEach(): Unit = {
     resetMocks()
     when(languageValidator.validate(any[String], any[String], any[Boolean]))
       .thenReturn(None)
@@ -66,7 +67,9 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val pageSize = 111
     val ids = "1,2"
 
-    val result = SearchResultV2(1, 1, 1, "nb", Seq(DefaultLearningPathSummary))
+    val result = SearchResult(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary), None)
+    val apiResult = SearchResultV2(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary))
+    when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
     when(
       searchService.matchingQuery(eqTo(List(1, 2)),
@@ -76,7 +79,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                                   eqTo(Sort.ByDurationDesc),
                                   eqTo(Some(page)),
                                   eqTo(Some(pageSize)),
-                                  eqTo(false))).thenReturn(result)
+                                  eqTo(false))).thenReturn(Success(result))
 
     get("/",
         Map(
@@ -103,7 +106,9 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val duration = ""
     val ids = "1,2"
 
-    val result = SearchResultV2(-1, 1, 1, "nb", Seq(DefaultLearningPathSummary))
+    val result = SearchResult(-1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary), None)
+    val apiResult = SearchResultV2(-1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary))
+    when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
     when(
       searchService.allV2(any[List[Long]],
@@ -112,7 +117,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                           any[String],
                           any[Option[Int]],
                           any[Option[Int]],
-                          eqTo(false))).thenReturn(result)
+                          eqTo(false))).thenReturn(Success(result))
 
     get("/",
         Map(
@@ -138,7 +143,9 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val page = 22
     val pageSize = 111
 
-    val result = SearchResultV2(1, page, pageSize, language, Seq(DefaultLearningPathSummary))
+    val result = SearchResult(1, Some(page), pageSize, language, Seq(DefaultLearningPathSummary), None)
+    val apiResult = SearchResultV2(1, Some(page), pageSize, language, Seq(DefaultLearningPathSummary))
+    when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
     when(
       searchService.matchingQuery(eqTo(List(1, 2)),
@@ -148,7 +155,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                                   eqTo(Sort.ByDurationDesc),
                                   eqTo(Some(page)),
                                   eqTo(Some(pageSize)),
-                                  eqTo(false))).thenReturn(result)
+                                  eqTo(false))).thenReturn(Success(result))
 
     post(
       "/search/",
@@ -190,7 +197,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns empty list when empty param") {
-    implicit val request = mock[HttpServletRequest]
+    implicit val request: HttpServletRequest = mock[HttpServletRequest]
     val paramName = "test"
     val parameterMap = Map("someOther" -> Array(""))
 
@@ -199,7 +206,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns List of longs for all ids specified in input") {
-    implicit val request = mock[HttpServletRequest]
+    implicit val request: HttpServletRequest = mock[HttpServletRequest]
     val expectedList = List(1, 2, 3, 5, 6, 7, 8)
     val paramName = "test"
     val parameterMap = Map(paramName -> Array(expectedList.mkString(" , ")))
@@ -209,7 +216,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns validation error when list of ids contains a string") {
-    implicit val request = mock[HttpServletRequest]
+    implicit val request: HttpServletRequest = mock[HttpServletRequest]
     val paramName = "test"
     val parameterMap = Map(paramName -> Array("1,2,abc,3"))
 
@@ -240,5 +247,117 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       status should equal(200)
     }
 
+  }
+
+  test("That scrollId is in header, and not in body") {
+    val scrollId =
+      "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
+    val searchResponse = SearchResult(
+      0,
+      Some(1),
+      10,
+      "nb",
+      Seq.empty,
+      Some(scrollId)
+    )
+    when(
+      searchService.allV2(
+        any[List[Long]],
+        any[Option[String]],
+        any[Sort.Value],
+        any[String],
+        any[Option[Int]],
+        any[Option[Int]],
+        any[Boolean]
+      ))
+      .thenReturn(Success(searchResponse))
+
+    get(s"/") {
+      status should be(200)
+      body.contains(scrollId) should be(false)
+      header("search-context") should be(scrollId)
+    }
+  }
+
+  test("That scrolling uses scroll and not searches normally") {
+    reset(searchService)
+    val scrollId =
+      "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
+    val searchResponse = SearchResult(
+      0,
+      Some(1),
+      10,
+      "nb",
+      Seq.empty,
+      Some(scrollId)
+    )
+
+    when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
+
+    get(s"/?search-context=$scrollId") {
+      status should be(200)
+    }
+
+    verify(searchService, times(0)).allV2(
+      any[List[Long]],
+      any[Option[String]],
+      any[Sort.Value],
+      any[String],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(0)).matchingQuery(
+      any[List[Long]],
+      any[String],
+      any[Option[String]],
+      any[String],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
+  }
+
+  test("That scrolling with POST uses scroll and not searches normally") {
+    reset(searchService)
+    val scrollId =
+      "DnF1ZXJ5VGhlbkZldGNoCgAAAAAAAAC1Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAthYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALcWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC4Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuRYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAALsWLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC9Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFEAAAAAAAAAuhYtY2VPYWFvRFQ5aWNSbzRFYVZSTEhRAAAAAAAAAL4WLWNlT2Fhb0RUOWljUm80RWFWUkxIUQAAAAAAAAC8Fi1jZU9hYW9EVDlpY1JvNEVhVlJMSFE="
+    val searchResponse = SearchResult(
+      0,
+      Some(1),
+      10,
+      "nb",
+      Seq.empty,
+      Some(scrollId)
+    )
+
+    when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
+
+    post(s"/search/?search-context=$scrollId") {
+      status should be(200)
+    }
+
+    verify(searchService, times(0)).allV2(
+      any[List[Long]],
+      any[Option[String]],
+      any[Sort.Value],
+      any[String],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(0)).matchingQuery(
+      any[List[Long]],
+      any[String],
+      any[Option[String]],
+      any[String],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean]
+    )
+    verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 }
