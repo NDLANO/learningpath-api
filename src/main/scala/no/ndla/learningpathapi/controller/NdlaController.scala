@@ -69,6 +69,10 @@ abstract class NdlaController
       InternalServerError(Error.DatabaseUnavailableError)
     case mse: InvalidStatusException =>
       BadRequest(Error(Error.MISSING_STATUS, mse.getMessage))
+    case nse: NdlaSearchException
+        if nse.rf.error.rootCause.exists(x =>
+          x.`type` == "search_context_missing_exception" || x.reason == "Cannot parse scroll id") =>
+      BadRequest(body = Error.InvalidSearchContext)
     case t: Throwable =>
       t.printStackTrace()
       logger.error(t.getMessage)
