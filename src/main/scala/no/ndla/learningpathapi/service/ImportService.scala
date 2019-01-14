@@ -53,22 +53,23 @@ trait ImportService {
             summary <- converterService.asApiLearningpathSummaryV2(persisted)
           } yield summary
 
-          // delete any previously imported versions of this learningpath
-          if (learningpathSummary.isFailure) {
-            metaData.toOption
-              .flatMap(data => learningPathRepository.withExternalId(data.mainPackage.packageId.toString))
-              .map(existingLP => {
-                val pathId = existingLP.id
-                val stepIds = existingLP.learningsteps.flatMap(_.id)
-                logger.info(
-                  s"Failed to import learningpath with node id $nodeId. Deleting previously imported learningpath with id $pathId and steps ${stepIds
-                    .mkString(",")}")
-                stepIds.foreach(id => learningPathRepository.deleteStep(id)) // delete learningsteps
-                learningPathRepository.deletePath(pathId.get) // delete learningpath
-              })
+          learningpathSummary match {
+            case Success(ls) => Success(ImportReport(nodeId, ImportStatus.OK, Seq.empty, Some(ls.id)))
+            case Failure(ex) =>
+              logger.error(s"Failed to import learningpath with node id $nodeId (${ex.getMessage}).", ex)
+              metaData.toOption
+                .flatMap(data => learningPathRepository.withExternalId(data.mainPackage.packageId.toString))
+                .map(existingLP => {
+                  val pathId = existingLP.id
+                  val stepIds = existingLP.learningsteps.flatMap(_.id)
+                  logger.info(
+                    s"Failed to import learningpath with node id $nodeId. Deleting previously imported learningpath with id $pathId and steps ${stepIds
+                      .mkString(",")}")
+                  stepIds.foreach(id => learningPathRepository.deleteStep(id)) // delete learningsteps
+                  learningPathRepository.deletePath(pathId.get) // delete learningpath
+                })
+              Failure(ex)
           }
-
-          learningpathSummary.map(ls => ImportReport(nodeId, ImportStatus.OK, Seq.empty, Some(ls.id)))
       }
     }
 
@@ -269,6 +270,7 @@ trait ImportService {
 
     /**
       * Gets and merges tags for for nodeIds specified languages.
+      *
       * @param nodeIds nodeIds to get tags for
       * @param languages languages to get tags for
       * @return Fetched tags
@@ -344,7 +346,7 @@ trait ImportService {
       val seqNo = step.pos - 1
       val stepType = asLearningStepType(s"${step.stepType}")
 
-      val title = Seq(Title(step.title, step.language)) ++ translations.map(translation =>
+      val title = Seq(Title(step.title, languageOrUnknown(step.language))) ++ translations.map(translation =>
         Title(translation.title, languageOrUnknown(translation.language)))
       val descriptions = descriptionAsList(Some(step), translations)
 
