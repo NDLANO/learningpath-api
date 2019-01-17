@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.controller
 import java.util.UUID
 
 import javax.servlet.http.HttpServletRequest
+import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
@@ -64,6 +65,27 @@ trait InternController {
         case Failure(f) =>
           logger.warn(f.getMessage, f)
           InternalServerError(f.getMessage)
+      }
+    }
+
+    delete("/index") {
+      def pluralIndex(n: Int) = if (n == 1) "1 index" else s"$n indexes"
+      val deleteResults = searchIndexService.findAllIndexes(LearningpathApiProperties.SearchIndex) match {
+        case Failure(f) => halt(status = 500, body = f.getMessage)
+        case Success(indexes) =>
+          indexes.map(index => {
+            logger.info(s"Deleting index $index")
+            searchIndexService.deleteIndexWithName(Option(index))
+          })
+      }
+      val (errors, successes) = deleteResults.partition(_.isFailure)
+      if (errors.nonEmpty) {
+        val message = s"Failed to delete ${pluralIndex(errors.length)}: " +
+          s"${errors.map(_.failed.get.getMessage).mkString(", ")}. " +
+          s"${pluralIndex(successes.length)} were deleted successfully."
+        halt(status = 500, body = message)
+      } else {
+        Ok(body = s"Deleted ${pluralIndex(successes.length)}")
       }
     }
 
