@@ -125,6 +125,19 @@ trait SearchIndexService {
       }
     }
 
+    def findAllIndexes(indexName: String): Try[Seq[String]] = {
+      val response = e4sClient.execute {
+        getAliases()
+      }
+
+      response match {
+        case Success(results) =>
+          Success(results.result.mappings.toList.map { case (index, _) => index.name }.filter(_.startsWith(indexName)))
+        case Failure(ex) =>
+          Failure(ex)
+      }
+    }
+
     private def sendToElastic(indexName: String): Try[Int] = {
       var numIndexed = 0
       getRanges.map(ranges => {
