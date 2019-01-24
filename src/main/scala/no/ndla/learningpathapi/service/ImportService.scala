@@ -142,7 +142,12 @@ trait ImportService {
     }
 
     private def importArticles(embedUrls: Seq[String], importId: String): Seq[(String, Try[String])] = {
-      def getNodeIdFromUrl = (url: String) => url.path.parts.lastOption
+      def getNodeIdFromUrl = (url: String) => {
+        if (url.endsWith("/"))
+          url.trim().path.parts.dropRight(1).lastOption
+        else
+          url.trim().path.parts.lastOption
+      }
       val mainNodeIds = embedUrls
         .map(url => {
           if (NdlaDomains.contains(url.hostOption.map(_.toString).getOrElse(""))) {
