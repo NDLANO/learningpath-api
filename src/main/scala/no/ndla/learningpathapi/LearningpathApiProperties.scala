@@ -18,6 +18,8 @@ import scala.util.Properties._
 import scala.util.{Failure, Success}
 
 object LearningpathApiProperties extends LazyLogging {
+  val IsKubernetes: Boolean = envOrNone("NDLA_IS_KUBERNETES").isDefined
+
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val ApplicationName = "learningpath-api"
   val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
@@ -38,7 +40,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val ArticleImportHost =
     propOrElse("ARTICLE_IMPORT_HOST", "article-import.ndla-local")
-  val ApiGatewayHost = "api-gateway.ndla-local"
+  val ApiGatewayHost = propOrElse("API_GATEWAY_HOST", "api-gateway.ndla-local")
   val ImageApiHost = propOrElse("IMAGE_API_HOST", "image-api.ndla-local")
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
   val SearchApiHost = propOrElse("SEARCH_API_HOST", "search-api.ndla-local")
@@ -116,13 +118,11 @@ object LearningpathApiProperties extends LazyLogging {
   }
 
   def propOrElse(key: String, default: => String): String = {
-    secrets.get(key).flatten match {
-      case Some(secret) => secret
-      case None =>
-        envOrNone(key) match {
-          case Some(env) => env
-          case None      => default
-        }
+    envOrNone(key) match {
+      case Some(prop)            => prop
+      case None if !IsKubernetes => secrets.get(key).flatten.getOrElse(default)
+      case _                     => default
     }
   }
+
 }
