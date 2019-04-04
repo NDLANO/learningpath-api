@@ -29,8 +29,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   val Domain = Domains.get(Environment)
 
-  val MetaInitialConnections = 3
-  val MetaMaxConnections = 20
+  val MetaMaxConnections = 10
 
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "learningpaths")
   val SearchDocument = "learningpath"
