@@ -92,7 +92,8 @@ case class LearningPath(id: Option[Long],
 }
 
 object LearningPathRole extends Enumeration {
-  val ADMIN: LearningPathRole.Value = Value
+  val ADMIN: LearningPathRole.Value = Value("admin")
+  val WRITE: LearningPathRole.Value = Value("write")
 
   def valueOf(s: String): Option[LearningPathRole.Value] = {
     val lpRole = s.split("learningpath:")
