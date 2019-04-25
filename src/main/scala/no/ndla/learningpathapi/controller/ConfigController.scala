@@ -84,7 +84,7 @@ trait ConfigController {
       )
     ) {
       val userInfo = UserInfo(requireUserId)
-      doOrAccessDenied(userInfo.isAdmin) {
+      doOrAccessDenied(userInfo.isAdmin, "Only administrators can edit configuration.") {
         val configKeyString = params("config_key")
         ConfigKey.valueOf(configKeyString) match {
           case None =>

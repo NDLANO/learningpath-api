@@ -149,11 +149,11 @@ abstract class NdlaController
     }
   }
 
-  def doOrAccessDenied(hasAccess: Boolean)(w: => Any): Any = {
+  def doOrAccessDenied(hasAccess: Boolean, reason: String = "Missing user/client-id or role")(w: => Any): Any = {
     if (hasAccess) {
       w
     } else {
-      errorHandler(AccessDeniedException("Missing user/client-id or role"))
+      errorHandler(AccessDeniedException(reason))
     }
   }
 }

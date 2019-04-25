@@ -9,7 +9,12 @@
 package no.ndla.learningpathapi
 
 import com.zaxxer.hikari.HikariDataSource
-import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathControllerV2}
+import no.ndla.learningpathapi.controller.{
+  ConfigController,
+  HealthController,
+  InternController,
+  LearningpathControllerV2
+}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 import no.ndla.learningpathapi.service._
@@ -21,6 +26,7 @@ import org.scalatest.mockito.MockitoSugar
 
 trait TestEnvironment
     extends LearningpathControllerV2
+    with ConfigController
     with LearningPathRepositoryComponent
     with ConfigRepository
     with ReadService
@@ -69,6 +75,7 @@ trait TestEnvironment
   val importService: ImportService = mock[ImportService]
   val languageValidator: LanguageValidator = mock[LanguageValidator]
   val learningpathControllerV2: LearningpathControllerV2 = mock[LearningpathControllerV2]
+  val configController: ConfigController = mock[ConfigController]
   val healthController: HealthController = mock[HealthController]
   val internController: InternController = mock[InternController]
   val learningStepValidator: LearningStepValidator = mock[LearningStepValidator]

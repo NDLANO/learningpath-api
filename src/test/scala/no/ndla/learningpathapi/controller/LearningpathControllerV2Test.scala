@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{LearningpathSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._
@@ -359,5 +359,62 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       any[Boolean]
     )
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
+  }
+
+  test("That writing a will result in 403 access denied for non-admin/non-writers during exam") {
+    when(readService.isExamPeriod).thenReturn(true)
+
+    def testStatus = {
+      status should be(403)
+      body.contains("You do not have write access during exam periods.") should be(true)
+    }
+
+    post("/123/copy/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    patch("/123", headers = TestData.emptyScopeAuthMap) { testStatus }
+    post("/123/learningsteps/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    patch("/123/learningsteps/321", headers = TestData.emptyScopeAuthMap) { testStatus }
+    put("/123/learningsteps/321/seqNo/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    put("/123/learningsteps/321/status/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    put("/123/status/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    delete("/123", headers = TestData.emptyScopeAuthMap) { testStatus }
+    delete("/123/learningsteps/321", headers = TestData.emptyScopeAuthMap) { testStatus }
+  }
+
+  test("That writing a will not result in 403 access denied for non-admin/non-writers not during exam") {
+    when(readService.isExamPeriod).thenReturn(false)
+
+    def testStatus = {
+      status shouldNot be(403)
+      body.contains("You do not have write access during exam periods.") should be(false)
+    }
+
+    post("/123/copy/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    patch("/123", headers = TestData.emptyScopeAuthMap) { testStatus }
+    post("/123/learningsteps/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    patch("/123/learningsteps/321", headers = TestData.emptyScopeAuthMap) { testStatus }
+    put("/123/learningsteps/321/seqNo/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    put("/123/learningsteps/321/status/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    put("/123/status/", headers = TestData.emptyScopeAuthMap) { testStatus }
+    delete("/123", headers = TestData.emptyScopeAuthMap) { testStatus }
+    delete("/123/learningsteps/321", headers = TestData.emptyScopeAuthMap) { testStatus }
+  }
+
+  test("That writing a will not result in 403 access denied for admin/writers during exam") {
+    when(readService.isExamPeriod).thenReturn(true)
+
+    def testStatus = {
+      status shouldNot be(403)
+      body.contains("You do not have write access during exam periods.") should be(false)
+    }
+
+    post("/123/copy/", headers = TestData.writeScopeAuthMap) { testStatus }
+    patch("/123", headers = TestData.writeScopeAuthMap) { testStatus }
+    post("/123/learningsteps/", headers = TestData.writeScopeAuthMap) { testStatus }
+    patch("/123/learningsteps/321", headers = TestData.writeScopeAuthMap) { testStatus }
+    put("/123/learningsteps/321/seqNo/", headers = TestData.adminScopeAuthMap) { testStatus }
+    put("/123/learningsteps/321/status/", headers = TestData.adminScopeAuthMap) { testStatus }
+    put("/123/status/", headers = TestData.adminScopeAuthMap) { testStatus }
+    delete("/123", headers = TestData.adminScopeAuthMap) { testStatus }
+    delete("/123/learningsteps/321", headers = TestData.adminScopeAuthMap) { testStatus }
   }
 }

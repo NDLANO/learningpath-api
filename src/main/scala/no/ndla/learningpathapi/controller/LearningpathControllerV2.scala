@@ -146,6 +146,8 @@ trait LearningpathControllerV2 {
       }
     }
 
+    private def canWriteNow(userInfo: UserInfo): Boolean = !readService.isExamPeriod || userInfo.canWriteDuringExams
+
     private def search(query: Option[String],
                        searchLanguage: String,
                        tag: Option[String],
@@ -493,15 +495,17 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val newLearningPath = extract[NewCopyLearningPathV2](request.body)
-      val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
-      updateService.newFromExistingV2(pathId, newLearningPath, userInfo) match {
-        case None =>
-          halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-        case Some(learningPath) =>
-          logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
-          halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val newLearningPath = extract[NewCopyLearningPathV2](request.body)
+        val pathId = long(this.learningpathId.paramName)
+        updateService.newFromExistingV2(pathId, newLearningPath, userInfo) match {
+          case None =>
+            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+          case Some(learningPath) =>
+            logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
+            halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+        }
       }
     }
 
@@ -519,16 +523,18 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
-      val updatedLearningPath =
-        updateService.updateLearningPathV2(pathId, extract[UpdatedLearningPathV2](request.body), userInfo)
-      updatedLearningPath match {
-        case None =>
-          halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-        case Some(learningPath) =>
-          logger.info(s"UPDATED LearningPath with ID =  ${learningPath.id}")
-          Ok(body = learningPath)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val pathId = long(this.learningpathId.paramName)
+        val updatedLearningPath =
+          updateService.updateLearningPathV2(pathId, extract[UpdatedLearningPathV2](request.body), userInfo)
+        updatedLearningPath match {
+          case None =>
+            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+          case Some(learningPath) =>
+            logger.info(s"UPDATED LearningPath with ID =  ${learningPath.id}")
+            Ok(body = learningPath)
+        }
       }
     }
 
@@ -546,17 +552,19 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response403, response404, response500, response502)
           authorizations "oauth2")
     ) {
-      val newLearningStep = extract[NewLearningStepV2](request.body)
-      val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
-      val createdLearningStep =
-        updateService.addLearningStepV2(pathId, newLearningStep, userInfo)
-      createdLearningStep match {
-        case None =>
-          halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-        case Some(learningStep) =>
-          logger.info(s"CREATED LearningStep with ID =  ${learningStep.id} for LearningPath with ID = $pathId")
-          halt(status = 201, headers = Map("Location" -> learningStep.metaUrl), body = createdLearningStep)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val newLearningStep = extract[NewLearningStepV2](request.body)
+        val pathId = long(this.learningpathId.paramName)
+        val createdLearningStep =
+          updateService.addLearningStepV2(pathId, newLearningStep, userInfo)
+        createdLearningStep match {
+          case None =>
+            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+          case Some(learningStep) =>
+            logger.info(s"CREATED LearningStep with ID =  ${learningStep.id} for LearningPath with ID = $pathId")
+            halt(status = 201, headers = Map("Location" -> learningStep.metaUrl), body = createdLearningStep)
+        }
       }
     }
 
@@ -575,21 +583,23 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response403, response404, response500, response502)
           authorizations "oauth2")
     ) {
-      val updatedLearningStep = extract[UpdatedLearningStepV2](request.body)
-      val pathId = long(this.learningpathId.paramName)
-      val stepId = long(this.learningstepId.paramName)
       val userInfo = UserInfo(requireUserId)
-      val createdLearningStep =
-        updateService.updateLearningStepV2(pathId, stepId, updatedLearningStep, userInfo)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val updatedLearningStep = extract[UpdatedLearningStepV2](request.body)
+        val pathId = long(this.learningpathId.paramName)
+        val stepId = long(this.learningstepId.paramName)
+        val createdLearningStep =
+          updateService.updateLearningStepV2(pathId, stepId, updatedLearningStep, userInfo)
 
-      createdLearningStep match {
-        case None =>
-          halt(
-            status = 404,
-            body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
-        case Some(learningStep) =>
-          logger.info(s"UPDATED LearningStep with ID = $stepId for LearningPath with ID = $pathId")
-          Ok(body = learningStep)
+        createdLearningStep match {
+          case None =>
+            halt(status = 404,
+                 body =
+                   Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+          case Some(learningStep) =>
+            logger.info(s"UPDATED LearningStep with ID = $stepId for LearningPath with ID = $pathId")
+            Ok(body = learningStep)
+        }
       }
     }
 
@@ -608,17 +618,19 @@ trait LearningpathControllerV2 {
           responseMessages (response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val newSeqNo = extract[LearningStepSeqNo](request.body)
-      val pathId = long(this.learningpathId.paramName)
-      val stepId = long(this.learningstepId.paramName)
       val userInfo = UserInfo(requireUserId)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val newSeqNo = extract[LearningStepSeqNo](request.body)
+        val pathId = long(this.learningpathId.paramName)
+        val stepId = long(this.learningstepId.paramName)
 
-      updateService.updateSeqNo(pathId, stepId, newSeqNo.seqNo, userInfo) match {
-        case Some(seqNo) => seqNo
-        case None =>
-          halt(
-            status = 404,
-            body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId"))
+        updateService.updateSeqNo(pathId, stepId, newSeqNo.seqNo, userInfo) match {
+          case Some(seqNo) => seqNo
+          case None =>
+            halt(status = 404,
+                 body =
+                   Error(Error.NOT_FOUND, s"Learningstep with id $stepId not found for learningpath with id $pathId"))
+        }
       }
     }
 
@@ -637,22 +649,25 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val learningStepStatus = extract[LearningStepStatus](request.body)
-      val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
-      val pathId = long(this.learningpathId.paramName)
-      val stepId = long(this.learningstepId.paramName)
       val userInfo = UserInfo(requireUserId)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val learningStepStatus = extract[LearningStepStatus](request.body)
+        val stepStatus = StepStatus.valueOfOrError(learningStepStatus.status)
+        val pathId = long(this.learningpathId.paramName)
+        val stepId = long(this.learningstepId.paramName)
 
-      val updatedStep = updateService.updateLearningStepStatusV2(pathId, stepId, stepStatus, userInfo)
-      updatedStep match {
-        case None =>
-          halt(
-            status = 404,
-            body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
-        case Some(learningStep) =>
-          logger.info(
-            s"UPDATED LearningStep with id: $stepId for LearningPath with id: $pathId to STATUS = ${learningStep.status}")
-          Ok(body = learningStep)
+        val updatedStep = updateService.updateLearningStepStatusV2(pathId, stepId, stepStatus, userInfo)
+
+        updatedStep match {
+          case None =>
+            halt(status = 404,
+                 body =
+                   Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+          case Some(learningStep) =>
+            logger.info(
+              s"UPDATED LearningStep with id: $stepId for LearningPath with id: $pathId to STATUS = ${learningStep.status}")
+            Ok(body = learningStep)
+        }
       }
     }
 
@@ -670,17 +685,23 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val toUpdate = extract[UpdateLearningPathStatus](request.body)
-      val pathStatus = domain.LearningPathStatus.valueOfOrError(toUpdate.status)
-      val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val toUpdate = extract[UpdateLearningPathStatus](request.body)
+        val pathStatus = domain.LearningPathStatus.valueOfOrError(toUpdate.status)
+        val pathId = long(this.learningpathId.paramName)
 
-      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, toUpdate.message) match {
-        case None =>
-          halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-        case Some(learningPath) =>
-          logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
-          Ok(body = learningPath)
+        updateService.updateLearningPathStatusV2(pathId,
+                                                 pathStatus,
+                                                 userInfo,
+                                                 Language.DefaultLanguage,
+                                                 toUpdate.message) match {
+          case None =>
+            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+          case Some(learningPath) =>
+            logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
+            Ok(body = learningPath)
+        }
       }
     }
 
@@ -717,19 +738,20 @@ trait LearningpathControllerV2 {
           responseMessages (response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val pathId = long(this.learningpathId.paramName)
       val userInfo = UserInfo(requireUserId)
-      val deleted =
-        updateService.updateLearningPathStatusV2(pathId,
-                                                 domain.LearningPathStatus.DELETED,
-                                                 userInfo,
-                                                 Language.DefaultLanguage)
-      deleted match {
-        case None =>
-          halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-        case Some(_) =>
-          logger.info(s"MARKED LearningPath with ID: $pathId as DELETED")
-          halt(status = 204)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val pathId = long(this.learningpathId.paramName)
+        val deleted = updateService.updateLearningPathStatusV2(pathId,
+                                                               domain.LearningPathStatus.DELETED,
+                                                               userInfo,
+                                                               Language.DefaultLanguage)
+        deleted match {
+          case None =>
+            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
+          case Some(_) =>
+            logger.info(s"MARKED LearningPath with ID: $pathId as DELETED")
+            halt(status = 204)
+        }
       }
     }
 
@@ -747,18 +769,20 @@ trait LearningpathControllerV2 {
           responseMessages (response403, response404, response500)
           authorizations "oauth2")
     ) {
-      val pathId = long(this.learningpathId.paramName)
-      val stepId = long(this.learningstepId.paramName)
       val userInfo = UserInfo(requireUserId)
-      val deleted = updateService.updateLearningStepStatusV2(pathId, stepId, StepStatus.DELETED, userInfo)
-      deleted match {
-        case None =>
-          halt(
-            status = 404,
-            body = Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
-        case Some(_) =>
-          logger.info(s"MARKED LearningStep with id: $stepId for LearningPath with id: $pathId as DELETED.")
-          halt(status = 204)
+      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
+        val pathId = long(this.learningpathId.paramName)
+        val stepId = long(this.learningstepId.paramName)
+        val deleted = updateService.updateLearningStepStatusV2(pathId, stepId, StepStatus.DELETED, userInfo)
+        deleted match {
+          case None =>
+            halt(status = 404,
+                 body =
+                   Error(Error.NOT_FOUND, s"Learningstep with id $stepId for learningpath with id $pathId not found"))
+          case Some(_) =>
+            logger.info(s"MARKED LearningStep with id: $stepId for LearningPath with id: $pathId as DELETED.")
+            halt(status = 204)
+        }
       }
     }
 
