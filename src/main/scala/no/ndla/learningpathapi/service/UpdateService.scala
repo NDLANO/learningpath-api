@@ -13,7 +13,7 @@ import java.util.Date
 import no.ndla.learningpathapi.model.api.{config, _}
 import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigValue}
+import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, UserInfo, LearningPath => _, LearningStep => _, _}
 import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 import no.ndla.learningpathapi.service.search.SearchIndexService
@@ -251,8 +251,8 @@ trait UpdateService {
 
     def updateConfig(configKey: ConfigKey.Value,
                      value: UpdateConfigValue,
-                     userInfo: UserInfo): Try[config.ConfigValue] = {
-      val newConfigValue = ConfigValue(configKey, value.value, new Date(), userInfo.userId)
+                     userInfo: UserInfo): Try[config.ConfigMeta] = {
+      val newConfigValue = ConfigMeta(configKey, value.value, new Date(), userInfo.userId)
       configRepository.updateConfigParam(newConfigValue).map(converterService.asApiConfig)
     }
 

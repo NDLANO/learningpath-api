@@ -9,7 +9,7 @@ package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.ValidationError
-import no.ndla.learningpathapi.model.api.config.{ConfigValue, UpdateConfigValue}
+import no.ndla.learningpathapi.model.api.config.{ConfigMeta, UpdateConfigValue}
 import no.ndla.learningpathapi.model.domain.{AccessDeniedException, UserInfo}
 import no.ndla.learningpathapi.model.domain.config.ConfigKey
 import no.ndla.learningpathapi.service.{ReadService, UpdateService}
@@ -72,7 +72,7 @@ trait ConfigController {
     post(
       "/:config_key",
       operation(
-        apiOperation[ConfigValue]("updateConfig")
+        apiOperation[ConfigMeta]("updateConfig")
           summary "Update configuration used by api."
           description "Update configuration used by api."
           parameters (

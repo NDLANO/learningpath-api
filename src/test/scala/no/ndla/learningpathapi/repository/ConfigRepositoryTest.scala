@@ -11,7 +11,7 @@ import java.net.Socket
 import java.util.Date
 
 import no.ndla.learningpathapi.integration.DataSource
-import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigValue}
+import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
 import no.ndla.learningpathapi.{DBMigrator, IntegrationSuite, LearningpathApiProperties, TestEnvironment}
 import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
@@ -36,8 +36,8 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
 
   def emptyTestDatabase: Boolean = {
     DB autoCommit (implicit session => {
-      sql"delete from learningpathapi_test.configtable;".execute.apply()
-      sql"delete from learningpathapi_test.configtable;".execute.apply()
+      sql"delete from learningpathapi_test.configtable;".execute.apply()(session)
+      sql"delete from learningpathapi_test.configtable;".execute.apply()(session)
     })
   }
 
@@ -59,9 +59,9 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
   test("That updating configKey from empty database inserts config") {
     assume(databaseIsAvailable, "Database is unavailable")
 
-    val newConfig = ConfigValue(
+    val newConfig = ConfigMeta(
       key = ConfigKey.IsExamPeriod,
-      value = "true",
+      value = true,
       updatedAt = new Date(0),
       updatedBy = "ndlaUser1"
     )
@@ -75,9 +75,9 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
   test("That updating config works as expected") {
     assume(databaseIsAvailable, "Database is unavailable")
 
-    val originalConfig = ConfigValue(
+    val originalConfig = ConfigMeta(
       key = ConfigKey.IsExamPeriod,
-      value = "true",
+      value = true,
       updatedAt = new Date(0),
       updatedBy = "ndlaUser1"
     )
@@ -86,9 +86,9 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
     repository.configCount should be(1)
     repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(originalConfig))
 
-    val updatedConfig = ConfigValue(
+    val updatedConfig = ConfigMeta(
       key = ConfigKey.IsExamPeriod,
-      value = "false",
+      value = false,
       updatedAt = new Date(10000),
       updatedBy = "ndlaUser2"
     )

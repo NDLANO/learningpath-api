@@ -15,7 +15,7 @@ import org.scalatra.swagger.runtime.annotations.ApiModel
 import scala.annotation.meta.field
 
 @ApiModel(description = "Describes configuration value.")
-case class ConfigValue(
+case class ConfigMeta(
     @(ApiModelProperty @field)(description = "Configuration key") key: String,
     @(ApiModelProperty @field)(description = "Configuration value.") value: Boolean,
     @(ApiModelProperty @field)(description = "Date of when configuration was last updated") updatedAt: Date,

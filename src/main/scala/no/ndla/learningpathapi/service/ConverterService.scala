@@ -21,7 +21,7 @@ import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigValue}
+import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
 import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator}
@@ -592,8 +592,8 @@ trait ConverterService {
       }
     }
 
-    def asApiConfig(configValue: ConfigValue): api.config.ConfigValue = {
-      api.config.ConfigValue(
+    def asApiConfig(configValue: ConfigMeta): api.config.ConfigMeta = {
+      api.config.ConfigMeta(
         configValue.key.toString,
         configValue.value,
         configValue.updatedAt,
