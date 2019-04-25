@@ -41,7 +41,7 @@ trait ConfigRepository {
       }.map(_.int(1)).single.apply.getOrElse(0)
     }
 
-    def updateConfigParam(config: ConfigValue)(implicit session: DBSession = AutoSession): Try[_] = {
+    def updateConfigParam(config: ConfigValue)(implicit session: DBSession = AutoSession): Try[ConfigValue] = {
       val updatedCount = withSQL {
         update(ConfigValue)
           .set(ConfigValue.column.column("value") -> config)

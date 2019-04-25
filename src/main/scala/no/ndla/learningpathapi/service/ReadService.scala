@@ -122,9 +122,6 @@ trait ReadService {
     def isExamPeriod: Boolean =
       configRepository
         .getConfigWithKey(ConfigKey.IsExamPeriod)
-        .flatMap(x => {
-          Try(x.value.toBoolean).toOption
-        })
-        .getOrElse(false)
+        .exists(x => x.value)
   }
 }

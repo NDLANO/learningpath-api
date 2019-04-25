@@ -10,7 +10,6 @@ package no.ndla.learningpathapi.model.domain.config
 import java.util.Date
 
 import no.ndla.learningpathapi.LearningpathApiProperties
-import org.joda.time.DateTime
 import org.json4s.Formats
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
@@ -18,7 +17,7 @@ import scalikejdbc.{WrappedResultSet, _}
 
 case class ConfigValue(
     key: ConfigKey.Value,
-    value: String,
+    value: Boolean,
     updatedAt: Date,
     updatedBy: String
 )

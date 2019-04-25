@@ -20,6 +20,8 @@ import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger.{ParamType, Parameter, ResponseMessage, Swagger, SwaggerSupport}
 import org.scalatra.util.NotNothing
 
+import scala.util.{Failure, Success}
+
 trait ConfigController {
 
   this: ReadService with UpdateService =>
@@ -91,7 +93,10 @@ trait ConfigController {
                 s"No such config key was found. Must be one of '${ConfigKey.values.mkString("', '")}'"))
           case Some(configKey) =>
             val newConfigValue = extract[UpdateConfigValue](request.body)
-            updateService.updateConfig(configKey, newConfigValue, userInfo)
+            updateService.updateConfig(configKey, newConfigValue, userInfo) match {
+              case Success(c)  => c
+              case Failure(ex) => errorHandler(ex)
+            }
         }
       }
     }

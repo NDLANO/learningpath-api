@@ -591,5 +591,14 @@ trait ConverterService {
           embedUrlOrPath.copy(url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
     }
+
+    def asApiConfig(configValue: ConfigValue): api.config.ConfigValue = {
+      api.config.ConfigValue(
+        configValue.key.toString,
+        configValue.value,
+        configValue.updatedAt,
+        configValue.updatedBy
+      )
+    }
   }
 }
