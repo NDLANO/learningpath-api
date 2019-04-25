@@ -116,19 +116,16 @@ trait SearchService extends LazyLogging {
       )
     }
 
-    def allWithPaths(paths: List[String],
-                     sort: Sort.Value,
-                     page: Option[Int],
-                     pageSize: Option[Int]): Try[SearchResult] = {
+    def containsPath(paths: List[String]): Try[SearchResult] = {
       executeSearch(
         boolQuery(),
         List.empty,
         None,
         paths,
-        sort,
-        "all",
-        page,
-        pageSize,
+        Sort.ByTitleAsc,
+        Language.AllLanguages,
+        None,
+        None,
         false
       )
     }

@@ -499,15 +499,15 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("that searching for paths should return only learningpaths with paths in steps") {
-    val Success(search) = searchService.allWithPaths(List("/article/123"), Sort.ByTitleAsc, None, None)
+    val Success(search) = searchService.containsPath(List("/article/123"))
 
     search.totalCount should be(4)
 
-    val Success(search2) = searchService.allWithPaths(List("/article/456"), Sort.ByTitleAsc, None, None)
+    val Success(search2) = searchService.containsPath(List("/article/456"))
 
     search2.totalCount should be(1)
 
-    val Success(search3) = searchService.allWithPaths(List("/article/123", "/article/456"), Sort.ByTitleAsc, None, None)
+    val Success(search3) = searchService.containsPath(List("/article/123", "/article/456"))
 
     search3.totalCount should be(5)
   }

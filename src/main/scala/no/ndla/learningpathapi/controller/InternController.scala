@@ -115,7 +115,7 @@ trait InternController {
     get("/containsArticle") {
       val paths = paramAsListOfString("paths")
 
-      searchService.allWithPaths(paths, Sort.ByTitleAsc, None, None) match {
+      searchService.containsPath(paths) match {
         case Success(result) => result.results
         case Failure(ex)     => errorHandler(ex)
       }
