@@ -12,15 +12,16 @@ import java.nio.file.AccessDeniedException
 
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.model.domain.config.ConfigKey
 import no.ndla.learningpathapi.model.domain.{Author => _, LearningPathStatus => _, LearningPathTags => _, _}
 import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo}
-import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 
 import scala.math.max
 import scala.util.{Failure, Success, Try}
 
 trait ReadService {
-  this: LearningPathRepositoryComponent with ConverterService =>
+  this: LearningPathRepositoryComponent with ConfigRepository with ConverterService =>
   val readService: ReadService
 
   class ReadService {
@@ -117,5 +118,13 @@ trait ReadService {
         }
       } else { Failure(domain.AccessDeniedException("You do not have access to this resource.")) }
     }
+
+    def isExamPeriod: Boolean =
+      configRepository
+        .getConfigWithKey(ConfigKey.IsExamPeriod)
+        .flatMap(x => {
+          Try(x.value.toBoolean).toOption
+        })
+        .getOrElse(false)
   }
 }

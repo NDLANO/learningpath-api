@@ -8,10 +8,14 @@
 
 package no.ndla.learningpathapi.service
 
+import java.util.Date
+
 import no.ndla.learningpathapi.model.api._
+import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigValue}
 import no.ndla.learningpathapi.model.domain.{LearningPathStatus, UserInfo, LearningPath => _, LearningStep => _, _}
-import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
 
@@ -19,6 +23,7 @@ import scala.util.{Failure, Success}
 
 trait UpdateService {
   this: LearningPathRepositoryComponent
+    with ConfigRepository
     with ConverterService
     with SearchIndexService
     with Clock
@@ -242,6 +247,11 @@ trait UpdateService {
               converterService.asApiLearningStepV2(updatedStep, updatedPath, Language.DefaultLanguage, true, owner)
           }
       }
+    }
+
+    def updateConfig(configKey: ConfigKey.Value, value: UpdateConfigValue, userInfo: UserInfo) = {
+      val newConfigValue = ConfigValue(configKey, value.value, new Date(), userInfo.userId)
+      configRepository.updateConfigParam(newConfigValue)
     }
 
     def updateSeqNo(learningPathId: Long,

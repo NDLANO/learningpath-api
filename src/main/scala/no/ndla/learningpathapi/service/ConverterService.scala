@@ -17,9 +17,11 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
   NdlaFrontendHostNames
 }
 import no.ndla.learningpathapi.integration._
+import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigValue}
 import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator}

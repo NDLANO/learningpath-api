@@ -68,7 +68,7 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
 
     repository.updateConfigParam(newConfig)
 
-    repository.configCount should be (1)
+    repository.configCount should be(1)
     repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(newConfig))
   }
 
@@ -83,7 +83,7 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
     )
 
     repository.updateConfigParam(originalConfig)
-    repository.configCount should be (1)
+    repository.configCount should be(1)
     repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(originalConfig))
 
     val updatedConfig = ConfigValue(
@@ -94,7 +94,7 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
     )
 
     repository.updateConfigParam(updatedConfig)
-    repository.configCount should be (1)
+    repository.configCount should be(1)
     repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(updatedConfig))
   }
 }

@@ -10,6 +10,7 @@ import no.ndla.network.AuthUser
 
 case class UserInfo(userId: String, roles: Set[LearningPathRole.Value]) {
   def isAdmin: Boolean = roles.contains(LearningPathRole.ADMIN)
+  def canWriteDuringExams: Boolean = isAdmin || roles.contains(LearningPathRole.WRITE)
 }
 
 object UserInfo {

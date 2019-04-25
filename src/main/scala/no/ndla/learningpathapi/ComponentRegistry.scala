@@ -9,12 +9,22 @@
 package no.ndla.learningpathapi
 
 import com.zaxxer.hikari.HikariDataSource
-import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathControllerV2}
+import no.ndla.learningpathapi.controller.{
+  ConfigController,
+  HealthController,
+  InternController,
+  LearningpathControllerV2
+}
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexService, SearchService}
-import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator, LearningStepValidator, TitleValidator}
+import no.ndla.learningpathapi.validation.{
+  LanguageValidator,
+  LearningPathValidator,
+  LearningStepValidator,
+  TitleValidator
+}
 import no.ndla.network.NdlaClient
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
@@ -22,6 +32,7 @@ object ComponentRegistry
     extends LearningpathControllerV2
     with InternController
     with HealthController
+    with ConfigController
     with LearningPathRepositoryComponent
     with ConfigRepository
     with ReadService
@@ -63,6 +74,7 @@ object ComponentRegistry
   lazy val clock = new SystemClock
   lazy val learningpathControllerV2 = new LearningpathControllerV2
   lazy val internController = new InternController
+  lazy val configController = new ConfigController
   lazy val resourcesApp = new ResourcesApp
   lazy val taxononyApiClient = new TaxonomyApiClient
   lazy val ndlaClient = new NdlaClient
