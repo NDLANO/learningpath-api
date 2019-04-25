@@ -16,7 +16,7 @@ import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.service.{ImportService, ReadService}
-import no.ndla.learningpathapi.service.search.SearchIndexService
+import no.ndla.learningpathapi.service.search.{SearchIndexService, SearchService}
 import no.ndla.network.AuthUser
 import org.json4s.Formats
 import org.json4s.ext.EnumNameSerializer
@@ -25,7 +25,11 @@ import org.scalatra._
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImportService with SearchIndexService with LearningPathRepositoryComponent with ReadService =>
+  this: ImportService
+    with SearchIndexService
+    with SearchService
+    with LearningPathRepositoryComponent
+    with ReadService =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -106,6 +110,15 @@ trait InternController {
       val pageSize = intOrDefault("page-size", 250)
 
       readService.getLearningPathDomainDump(pageNo, pageSize)
+    }
+
+    get("/containsArticle") {
+      val paths = paramAsListOfString("paths")
+
+      searchService.allWithPaths(paths, Sort.ByTitleAsc, None, None) match {
+        case Success(result) => result.results
+        case Failure(ex)     => errorHandler(ex)
+      }
     }
 
   }

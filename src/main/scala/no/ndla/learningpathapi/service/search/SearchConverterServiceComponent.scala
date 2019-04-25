@@ -194,9 +194,12 @@ trait SearchConverterServiceComponent {
     }
 
     def asSearchableLearningStep(learningStep: LearningStep): SearchableLearningStep = {
-      SearchableLearningStep(learningStep.`type`.toString,
-                             asSearchableTitles(learningStep.title),
-                             asSearchableDescriptions(learningStep.description))
+      SearchableLearningStep(
+        learningStep.`type`.toString,
+        learningStep.embedUrl.map(_.url).toList,
+        asSearchableTitles(learningStep.title),
+        asSearchableDescriptions(learningStep.description)
+      )
     }
 
     def asAuthor(author: String): Author = {

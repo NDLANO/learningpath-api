@@ -8,4 +8,7 @@
 
 package no.ndla.learningpathapi.model.search
 
-case class SearchableLearningStep(stepType: String, titles: SearchableTitles, descriptions: SearchableDescriptions)
+case class SearchableLearningStep(stepType: String,
+                                  embedUrl: List[String],
+                                  titles: SearchableTitles,
+                                  descriptions: SearchableDescriptions)

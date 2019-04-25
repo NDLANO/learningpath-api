@@ -37,6 +37,20 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val license = "publicdomain"
   val copyright = Copyright(license, List(paul))
 
+  val DefaultLearningStep = LearningStep(
+    id = None,
+    revision = None,
+    externalId = None,
+    learningPathId = None,
+    seqNo = 0,
+    title = List(),
+    description = List(),
+    embedUrl = List(EmbedUrl("/nb/article/123", "nb", EmbedType.OEmbed)),
+    `type` = StepType.INTRODUCTION,
+    license = None,
+    status = StepStatus.ACTIVE
+  )
+
   val DefaultLearningPath = LearningPath(
     id = None,
     revision = None,
@@ -51,7 +65,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     lastUpdated = clock.now(),
     tags = List(),
     owner = "owner",
-    copyright = copyright
+    copyright = copyright,
+    learningsteps = Seq(DefaultLearningStep)
   )
 
   val PenguinId = 1
@@ -113,7 +128,9 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       description = List(Description("This is a englando learningpath", "en")),
       duration = Some(5),
       lastUpdated = tomorrowp2,
-      tags = List()
+      tags = List(),
+      learningsteps =
+        Seq(DefaultLearningStep.copy(embedUrl = List(EmbedUrl("/nb/article/456", "nb", EmbedType.OEmbed))))
     )
 
     searchIndexService.indexDocument(thePenguin)
@@ -479,6 +496,20 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val Success(search) =
       searchService.matchingQuery(List(), "Batman", None, "all", Sort.ByTitleAsc, None, None, fallback = false)
     search.results.head.supportedLanguages should be(Seq("nb", "en"))
+  }
+
+  test("that searching for paths should return only learningpaths with paths in steps") {
+    val Success(search) = searchService.allWithPaths(List("/article/123"), Sort.ByTitleAsc, None, None)
+
+    search.totalCount should be(4)
+
+    val Success(search2) = searchService.allWithPaths(List("/article/456"), Sort.ByTitleAsc, None, None)
+
+    search2.totalCount should be(1)
+
+    val Success(search3) = searchService.allWithPaths(List("/article/123", "/article/456"), Sort.ByTitleAsc, None, None)
+
+    search3.totalCount should be(5)
   }
 
   test("That searching with fallback still returns searched language if specified") {

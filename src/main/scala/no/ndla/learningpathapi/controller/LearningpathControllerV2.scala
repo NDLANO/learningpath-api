@@ -9,6 +9,10 @@
 package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.learningpathapi.LearningpathApiProperties.{
+  ElasticSearchIndexMaxResultWindow,
+  ElasticSearchScrollKeepAlive
+}
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{
@@ -21,10 +25,6 @@ import no.ndla.learningpathapi.model.domain.{
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchService}
 import no.ndla.learningpathapi.service.{ConverterService, ReadService, UpdateService}
 import no.ndla.learningpathapi.validation.LanguageValidator
-import no.ndla.learningpathapi.LearningpathApiProperties.{
-  ElasticSearchIndexMaxResultWindow,
-  ElasticSearchScrollKeepAlive
-}
 import no.ndla.mapping
 import no.ndla.mapping.LicenseDefinition
 import org.json4s.{DefaultFormats, Formats}
@@ -157,13 +157,13 @@ trait LearningpathControllerV2 {
       val result = query match {
         case Some(q) =>
           searchService.matchingQuery(
-            query = q,
             withIdIn = idList,
+            query = q,
             taggedWith = tag,
             searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
-            pageSize = pageSize,
             page = page,
+            pageSize = pageSize,
             fallback = fallback
           )
         case None =>

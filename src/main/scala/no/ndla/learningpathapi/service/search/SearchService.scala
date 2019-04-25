@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.searches.ScoreMode
-import com.sksamuel.elastic4s.searches.queries.BoolQuery
+import com.sksamuel.elastic4s.searches.queries.{BoolQuery, NestedQuery}
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
@@ -107,11 +107,29 @@ trait SearchService extends LazyLogging {
         fullQuery,
         withIdIn,
         taggedWith,
+        List.empty,
         sort,
         searchLanguage,
         page,
         pageSize,
         fallback
+      )
+    }
+
+    def allWithPaths(paths: List[String],
+                     sort: Sort.Value,
+                     page: Option[Int],
+                     pageSize: Option[Int]): Try[SearchResult] = {
+      executeSearch(
+        boolQuery(),
+        List.empty,
+        None,
+        paths,
+        sort,
+        "all",
+        page,
+        pageSize,
+        false
       )
     }
 
@@ -147,17 +165,18 @@ trait SearchService extends LazyLogging {
             )
         )
 
-      executeSearch(fullQuery, withIdIn, taggedWith, sort, language, page, pageSize, fallback)
+      executeSearch(fullQuery, withIdIn, taggedWith, List.empty, sort, language, page, pageSize, fallback)
     }
 
     private def executeSearch(queryBuilder: BoolQuery,
                               withIdIn: List[Long],
                               taggedWith: Option[String],
+                              withPaths: List[String],
                               sort: Sort.Value,
                               language: String,
                               page: Option[Int],
                               pageSize: Option[Int],
-                              fallback: Boolean): Try[SearchResult] = {
+                              fallback: Boolean) = {
       val tagFilter = taggedWith match {
         case None => None
         case Some(tag) =>
@@ -166,7 +185,7 @@ trait SearchService extends LazyLogging {
               .scoreMode(ScoreMode.None))
       }
       val idFilter = if (withIdIn.isEmpty) None else Some(idsQuery(withIdIn))
-
+      val pathFilter = pathsFilterQuery(withPaths)
       val (languageFilter, searchLanguage) = language match {
         case "" | Language.AllLanguages =>
           (None, "*")
@@ -174,7 +193,7 @@ trait SearchService extends LazyLogging {
           if (fallback) (None, "*") else (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
       }
 
-      val filters = List(tagFilter, idFilter, languageFilter)
+      val filters = List(tagFilter, idFilter, pathFilter, languageFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
@@ -187,6 +206,7 @@ trait SearchService extends LazyLogging {
         val searchToExecute = search(LearningpathApiProperties.SearchIndex)
           .size(numResults)
           .from(startAt)
+          .explain(true)
           .query(filteredSearch)
           .highlighting(highlight("*"))
           .sortBy(getSortDefinition(sort, searchLanguage))
@@ -210,6 +230,15 @@ trait SearchService extends LazyLogging {
             errorHandler(ex)
         }
 
+      }
+    }
+
+    def pathsFilterQuery(paths: List[String]): Option[NestedQuery] = {
+      if (paths.isEmpty) None
+      else {
+        Some(
+          nestedQuery("learningsteps",
+                      boolQuery().should(paths.map(p => wildcardQuery("learningsteps.embedUrl", s"*$p")))))
       }
     }
 
