@@ -34,8 +34,9 @@ trait UpdateService {
 
   class UpdateService {
 
-    def writeOrAccessDenied[T](owner: UserInfo, reason: String = "You do not have write access during exams.")(
-        w: => Try[T]): Try[T] = {
+    private[service] def writeOrAccessDenied[T](
+        owner: UserInfo,
+        reason: String = "You do not have write access during exams.")(w: => Try[T]): Try[T] = {
       if (!readService.canWriteNow(owner)) {
         Failure(AccessDeniedException(reason))
       } else { w }

@@ -27,7 +27,7 @@ import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import scalikejdbc.DBSession
 
-import scala.util.Failure
+import scala.util.{Failure, Success}
 
 class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   var service: UpdateService = _
@@ -1330,5 +1330,14 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     )
 
     verify(learningPathRepository, times(1)).update(eqTo(expectedUpdatedPath))(any[DBSession])
+  }
+
+  test("That writeOrAccessDenied denies writes during exam periods.") {
+    val readMock = mock[ReadService]
+    when(readMock.tags).thenReturn(List.empty)
+    when(readService.canWriteNow(any[UserInfo])).thenReturn(false)
+
+    service.writeOrAccessDenied(UserInfo("SomeDude", roles = Set())) { Success(readMock.tags) }
+    verify(readMock, times(0)).tags
   }
 }
