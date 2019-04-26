@@ -203,7 +203,6 @@ trait SearchService extends LazyLogging {
         val searchToExecute = search(LearningpathApiProperties.SearchIndex)
           .size(numResults)
           .from(startAt)
-          .explain(true)
           .query(filteredSearch)
           .highlighting(highlight("*"))
           .sortBy(getSortDefinition(sort, searchLanguage))
