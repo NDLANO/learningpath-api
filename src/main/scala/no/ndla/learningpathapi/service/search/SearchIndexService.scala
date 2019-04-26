@@ -254,6 +254,7 @@ trait SearchIndexService {
         textField("author"),
         nestedField("learningsteps").fields(
           textField("stepType"),
+          keywordField("embedUrl"),
           languageSupportedField("titles"),
           languageSupportedField("descriptions")
         ),

@@ -133,6 +133,13 @@ abstract class NdlaController
   def booleanOrDefault(paramName: String, default: Boolean)(implicit request: HttpServletRequest): Boolean =
     booleanOrNone(paramName).getOrElse(default)
 
+  def paramAsListOfString(paramName: String)(implicit request: HttpServletRequest): List[String] = {
+    params.get(paramName) match {
+      case None        => List.empty
+      case Some(param) => param.split(",").toList.map(_.trim)
+    }
+  }
+
   def paramAsListOfLong(paramName: String)(implicit request: HttpServletRequest): List[Long] = {
     params.get(paramName) match {
       case None => List()
