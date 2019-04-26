@@ -9,6 +9,7 @@
 package no.ndla.learningpathapi.service
 
 import java.util.Date
+
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
@@ -21,7 +22,7 @@ import org.joda.time.DateTime
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   val clinton = api.Author("author", "Crooked Hillary")
@@ -89,7 +90,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLearningpathV2 converts domain to api LearningPathV2") {
-    val expected = Some(
+    val expected = Success(
       api.LearningPathV2(
         1,
         1,
@@ -120,13 +121,13 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
                                 UserInfo("me", Set.empty)) should equal(expected)
   }
 
-  test("asApiLearningpathV2 returns None if fallback is false and language is not supported") {
+  test("asApiLearningpathV2 returns Failure if fallback is false and language is not supported") {
     service.asApiLearningpathV2(domainLearningPath, "hurr-durr-lang", false, UserInfo("me", Set.empty)) should equal(
-      None)
+      Failure(NotFoundException("Language 'hurr-durr-lang' is not supported for learningpath with id '1'.")))
   }
 
   test("asApiLearningpathV2 converts domain to api LearningPathV2 with fallback if true") {
-    val expected = Some(
+    val expected = Success(
       api.LearningPathV2(
         1,
         1,
@@ -184,7 +185,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asApiLearningStepV2 converts domain learningstep to api LearningStepV2") {
-    val learningstep = Some(
+    val learningstep = Success(
       api.LearningStepV2(
         1,
         1,
@@ -207,17 +208,19 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
                                 UserInfo("me", Set.empty)) should equal(learningstep)
   }
 
-  test("asApiLearningStepV2 return None if fallback is false and language not supported") {
+  test("asApiLearningStepV2 return Failure if fallback is false and language not supported") {
     service.asApiLearningStepV2(domainLearningStep2,
                                 domainLearningPath,
                                 "hurr durr I'm a language",
                                 false,
-                                UserInfo("me", Set.empty)) should equal(None)
+                                UserInfo("me", Set.empty)) should equal(
+      Failure(NotFoundException(
+        "Learningstep with id '1' in learningPath '1' and language hurr durr I'm a language not found.")))
   }
 
   test(
     "asApiLearningStepV2 converts domain learningstep to api LearningStepV2 if fallback is true and language undefined") {
-    val learningstep = Some(
+    val learningstep = Success(
       api.LearningStepV2(
         1,
         1,

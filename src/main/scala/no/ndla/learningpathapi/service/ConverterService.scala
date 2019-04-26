@@ -150,7 +150,9 @@ trait ConverterService {
             message
           ))
       } else
-        Failure(NotFoundException(s"Language '$language' is not supported for learningpath ${lp.id.getOrElse(-1)}."))
+        Failure(
+          NotFoundException(
+            s"Language '$language' is not supported for learningpath with id '${lp.id.getOrElse(-1)}'."))
     }
 
     private def asApiMessage(message: domain.Message): api.Message =
@@ -471,7 +473,10 @@ trait ConverterService {
             ls.status.toString,
             supportedLanguages
           ))
-      } else { Failure(NotFoundException("Learningpath with id $id and language $language not found")) }
+      } else {
+        Failure(NotFoundException(
+          s"Learningstep with id '${ls.id.getOrElse(-1)}' in learningPath '${lp.id.getOrElse(-1)}' and language $language not found."))
+      }
     }
 
     def asApiLearningStepSummaryV2(ls: domain.LearningStep,
