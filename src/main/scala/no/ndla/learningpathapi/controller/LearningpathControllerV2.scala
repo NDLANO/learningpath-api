@@ -32,7 +32,7 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger._
 import org.scalatra.util.NotNothing
-import org.scalatra.{Ok, ScalatraServlet}
+import org.scalatra.{Created, NoContent, Ok, ScalatraServlet}
 
 import scala.util.{Failure, Success, Try}
 
@@ -145,8 +145,6 @@ trait LearningpathControllerV2 {
         case None => orFunction
       }
     }
-
-    private def canWriteNow(userInfo: UserInfo): Boolean = !readService.isExamPeriod || userInfo.canWriteDuringExams
 
     private def search(query: Option[String],
                        searchLanguage: String,
@@ -473,11 +471,11 @@ trait LearningpathControllerV2 {
       val newLearningPath = extract[NewLearningPathV2](request.body)
       val userInfo = UserInfo(requireUserId)
       updateService.addLearningPathV2(newLearningPath, userInfo) match {
-        case None =>
-          halt(status = 404, body = Error(Error.GENERIC, s"The chosen language is not supported"))
-        case Some(learningPath) =>
+        case Failure(ex) =>
+          Failure(ex)
+        case Success(learningPath) =>
           logger.info(s"CREATED LearningPath with ID =  ${learningPath.id}")
-          halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+          Created(headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
       }
     }
 
@@ -496,16 +494,13 @@ trait LearningpathControllerV2 {
           authorizations "oauth2")
     ) {
       val userInfo = UserInfo(requireUserId)
-      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
-        val newLearningPath = extract[NewCopyLearningPathV2](request.body)
-        val pathId = long(this.learningpathId.paramName)
-        updateService.newFromExistingV2(pathId, newLearningPath, userInfo) match {
-          case None =>
-            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-          case Some(learningPath) =>
-            logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
-            halt(status = 201, headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
-        }
+      val newLearningPath = extract[NewCopyLearningPathV2](request.body)
+      val pathId = long(this.learningpathId.paramName)
+      updateService.newFromExistingV2(pathId, newLearningPath, userInfo) match {
+        case Success(learningPath) =>
+          logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
+          Created(headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+        case Failure(ex) => errorHandler(ex)
       }
     }
 
@@ -686,22 +681,15 @@ trait LearningpathControllerV2 {
           authorizations "oauth2")
     ) {
       val userInfo = UserInfo(requireUserId)
-      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
-        val toUpdate = extract[UpdateLearningPathStatus](request.body)
-        val pathStatus = domain.LearningPathStatus.valueOfOrError(toUpdate.status)
-        val pathId = long(this.learningpathId.paramName)
+      val toUpdate = extract[UpdateLearningPathStatus](request.body)
+      val pathStatus = domain.LearningPathStatus.valueOfOrError(toUpdate.status)
+      val pathId = long(this.learningpathId.paramName)
 
-        updateService.updateLearningPathStatusV2(pathId,
-                                                 pathStatus,
-                                                 userInfo,
-                                                 Language.DefaultLanguage,
-                                                 toUpdate.message) match {
-          case None =>
-            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-          case Some(learningPath) =>
-            logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
-            Ok(body = learningPath)
-        }
+      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, toUpdate.message) match {
+        case Failure(ex) => Failure(ex)
+        case Success(learningPath) =>
+          logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
+          Ok(body = learningPath)
       }
     }
 
@@ -739,19 +727,18 @@ trait LearningpathControllerV2 {
           authorizations "oauth2")
     ) {
       val userInfo = UserInfo(requireUserId)
-      doOrAccessDenied(canWriteNow(userInfo), "You do not have write access during exam periods.") {
-        val pathId = long(this.learningpathId.paramName)
-        val deleted = updateService.updateLearningPathStatusV2(pathId,
-                                                               domain.LearningPathStatus.DELETED,
-                                                               userInfo,
-                                                               Language.DefaultLanguage)
-        deleted match {
-          case None =>
-            halt(status = 404, body = Error(Error.NOT_FOUND, s"Learningpath with id $pathId not found"))
-          case Some(_) =>
-            logger.info(s"MARKED LearningPath with ID: $pathId as DELETED")
-            halt(status = 204)
-        }
+      val pathId = long(this.learningpathId.paramName)
+
+      updateService.updateLearningPathStatusV2(
+        pathId,
+        domain.LearningPathStatus.DELETED,
+        userInfo,
+        Language.DefaultLanguage
+      ) match {
+        case Failure(ex) => Failure(ex)
+        case Success(_) =>
+          logger.info(s"MARKED LearningPath with ID: $pathId as DELETED")
+          NoContent()
       }
     }
 
