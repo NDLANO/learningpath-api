@@ -12,6 +12,7 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model._
+import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.api.{
   NewCopyLearningPathV2,
   NewLearningPathV2,
@@ -20,6 +21,7 @@ import no.ndla.learningpathapi.model.api.{
   UpdatedLearningStepV2
 }
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
@@ -1339,5 +1341,22 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     service.writeDuringExamOrAccessDenied(UserInfo("SomeDude", roles = Set())) { Success(readMock.tags) }
     verify(readMock, times(0)).tags
+  }
+
+  test("That updating config returns failure for non-admin users") {
+    when(configRepository.updateConfigParam(any[ConfigMeta])(any[DBSession]))
+      .thenReturn(Success(TestData.testConfigMeta))
+    val Failure(ex) = service.updateConfig(ConfigKey.IsExamPeriod,
+                                           UpdateConfigValue(true),
+                                           UserInfo("Kari", Set(LearningPathRole.PUBLISH)))
+    ex.isInstanceOf[AccessDeniedException] should be(true)
+  }
+
+  test("That updating config returns success if all is good") {
+    when(configRepository.updateConfigParam(any[ConfigMeta])(any[DBSession]))
+      .thenReturn(Success(TestData.testConfigMeta))
+    val Success(config) = service.updateConfig(ConfigKey.IsExamPeriod,
+                                               UpdateConfigValue(true),
+                                               UserInfo("Kari", Set(LearningPathRole.ADMIN)))
   }
 }

@@ -37,19 +37,7 @@ class ConfigControllerTest extends UnitSuite with TestEnvironment with ScalatraF
       .thenReturn(None)
   }
 
-  test("That updating config returns 403 for non-admin users") {
-    post(s"/${ConfigKey.IsExamPeriod}", headers = Map("Authorization" -> s"Bearer $emptyScopeClientToken")) {
-      status should be(403)
-      body.contains("Only administrators can edit configuration.") should be(true)
-    }
-
-    post(s"/${ConfigKey.IsExamPeriod}", headers = Map("Authorization" -> s"Bearer $writeScopeClientToken")) {
-      status should be(403)
-      body.contains("Only administrators can edit configuration.") should be(true)
-    }
-  }
-
-  test("That updating config returns 200 for admin users") {
+  test("That updating config returns 200 if all is good") {
     when(updateService.updateConfig(any[ConfigKey.Value], any[UpdateConfigValue], any[UserInfo]))
       .thenReturn(Success(ConfigMeta(ConfigKey.IsExamPeriod.toString, value = true, new Date(), "someoneCool")))
 
