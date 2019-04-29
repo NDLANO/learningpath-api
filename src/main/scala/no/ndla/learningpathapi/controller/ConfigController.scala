@@ -10,11 +10,11 @@ package no.ndla.learningpathapi.controller
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.api.ValidationError
 import no.ndla.learningpathapi.model.api.config.{ConfigMeta, UpdateConfigValue}
-import no.ndla.learningpathapi.model.domain.{AccessDeniedException, UserInfo}
+import no.ndla.learningpathapi.model.domain.{AccessDeniedException, NotFoundException, UserInfo}
 import no.ndla.learningpathapi.model.domain.config.ConfigKey
 import no.ndla.learningpathapi.service.{ReadService, UpdateService}
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.DataType.ValueDataType
 import org.scalatra.swagger.{ParamType, Parameter, ResponseMessage, Swagger, SwaggerSupport}
@@ -84,20 +84,16 @@ trait ConfigController {
       )
     ) {
       val userInfo = UserInfo(requireUserId)
-      doOrAccessDenied(userInfo.isAdmin, "Only administrators can edit configuration.") {
-        val configKeyString = params("config_key")
-        ConfigKey.valueOf(configKeyString) match {
-          case None =>
-            errorHandler(
-              AccessDeniedException(
-                s"No such config key was found. Must be one of '${ConfigKey.values.mkString("', '")}'"))
-          case Some(configKey) =>
-            val newConfigValue = extract[UpdateConfigValue](request.body)
-            updateService.updateConfig(configKey, newConfigValue, userInfo) match {
-              case Success(c)  => c
-              case Failure(ex) => errorHandler(ex)
-            }
-        }
+      val configKeyString = params("config_key")
+      ConfigKey.valueOf(configKeyString) match {
+        case None =>
+          BadRequest(s"No such config key was found. Must be one of '${ConfigKey.values.mkString("', '")}'")
+        case Some(configKey) =>
+          val newConfigValue = extract[UpdateConfigValue](request.body)
+          updateService.updateConfig(configKey, newConfigValue, userInfo) match {
+            case Success(c)  => c
+            case Failure(ex) => errorHandler(ex)
+          }
       }
     }
 

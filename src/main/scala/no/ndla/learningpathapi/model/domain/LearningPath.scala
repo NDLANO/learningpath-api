@@ -55,9 +55,9 @@ case class LearningPath(id: Option[Long],
   }
 
   def canEditLearningpath(user: UserInfo): Try[LearningPath] = {
-    if (user.userId == owner ||
+    if ((user.userId == owner) ||
         user.isAdmin ||
-        ((user.isWriter || user.isAdmin) && verificationStatus == LearningPathVerificationStatus.CREATED_BY_NDLA)) {
+        (user.isWriter && verificationStatus == LearningPathVerificationStatus.CREATED_BY_NDLA)) {
       Success(this)
     } else {
       Failure(AccessDeniedException("You do not have access to the requested resource."))

@@ -279,8 +279,11 @@ trait UpdateService {
     def updateConfig(configKey: ConfigKey.Value,
                      value: UpdateConfigValue,
                      userInfo: UserInfo): Try[config.ConfigMeta] = {
-      val newConfigValue = ConfigMeta(configKey, value.value, new Date(), userInfo.userId)
-      configRepository.updateConfigParam(newConfigValue).map(converterService.asApiConfig)
+
+      writeOrAccessDenied(userInfo.isAdmin, "Only administrators can edit configuration.") {
+        val newConfigValue = ConfigMeta(configKey, value.value, new Date(), userInfo.userId)
+        configRepository.updateConfigParam(newConfigValue).map(converterService.asApiConfig)
+      }
     }
 
     def updateSeqNo(learningPathId: Long, learningStepId: Long, seqNo: Int, owner: UserInfo): Try[LearningStepSeqNo] =
