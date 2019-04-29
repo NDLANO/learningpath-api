@@ -1337,7 +1337,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(readMock.tags).thenReturn(List.empty)
     when(readService.canWriteNow(any[UserInfo])).thenReturn(false)
 
-    service.writeOrAccessDenied(UserInfo("SomeDude", roles = Set())) { Success(readMock.tags) }
+    service.writeDuringExamOrAccessDenied(UserInfo("SomeDude", roles = Set())) { Success(readMock.tags) }
     verify(readMock, times(0)).tags
   }
 }

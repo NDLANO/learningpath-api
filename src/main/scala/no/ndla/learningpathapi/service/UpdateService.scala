@@ -34,16 +34,17 @@ trait UpdateService {
 
   class UpdateService {
 
+    private[service] def writeDuringExamOrAccessDenied[T](owner: UserInfo)(w: => Try[T]): Try[T] =
+      writeOrAccessDenied(readService.canWriteNow(owner), "You do not have write access during exams.")(w)
+
     private[service] def writeOrAccessDenied[T](
-        owner: UserInfo,
-        reason: String = "You do not have write access during exams.")(w: => Try[T]): Try[T] = {
-      if (!readService.canWriteNow(owner)) {
-        Failure(AccessDeniedException(reason))
-      } else { w }
-    }
+        willExecute: Boolean,
+        reason: String = "You do not have permission to perform this action.")(w: => Try[T]): Try[T] =
+      if (willExecute) w
+      else Failure(AccessDeniedException(reason))
 
     def newFromExistingV2(id: Long, newLearningPath: NewCopyLearningPathV2, owner: UserInfo): Try[LearningPathV2] =
-      writeOrAccessDenied(owner) {
+      writeDuringExamOrAccessDenied(owner) {
         learningPathRepository.withId(id).map(_.isOwnerOrPublic(owner)) match {
           case None              => Failure(NotFoundException("Could not find learningpath to copy."))
           case Some(Failure(ex)) => Failure(ex)
@@ -58,7 +59,7 @@ trait UpdateService {
       }
 
     def addLearningPathV2(newLearningPath: NewLearningPathV2, owner: UserInfo): Try[LearningPathV2] =
-      writeOrAccessDenied(owner) {
+      writeDuringExamOrAccessDenied(owner) {
         val learningPath = converterService.newLearningPath(newLearningPath, owner)
         learningPathValidator.validate(learningPath)
 
@@ -70,7 +71,7 @@ trait UpdateService {
 
     def updateLearningPathV2(id: Long,
                              learningPathToUpdate: UpdatedLearningPathV2,
-                             owner: UserInfo): Try[LearningPathV2] = writeOrAccessDenied(owner) {
+                             owner: UserInfo): Try[LearningPathV2] = writeDuringExamOrAccessDenied(owner) {
       // Should not be able to submit with an illegal language
       learningPathValidator.validate(learningPathToUpdate)
 
@@ -102,34 +103,34 @@ trait UpdateService {
                                    status: LearningPathStatus.Value,
                                    owner: UserInfo,
                                    language: String,
-                                   message: Option[String] = None): Try[LearningPathV2] = writeOrAccessDenied(owner) {
-      withId(learningPathId, includeDeleted = true).flatMap(_.canSetStatus(status, owner)) match {
-        case Failure(ex) => Failure(ex)
-        case Success(existing) =>
-          if (status == domain.LearningPathStatus.PUBLISHED) {
-            existing.validateForPublishing()
-          }
+                                   message: Option[String] = None): Try[LearningPathV2] =
+      writeDuringExamOrAccessDenied(owner) {
+        withId(learningPathId, includeDeleted = true).flatMap(_.canSetStatus(status, owner)) match {
+          case Failure(ex) => Failure(ex)
+          case Success(existing) =>
+            val validatedLearningPath =
+              if (status == domain.LearningPathStatus.PUBLISHED) existing.validateForPublishing() else Success(existing)
 
-          val newMessage = message match {
-            case Some(msg) if owner.isAdmin =>
-              Some(domain.Message(msg, owner.userId, clock.now()))
-            case _ => existing.message
-          }
+            validatedLearningPath.flatMap(valid => {
+              val newMessage = message match {
+                case Some(msg) if owner.isAdmin => Some(domain.Message(msg, owner.userId, clock.now()))
+                case _                          => valid.message
+              }
 
-          val updatedLearningPath =
-            learningPathRepository.update(
-              existing.copy(message = newMessage, status = status, lastUpdated = clock.now()))
+              val updatedLearningPath = learningPathRepository.update(
+                valid.copy(message = newMessage, status = status, lastUpdated = clock.now()))
 
-          if (updatedLearningPath.isPublished) {
-            searchIndexService.indexDocument(updatedLearningPath)
-          } else {
-            deleteIsBasedOnReference(updatedLearningPath)
-            searchIndexService.deleteDocument(updatedLearningPath)
-          }
+              if (updatedLearningPath.isPublished) {
+                searchIndexService.indexDocument(updatedLearningPath)
+              } else {
+                deleteIsBasedOnReference(updatedLearningPath)
+                searchIndexService.deleteDocument(updatedLearningPath)
+              }
 
-          converterService.asApiLearningpathV2(updatedLearningPath, language, fallback = true, owner)
+              converterService.asApiLearningpathV2(updatedLearningPath, language, fallback = true, owner)
+            })
+        }
       }
-    }
 
     private[service] def deleteIsBasedOnReference(updatedLearningPath: domain.LearningPath): Unit = {
       learningPathRepository
@@ -146,7 +147,7 @@ trait UpdateService {
 
     def addLearningStepV2(learningPathId: Long,
                           newLearningStep: NewLearningStepV2,
-                          owner: UserInfo): Try[LearningStepV2] = writeOrAccessDenied(owner) {
+                          owner: UserInfo): Try[LearningStepV2] = writeDuringExamOrAccessDenied(owner) {
       optimisticLockRetries(10) {
         withId(learningPathId).flatMap(_.canEditLearningpath(owner)) match {
           case Failure(ex) => Failure(ex)
@@ -180,7 +181,7 @@ trait UpdateService {
     def updateLearningStepV2(learningPathId: Long,
                              learningStepId: Long,
                              learningStepToUpdate: UpdatedLearningStepV2,
-                             owner: UserInfo): Try[LearningStepV2] = writeOrAccessDenied(owner) {
+                             owner: UserInfo): Try[LearningStepV2] = writeDuringExamOrAccessDenied(owner) {
       withId(learningPathId).flatMap(_.canEditLearningpath(owner)) match {
         case Failure(ex) => Failure(ex)
         case Success(learningPath) =>
@@ -220,7 +221,7 @@ trait UpdateService {
     def updateLearningStepStatusV2(learningPathId: Long,
                                    learningStepId: Long,
                                    newStatus: StepStatus.Value,
-                                   owner: UserInfo): Try[LearningStepV2] = writeOrAccessDenied(owner) {
+                                   owner: UserInfo): Try[LearningStepV2] = writeDuringExamOrAccessDenied(owner) {
       withId(learningPathId).flatMap(_.canEditLearningpath(owner)) match {
         case Failure(ex) => Failure(ex)
         case Success(learningPath) =>
@@ -283,7 +284,7 @@ trait UpdateService {
     }
 
     def updateSeqNo(learningPathId: Long, learningStepId: Long, seqNo: Int, owner: UserInfo): Try[LearningStepSeqNo] =
-      writeOrAccessDenied(owner) {
+      writeDuringExamOrAccessDenied(owner) {
         optimisticLockRetries(10) {
           withId(learningPathId).flatMap(_.canEditLearningpath(owner)) match {
             case Failure(ex) => Failure(ex)

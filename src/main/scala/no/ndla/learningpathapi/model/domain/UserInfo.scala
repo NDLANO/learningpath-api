@@ -13,6 +13,8 @@ case class UserInfo(userId: String, roles: Set[LearningPathRole.Value]) {
   def isPublisher: Boolean = roles.contains(LearningPathRole.PUBLISH)
   def isWriter: Boolean = roles.contains(LearningPathRole.WRITE)
   def canWriteDuringExams: Boolean = isAdmin || isPublisher || isWriter
+  def canPublish: Boolean = isAdmin || isPublisher
+  def isNdla: Boolean = roles.nonEmpty
 }
 
 object UserInfo {

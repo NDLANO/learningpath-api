@@ -8,7 +8,6 @@
 
 package no.ndla.learningpathapi.service
 
-import io.lemonlabs.uri.{QueryString, UrlPath}
 import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.LearningpathApiProperties.{
   Domain,
@@ -17,11 +16,10 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
   NdlaFrontendHostNames
 }
 import no.ndla.learningpathapi.integration._
-import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
+import no.ndla.learningpathapi.model.domain.config.ConfigMeta
 import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator}
@@ -306,6 +304,11 @@ trait ConverterService {
       )
     }
 
+    private def getVerificationStatus(user: UserInfo): LearningPathVerificationStatus.Value =
+      if (user.isNdla)
+        LearningPathVerificationStatus.CREATED_BY_NDLA
+      else LearningPathVerificationStatus.EXTERNAL
+
     def newFromExistingLearningPath(existing: LearningPath,
                                     newLearningPath: NewCopyLearningPathV2,
                                     user: UserInfo): LearningPath = {
@@ -344,7 +347,7 @@ trait ConverterService {
         title = title,
         description = description,
         status = LearningPathStatus.PRIVATE,
-        verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+        verificationStatus = getVerificationStatus(user),
         lastUpdated = clock.now(),
         owner = user.userId,
         copyright = copyright,
@@ -372,7 +375,7 @@ trait ConverterService {
         newLearningPath.coverPhotoMetaUrl.flatMap(converterService.extractImageId),
         newLearningPath.duration,
         domain.LearningPathStatus.PRIVATE,
-        LearningPathVerificationStatus.EXTERNAL,
+        getVerificationStatus(user),
         clock.now(),
         domainTags,
         user.userId,

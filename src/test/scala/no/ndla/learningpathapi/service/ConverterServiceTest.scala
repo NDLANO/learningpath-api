@@ -13,7 +13,7 @@ import java.util.Date
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
-import no.ndla.learningpathapi.model.api.CoverPhoto
+import no.ndla.learningpathapi.model.api.{CoverPhoto, NewCopyLearningPathV2, NewLearningPathV2}
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.mapping.License.CC_BY
@@ -436,4 +436,25 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     admin.get.ownerId.get should be(domainLearningPath.owner)
   }
 
+  test("New learningPaths get correct verification") {
+    val apiRubio = api.Author("author", "Little Marco")
+    val apiLicense = api.License("publicdomain", Some("Public Domain"), Some("https://creativecommons.org/about/pdm"))
+    val apiCopyright = api.Copyright(apiLicense, List(apiRubio))
+
+    val newCopyLp = NewCopyLearningPathV2("Tittel", Some("Beskrivelse"), "nb", None, Some(1), None, None)
+    val newLp = NewLearningPathV2("Tittel", "Beskrivelse", None, Some(1), List(), "nb", apiCopyright)
+
+    service
+      .newFromExistingLearningPath(domainLearningPath, newCopyLp, UserInfo("Me", Set.empty))
+      .verificationStatus should be(LearningPathVerificationStatus.EXTERNAL)
+    service.newLearningPath(newLp, UserInfo("Me", Set.empty)).verificationStatus should be(
+      LearningPathVerificationStatus.EXTERNAL)
+    service
+      .newFromExistingLearningPath(domainLearningPath, newCopyLp, UserInfo("Me", Set(LearningPathRole.ADMIN)))
+      .verificationStatus should be(LearningPathVerificationStatus.CREATED_BY_NDLA)
+    service.newLearningPath(newLp, UserInfo("Me", Set(LearningPathRole.PUBLISH))).verificationStatus should be(
+      LearningPathVerificationStatus.CREATED_BY_NDLA)
+    service.newLearningPath(newLp, UserInfo("Me", Set(LearningPathRole.WRITE))).verificationStatus should be(
+      LearningPathVerificationStatus.CREATED_BY_NDLA)
+  }
 }

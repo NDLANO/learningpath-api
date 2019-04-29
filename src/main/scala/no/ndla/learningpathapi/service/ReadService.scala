@@ -130,6 +130,6 @@ trait ReadService {
         .getConfigWithKey(ConfigKey.IsExamPeriod)
         .exists(x => x.value)
 
-    def canWriteNow(userInfo: UserInfo): Boolean = !readService.isExamPeriod || userInfo.canWriteDuringExams
+    def canWriteNow(userInfo: UserInfo): Boolean = userInfo.canWriteDuringExams || !readService.isExamPeriod
   }
 }
