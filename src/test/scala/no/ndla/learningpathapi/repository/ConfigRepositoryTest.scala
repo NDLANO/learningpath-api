@@ -14,9 +14,7 @@ import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
 import no.ndla.learningpathapi.{DBMigrator, IntegrationSuite, LearningpathApiProperties, TestEnvironment}
 import no.ndla.tag.IntegrationTest
-import org.joda.time.DateTime
-import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool}
-import scalikejdbc._
+import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
 
 import scala.util.{Success, Try}
 
@@ -60,8 +58,8 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
     assume(databaseIsAvailable, "Database is unavailable")
 
     val newConfig = ConfigMeta(
-      key = ConfigKey.IsExamPeriod,
-      value = true,
+      key = ConfigKey.IsWriteRestricted,
+      value = "true",
       updatedAt = new Date(0),
       updatedBy = "ndlaUser1"
     )
@@ -69,32 +67,32 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
     repository.updateConfigParam(newConfig)
 
     repository.configCount should be(1)
-    repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(newConfig))
+    repository.getConfigWithKey(ConfigKey.IsWriteRestricted) should be(Some(newConfig))
   }
 
   test("That updating config works as expected") {
     assume(databaseIsAvailable, "Database is unavailable")
 
     val originalConfig = ConfigMeta(
-      key = ConfigKey.IsExamPeriod,
-      value = true,
+      key = ConfigKey.IsWriteRestricted,
+      value = "true",
       updatedAt = new Date(0),
       updatedBy = "ndlaUser1"
     )
 
     repository.updateConfigParam(originalConfig)
     repository.configCount should be(1)
-    repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(originalConfig))
+    repository.getConfigWithKey(ConfigKey.IsWriteRestricted) should be(Some(originalConfig))
 
     val updatedConfig = ConfigMeta(
-      key = ConfigKey.IsExamPeriod,
-      value = false,
+      key = ConfigKey.IsWriteRestricted,
+      value = "false",
       updatedAt = new Date(10000),
       updatedBy = "ndlaUser2"
     )
 
     repository.updateConfigParam(updatedConfig)
     repository.configCount should be(1)
-    repository.getConfigWithKey(ConfigKey.IsExamPeriod) should be(Some(updatedConfig))
+    repository.getConfigWithKey(ConfigKey.IsWriteRestricted) should be(Some(updatedConfig))
   }
 }

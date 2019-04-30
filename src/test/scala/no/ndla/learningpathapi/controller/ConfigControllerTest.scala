@@ -39,16 +39,16 @@ class ConfigControllerTest extends UnitSuite with TestEnvironment with ScalatraF
 
   test("That updating config returns 200 if all is good") {
     when(updateService.updateConfig(any[ConfigKey.Value], any[UpdateConfigValue], any[UserInfo]))
-      .thenReturn(Success(ConfigMeta(ConfigKey.IsExamPeriod.toString, value = true, new Date(), "someoneCool")))
+      .thenReturn(Success(ConfigMeta(ConfigKey.IsWriteRestricted.toString, "true", new Date(), "someoneCool")))
 
-    post(s"/${ConfigKey.IsExamPeriod}",
-         body = "{\"value\": true}",
+    post(s"/${ConfigKey.IsWriteRestricted}",
+         body = "{\"value\": \"true\"}",
          headers = Map("Authorization" -> s"Bearer $adminScopeClientToken")) {
       status should be(200)
     }
 
-    post(s"/${ConfigKey.IsExamPeriod}",
-         body = "{\"value\": true}",
+    post(s"/${ConfigKey.IsWriteRestricted}",
+         body = "{\"value\": \"true\"}",
          headers = Map("Authorization" -> s"Bearer $adminAndWriteScopeClientToken")) {
       status should be(200)
     }

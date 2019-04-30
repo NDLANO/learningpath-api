@@ -125,11 +125,14 @@ trait ReadService {
       } else { Failure(AccessDeniedException("You do not have access to this resource.")) }
     }
 
-    def isExamPeriod: Boolean =
-      configRepository
-        .getConfigWithKey(ConfigKey.IsExamPeriod)
-        .exists(x => x.value)
+    def isWriteRestricted: Boolean =
+      Try(
+        configRepository
+          .getConfigWithKey(ConfigKey.IsWriteRestricted)
+          .map(_.value.toBoolean)
+      ).toOption.flatten.getOrElse(false)
 
-    def canWriteNow(userInfo: UserInfo): Boolean = userInfo.canWriteDuringExams || !readService.isExamPeriod
+    def canWriteNow(userInfo: UserInfo): Boolean =
+      userInfo.canWriteDuringWriteRestriction || !readService.isWriteRestricted
   }
 }

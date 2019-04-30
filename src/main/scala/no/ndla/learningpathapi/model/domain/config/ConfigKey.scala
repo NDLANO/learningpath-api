@@ -8,6 +8,6 @@
 package no.ndla.learningpathapi.model.domain.config
 
 object ConfigKey extends Enumeration {
-  val IsExamPeriod: ConfigKey.Value = Value("IS_EXAM_PERIOD")
+  val IsWriteRestricted: ConfigKey.Value = Value("IS_WRITE_RESTRICTED")
   def valueOf(s: String): Option[ConfigKey.Value] = ConfigKey.values.find(_.toString == s)
 }

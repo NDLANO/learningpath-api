@@ -13,5 +13,5 @@ import scala.annotation.meta.field
 
 @ApiModel(description = "Info for updating a configuration parameter")
 case class UpdateConfigValue(
-    @(ApiModelProperty @field)(description = "Value to set configuration param to.") value: Boolean
+    @(ApiModelProperty @field)(description = "Value to set configuration param to.") value: String
 )

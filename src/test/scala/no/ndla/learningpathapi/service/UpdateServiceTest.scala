@@ -22,8 +22,6 @@ import no.ndla.learningpathapi.model.api.{
 }
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
-import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
@@ -1334,20 +1332,20 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(learningPathRepository, times(1)).update(eqTo(expectedUpdatedPath))(any[DBSession])
   }
 
-  test("That writeOrAccessDenied denies writes during exam periods.") {
+  test("That writeOrAccessDenied denies writes while write restriction is enabled.") {
     val readMock = mock[ReadService]
     when(readMock.tags).thenReturn(List.empty)
     when(readService.canWriteNow(any[UserInfo])).thenReturn(false)
 
-    service.writeDuringExamOrAccessDenied(UserInfo("SomeDude", roles = Set())) { Success(readMock.tags) }
+    service.writeDuringWriteRestrictionOrAccessDenied(UserInfo("SomeDude", roles = Set())) { Success(readMock.tags) }
     verify(readMock, times(0)).tags
   }
 
   test("That updating config returns failure for non-admin users") {
     when(configRepository.updateConfigParam(any[ConfigMeta])(any[DBSession]))
       .thenReturn(Success(TestData.testConfigMeta))
-    val Failure(ex) = service.updateConfig(ConfigKey.IsExamPeriod,
-                                           UpdateConfigValue(true),
+    val Failure(ex) = service.updateConfig(ConfigKey.IsWriteRestricted,
+                                           UpdateConfigValue("true"),
                                            UserInfo("Kari", Set(LearningPathRole.PUBLISH)))
     ex.isInstanceOf[AccessDeniedException] should be(true)
   }
@@ -1355,8 +1353,27 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That updating config returns success if all is good") {
     when(configRepository.updateConfigParam(any[ConfigMeta])(any[DBSession]))
       .thenReturn(Success(TestData.testConfigMeta))
-    val Success(config) = service.updateConfig(ConfigKey.IsExamPeriod,
-                                               UpdateConfigValue(true),
+    val Success(config) = service.updateConfig(ConfigKey.IsWriteRestricted,
+                                               UpdateConfigValue("true"),
                                                UserInfo("Kari", Set(LearningPathRole.ADMIN)))
+  }
+
+  test("That validation fails if IsWriteRestricted is not a boolean") {
+    when(configRepository.updateConfigParam(any[ConfigMeta])(any[DBSession]))
+      .thenReturn(Success(TestData.testConfigMeta))
+    val Failure(ex) = service.updateConfig(ConfigKey.IsWriteRestricted,
+                                           UpdateConfigValue("123"),
+                                           UserInfo("Kari", Set(LearningPathRole.ADMIN)))
+
+    ex.isInstanceOf[ValidationException] should be(true)
+  }
+
+  test("That validation succeeds if IsWriteRestricted is a boolean") {
+    when(configRepository.updateConfigParam(any[ConfigMeta])(any[DBSession]))
+      .thenReturn(Success(TestData.testConfigMeta))
+    val res = service.updateConfig(ConfigKey.IsWriteRestricted,
+                                   UpdateConfigValue("true"),
+                                   UserInfo("Kari", Set(LearningPathRole.ADMIN)))
+    res.isSuccess should be(true)
   }
 }

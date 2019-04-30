@@ -17,7 +17,7 @@ import scala.annotation.meta.field
 @ApiModel(description = "Describes configuration value.")
 case class ConfigMeta(
     @(ApiModelProperty @field)(description = "Configuration key") key: String,
-    @(ApiModelProperty @field)(description = "Configuration value.") value: Boolean,
+    @(ApiModelProperty @field)(description = "Configuration value.") value: String,
     @(ApiModelProperty @field)(description = "Date of when configuration was last updated") updatedAt: Date,
     @(ApiModelProperty @field)(description = "UserId of who last updated the configuration parameter.") updatedBy: String
 )
