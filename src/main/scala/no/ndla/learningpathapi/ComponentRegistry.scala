@@ -8,9 +8,15 @@
 
 package no.ndla.learningpathapi
 
-import no.ndla.learningpathapi.controller.{HealthController, InternController, LearningpathControllerV2}
+import com.zaxxer.hikari.HikariDataSource
+import no.ndla.learningpathapi.controller.{
+  ConfigController,
+  HealthController,
+  InternController,
+  LearningpathControllerV2
+}
 import no.ndla.learningpathapi.integration._
-import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 import no.ndla.learningpathapi.service._
 import no.ndla.learningpathapi.service.search.{SearchConverterServiceComponent, SearchIndexService, SearchService}
 import no.ndla.learningpathapi.validation.{
@@ -20,14 +26,15 @@ import no.ndla.learningpathapi.validation.{
   TitleValidator
 }
 import no.ndla.network.NdlaClient
-import org.postgresql.ds.PGPoolingDataSource
 import scalikejdbc.{ConnectionPool, DataSourceConnectionPool}
 
 object ComponentRegistry
     extends LearningpathControllerV2
     with InternController
     with HealthController
+    with ConfigController
     with LearningPathRepositoryComponent
+    with ConfigRepository
     with ReadService
     with UpdateService
     with SearchConverterServiceComponent
@@ -51,12 +58,13 @@ object ComponentRegistry
     with SearchApiClient {
 
   def connectToDatabase(): Unit = ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
-  lazy val dataSource = DataSource.getHikariDataSource
+  lazy val dataSource: HikariDataSource = DataSource.getHikariDataSource
   connectToDatabase()
 
-  implicit val swagger = new LearningpathSwagger
+  implicit val swagger: LearningpathSwagger = new LearningpathSwagger
 
   lazy val learningPathRepository = new LearningPathRepository
+  lazy val configRepository = new ConfigRepository
   lazy val readService = new ReadService
   lazy val updateService = new UpdateService
   lazy val searchConverterService = new SearchConverterService
@@ -66,6 +74,7 @@ object ComponentRegistry
   lazy val clock = new SystemClock
   lazy val learningpathControllerV2 = new LearningpathControllerV2
   lazy val internController = new InternController
+  lazy val configController = new ConfigController
   lazy val resourcesApp = new ResourcesApp
   lazy val taxononyApiClient = new TaxonomyApiClient
   lazy val ndlaClient = new NdlaClient
@@ -79,6 +88,6 @@ object ComponentRegistry
   lazy val titleValidator = new TitleValidator
   lazy val learningPathValidator = new LearningPathValidator
   lazy val learningStepValidator = new LearningStepValidator
-  lazy val e4sClient = Elastic4sClientFactory.getClient()
+  lazy val e4sClient: NdlaE4sClient = Elastic4sClientFactory.getClient()
   lazy val searchApiClient = new SearchApiClient
 }

@@ -8,7 +8,6 @@
 
 package no.ndla.learningpathapi.service
 
-import io.lemonlabs.uri.{QueryString, UrlPath}
 import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.LearningpathApiProperties.{
   Domain,
@@ -20,13 +19,14 @@ import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.config.ConfigMeta
 import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
 import no.ndla.learningpathapi.validation.{LanguageValidator, LearningPathValidator}
 import no.ndla.mapping.License.getLicense
 import no.ndla.network.ApplicationUrl
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 trait ConverterService {
   this: ImageApiClientComponent
@@ -101,7 +101,7 @@ trait ConverterService {
     def asApiLearningpathV2(lp: domain.LearningPath,
                             language: String,
                             fallback: Boolean,
-                            userInfo: UserInfo): Option[api.LearningPathV2] = {
+                            userInfo: UserInfo): Try[api.LearningPathV2] = {
       val supportedLanguages = findSupportedLanguages(lp)
       if (languageIsSupported(supportedLanguages, language) || fallback) {
 
@@ -125,7 +125,7 @@ trait ConverterService {
 
         val message = lp.message.filter(_ => lp.canEdit(userInfo)).map(asApiMessage)
         val owner = Some(lp.owner).filter(_ => userInfo.isAdmin)
-        Some(
+        Success(
           api.LearningPathV2(
             lp.id.get,
             lp.revision.get,
@@ -148,7 +148,9 @@ trait ConverterService {
             message
           ))
       } else
-        None
+        Failure(
+          NotFoundException(
+            s"Language '$language' is not supported for learningpath with id '${lp.id.getOrElse(-1)}'."))
     }
 
     private def asApiMessage(message: domain.Message): api.Message =
@@ -302,6 +304,11 @@ trait ConverterService {
       )
     }
 
+    private def getVerificationStatus(user: UserInfo): LearningPathVerificationStatus.Value =
+      if (user.isNdla)
+        LearningPathVerificationStatus.CREATED_BY_NDLA
+      else LearningPathVerificationStatus.EXTERNAL
+
     def newFromExistingLearningPath(existing: LearningPath,
                                     newLearningPath: NewCopyLearningPathV2,
                                     user: UserInfo): LearningPath = {
@@ -340,7 +347,7 @@ trait ConverterService {
         title = title,
         description = description,
         status = LearningPathStatus.PRIVATE,
-        verificationStatus = LearningPathVerificationStatus.EXTERNAL,
+        verificationStatus = getVerificationStatus(user),
         lastUpdated = clock.now(),
         owner = user.userId,
         copyright = copyright,
@@ -368,7 +375,7 @@ trait ConverterService {
         newLearningPath.coverPhotoMetaUrl.flatMap(converterService.extractImageId),
         newLearningPath.duration,
         domain.LearningPathStatus.PRIVATE,
-        LearningPathVerificationStatus.EXTERNAL,
+        getVerificationStatus(user),
         clock.now(),
         domainTags,
         user.userId,
@@ -439,7 +446,7 @@ trait ConverterService {
                             lp: domain.LearningPath,
                             language: String,
                             fallback: Boolean,
-                            user: UserInfo): Option[api.LearningStepV2] = {
+                            user: UserInfo): Try[api.LearningStepV2] = {
       val supportedLanguages = findSupportedLanguages(ls)
 
       if (languageIsSupported(supportedLanguages, language) || fallback) {
@@ -453,7 +460,7 @@ trait ConverterService {
           .map(asApiEmbedUrlV2)
           .map(createEmbedUrl)
 
-        Some(
+        Success(
           api.LearningStepV2(
             ls.id.get,
             ls.revision.get,
@@ -469,8 +476,10 @@ trait ConverterService {
             ls.status.toString,
             supportedLanguages
           ))
-      } else
-        None
+      } else {
+        Failure(NotFoundException(
+          s"Learningstep with id '${ls.id.getOrElse(-1)}' in learningPath '${lp.id.getOrElse(-1)}' and language $language not found."))
+      }
     }
 
     def asApiLearningStepSummaryV2(ls: domain.LearningStep,
@@ -490,7 +499,7 @@ trait ConverterService {
     def asLearningStepContainerSummary(status: StepStatus.Value,
                                        learningPath: domain.LearningPath,
                                        language: String,
-                                       fallback: Boolean): Option[api.LearningStepContainerSummary] = {
+                                       fallback: Boolean): Try[api.LearningStepContainerSummary] = {
       val learningSteps = learningPathRepository
         .learningStepsFor(learningPath.id.get)
         .filter(_.status == status)
@@ -503,7 +512,7 @@ trait ConverterService {
             getSearchLanguage(language, supportedLanguages)
           else language
 
-        Some(
+        Success(
           api.LearningStepContainerSummary(
             searchLanguage,
             learningSteps
@@ -514,7 +523,8 @@ trait ConverterService {
             supportedLanguages
           ))
       } else
-        None
+        Failure(
+          NotFoundException(s"Learningpath with id ${learningPath.id.getOrElse(-1)} and language $language not found"))
     }
 
     def asApiLearningPathTagsSummary(allTags: List[api.LearningPathTags],
@@ -588,6 +598,15 @@ trait ConverterService {
         case None =>
           embedUrlOrPath.copy(url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
+    }
+
+    def asApiConfig(configValue: ConfigMeta): api.config.ConfigMeta = {
+      api.config.ConfigMeta(
+        configValue.key.toString,
+        configValue.value,
+        configValue.updatedAt,
+        configValue.updatedBy
+      )
     }
   }
 }

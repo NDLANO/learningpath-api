@@ -11,11 +11,13 @@ package no.ndla.learningpathapi.service
 import java.util.Date
 
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.model.api.{License}
+import no.ndla.learningpathapi.model.api.License
 import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
 import no.ndla.learningpathapi.model._
 import org.mockito.Mockito._
 import org.mockito.Matchers._
+
+import scala.util.Failure
 
 class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
 
@@ -110,16 +112,15 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That withIdV2 returns None when id does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(None) {
-      service.withIdV2(PUBLISHED_ID, "nb", false)
-    }
+    val Failure(ex) = service.withIdV2(PUBLISHED_ID, "nb", false)
+    ex.isInstanceOf[NotFoundException]
   }
 
   test("That withIdV2 returns a learningPath when the status is PUBLISHED") {
     when(learningPathRepository.withId(PUBLISHED_ID))
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
     val learningPath = service.withIdV2(PUBLISHED_ID, "nb", false)
-    assert(learningPath.isDefined)
+    assert(learningPath.isSuccess)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
   }
@@ -128,7 +129,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.withId(PUBLISHED_ID))
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
     val learningPath = service.withIdV2(PUBLISHED_ID, "nb", false, PRIVATE_OWNER)
-    assert(learningPath.isDefined)
+    assert(learningPath.isSuccess)
     assert(learningPath.get.id == PUBLISHED_ID)
     assert(learningPath.get.status == "PUBLISHED")
   }
@@ -136,37 +137,30 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That withId throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.withIdV2(PRIVATE_ID, "nb", false)
-      }.getMessage
-    }
+    val Failure(ex) = service.withIdV2(PRIVATE_ID, "nb", false)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test("That withId throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.withIdV2(PRIVATE_ID, "nb", false, PUBLISHED_OWNER)
-      }.getMessage
-    }
+    val Failure(ex) = service.withIdV2(PRIVATE_ID, "nb", false, PUBLISHED_OWNER)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test("That withId returns a learningPath when the status is PRIVATE and user is the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
     val learningPath = service.withIdV2(PRIVATE_ID, "nb", false, PRIVATE_OWNER)
-    assert(learningPath.isDefined)
+    assert(learningPath.isSuccess)
     assert(learningPath.get.id == PRIVATE_ID)
     assert(learningPath.get.status == "PRIVATE")
   }
 
   test("That statusFor returns None when id does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(None) {
-      service.statusFor(PUBLISHED_ID)
-    }
+    val Failure(ex) = service.statusFor(PUBLISHED_ID)
+    ex.isInstanceOf[NotFoundException]
   }
 
   test("That statusFor returns a LearningPathStatus when the status is PUBLISHED") {
@@ -180,19 +174,16 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That statusFor throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] { service.statusFor(2) }.getMessage
-    }
+
+    val Failure(ex) = service.statusFor(2)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test("That statusFor throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.statusFor(2, PUBLISHED_OWNER)
-      }.getMessage
-    }
+    val Failure(ex) = service.statusFor(2, PUBLISHED_OWNER)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test("That statusFor returns a LearningPathStatus when the status is PRIVATE and the user is the owner") {
@@ -205,9 +196,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That learningstepsFor returns None when the learningPath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(None) {
-      service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb", false)
-    }
+    val Failure(ex) = service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb", false)
+    ex.isInstanceOf[NotFoundException]
   }
 
   test("That learningstepsFor returns None the learningPath does not have any learningsteps") {
@@ -215,9 +205,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID))
       .thenReturn(List())
-    assertResult(None) {
-      service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb", false)
-    }
+    val Failure(ex) = service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb", false)
+    ex.isInstanceOf[NotFoundException]
   }
 
   test("That learningstepsFor returns only active steps when specifying status active") {
@@ -226,7 +215,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID))
       .thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
     val learningSteps = service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.ACTIVE, "nb", false)
-    learningSteps.isDefined should be(true)
+    learningSteps.isSuccess should be(true)
     learningSteps.get.learningsteps.size should be(2)
     learningSteps.get.learningsteps.head.id should equal(STEP1.id.get)
     learningSteps.get.learningsteps.last.id should equal(STEP3.id.get)
@@ -238,7 +227,7 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
     when(learningPathRepository.learningStepsFor(PUBLISHED_ID))
       .thenReturn(List(STEP1, STEP2.copy(status = StepStatus.DELETED), STEP3))
     val learningSteps = service.learningstepsForWithStatusV2(PUBLISHED_ID, StepStatus.DELETED, "nb", false)
-    learningSteps.isDefined should be(true)
+    learningSteps.isSuccess should be(true)
     learningSteps.get.learningsteps.size should be(1)
     learningSteps.get.learningsteps.head.id should equal(STEP2.id.get)
   }
@@ -246,21 +235,15 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", false)
-      }.getMessage
-    }
+    val Failure(ex) = service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", false)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test("That learningstepsFor throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", false, PUBLISHED_OWNER)
-      }.getMessage
-    }
+    val Failure(ex) = service.learningstepsForWithStatusV2(PRIVATE_ID, StepStatus.ACTIVE, "nb", false, PUBLISHED_OWNER)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test(
@@ -280,9 +263,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That learningstepV2For returns None when the learningPath does not exist") {
     when(learningPathRepository.withId(PUBLISHED_ID)).thenReturn(None)
-    assertResult(None) {
-      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false)
-    }
+    val Failure(ex) = service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false)
+    ex.isInstanceOf[NotFoundException]
   }
 
   test("That learningstepV2For returns None when the learningStep does not exist") {
@@ -290,9 +272,8 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
     when(learningPathRepository.learningStepWithId(PUBLISHED_ID, STEP1.id.get))
       .thenReturn(None)
-    assertResult(None) {
-      service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false)
-    }
+    val Failure(ex) = service.learningstepV2For(PUBLISHED_ID, STEP1.id.get, "nb", false)
+    ex.isInstanceOf[NotFoundException]
   }
 
   test("That learningstepV2For returns the LearningStep when it exists") {
@@ -321,21 +302,15 @@ class ReadServiceTest extends UnitSuite with UnitTestEnvironment {
   test("That learningstepV2For throws an AccessDeniedException when the status is PRIVATE and no user") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false)
-      }.getMessage
-    }
+    val Failure(ex) = service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
   test("That learningstepFor throws an AccessDeniedException when the status is PRIVATE and user is not the owner") {
     when(learningPathRepository.withId(PRIVATE_ID))
       .thenReturn(Some(PRIVATE_LEARNINGPATH))
-    assertResult("You do not have access to the requested resource.") {
-      intercept[AccessDeniedException] {
-        service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false, PUBLISHED_OWNER)
-      }.getMessage
-    }
+    val Failure(ex) = service.learningstepV2For(PRIVATE_ID, STEP1.id.get, "nb", false, PUBLISHED_OWNER)
+    ex should be(AccessDeniedException("You do not have access to the requested resource."))
   }
 
 }

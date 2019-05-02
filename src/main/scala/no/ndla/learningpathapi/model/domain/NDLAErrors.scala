@@ -31,3 +31,4 @@ class ResultWindowTooLargeException(message: String) extends RuntimeException(me
 case class LanguageNotSupportedException(message: String) extends RuntimeException(message)
 case class InvalidStatusException(message: String) extends RuntimeException(message)
 case class SearchException(message: String) extends RuntimeException(message)
+case class NotFoundException(message: String) extends RuntimeException(message)

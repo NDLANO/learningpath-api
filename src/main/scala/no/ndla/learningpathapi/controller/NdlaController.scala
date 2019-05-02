@@ -53,6 +53,8 @@ abstract class NdlaController
       halt(status = 403, body = Error(Error.ACCESS_DENIED, a.getMessage))
     case ole: OptimisticLockException =>
       halt(status = 409, body = Error(Error.RESOURCE_OUTDATED, Error.RESOURCE_OUTDATED_DESCRIPTION))
+    case nfe: NotFoundException =>
+      halt(status = 404, body = Error(Error.NOT_FOUND, nfe.getMessage))
     case hre: HttpRequestException =>
       halt(status = 502, body = Error(Error.REMOTE_ERROR, hre.getMessage))
     case i: ImportException =>
@@ -153,6 +155,14 @@ abstract class NdlaController
         paramAsListOfStrings.map(_.toLong)
 
       }
+    }
+  }
+
+  def doOrAccessDenied(hasAccess: Boolean, reason: String = "Missing user/client-id or role")(w: => Any): Any = {
+    if (hasAccess) {
+      w
+    } else {
+      errorHandler(AccessDeniedException(reason))
     }
   }
 }

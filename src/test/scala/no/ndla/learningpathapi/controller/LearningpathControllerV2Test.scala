@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{LearningpathSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._

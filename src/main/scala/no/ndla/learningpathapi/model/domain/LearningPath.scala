@@ -47,20 +47,20 @@ case class LearningPath(id: Option[Long],
   }
 
   def canSetStatus(status: LearningPathStatus.Value, user: UserInfo): Try[LearningPath] = {
-    if (status == LearningPathStatus.PUBLISHED && !user.isAdmin) {
+    if (status == LearningPathStatus.PUBLISHED && !user.canPublish) {
       Failure(AccessDeniedException("You need to be a publisher to publish learningpaths."))
-    } else if (user.userId != owner && !user.isAdmin) {
-      Failure(AccessDeniedException("You do not have access to the requested resource."))
     } else {
-      Success(this)
+      canEditLearningpath(user)
     }
   }
 
   def canEditLearningpath(user: UserInfo): Try[LearningPath] = {
-    if (user.userId != owner && !user.isAdmin) {
-      Failure(AccessDeniedException("You do not have access to the requested resource."))
-    } else {
+    if ((user.userId == owner) ||
+        user.isAdmin ||
+        (user.isWriter && verificationStatus == LearningPathVerificationStatus.CREATED_BY_NDLA)) {
       Success(this)
+    } else {
+      Failure(AccessDeniedException("You do not have access to the requested resource."))
     }
   }
 
@@ -81,18 +81,19 @@ case class LearningPath(id: Option[Long],
     }
   }
 
-  def validateForPublishing(): LearningPath = {
-    val validationResult =
-      new DurationValidator().validateRequired(duration).toList
-    validationResult.isEmpty match {
-      case true  => this
-      case false => throw new ValidationException(errors = validationResult)
-    }
+  def validateForPublishing(): Try[LearningPath] = {
+    val validationResult = new DurationValidator().validateRequired(duration).toList
+    if (validationResult.isEmpty)
+      Success(this)
+    else
+      Failure(new ValidationException(errors = validationResult))
   }
 }
 
 object LearningPathRole extends Enumeration {
-  val ADMIN: LearningPathRole.Value = Value
+  val ADMIN: LearningPathRole.Value = Value("ADMIN")
+  val WRITE: LearningPathRole.Value = Value("WRITE")
+  val PUBLISH: LearningPathRole.Value = Value("PUBLISH")
 
   def valueOf(s: String): Option[LearningPathRole.Value] = {
     val lpRole = s.split("learningpath:")

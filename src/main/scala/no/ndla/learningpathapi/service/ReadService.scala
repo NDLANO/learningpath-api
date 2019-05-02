@@ -8,19 +8,24 @@
 
 package no.ndla.learningpathapi.service
 
-import java.nio.file.AccessDeniedException
-
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{Author => _, LearningPathStatus => _, LearningPathTags => _, _}
-import no.ndla.learningpathapi.model.domain.{StepStatus, UserInfo}
-import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import no.ndla.learningpathapi.model.domain.config.ConfigKey
+import no.ndla.learningpathapi.model.domain.{
+  StepStatus,
+  UserInfo,
+  Author => _,
+  LearningPathStatus => _,
+  LearningPathTags => _,
+  _
+}
+import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathRepositoryComponent}
 
 import scala.math.max
 import scala.util.{Failure, Success, Try}
 
 trait ReadService {
-  this: LearningPathRepositoryComponent with ConverterService =>
+  this: LearningPathRepositoryComponent with ConfigRepository with ConverterService =>
   val readService: ReadService
 
   class ReadService {
@@ -42,12 +47,12 @@ trait ReadService {
     def withIdV2(learningPathId: Long,
                  language: String,
                  fallback: Boolean,
-                 user: UserInfo = UserInfo.get): Option[LearningPathV2] = {
+                 user: UserInfo = UserInfo.get): Try[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp =>
         converterService.asApiLearningpathV2(lp, language, fallback, user))
     }
 
-    def statusFor(learningPathId: Long, user: UserInfo = UserInfo.get): Option[LearningPathStatus] = {
+    def statusFor(learningPathId: Long, user: UserInfo = UserInfo.get): Try[LearningPathStatus] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
@@ -55,7 +60,7 @@ trait ReadService {
                                 learningStepId: Long,
                                 language: String,
                                 fallback: Boolean,
-                                user: UserInfo = UserInfo.get): Option[LearningStepStatus] = {
+                                user: UserInfo = UserInfo.get): Try[LearningStepStatus] = {
       learningstepV2For(learningPathId, learningStepId, language, fallback, user).map(ls =>
         LearningStepStatus(ls.status.toString))
     }
@@ -64,37 +69,39 @@ trait ReadService {
                                      status: StepStatus.Value,
                                      language: String,
                                      fallback: Boolean,
-                                     user: UserInfo = UserInfo.get): Option[LearningStepContainerSummary] = {
+                                     user: UserInfo = UserInfo.get): Try[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) =>
-          converterService.asLearningStepContainerSummary(status, lp, language, fallback)
-        case None => None
+        case Success(lp) => converterService.asLearningStepContainerSummary(status, lp, language, fallback)
+        case Failure(ex) => Failure(ex)
       }
     }
 
     def learningstepV2For(learningPathId: Long,
-                          learningstepId: Long,
+                          learningStepId: Long,
                           language: String,
                           fallback: Boolean,
-                          user: UserInfo = UserInfo.get): Option[LearningStepV2] = {
+                          user: UserInfo = UserInfo.get): Try[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {
-        case Some(lp) =>
+        case Success(lp) =>
           learningPathRepository
-            .learningStepWithId(learningPathId, learningstepId)
-            .flatMap(
-              ls =>
-                converterService
-                  .asApiLearningStepV2(ls, lp, language, fallback, user))
-        case None => None
+            .learningStepWithId(learningPathId, learningStepId)
+            .map(ls => converterService.asApiLearningStepV2(ls, lp, language, fallback, user)) match {
+            case Some(value) => value
+            case None =>
+              Failure(
+                NotFoundException(
+                  s"Learningstep with id $learningStepId for learningpath with id $learningPathId not found"))
+          }
+        case Failure(ex) => Failure(ex)
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, user: UserInfo): Option[domain.LearningPath] = {
+    private def withIdAndAccessGranted(learningPathId: Long, user: UserInfo): Try[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.map(_.isOwnerOrPublic(user)) match {
-        case Some(Success(lp)) => Some(lp)
-        case Some(Failure(ex)) => throw ex
-        case None              => None
+        case Some(Success(lp)) => Success(lp)
+        case Some(Failure(ex)) => Failure(ex)
+        case None              => Failure(NotFoundException(s"Could not find learningPath with id $learningPathId"))
       }
     }
 
@@ -112,10 +119,20 @@ trait ReadService {
             Success(
               learningPathRepository
                 .learningPathsWithStatus(ps)
-                .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", true, user)))
+                .flatMap(lp => converterService.asApiLearningpathV2(lp, "all", fallback = true, user).toOption))
           case _ => Failure(InvalidStatusException(s"Parameter '$status' is not a valid status"))
         }
-      } else { Failure(domain.AccessDeniedException("You do not have access to this resource.")) }
+      } else { Failure(AccessDeniedException("You do not have access to this resource.")) }
     }
+
+    def isWriteRestricted: Boolean =
+      Try(
+        configRepository
+          .getConfigWithKey(ConfigKey.IsWriteRestricted)
+          .map(_.value.toBoolean)
+      ).toOption.flatten.getOrElse(false)
+
+    def canWriteNow(userInfo: UserInfo): Boolean =
+      userInfo.canWriteDuringWriteRestriction || !readService.isWriteRestricted
   }
 }
