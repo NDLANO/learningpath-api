@@ -47,6 +47,9 @@ lazy val learningpath_api = (project in file("."))
       "javax.servlet" % "javax.servlet-api" % "4.0.1" % "container;provided;test",
       "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s" %% "json4s-native" % Json4SVersion,
+      "org.json4s" %% "json4s-ast" % Json4SVersion,
+      "org.json4s" %% "json4s-core" % Json4SVersion,
+      "org.json4s" %% "json4s-ext" % Json4SVersion,
       "org.scalatra" %% "scalatra-swagger" % Scalatraversion,
       "org.scalikejdbc" %% "scalikejdbc" % "3.3.1",
       "org.postgresql" % "postgresql" % PostgresVersion,
@@ -108,13 +111,6 @@ fmt := {
   (Test / scalafmt).value
   (Compile / scalafmtSbt).value
 }
-
-// Don't run Integration tests with annotation IntegrationTest in default run on Travis as there is no elasticsearch localhost:9200 there yet.
-// NB this line will unfortunalty override runs on your local commandline so that
-// sbt "test-only -- -n no.ndla.tag.IntegrationTest"
-// will not run unless this line gets commented out or you remove the tag over the test class
-// This should be solved better!
-Test / testOptions += Tests.Argument("-l", "no.ndla.tag.IntegrationTest")
 
 // Make the docker task depend on the assembly task, which generates a fat JAR file
 docker := (docker dependsOn assembly).value

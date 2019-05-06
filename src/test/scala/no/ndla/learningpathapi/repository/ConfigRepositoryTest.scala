@@ -7,29 +7,19 @@
 
 package no.ndla.learningpathapi.repository
 
-import java.net.Socket
 import java.util.Date
 
-import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
-import no.ndla.learningpathapi.{DBMigrator, IntegrationSuite, LearningpathApiProperties, TestEnvironment}
+import no.ndla.learningpathapi.{IntegrationTestEnvironment, UnitSuite}
 import no.ndla.tag.IntegrationTest
-import scalikejdbc.{ConnectionPool, DB, DataSourceConnectionPool, _}
+import scalikejdbc.{DB, _}
 
-import scala.util.{Success, Try}
+import scala.util.Try
 
 @IntegrationTest
-class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
+class ConfigRepositoryTest extends UnitSuite with IntegrationTestEnvironment {
   var repository: ConfigRepository = _
 
-  def serverIsListenning: Boolean = {
-    Try(new Socket(LearningpathApiProperties.MetaServer, LearningpathApiProperties.MetaPort)) match {
-      case Success(c) =>
-        c.close()
-        true
-      case _ => false
-    }
-  }
   def databaseIsAvailable: Boolean = Try(repository.configCount).isSuccess
 
   def emptyTestDatabase: Boolean = {
@@ -39,18 +29,12 @@ class ConfigRepositoryTest extends IntegrationSuite with TestEnvironment {
     })
   }
 
+  override def beforeAll(): Unit = connectToDatabase()
+
   override def beforeEach(): Unit = {
     repository = new ConfigRepository
     if (databaseIsAvailable) {
       emptyTestDatabase
-    }
-  }
-
-  override def beforeAll(): Unit = {
-    val datasource = DataSource.getHikariDataSource
-    if (serverIsListenning) {
-      DBMigrator.migrate(datasource)
-      ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
     }
   }
 

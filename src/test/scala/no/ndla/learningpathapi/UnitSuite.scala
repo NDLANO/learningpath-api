@@ -11,6 +11,7 @@ package no.ndla.learningpathapi
 import no.ndla.network.secrets.PropertyKeys
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
+import scala.util.Properties.setProp
 
 abstract class UnitSuite
     extends FunSuite
@@ -22,30 +23,21 @@ abstract class UnitSuite
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
 
-  setEnv("NDLA_ENVIRONMENT", "local")
+  setProp("NDLA_ENVIRONMENT", "local")
 
-  setEnv(PropertyKeys.MetaUserNameKey, "user")
-  setEnv(PropertyKeys.MetaPasswordKey, "password")
-  setEnv(PropertyKeys.MetaResourceKey, "dbresource")
-  setEnv(PropertyKeys.MetaServerKey, "dbserver")
-  setEnv(PropertyKeys.MetaPortKey, "1")
-  setEnv(PropertyKeys.MetaSchemaKey, "learningpathapi")
+  setProp("SEARCH_SERVER", "search-server")
+  setProp("SEARCH_REGION", "some-region")
+  setProp("RUN_WITH_SIGNED_SEARCH_REQUESTS", "false")
 
-  setEnv("SEARCH_SERVER", "search-server")
-  setEnv("SEARCH_REGION", "some-region")
-  setEnv("RUN_WITH_SIGNED_SEARCH_REQUESTS", "false")
+  setProp("MIGRATION_HOST", "migration-api")
+  setProp("MIGRATION_USER", "username")
+  setProp("MIGRATION_PASSWORD", "password")
+  setProp("SEARCH_INDEX_NAME", "learning-integration-test-index")
 
-  setEnv("MIGRATION_HOST", "migration-api")
-  setEnv("MIGRATION_USER", "username")
-  setEnv("MIGRATION_PASSWORD", "password")
-  setEnv("SEARCH_INDEX_NAME", "learning-integration-test-index")
-
-  def setEnv(key: String, value: String) = {
-    val field = System.getenv().getClass.getDeclaredField("m")
-    field.setAccessible(true)
-    val map = field
-      .get(System.getenv())
-      .asInstanceOf[java.util.Map[java.lang.String, java.lang.String]]
-    map.put(key, value)
-  }
+  setProp(PropertyKeys.MetaUserNameKey, "postgres")
+  setProp(PropertyKeys.MetaPasswordKey, "hemmelig")
+  setProp(PropertyKeys.MetaResourceKey, "postgres")
+  setProp(PropertyKeys.MetaServerKey, "127.0.0.1")
+  setProp(PropertyKeys.MetaPortKey, "5432")
+  setProp(PropertyKeys.MetaSchemaKey, "learningpathapi_test")
 }

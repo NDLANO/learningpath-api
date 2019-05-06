@@ -8,20 +8,14 @@
 
 package no.ndla.learningpathapi.repository
 
-import java.net.Socket
-import java.util.Date
-
 import no.ndla.learningpathapi._
-import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
 import scalikejdbc._
 
-import scala.util.{Success, Try}
-
 @IntegrationTest
-class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite with TestEnvironment {
+class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with IntegrationTestEnvironment {
   var repository: LearningPathRepository = _
 
   val clinton = Author("author", "Hilla the Hun")
@@ -60,28 +54,12 @@ class LearningPathRepositoryComponentIntegrationTest extends IntegrationSuite wi
     StepStatus.ACTIVE
   )
 
-  def serverIsListenning: Boolean = {
-    Try(new Socket(LearningpathApiProperties.MetaServer, LearningpathApiProperties.MetaPort)) match {
-      case Success(c) =>
-        c.close()
-        true
-      case _ => false
-    }
-  }
-  def databaseIsAvailable: Boolean = Try(repository.learningPathCount).isSuccess
+  override def beforeAll(): Unit = connectToDatabase()
 
   override def beforeEach(): Unit = {
     repository = new LearningPathRepository()
     if (databaseIsAvailable) {
       emptyTestDatabase
-    }
-  }
-
-  override def beforeAll(): Unit = {
-    val datasource = DataSource.getHikariDataSource
-    if (serverIsListenning) {
-      DBMigrator.migrate(datasource)
-      ConnectionPool.singleton(new DataSourceConnectionPool(datasource))
     }
   }
 

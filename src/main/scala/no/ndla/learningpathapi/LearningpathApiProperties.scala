@@ -10,7 +10,6 @@ package no.ndla.learningpathapi
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.model.domain.Language
-import no.ndla.learningpathapi.model.domain.config.ConfigKey
 import no.ndla.network.{AuthUser, Domains}
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.network.secrets.Secrets.readSecrets
@@ -19,7 +18,7 @@ import scala.util.Properties._
 import scala.util.{Failure, Success}
 
 object LearningpathApiProperties extends LazyLogging {
-  val IsKubernetes: Boolean = envOrNone("NDLA_IS_KUBERNETES").isDefined
+  val IsKubernetes: Boolean = propOrNone("NDLA_IS_KUBERNETES").isDefined
 
   val Environment = propOrElse("NDLA_ENVIRONMENT", "local")
   val ApplicationName = "learningpath-api"
@@ -86,12 +85,12 @@ object LearningpathApiProperties extends LazyLogging {
   val CorrelationIdKey = "correlationID"
   val CorrelationIdHeader = "X-Correlation-ID"
 
-  val MetaUserName = prop(PropertyKeys.MetaUserNameKey)
-  val MetaPassword = prop(PropertyKeys.MetaPasswordKey)
-  val MetaResource = prop(PropertyKeys.MetaResourceKey)
-  val MetaServer = prop(PropertyKeys.MetaServerKey)
-  val MetaPort = prop(PropertyKeys.MetaPortKey).toInt
-  val MetaSchema = prop(PropertyKeys.MetaSchemaKey)
+  def MetaUserName = prop(PropertyKeys.MetaUserNameKey)
+  def MetaPassword = prop(PropertyKeys.MetaPasswordKey)
+  def MetaResource = prop(PropertyKeys.MetaResourceKey)
+  def MetaServer = prop(PropertyKeys.MetaServerKey)
+  def MetaPort = prop(PropertyKeys.MetaPortKey).toInt
+  def MetaSchema = prop(PropertyKeys.MetaSchemaKey)
 
   val SearchServer =
     propOrElse("SEARCH_SERVER", "http://search-learningpath-api.ndla-local")
@@ -118,7 +117,7 @@ object LearningpathApiProperties extends LazyLogging {
   }
 
   def propOrElse(key: String, default: => String): String = {
-    envOrNone(key) match {
+    propOrNone(key) match {
       case Some(prop)            => prop
       case None if !IsKubernetes => secrets.get(key).flatten.getOrElse(default)
       case _                     => default
