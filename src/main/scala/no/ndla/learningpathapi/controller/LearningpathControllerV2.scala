@@ -99,7 +99,8 @@ trait LearningpathControllerV2 {
       Param[Option[String]]("filter",
                             "Query for filtering licenses. Only licenses containing filter-string are returned.")
     private val fallback = Param[Option[Boolean]]("fallback", "Fallback to existing language if language is specified.")
-    private val learningPathStatus = Param[String]("STATUS", "Status of LearningPaths")
+    private val learningPathStatus =
+      Param[String]("STATUS", "Status of LearningPaths")
     private val scrollId = Param[Option[String]](
       "search-context",
       s"""A search context retrieved from the response header of a previous search.
@@ -132,13 +133,16 @@ trait LearningpathControllerV2 {
       * @return A Try with scroll result, or the return of the orFunction (Usually a try with a search result).
       */
     private def scrollSearchOr(orFunction: => Any): Any = {
-      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+      val language =
+        paramOrDefault(this.language.paramName, Language.AllLanguages)
 
       paramOrNone(this.scrollId.paramName) match {
         case Some(scroll) =>
           searchService.scroll(scroll, language) match {
             case Success(scrollResult) =>
-              val responseHeader = scrollResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+              val responseHeader = scrollResult.scrollId
+                .map(i => this.scrollId.paramName -> i)
+                .toMap
               Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
             case Failure(ex) => errorHandler(ex)
           }
@@ -180,7 +184,8 @@ trait LearningpathControllerV2 {
 
       result match {
         case Success(searchResult) =>
-          val responseHeader = searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
+          val responseHeader =
+            searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
           Ok(searchConverterService.asApiSearchResult(searchResult), headers = responseHeader)
         case Failure(ex) => errorHandler(ex)
       }
@@ -216,7 +221,8 @@ trait LearningpathControllerV2 {
         val sort = paramOrNone(this.sort.paramName)
         val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps => Try(ps.toInt).toOption)
         val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
-        val fallback = booleanOrDefault(this.fallback.paramName, default = false)
+        val fallback =
+          booleanOrDefault(this.fallback.paramName, default = false)
 
         search(query, language, tag, idList, sort, pageSize, page, fallback)
       }
@@ -435,7 +441,8 @@ trait LearningpathControllerV2 {
         paramOrNone(this.licenseFilter.paramName) match {
           case None => mapping.License.getLicenses
           case Some(filter) =>
-            mapping.License.getLicenses.filter(_.license.toString.contains(filter))
+            mapping.License.getLicenses
+              .filter(_.license.toString.contains(filter))
         }
 
       licenses.map(x => License(x.license.toString, Option(x.description), x.url))
