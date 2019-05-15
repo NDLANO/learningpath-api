@@ -644,7 +644,7 @@ trait LearningpathControllerV2 {
       val pathId = long(this.learningpathId.paramName)
 
       updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, toUpdate.message) match {
-        case Failure(ex) => Failure(ex)
+        case Failure(ex) => errorHandler(ex)
         case Success(learningPath) =>
           logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
           Ok(learningPath)
