@@ -95,7 +95,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", "nb")),
       duration = Some(3),
       lastUpdated = tomorrow,
-      tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb"))
+      tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb")),
+      verificationStatus = LearningPathVerificationStatus.CREATED_BY_NDLA
     )
 
     val unrelated = DefaultLearningPath.copy(
@@ -526,6 +527,23 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     scroll1.results.map(_.id) should be(expectedIds(1))
     scroll2.results.map(_.id) should be(expectedIds(2))
     scroll3.results.map(_.id) should be(List.empty)
+  }
+
+  test("That search combined with filter by verification status only returns documents matching the query with the given verification status") {
+    val Success(searchResult) =
+      searchService.matchingQuery(List(),
+        "flaggermus",
+        None,
+        Language.AllLanguages,
+        Sort.ByTitleAsc,
+        None,
+        None,
+        fallback = false,
+        Some("EXTERNAL"))
+    val hits = searchResult.results
+
+    searchResult.totalCount should be(1)
+    hits.head.id should be(BatmanId)
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {
