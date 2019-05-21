@@ -112,7 +112,8 @@ trait SearchService extends LazyLogging {
         searchLanguage,
         page,
         pageSize,
-        fallback
+        fallback,
+        None
       )
     }
 
@@ -126,7 +127,8 @@ trait SearchService extends LazyLogging {
         Language.AllLanguages,
         None,
         None,
-        false
+        false,
+        None
       )
     }
 
@@ -137,7 +139,8 @@ trait SearchService extends LazyLogging {
                       sort: Sort.Value,
                       page: Option[Int],
                       pageSize: Option[Int],
-                      fallback: Boolean): Try[SearchResult] = {
+                      fallback: Boolean,
+                      verificationStatus: Option[String]): Try[SearchResult] = {
       val language =
         if (searchLanguage == Language.AllLanguages || fallback) "*"
         else searchLanguage
@@ -162,7 +165,16 @@ trait SearchService extends LazyLogging {
             )
         )
 
-      executeSearch(fullQuery, withIdIn, taggedWith, List.empty, sort, language, page, pageSize, fallback)
+      executeSearch(fullQuery,
+                    withIdIn,
+                    taggedWith,
+                    List.empty,
+                    sort,
+                    language,
+                    page,
+                    pageSize,
+                    fallback,
+                    verificationStatus)
     }
 
     private def executeSearch(queryBuilder: BoolQuery,
@@ -173,14 +185,11 @@ trait SearchService extends LazyLogging {
                               language: String,
                               page: Option[Int],
                               pageSize: Option[Int],
-                              fallback: Boolean) = {
-      val tagFilter = taggedWith match {
-        case None => None
-        case Some(tag) =>
-          Some(
-            nestedQuery("tags", termQuery(s"tags.$language.raw", tag))
-              .scoreMode(ScoreMode.None))
-      }
+                              fallback: Boolean,
+                              verificationStatus: Option[String]) = {
+      val tagFilter: Option[NestedQuery] = taggedWith.map(
+        tag => nestedQuery("tags", termQuery(s"tags.$language.raw", tag)).scoreMode(ScoreMode.None)
+      )
       val idFilter = if (withIdIn.isEmpty) None else Some(idsQuery(withIdIn))
       val pathFilter = pathsFilterQuery(withPaths)
       val (languageFilter, searchLanguage) = language match {
@@ -190,7 +199,9 @@ trait SearchService extends LazyLogging {
           if (fallback) (None, "*") else (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
       }
 
-      val filters = List(tagFilter, idFilter, pathFilter, languageFilter)
+      val verificationStatusFilter = verificationStatus.map(status => termQuery("verificationStatus", status))
+
+      val filters = List(tagFilter, idFilter, pathFilter, languageFilter, verificationStatusFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)

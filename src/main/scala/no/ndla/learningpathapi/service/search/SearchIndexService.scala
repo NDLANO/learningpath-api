@@ -247,7 +247,7 @@ trait SearchIndexService {
         textField("coverPhotoUrl"),
         intField("duration"),
         textField("status"),
-        textField("verificationStatus"),
+        keywordField("verificationStatus"),
         dateField("lastUpdated"),
         keywordField("defaultTitle"),
         languageSupportedField("tags", keepRaw = true),

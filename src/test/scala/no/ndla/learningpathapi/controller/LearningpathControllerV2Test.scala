@@ -79,7 +79,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                                   eqTo(Sort.ByDurationDesc),
                                   eqTo(Some(page)),
                                   eqTo(Some(pageSize)),
-                                  eqTo(false))).thenReturn(Success(result))
+                                  eqTo(false),
+                                  eqTo(None))).thenReturn(Success(result))
 
     get("/",
         Map(
@@ -155,7 +156,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                                   eqTo(Sort.ByDurationDesc),
                                   eqTo(Some(page)),
                                   eqTo(Some(pageSize)),
-                                  eqTo(false))).thenReturn(Success(result))
+                                  eqTo(false),
+                                  eqTo(None))).thenReturn(Success(result))
 
     post(
       "/search/",
@@ -307,14 +309,17 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       any[Option[Int]],
       any[Boolean]
     )
-    verify(searchService, times(0)).matchingQuery(any[List[Long]],
-                                                  any[String],
-                                                  any[Option[String]],
-                                                  any[String],
-                                                  any[Sort.Value],
-                                                  any[Option[Int]],
-                                                  any[Option[Int]],
-                                                  any[Boolean])
+    verify(searchService, times(0)).matchingQuery(
+      any[List[Long]],
+      any[String],
+      any[Option[String]],
+      any[String],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean],
+      any[Option[String]]
+    )
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
@@ -346,14 +351,17 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       any[Option[Int]],
       any[Boolean]
     )
-    verify(searchService, times(0)).matchingQuery(any[List[Long]],
-                                                  any[String],
-                                                  any[Option[String]],
-                                                  any[String],
-                                                  any[Sort.Value],
-                                                  any[Option[Int]],
-                                                  any[Option[Int]],
-                                                  any[Boolean])
+    verify(searchService, times(0)).matchingQuery(
+      any[List[Long]],
+      any[String],
+      any[Option[String]],
+      any[String],
+      any[Sort.Value],
+      any[Option[Int]],
+      any[Option[Int]],
+      any[Boolean],
+      any[Option[String]]
+    )
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 }

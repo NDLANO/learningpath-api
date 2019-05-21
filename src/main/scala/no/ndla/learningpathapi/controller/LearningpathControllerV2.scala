@@ -157,7 +157,8 @@ trait LearningpathControllerV2 {
                        sort: Option[String],
                        pageSize: Option[Int],
                        page: Option[Int],
-                       fallback: Boolean) = {
+                       fallback: Boolean,
+                       verificationStatus: Option[String]) = {
       val result = query match {
         case Some(q) =>
           searchService.matchingQuery(
@@ -168,7 +169,8 @@ trait LearningpathControllerV2 {
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
             page = page,
             pageSize = pageSize,
-            fallback = fallback
+            fallback = fallback,
+            verificationStatus = verificationStatus
           )
         case None =>
           searchService.allV2(
@@ -224,7 +226,7 @@ trait LearningpathControllerV2 {
         val fallback =
           booleanOrDefault(this.fallback.paramName, default = false)
 
-        search(query, language, tag, idList, sort, pageSize, page, fallback)
+        search(query, language, tag, idList, sort, pageSize, page, fallback, None)
       }
     }
 
@@ -253,8 +255,9 @@ trait LearningpathControllerV2 {
         val pageSize = searchParams.pageSize
         val page = searchParams.page
         val fallback = searchParams.fallback.getOrElse(false)
+        val verificationStatus = searchParams.verificationStatus
 
-        search(query, language, tag, idList, sort, pageSize, page, fallback)
+        search(query, language, tag, idList, sort, pageSize, page, fallback, verificationStatus)
       }
     }
 

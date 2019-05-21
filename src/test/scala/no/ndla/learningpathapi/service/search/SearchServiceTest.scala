@@ -37,20 +37,6 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val license = "publicdomain"
   val copyright = Copyright(license, List(paul))
 
-  val DefaultLearningStep = LearningStep(
-    id = None,
-    revision = None,
-    externalId = None,
-    learningPathId = None,
-    seqNo = 0,
-    title = List(),
-    description = List(),
-    embedUrl = List(EmbedUrl("/nb/article/123", "nb", EmbedType.OEmbed)),
-    `type` = StepType.INTRODUCTION,
-    license = None,
-    status = StepStatus.ACTIVE
-  )
-
   val DefaultLearningPath = LearningPath(
     id = None,
     revision = None,
@@ -65,8 +51,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     lastUpdated = clock.now(),
     tags = List(),
     owner = "owner",
-    copyright = copyright,
-    learningsteps = Seq(DefaultLearningStep)
+    copyright = copyright
   )
 
   val PenguinId = 1
@@ -128,9 +113,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
       description = List(Description("This is a englando learningpath", "en")),
       duration = Some(5),
       lastUpdated = tomorrowp2,
-      tags = List(),
-      learningsteps =
-        Seq(DefaultLearningStep.copy(embedUrl = List(EmbedUrl("/nb/article/456", "nb", EmbedType.OEmbed))))
+      tags = List()
     )
 
     searchIndexService.indexDocument(thePenguin)
@@ -281,21 +264,21 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching returns matching documents with unmatching language if fallback is enabled") {
     val Success(searchResult) =
-      searchService.matchingQuery(List(), "Pingvinen", None, "en", Sort.ByTitleAsc, None, None, fallback = true)
+      searchService.matchingQuery(List(), "Pingvinen", None, "en", Sort.ByTitleAsc, None, None, fallback = true, None)
 
     searchResult.totalCount should be(1)
   }
 
   test("That searching returns no matching documents with unmatching language if fallback is disabled ") {
     val Success(searchResult) =
-      searchService.matchingQuery(List(), "Pingvinen", None, "en", Sort.ByTitleAsc, None, None, fallback = false)
+      searchService.matchingQuery(List(), "Pingvinen", None, "en", Sort.ByTitleAsc, None, None, fallback = false, None)
 
     searchResult.totalCount should be(0)
   }
 
   test("That searching only returns documents matching the query") {
     val Success(searchResult) =
-      searchService.matchingQuery(List(), "heltene", None, "nb", Sort.ByTitleAsc, None, None, fallback = false)
+      searchService.matchingQuery(List(), "heltene", None, "nb", Sort.ByTitleAsc, None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -311,7 +294,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                   Sort.ByTitleAsc,
                                   None,
                                   None,
-                                  fallback = false)
+                                  fallback = false,
+                                  None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -320,7 +304,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching only returns documents matching the query in the specified language") {
     val Success(searchResult) =
-      searchService.matchingQuery(List(), "guy", None, "en", Sort.ByTitleAsc, None, None, fallback = false)
+      searchService.matchingQuery(List(), "guy", None, "en", Sort.ByTitleAsc, None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -347,7 +331,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                   Sort.ByTitleAsc,
                                   None,
                                   None,
-                                  fallback = false)
+                                  fallback = false,
+                                  None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -356,7 +341,15 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching and ordering by relevance is returning Donald before Batman when searching for tough weirdos") {
     val Success(searchResult) =
-      searchService.matchingQuery(List(), "tøff rar", None, "nb", Sort.ByRelevanceDesc, None, None, fallback = false)
+      searchService.matchingQuery(List(),
+                                  "tøff rar",
+                                  None,
+                                  "nb",
+                                  Sort.ByRelevanceDesc,
+                                  None,
+                                  None,
+                                  fallback = false,
+                                  None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -374,7 +367,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                   Sort.ByRelevanceDesc,
                                   None,
                                   None,
-                                  fallback = false)
+                                  fallback = false,
+                                  None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(3)
@@ -392,7 +386,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                                             Sort.ByRelevanceDesc,
                                                             None,
                                                             None,
-                                                            fallback = false)
+                                                            fallback = false,
+                                                            None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -409,7 +404,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                   Sort.ByRelevanceDesc,
                                   None,
                                   None,
-                                  fallback = false)
+                                  fallback = false,
+                                  None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
@@ -425,7 +421,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                   Sort.ByRelevanceAsc,
                                   None,
                                   None,
-                                  fallback = false)
+                                  fallback = false,
+                                  None)
     searchResult1.totalCount should be(0)
 
     val Success(searchResult2) =
@@ -436,7 +433,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                   Sort.ByRelevanceAsc,
                                   None,
                                   None,
-                                  fallback = false)
+                                  fallback = false,
+                                  None)
     val hits2 = searchResult2.results
 
     searchResult2.totalCount should be(1)
@@ -449,7 +447,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
                                                              Sort.ByRelevanceAsc,
                                                              None,
                                                              None,
-                                                             fallback = false)
+                                                             fallback = false,
+                                                             None)
     val hits3 = searchResult3.results
 
     searchResult3.totalCount should be(3)
@@ -460,9 +459,9 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That searching for multiple languages returns result in matched language") {
     val Success(searchNb) =
-      searchService.matchingQuery(List(), "Urelatert", None, "all", Sort.ByTitleAsc, None, None, fallback = false)
+      searchService.matchingQuery(List(), "Urelatert", None, "all", Sort.ByTitleAsc, None, None, fallback = false, None)
     val Success(searchEn) =
-      searchService.matchingQuery(List(), "Unrelated", None, "all", Sort.ByTitleAsc, None, None, fallback = false)
+      searchService.matchingQuery(List(), "Unrelated", None, "all", Sort.ByTitleAsc, None, None, fallback = false, None)
 
     searchEn.totalCount should be(1)
     searchEn.results.head.id should be(UnrelatedId)
@@ -494,22 +493,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("that supportedLanguages are sorted correctly") {
     val Success(search) =
-      searchService.matchingQuery(List(), "Batman", None, "all", Sort.ByTitleAsc, None, None, fallback = false)
+      searchService.matchingQuery(List(), "Batman", None, "all", Sort.ByTitleAsc, None, None, fallback = false, None)
     search.results.head.supportedLanguages should be(Seq("nb", "en"))
-  }
-
-  test("that searching for paths should return only learningpaths with paths in steps") {
-    val Success(search) = searchService.containsPath(List("/article/123"))
-
-    search.totalCount should be(4)
-
-    val Success(search2) = searchService.containsPath(List("/article/456"))
-
-    search2.totalCount should be(1)
-
-    val Success(search3) = searchService.containsPath(List("/article/123", "/article/456"))
-
-    search3.totalCount should be(5)
   }
 
   test("That searching with fallback still returns searched language if specified") {
