@@ -529,17 +529,18 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     scroll3.results.map(_.id) should be(List.empty)
   }
 
-  test("That search combined with filter by verification status only returns documents matching the query with the given verification status") {
+  test(
+    "That search combined with filter by verification status only returns documents matching the query with the given verification status") {
     val Success(searchResult) =
       searchService.matchingQuery(List(),
-        "flaggermus",
-        None,
-        Language.AllLanguages,
-        Sort.ByTitleAsc,
-        None,
-        None,
-        fallback = false,
-        Some("EXTERNAL"))
+                                  "flaggermus",
+                                  None,
+                                  Language.AllLanguages,
+                                  Sort.ByTitleAsc,
+                                  None,
+                                  None,
+                                  fallback = false,
+                                  Some("EXTERNAL"))
     val hits = searchResult.results
 
     searchResult.totalCount should be(1)
