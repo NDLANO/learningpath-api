@@ -110,6 +110,8 @@ trait LearningpathControllerV2 {
          |Used to enable scrolling past $ElasticSearchIndexMaxResultWindow results.
       """.stripMargin
     )
+    private val verificationStatus =
+      Param[Option[String]]("verificationStatus", "Return only learning paths that have this verification status.")
 
     private def asQueryParam[T: Manifest: NotNothing](param: Param[T]) =
       queryParam[T](param.paramName).description(param.description)
@@ -180,7 +182,8 @@ trait LearningpathControllerV2 {
             sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
             page = page,
             pageSize = pageSize,
-            fallback = fallback
+            fallback = fallback,
+            verificationStatus = verificationStatus
           )
       }
 
@@ -209,7 +212,8 @@ trait LearningpathControllerV2 {
             asQueryParam(pageSize),
             asQueryParam(sort),
             asQueryParam(fallback),
-            asQueryParam(scrollId)
+            asQueryParam(scrollId),
+            asQueryParam(verificationStatus)
         )
           responseMessages (response400, response500)
           authorizations "oauth2")
@@ -225,8 +229,9 @@ trait LearningpathControllerV2 {
         val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
         val fallback =
           booleanOrDefault(this.fallback.paramName, default = false)
+        val verificationStatus = paramOrNone(this.verificationStatus.paramName)
 
-        search(query, language, tag, idList, sort, pageSize, page, fallback, None)
+        search(query, language, tag, idList, sort, pageSize, page, fallback, verificationStatus)
       }
     }
 

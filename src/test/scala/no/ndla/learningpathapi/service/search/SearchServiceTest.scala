@@ -132,14 +132,28 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("all learningpaths should be returned if fallback is enabled in all-search") {
     val Success(res) =
-      searchService.allV2(List.empty, None, Sort.ByIdDesc, "hurr durr I'm a language", Some(1), None, fallback = true)
+      searchService.allV2(List.empty,
+                          None,
+                          Sort.ByIdDesc,
+                          "hurr durr I'm a language",
+                          Some(1),
+                          None,
+                          fallback = true,
+                          None)
     res.results.length should be(res.totalCount)
     res.totalCount should be(5)
   }
 
   test("no learningpaths should be returned if fallback is disabled with an unsupported language in all-search") {
     val Success(res) =
-      searchService.allV2(List.empty, None, Sort.ByIdDesc, "hurr durr I'm a language", Some(1), None, fallback = false)
+      searchService.allV2(List.empty,
+                          None,
+                          Sort.ByIdDesc,
+                          "hurr durr I'm a language",
+                          Some(1),
+                          None,
+                          fallback = false,
+                          None)
     res.results.length should be(res.totalCount)
     res.totalCount should be(0)
   }
@@ -167,7 +181,8 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That all learningpaths are returned ordered by title descending") {
-    val Success(searchResult) = searchService.allV2(List(), None, Sort.ByTitleDesc, "nb", None, None, fallback = false)
+    val Success(searchResult) =
+      searchService.allV2(List(), None, Sort.ByTitleDesc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
     searchResult.totalCount should be(4)
 
@@ -180,7 +195,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by title ascending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByTitleAsc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByTitleAsc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -192,7 +207,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by id descending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByIdDesc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByIdDesc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -204,7 +219,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all learningpaths are returned ordered by id ascending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByIdAsc, "all", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByIdAsc, "all", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(5)
@@ -217,7 +232,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That order by durationDesc orders search result by duration descending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByDurationDesc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByDurationDesc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -226,7 +241,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That order ByDurationAsc orders search result by duration ascending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByDurationAsc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByDurationAsc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -235,7 +250,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That order ByLastUpdatedDesc orders search result by last updated date descending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByLastUpdatedDesc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByLastUpdatedDesc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -245,7 +260,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That order ByLastUpdatedAsc orders search result by last updated date ascending") {
     val Success(searchResult) =
-      searchService.allV2(List(), None, Sort.ByLastUpdatedAsc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), None, Sort.ByLastUpdatedAsc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(4)
@@ -255,7 +270,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That all filtered by id only returns learningpaths with the given ids") {
     val Success(searchResult) =
-      searchService.allV2(List(1, 2), None, Sort.ByTitleAsc, Language.AllLanguages, None, None, fallback = false)
+      searchService.allV2(List(1, 2), None, Sort.ByTitleAsc, Language.AllLanguages, None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -314,7 +329,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
   test("That filtering on tag only returns documents where the tag is present") {
     val Success(searchResult) =
-      searchService.allV2(List(), Some("superhelt"), Sort.ByTitleAsc, "nb", None, None, fallback = false)
+      searchService.allV2(List(), Some("superhelt"), Sort.ByTitleAsc, "nb", None, None, fallback = false, None)
     val hits = searchResult.results
 
     searchResult.totalCount should be(2)
@@ -480,7 +495,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That searching for all languages returns multiple languages") {
-    val Success(search) = searchService.allV2(List(), None, Sort.ByTitleAsc, "all", None, None, fallback = false)
+    val Success(search) = searchService.allV2(List(), None, Sort.ByTitleAsc, "all", None, None, fallback = false, None)
 
     search.totalCount should be(5)
     search.results.head.id should be(BatmanId)
@@ -499,7 +514,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That searching with fallback still returns searched language if specified") {
-    val Success(search) = searchService.allV2(List(), None, Sort.ByIdAsc, "en", None, None, fallback = true)
+    val Success(search) = searchService.allV2(List(), None, Sort.ByIdAsc, "en", None, None, fallback = true, None)
 
     search.totalCount should be(5)
     search.results.head.id should be(PenguinId)
@@ -517,7 +532,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     val expectedIds = List(1, 2, 3, 4, 5).sliding(pageSize, pageSize).toList
 
     val Success(initialSearch) =
-      searchService.allV2(List(), None, Sort.ByIdAsc, "all", None, Some(pageSize), fallback = true)
+      searchService.allV2(List(), None, Sort.ByIdAsc, "all", None, Some(pageSize), fallback = true, None)
 
     val Success(scroll1) = searchService.scroll(initialSearch.scrollId.get, "all")
     val Success(scroll2) = searchService.scroll(scroll1.scrollId.get, "all")
@@ -545,6 +560,23 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
 
     searchResult.totalCount should be(1)
     hits.head.id should be(BatmanId)
+  }
+
+  test(
+    "That search combined with filter by verification status only returns documents with the given verification status") {
+    val Success(searchResult) =
+      searchService.allV2(List(),
+                          None,
+                          Sort.ByTitleAsc,
+                          Language.AllLanguages,
+                          None,
+                          None,
+                          fallback = false,
+                          Some("CREATED_BY_NDLA"))
+    val hits = searchResult.results
+
+    searchResult.totalCount should be(1)
+    hits.head.id should be(DonaldId)
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

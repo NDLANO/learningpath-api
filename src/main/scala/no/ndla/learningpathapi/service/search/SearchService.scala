@@ -88,7 +88,8 @@ trait SearchService extends LazyLogging {
               searchLanguage: String,
               page: Option[Int],
               pageSize: Option[Int],
-              fallback: Boolean): Try[SearchResult] = {
+              fallback: Boolean,
+              verificationStatus: Option[String]): Try[SearchResult] = {
       val language = if (searchLanguage == Language.AllLanguages || fallback) "*" else searchLanguage
       val fullQuery = language match {
         case "*" => boolQuery()
@@ -113,7 +114,7 @@ trait SearchService extends LazyLogging {
         page,
         pageSize,
         fallback,
-        None
+        verificationStatus
       )
     }
 

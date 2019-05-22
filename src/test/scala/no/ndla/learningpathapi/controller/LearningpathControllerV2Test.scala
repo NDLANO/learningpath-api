@@ -66,32 +66,38 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val page = 22
     val pageSize = 111
     val ids = "1,2"
+    val verificationStatus = "EXTERNAL"
 
     val result = SearchResult(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary), None)
     val apiResult = SearchResultV2(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary))
     when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
     when(
-      searchService.matchingQuery(eqTo(List(1, 2)),
-                                  eqTo(query),
-                                  eqTo(Some(tag)),
-                                  eqTo(language),
-                                  eqTo(Sort.ByDurationDesc),
-                                  eqTo(Some(page)),
-                                  eqTo(Some(pageSize)),
-                                  eqTo(false),
-                                  eqTo(None))).thenReturn(Success(result))
+      searchService.matchingQuery(
+        eqTo(List(1, 2)),
+        eqTo(query),
+        eqTo(Some(tag)),
+        eqTo(language),
+        eqTo(Sort.ByDurationDesc),
+        eqTo(Some(page)),
+        eqTo(Some(pageSize)),
+        eqTo(false),
+        eqTo(Some(verificationStatus))
+      )).thenReturn(Success(result))
 
-    get("/",
-        Map(
-          "query" -> query,
-          "tag" -> tag,
-          "language" -> language,
-          "sort" -> "-duration",
-          "page-size" -> s"$pageSize",
-          "page" -> s"$page",
-          "ids" -> s"$ids"
-        )) {
+    get(
+      "/",
+      Map(
+        "query" -> query,
+        "tag" -> tag,
+        "language" -> language,
+        "sort" -> "-duration",
+        "page-size" -> s"$pageSize",
+        "page" -> s"$page",
+        "ids" -> s"$ids",
+        "verificationStatus" -> s"$verificationStatus"
+      )
+    ) {
       status should equal(200)
       val convertedBody = read[api.SearchResultV2](body)
       convertedBody.results.head.title should equal(api.Title("Tittel", "nb"))
@@ -118,7 +124,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
                           any[String],
                           any[Option[Int]],
                           any[Option[Int]],
-                          eqTo(false))).thenReturn(Success(result))
+                          eqTo(false),
+                          any[Option[String]])).thenReturn(Success(result))
 
     get("/",
         Map(
@@ -270,7 +277,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
         any[String],
         any[Option[Int]],
         any[Option[Int]],
-        any[Boolean]
+        any[Boolean],
+        any[Option[String]]
       ))
       .thenReturn(Success(searchResponse))
 
@@ -307,7 +315,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       any[String],
       any[Option[Int]],
       any[Option[Int]],
-      any[Boolean]
+      any[Boolean],
+      any[Option[String]]
     )
     verify(searchService, times(0)).matchingQuery(
       any[List[Long]],
@@ -349,7 +358,8 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       any[String],
       any[Option[Int]],
       any[Option[Int]],
-      any[Boolean]
+      any[Boolean],
+      any[Option[String]]
     )
     verify(searchService, times(0)).matchingQuery(
       any[List[Long]],
