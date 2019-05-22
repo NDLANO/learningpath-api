@@ -25,7 +25,7 @@ object LearningpathApiProperties extends LazyLogging {
   val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
 
   val ApplicationPort = propOrElse("APPLICATION_PORT", "80").toInt
-  val ContactEmail = "christergundersen@ndla.no"
+  val ContactEmail = "support+api@ndla.no"
 
   val Domain = Domains.get(Environment)
 
