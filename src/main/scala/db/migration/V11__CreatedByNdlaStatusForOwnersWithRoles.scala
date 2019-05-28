@@ -80,21 +80,49 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
       })
   }
 
-  def getOwnerIdsWithRoles: Try[List[String]] = {
+  private def getAuth0Response(token: String, page: Int, pageSize: Int) = {
     val url = s"https://$auth0Host/api/v2/users"
-
-    getAuth0Token.flatMap(token => {
-      Try(
-        Http(url)
-          .params(
-            "search_engine" -> "v3",
-            "q" -> """app_metadata.roles:"learningpath:write" || app_metadata.roles:"learningpath:admin" || app_metadata.roles:"learningpath:publish""""
-          )
-          .header("Authorization", s"Bearer $token")
-          .method("GET")
-          .asString).map(res => read[List[UserResponseObject]](res.body).map(_.app_metadata.ndla_id))
-    })
+    Try(
+      Http(url)
+        .header("Authorization", s"Bearer $token")
+        .method("GET")
+        .params(
+          "search_engine" -> "v3",
+          "q" -> """app_metadata.roles:"learningpath:write" || app_metadata.roles:"learningpath:admin" || app_metadata.roles:"learningpath:publish"""",
+          "page" -> page.toString,
+          "per_page" -> pageSize.toString
+        )
+        .asString
+    ) match {
+      case Failure(ex) =>
+        println(s"Could not fetch users at page '$page' with page-size '$pageSize' on url '$url'.")
+        Failure(ex)
+      case Success(res) =>
+        println(s"Successfully fetched users at page '$page' with page-size '$pageSize' on url '$url'.")
+        Success(res)
+    }
   }
+
+  private def getOwnerIdsWithRolesOnPage(token: String,
+                                         page: Int,
+                                         results: List[String] = List.empty): Try[List[String]] = {
+    val pageSize = 3
+    getAuth0Response(token, page, pageSize) match {
+      case Failure(ex) => Failure(ex)
+      case Success(response) =>
+        val parsedResponse = Try(read[List[UserResponseObject]](response.body))
+        parsedResponse.map(listOfUsers => listOfUsers.map(userData => userData.app_metadata.ndla_id)) match {
+          case Failure(ex)                          => Failure(ex)
+          case Success(ids) if ids.size >= pageSize => getOwnerIdsWithRolesOnPage(token, page + 1, results ++ ids)
+          case Success(ids)                         => Success(results ++ ids)
+        }
+    }
+  }
+
+  private def getOwnerIdsWithRoles =
+    getAuth0Token.flatMap(token => {
+      getOwnerIdsWithRolesOnPage(token, 0)
+    })
 
   def allLearningPathsWithOwnerInList(ownerList: List[String])(implicit session: DBSession): Seq[(Long, String)] = {
     sql"select id, document from learningpaths where document->>'owner' in ($ownerList)"
