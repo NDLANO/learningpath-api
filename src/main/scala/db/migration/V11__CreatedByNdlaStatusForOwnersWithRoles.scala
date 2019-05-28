@@ -106,7 +106,7 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
   private def getOwnerIdsWithRolesOnPage(token: String,
                                          page: Int,
                                          results: List[String] = List.empty): Try[List[String]] = {
-    val pageSize = 3
+    val pageSize = 50
     getAuth0Response(token, page, pageSize) match {
       case Failure(ex) => Failure(ex)
       case Success(response) =>
