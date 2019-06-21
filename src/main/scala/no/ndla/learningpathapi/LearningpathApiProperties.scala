@@ -105,7 +105,7 @@ object LearningpathApiProperties extends LazyLogging {
 
   lazy val secrets = {
     val SecretsFile = "learningpath-api.secrets"
-    readSecrets(SecretsFile) match {
+    readSecrets(SecretsFile, Set("LEARNINGPATH_CLIENT_ID", "LEARNINGPATH_CLIENT_SECRET"), readDBCredentials = true) match {
       case Success(values) => values
       case Failure(exception) =>
         throw new RuntimeException(s"Unable to load remote secrets from $SecretsFile", exception)
