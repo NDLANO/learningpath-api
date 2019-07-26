@@ -347,7 +347,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
 
     when(searchService.scroll(anyString, anyString)).thenReturn(Success(searchResponse))
 
-    post(s"/search/?search-context=$scrollId") {
+    post(s"/search/", body = s"""{"scrollId":"$scrollId"}""") {
       status should be(200)
     }
 

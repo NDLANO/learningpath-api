@@ -134,11 +134,8 @@ trait LearningpathControllerV2 {
       * @param orFunction Function to execute if no scrollId in parameters (Usually searching)
       * @return A Try with scroll result, or the return of the orFunction (Usually a try with a search result).
       */
-    private def scrollSearchOr(orFunction: => Any): Any = {
-      val language =
-        paramOrDefault(this.language.paramName, Language.AllLanguages)
-
-      paramOrNone(this.scrollId.paramName) match {
+    private def scrollSearchOr(scrollId: Option[String], language: String)(orFunction: => Any): Any = {
+      scrollId match {
         case Some(scroll) =>
           searchService.scroll(scroll, language) match {
             case Success(scrollResult) =>
@@ -218,12 +215,13 @@ trait LearningpathControllerV2 {
           responseMessages (response400, response500)
           authorizations "oauth2")
     ) {
-      scrollSearchOr {
+      val scrollId = paramOrNone(this.scrollId.paramName)
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+
+      scrollSearchOr(scrollId, language) {
         val query = paramOrNone(this.query.paramName)
         val tag = paramOrNone(this.tag.paramName)
         val idList = paramAsListOfLong(this.learningpathIds.paramName)
-        val language =
-          paramOrDefault(this.language.paramName, Language.AllLanguages)
         val sort = paramOrNone(this.sort.paramName)
         val pageSize = paramOrNone(this.pageSize.paramName).flatMap(ps => Try(ps.toInt).toOption)
         val page = paramOrNone(this.pageNo.paramName).flatMap(idx => Try(idx.toInt).toOption)
@@ -249,13 +247,13 @@ trait LearningpathControllerV2 {
           authorizations "oauth2"
           responseMessages (response400, response500))
     ) {
-      scrollSearchOr {
-        val searchParams = extract[SearchParams](request.body)
+      val searchParams = extract[SearchParams](request.body)
+      val language = searchParams.language.getOrElse(Language.AllLanguages)
 
+      scrollSearchOr(searchParams.scrollId, language) {
         val query = searchParams.query
         val tag = searchParams.tag
         val idList = searchParams.ids
-        val language = searchParams.language.getOrElse(Language.AllLanguages)
         val sort = searchParams.sort
         val pageSize = searchParams.pageSize
         val page = searchParams.page

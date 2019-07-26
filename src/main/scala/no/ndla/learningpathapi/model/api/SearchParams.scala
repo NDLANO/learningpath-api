@@ -28,4 +28,8 @@ case class SearchParams(
     @(ApiModelProperty @field)(description =
       "Return all matched learning paths whether they exist on selected language or not.") fallback: Option[Boolean],
     @(ApiModelProperty @field)(description = "Return only learning paths that have the provided verification status.") verificationStatus: Option[
-      String])
+      String],
+    @(ApiModelProperty @field)(
+      description = "A search context retrieved from the response header of a previous search.") scrollId: Option[
+      String]
+)
