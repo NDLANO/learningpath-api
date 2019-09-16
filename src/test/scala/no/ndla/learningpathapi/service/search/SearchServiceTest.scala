@@ -163,7 +163,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   }
 
   test("That getStartAtAndNumResults returns SEARCH_MAX_PAGE_SIZE for value greater than SEARCH_MAX_PAGE_SIZE") {
-    searchService.getStartAtAndNumResults(None, Some(1000)) should equal((0, MaxPageSize))
+    searchService.getStartAtAndNumResults(None, Some(10001)) should equal((0, MaxPageSize))
   }
 
   test(
