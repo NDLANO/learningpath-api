@@ -34,7 +34,7 @@ object LearningpathApiProperties extends LazyLogging {
   val SearchIndex = propOrElse("SEARCH_INDEX_NAME", "learningpaths")
   val SearchDocument = "learningpath"
   val DefaultPageSize = 10
-  val MaxPageSize = 100
+  val MaxPageSize = 10000
   val IndexBulkSize = 1000
 
   val ArticleImportHost =
