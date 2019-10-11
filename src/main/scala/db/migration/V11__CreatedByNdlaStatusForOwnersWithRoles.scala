@@ -34,12 +34,12 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
   override def migrate(context: Context): Unit = {
     val db = DB(context.getConnection)
     db.autoClose(false)
-    getOwnerIdsWithRoles match {
-      case Failure(ex) =>
-        logger.error("Something went wrong during fetching users from auth0.")
-        throw ex
-      case Success(ownerIds) =>
-        db.withinTx { implicit session =>
+    db.withinTx(implicit session => {
+      getOwnerIdsWithRoles match {
+        case Failure(ex) =>
+          logger.error("Something went wrong during fetching users from auth0.")
+          throw ex
+        case Success(ownerIds) if ownerIds.size > 0 =>
           allLearningPathsWithOwnerInList(ownerIds)
             .map { case (id, document) => (id, convertLearningPathDocument(document)) }
             .foreach {
@@ -47,8 +47,9 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
                 println(s"Setting the verificationStatus of $id to '${LearningPathVerificationStatus.CREATED_BY_NDLA}'")
                 updateLearningPath(id, convertedDocument)
             }
-        }
-    }
+        case _ => // No paths to migrate
+      }
+    })
   }
 
   def getAuth0Token: Try[String] = {
@@ -119,10 +120,15 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
     }
   }
 
-  private def getOwnerIdsWithRoles =
-    getAuth0Token.flatMap(token => {
-      getOwnerIdsWithRolesOnPage(token, 0)
-    })
+  private def getOwnerIdsWithRoles(implicit session: DBSession) =
+    if (learningPathCount > 0)
+      getAuth0Token.flatMap(token => { getOwnerIdsWithRolesOnPage(token, 0) })
+    else
+      Success(List.empty)
+
+  def learningPathCount(implicit session: DBSession): Long = {
+    sql"select count(*) from learningpaths".map(rs => rs.long("count")).single.apply().getOrElse(0)
+  }
 
   def allLearningPathsWithOwnerInList(ownerList: List[String])(implicit session: DBSession): Seq[(Long, String)] = {
     sql"select id, document from learningpaths where document->>'owner' in ($ownerList)"

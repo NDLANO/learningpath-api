@@ -23,9 +23,6 @@ import scala.io.Source
 object JettyLauncher extends LazyLogging {
 
   def startServer(port: Int): Server = {
-    val envMap = System.getenv()
-    envMap.asScala.foreach { case (k, v) => System.setProperty(k, v) }
-
     logger.info(
       Source
         .fromInputStream(getClass.getResourceAsStream("/log-license.txt"))
@@ -64,6 +61,9 @@ object JettyLauncher extends LazyLogging {
   }
 
   def main(args: Array[String]) {
+    val envMap = System.getenv()
+    envMap.asScala.foreach { case (k, v) => System.setProperty(k, v) }
+
     val server = startServer(LearningpathApiProperties.ApplicationPort)
     server.join()
   }
