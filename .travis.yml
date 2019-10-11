@@ -7,8 +7,7 @@ notifications:
 matrix:
   fast_finish: true
   include:
-    - name: "Test"
-
+    - name: "Unit tests with pact publication"
       env:
         - META_PASSWORD=""
       services:
@@ -31,6 +30,22 @@ matrix:
           - $HOME/.sbt/boot/
       before_cache:
         # Tricks to avoid unnecessary cache updates
+        - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+        - find $HOME/.sbt -name "*.lock" -delete
+
+    - name: "Pact provider verification tests"
+      script: sbt ++$TRAVIS_SCALA_VERSION "pact:testOnly -- -n PactProviderTest"
+      dist: trusty
+      language: scala
+      scala:
+        - 2.12.7
+      jdk:
+        - openjdk8
+      cache:
+        directories:
+        - $HOME/.ivy2/cache
+        - $HOME/.sbt/boot/
+      before_cache:
         - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
         - find $HOME/.sbt -name "*.lock" -delete
 

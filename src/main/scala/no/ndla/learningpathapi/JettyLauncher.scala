@@ -22,7 +22,7 @@ import scala.io.Source
 
 object JettyLauncher extends LazyLogging {
 
-  def main(args: Array[String]) {
+  def startServer(port: Int): Server = {
     val envMap = System.getenv()
     envMap.asScala.foreach { case (k, v) => System.setProperty(k, v) }
 
@@ -34,7 +34,6 @@ object JettyLauncher extends LazyLogging {
     DBMigrator.migrate(ComponentRegistry.dataSource)
 
     val startMillis = System.currentTimeMillis
-    val port = LearningpathApiProperties.ApplicationPort
 
     val servletContext = new ServletContextHandler
     servletContext.setContextPath("/")
@@ -61,6 +60,11 @@ object JettyLauncher extends LazyLogging {
     val startTime = System.currentTimeMillis - startMillis
     logger.info(s"Started at port $port in $startTime ms.")
 
+    server
+  }
+
+  def main(args: Array[String]) {
+    val server = startServer(LearningpathApiProperties.ApplicationPort)
     server.join()
   }
 }
