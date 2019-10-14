@@ -77,7 +77,7 @@ object TestData {
     List(domain.Description("deskripsjon", Language.DefaultLanguage)),
     None,
     Some(60),
-    domain.LearningPathStatus.PRIVATE,
+    domain.LearningPathStatus.PUBLISHED,
     domain.LearningPathVerificationStatus.CREATED_BY_NDLA,
     today,
     List(domain.LearningPathTags(List("tag"), Language.DefaultLanguage)),
