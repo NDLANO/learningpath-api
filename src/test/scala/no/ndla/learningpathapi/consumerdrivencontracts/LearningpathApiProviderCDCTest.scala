@@ -110,7 +110,7 @@ class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvir
     } else { None }
 
     val consumersToVerify = List(
-      TaggedConsumer("search-api", List("NDLANO/Issues#1887-pact-publication")) // TODO: master
+      TaggedConsumer("search-api", List("master"))
     )
 
     val broker = for {
