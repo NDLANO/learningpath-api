@@ -16,7 +16,7 @@ notifications:
 matrix:
   fast_finish: true
   include:
-    - name: "Unit tests with pact publication"
+    - name: "Unit tests"
 
       language: scala
       dist: trusty
