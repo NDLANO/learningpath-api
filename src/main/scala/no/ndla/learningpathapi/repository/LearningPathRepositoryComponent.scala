@@ -377,8 +377,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
 
     def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
-      sql"select count(*) from ${LearningPath.as(lp)} left join ${LearningStep
-        .as(ls)} on ${lp.id} = ${ls.learningPathId}"
+      sql"select count(*) from ${LearningPath.as(lp)}"
         .map(rs => rs.long("count"))
         .single
         .apply()

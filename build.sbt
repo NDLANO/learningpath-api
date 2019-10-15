@@ -24,11 +24,26 @@ appProperties := {
   prop
 }
 
-lazy val ITest = config("it") extend (Test)
+import com.itv.scalapact.plugin._
+val pactVersion = "2.3.9"
+
+val pactTestFramework = Seq(
+  "com.itv" %% "scalapact-circe-0-9" % pactVersion % "test",
+  "com.itv" %% "scalapact-http4s-0-18" % pactVersion % "test",
+  "com.itv" %% "scalapact-scalatest" % pactVersion % "test"
+)
+
+lazy val PactTest = config("pact") extend Test
 
 lazy val learningpath_api = (project in file("."))
-  .configs(ITest)
-  .settings(inConfig(ITest)(Defaults.testTasks): _*)
+  .configs(PactTest)
+  .settings(inConfig(PactTest)(Defaults.testTasks))
+  .settings(
+    // Since pactTest gets its options from Test configuration, the 'Test' (default) config won't run PactProviderTests
+    // To run all tests use pact config ('sbt pact:test')
+    Test / testOptions := Seq(Tests.Argument("-l", "PactProviderTest")),
+    PactTest / testOptions := Seq.empty
+  )
   .settings(
     name := "learningpath-api",
     organization := appProperties.value.getProperty("NDLAOrganization"),
@@ -36,7 +51,7 @@ lazy val learningpath_api = (project in file("."))
     scalaVersion := Scalaversion,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-deprecation"),
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= pactTestFramework ++ Seq(
       "ndla" %% "network" % "0.38",
       "ndla" %% "mapping" % "0.10",
       "joda-time" % "joda-time" % "2.10",
@@ -78,6 +93,7 @@ lazy val learningpath_api = (project in file("."))
   )
   .enablePlugins(DockerPlugin)
   .enablePlugins(JettyPlugin)
+  .enablePlugins(ScalaPactPlugin)
 
 assemblyJarName in assembly := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")

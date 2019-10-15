@@ -9,8 +9,10 @@
 package no.ndla.learningpathapi
 
 import no.ndla.network.secrets.PropertyKeys
+import org.joda.time.{DateTime, DateTimeUtils}
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
+
 import scala.util.Properties.setProp
 
 abstract class UnitSuite
@@ -40,4 +42,10 @@ abstract class UnitSuite
   setProp(PropertyKeys.MetaServerKey, "127.0.0.1")
   setProp(PropertyKeys.MetaPortKey, "5432")
   setProp(PropertyKeys.MetaSchemaKey, "learningpathapi_test")
+
+  def withFrozenTime(time: DateTime = new DateTime())(toExecute: => Any) = {
+    DateTimeUtils.setCurrentMillisFixed(time.getMillis)
+    toExecute
+    DateTimeUtils.setCurrentMillisSystem()
+  }
 }
