@@ -141,7 +141,7 @@ trait SearchConverterServiceComponent {
         learningPath.lastUpdated,
         defaultTitle.map(_.title),
         asSearchableTags(learningPath.tags),
-        learningPath.learningsteps.map(asSearchableLearningStep).toList,
+        learningPath.learningsteps.getOrElse(Seq.empty).map(asSearchableLearningStep).toList,
         converterService.asApiCopyright(learningPath.copyright),
         learningPath.isBasedOn
       )

@@ -119,9 +119,13 @@ trait ConverterService {
           .map(asApiLearningPathTags)
           .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
         val learningSteps = lp.learningsteps
-          .flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage))
-          .toList
-          .sortBy(_.seqNo)
+          .map(lsteps => {
+            lsteps
+              .flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage))
+              .toList
+              .sortBy(_.seqNo)
+          })
+          .getOrElse(Seq.empty)
 
         val message = lp.message.filter(_ => lp.canEdit(userInfo)).map(asApiMessage)
         val owner = Some(lp.owner).filter(_ => userInfo.isAdmin)
@@ -239,7 +243,8 @@ trait ConverterService {
         .toSeq
 
       val newSeqNo =
-        if (learningPath.learningsteps.isEmpty) 0 else learningPath.learningsteps.map(_.seqNo).max + 1
+        if (learningPath.learningsteps.isEmpty) 0
+        else learningPath.learningsteps.getOrElse(Seq.empty).map(_.seqNo).max + 1
 
       domain.LearningStep(
         None,
@@ -264,11 +269,11 @@ trait ConverterService {
 
     def insertLearningStep(learningPath: LearningPath, updatedStep: LearningStep, user: UserInfo): LearningPath = {
       val status = mergeStatus(learningPath, user)
-      val existingLearningSteps = learningPath.learningsteps.filterNot(_.id == updatedStep.id)
+      val existingLearningSteps = learningPath.learningsteps.getOrElse(Seq.empty).filterNot(_.id == updatedStep.id)
       val steps =
         if (StepStatus.ACTIVE == updatedStep.status) existingLearningSteps :+ updatedStep else existingLearningSteps
 
-      learningPath.copy(learningsteps = steps, status = status, lastUpdated = clock.now())
+      learningPath.copy(learningsteps = Some(steps), status = status, lastUpdated = clock.now())
     }
 
     def mergeLearningSteps(existing: LearningStep, updated: UpdatedLearningStepV2): LearningStep = {
@@ -351,8 +356,8 @@ trait ConverterService {
         lastUpdated = clock.now(),
         owner = user.userId,
         copyright = copyright,
-        learningsteps =
-          existing.learningsteps.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)),
+        learningsteps = existing.learningsteps.map(ls =>
+          ls.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None))),
         tags = tags,
         coverPhotoId = coverPhotoId,
         duration = duration
@@ -380,7 +385,7 @@ trait ConverterService {
         domainTags,
         user.userId,
         converterService.asCopyright(newLearningPath.copyright),
-        List()
+        Some(Seq.empty)
       )
     }
 
@@ -410,7 +415,8 @@ trait ConverterService {
         .map(asApiLearningPathTags)
         .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
       val introduction =
-        findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps), Some(Language.AllLanguages))
+        findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps.getOrElse(Seq.empty)),
+                                   Some(Language.AllLanguages))
           .getOrElse(api.Introduction("", DefaultLanguage))
 
       val message = learningpath.message.filter(_ => learningpath.canEdit(user)).map(_.message)

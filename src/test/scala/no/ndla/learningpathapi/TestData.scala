@@ -83,7 +83,7 @@ object TestData {
     List(domain.LearningPathTags(List("tag"), Language.DefaultLanguage)),
     "me",
     domain.Copyright(CC_BY.toString, List.empty),
-    List(domainLearningStep1, domainLearningStep2)
+    Some(List(domainLearningStep1, domainLearningStep2))
   )
 
 }

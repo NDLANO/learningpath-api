@@ -79,8 +79,12 @@ object LearningStep extends SQLSyntaxSupport[LearningStep] {
         ignore("externalId") orElse
         ignore("revision"))
 
-  implicit val formats = org.json4s.DefaultFormats + new EnumNameSerializer(StepType) + new EnumNameSerializer(
-    StepStatus) + new EnumNameSerializer(EmbedType) + JSonSerializer
+  implicit val formats =
+    org.json4s.DefaultFormats +
+      new EnumNameSerializer(StepType) +
+      new EnumNameSerializer(StepStatus) +
+      new EnumNameSerializer(EmbedType) +
+      JSonSerializer
   override val tableName = "learningsteps"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 

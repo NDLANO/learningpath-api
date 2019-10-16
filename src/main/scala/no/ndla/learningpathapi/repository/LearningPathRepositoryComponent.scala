@@ -40,6 +40,9 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     implicit val formats = org.json4s.DefaultFormats +
       LearningPath.JSonSerializer +
       LearningStep.JSonSerializer +
+      new EnumNameSerializer(StepType) +
+      new EnumNameSerializer(StepStatus) +
+      new EnumNameSerializer(EmbedType) +
       new EnumNameSerializer(LearningPathStatus) +
       new EnumNameSerializer(LearningPathVerificationStatus) +
       new EnumNameSerializer(StepType) ++
@@ -114,9 +117,11 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         sql"insert into learningpaths(external_id, document, revision) values(${learningpath.externalId}, $dataObject, $startRevision)"
           .updateAndReturnGeneratedKey()
           .apply
-      val learningSteps = learningpath.learningsteps.map(learningStep => {
-        insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
-      })
+
+      val learningSteps = learningpath.learningsteps.map(lsteps =>
+        lsteps.map(learningStep => {
+          insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
+        }))
 
       logger.info(s"Inserted learningpath with id $learningPathId")
       learningpath.copy(id = Some(learningPathId), revision = Some(startRevision), learningsteps = learningSteps)
@@ -134,9 +139,10 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         sql"insert into learningpaths(external_id, document, revision, import_id) values(${learningpath.externalId}, $dataObject, $startRevision, $importIdUUID)"
           .updateAndReturnGeneratedKey()
           .apply
-      val learningSteps = learningpath.learningsteps.map(learningStep => {
-        insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
-      })
+      val learningSteps = learningpath.learningsteps.map(lsteps =>
+        lsteps.map(learningStep => {
+          insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
+        }))
 
       logger.info(s"Inserted learningpath with id $learningPathId")
       learningpath.copy(id = Some(learningPathId), revision = Some(startRevision), learningsteps = learningSteps)
@@ -267,7 +273,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = learningsteps)
+          learningpath.copy(learningsteps = Some(learningsteps))
         }
         .toList()
         .apply()
@@ -329,7 +335,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE)))
         }
         .list
         .apply()
@@ -343,7 +349,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE)))
         }
         .single
         .apply()
@@ -364,7 +370,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lps(lp).resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = learningsteps.filter(_.status == StepStatus.ACTIVE))
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE)))
         }
         .list
         .apply()

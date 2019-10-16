@@ -144,7 +144,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     List(),
     PUBLISHED_OWNER.userId,
     copyright,
-    STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil
+    Some(STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   )
 
   val PUBLISHED_LEARNINGPATH_NO_STEPS = domain.LearningPath(
@@ -162,7 +162,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     List(),
     PUBLISHED_OWNER.userId,
     copyright,
-    List()
+    None
   )
 
   val PRIVATE_LEARNINGPATH = domain.LearningPath(
@@ -180,7 +180,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     List(),
     PRIVATE_OWNER.userId,
     copyright,
-    STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil
+    Some(STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   )
 
   val PRIVATE_LEARNINGPATH_NO_STEPS = domain.LearningPath(
@@ -198,7 +198,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     List(),
     PRIVATE_OWNER.userId,
     copyright,
-    List()
+    None
   )
 
   val DELETED_LEARNINGPATH = domain.LearningPath(
@@ -216,7 +216,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     List(),
     PRIVATE_OWNER.userId,
     copyright,
-    STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil
+    Some(STEP1 :: STEP2 :: STEP3 :: STEP4 :: STEP5 :: STEP6 :: Nil)
   )
   val NEW_PRIVATE_LEARNINGPATHV2 = NewLearningPathV2("Tittel", "Beskrivelse", None, Some(1), List(), "nb", apiCopyright)
   val NEW_COPIED_LEARNINGPATHV2 = NewCopyLearningPathV2("Tittel", Some("Beskrivelse"), "nb", None, Some(1), None, None)
@@ -1054,7 +1054,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     val updatedPath = PUBLISHED_LEARNINGPATH.copy(
       status = LearningPathStatus.UNLISTED,
       lastUpdated = newDate,
-      learningsteps = PUBLISHED_LEARNINGPATH.learningsteps.tail ++ List(stepWithBadTitle)
+      learningsteps = Some(PUBLISHED_LEARNINGPATH.learningsteps.get.tail ++ List(stepWithBadTitle))
     )
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
@@ -1106,7 +1106,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     service.updateLearningStepV2(PRIVATE_ID, STEP1.id.get, updatedLs, PRIVATE_OWNER)
     val updatedPath = PRIVATE_LEARNINGPATH.copy(
       lastUpdated = newDate,
-      learningsteps = PRIVATE_LEARNINGPATH.learningsteps.tail ++ List(stepWithBadTitle)
+      learningsteps = Some(PRIVATE_LEARNINGPATH.learningsteps.get.tail ++ List(stepWithBadTitle))
     )
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
@@ -1135,7 +1135,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
                                  PUBLISHED_OWNER.copy(roles = Set(LearningPathRole.ADMIN)))
     val updatedPath = PUBLISHED_LEARNINGPATH.copy(
       lastUpdated = newDate,
-      learningsteps = PUBLISHED_LEARNINGPATH.learningsteps.tail ++ List(stepWithBadTitle)
+      learningsteps = Some(PUBLISHED_LEARNINGPATH.learningsteps.get.tail ++ List(stepWithBadTitle))
     )
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
@@ -1280,7 +1280,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     when(clock.now()).thenReturn(now)
 
     val toCopy =
-      PUBLISHED_LEARNINGPATH_NO_STEPS.copy(learningsteps = STEP1 :: Nil)
+      PUBLISHED_LEARNINGPATH_NO_STEPS.copy(learningsteps = Some(STEP1 :: Nil))
 
     when(learningPathRepository.withId(PUBLISHED_ID))
       .thenReturn(Some(PUBLISHED_LEARNINGPATH))
@@ -1299,7 +1299,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       owner = PRIVATE_OWNER.userId,
       lastUpdated = now,
       learningsteps = PUBLISHED_LEARNINGPATH.learningsteps.map(
-        _.copy(id = None, revision = None, externalId = None, learningPathId = None))
+        _.map(_.copy(id = None, revision = None, externalId = None, learningPathId = None)))
     )
 
     verify(learningPathRepository, times(1))
