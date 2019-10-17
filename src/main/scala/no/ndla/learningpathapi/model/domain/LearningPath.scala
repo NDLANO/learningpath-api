@@ -35,7 +35,7 @@ case class LearningPath(id: Option[Long],
                         tags: Seq[LearningPathTags],
                         owner: String,
                         copyright: Copyright,
-                        learningsteps: Seq[LearningStep] = Nil,
+                        learningsteps: Option[Seq[LearningStep]] = None,
                         message: Option[Message] = None) {
 
   def isPrivate: Boolean = {
@@ -74,10 +74,12 @@ case class LearningPath(id: Option[Long],
 
   def canEdit(userInfo: UserInfo): Boolean = canEditLearningpath(userInfo).isSuccess
 
+  def lsLength = learningsteps.map(_.length).getOrElse(0)
+
   def validateSeqNo(seqNo: Int): Unit = {
-    if (seqNo < 0 || seqNo > learningsteps.length - 1) {
+    if (seqNo < 0 || seqNo > lsLength - 1) {
       throw new ValidationException(
-        errors = List(ValidationMessage("seqNo", s"seqNo must be between 0 and ${learningsteps.length - 1}")))
+        errors = List(ValidationMessage("seqNo", s"seqNo must be between 0 and ${lsLength - 1}")))
     }
   }
 

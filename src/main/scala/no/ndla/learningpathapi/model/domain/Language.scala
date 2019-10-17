@@ -86,7 +86,7 @@ object Language {
       domainLearningpath.description,
       domainLearningpath.tags
     ) ++
-      domainLearningpath.learningsteps.flatMap(findSupportedLanguages)
+      domainLearningpath.learningsteps.getOrElse(Seq.empty).flatMap(findSupportedLanguages)
 
     languages.distinct
   }

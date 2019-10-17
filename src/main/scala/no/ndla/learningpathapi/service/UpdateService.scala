@@ -248,11 +248,13 @@ trait UpdateService {
                 val (updatedPath, updatedStep) = inTransaction { implicit session =>
                   val updatedStep = learningPathRepository.updateLearningStep(stepToUpdate)
 
-                  val newLearningSteps = learningPath.learningsteps.filterNot(
-                    step =>
-                      stepsWithChangedSeqNo
-                        .map(_.id)
-                        .contains(step.id)) ++ stepsWithChangedSeqNo
+                  val newLearningSteps = learningPath.learningsteps
+                    .getOrElse(Seq.empty)
+                    .filterNot(
+                      step =>
+                        stepsWithChangedSeqNo
+                          .map(_.id)
+                          .contains(step.id)) ++ stepsWithChangedSeqNo
 
                   val lp = converterService.insertLearningSteps(learningPath, newLearningSteps, owner)
                   val updatedPath = learningPathRepository.update(lp)
@@ -306,7 +308,9 @@ trait UpdateService {
 
                   val from = learningStep.seqNo
                   val to = seqNo
-                  val toUpdate = learningPath.learningsteps.filter(step => rangeToUpdate(from, to).contains(step.seqNo))
+                  val toUpdate = learningPath.learningsteps
+                    .getOrElse(Seq.empty)
+                    .filter(step => rangeToUpdate(from, to).contains(step.seqNo))
 
                   def addOrSubtract(seqNo: Int): Int = if (from > to) seqNo + 1 else seqNo - 1
 

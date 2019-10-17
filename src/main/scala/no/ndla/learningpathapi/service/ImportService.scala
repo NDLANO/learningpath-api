@@ -61,7 +61,7 @@ trait ImportService {
                 .flatMap(data => learningPathRepository.withExternalId(data.mainPackage.packageId.toString))
                 .map(existingLP => {
                   val pathId = existingLP.id
-                  val stepIds = existingLP.learningsteps.flatMap(_.id)
+                  val stepIds = existingLP.learningsteps.getOrElse(Seq.empty).flatMap(_.id)
                   logger.info(
                     s"Failed to import learningpath with node id $nodeId. Deleting previously imported learningpath with id $pathId and steps ${stepIds
                       .mkString(",")}")
@@ -101,16 +101,17 @@ trait ImportService {
         val learningPathWithOldEmbedUrls =
           asLearningPath(mainImport, coverPhoto, clientId)
 
-        val steps = learningPathWithOldEmbedUrls.learningsteps.map {
-          case l: LearningStep if l.embedUrl.nonEmpty =>
-            val embedUrls = l.embedUrl.map(embed => {
-              val path =
-                embedUrlMap.get(embed.url).flatten.map(p => s"/${embed.language}$p")
-              embed.copy(url = path.getOrElse(embed.url)) // Fall back on old url if not ndla-url
-            })
-            l.copy(embedUrl = embedUrls)
-          case l => l
-        }
+        val steps = learningPathWithOldEmbedUrls.learningsteps.map(lsteps =>
+          lsteps.map {
+            case l: LearningStep if l.embedUrl.nonEmpty =>
+              val embedUrls = l.embedUrl.map(embed => {
+                val path =
+                  embedUrlMap.get(embed.url).flatten.map(p => s"/${embed.language}$p")
+                embed.copy(url = path.getOrElse(embed.url)) // Fall back on old url if not ndla-url
+              })
+              l.copy(embedUrl = embedUrls)
+            case l => l
+        })
 
         Success(learningPathWithOldEmbedUrls.copy(learningsteps = steps))
       }
@@ -122,15 +123,17 @@ trait ImportService {
         case Some(existingLearningPath) =>
           val updatedLp = Try(
             learningPathRepository.updateWithImportId(asLearningPath(existingLearningPath, learningpath), importId))
-          learningpath.learningsteps.foreach(learningStep => {
-            learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId,
-                                                                                existingLearningPath.id) match {
-              case None =>
-                learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
-              case Some(existingLearningStep) =>
-                learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
-            }
-          })
+          learningpath.learningsteps
+            .getOrElse(Seq.empty)
+            .foreach(learningStep => {
+              learningPathRepository.learningStepWithExternalIdAndForLearningPath(learningStep.externalId,
+                                                                                  existingLearningPath.id) match {
+                case None =>
+                  learningPathRepository.insertLearningStep(learningStep.copy(learningPathId = existingLearningPath.id))
+                case Some(existingLearningStep) =>
+                  learningPathRepository.updateLearningStep(asLearningStep(existingLearningStep, learningStep))
+              }
+            })
           updatedLp
       }
     }
@@ -324,7 +327,7 @@ trait ImportService {
         tags,
         clientId,
         Copyright(mainPackage.license, authors),
-        learningSteps
+        Some(learningSteps)
       )
     }
 

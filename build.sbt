@@ -11,7 +11,7 @@ val MockitoVersion = "2.23.0"
 val Elastic4sVersion = "6.3.7"
 val JacksonVersion = "2.9.9.3"
 val ElasticsearchVersion = "6.3.2"
-val Json4SVersion = "3.5.4"
+val Json4SVersion = "3.6.7"
 val FlywayVersion = "5.2.0"
 val PostgresVersion = "42.2.5"
 val HikariConnectionPoolVersion = "3.2.0"
@@ -52,7 +52,7 @@ lazy val learningpath_api = (project in file("."))
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-deprecation"),
     libraryDependencies ++= pactTestFramework ++ Seq(
-      "ndla" %% "network" % "0.38",
+      "ndla" %% "network" % "0.41",
       "ndla" %% "mapping" % "0.10",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,

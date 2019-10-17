@@ -194,7 +194,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val res = importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
     res.isSuccess should be(true)
 
-    res.get.learningsteps.head.embedUrl should equal(
+    res.get.learningsteps.get.head.embedUrl should equal(
       Seq(EmbedUrl(s"/nb/subjects${taxonomyResource.path}", "nb", EmbedType.OEmbed)))
 
     verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
@@ -292,7 +292,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       .thenReturn(Memoize[String, Set[ArticleMigrationContent]](memoizeFunc))
 
     val Success(res) = importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
-    res.learningsteps.head.embedUrl should equal(Seq(EmbedUrl("/nb/article/1", "nb", EmbedType.OEmbed)))
+    res.learningsteps.get.head.embedUrl should equal(Seq(EmbedUrl("/nb/article/1", "nb", EmbedType.OEmbed)))
   }
 
   test("That duration is calculated correctly") {
@@ -409,7 +409,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       List(),
       "",
       copyright,
-      Seq(learningStep)
+      Some(Seq(learningStep))
     )
     val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
 
@@ -465,7 +465,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     when(keywordsService.forNodeId(any[Long])).thenReturn(Seq.empty)
     val learningPath = importService.asLearningPath(pakke, None, CLIENT_ID)
 
-    learningPath.learningsteps.head.license should be(None)
+    learningPath.learningsteps.get.head.license should be(None)
   }
 
   test("That imported learningPaths only include tags in relevant languages") {

@@ -280,8 +280,8 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     learningPath.id.isDefined should be(true)
     val savedLearningPath = repository.withId(learningPath.id.get)
     savedLearningPath.isDefined should be(true)
-    savedLearningPath.get.learningsteps.size should be(2)
-    savedLearningPath.get.learningsteps
+    savedLearningPath.get.learningsteps.get.size should be(2)
+    savedLearningPath.get.learningsteps.get
       .forall(_.status == StepStatus.ACTIVE) should be(true)
 
     repository.deletePath(learningPath.id.get)
@@ -296,7 +296,7 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     )
 
     val learningPath =
-      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PUBLISHED))
+      repository.insert(DefaultLearningPath.copy(learningsteps = Some(steps), status = LearningPathStatus.PUBLISHED))
 
     val page1 = repository.getLearningPathByPage(2, 0)
     val page2 = repository.getLearningPathByPage(2, 2)
@@ -316,11 +316,11 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     )
 
     val learningPath1 =
-      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PRIVATE))
+      repository.insert(DefaultLearningPath.copy(learningsteps = Some(steps), status = LearningPathStatus.PRIVATE))
     val learningPath2 =
-      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PRIVATE))
+      repository.insert(DefaultLearningPath.copy(learningsteps = Some(steps), status = LearningPathStatus.PRIVATE))
     val learningPath3 =
-      repository.insert(DefaultLearningPath.copy(learningsteps = steps, status = LearningPathStatus.PUBLISHED))
+      repository.insert(DefaultLearningPath.copy(learningsteps = Some(steps), status = LearningPathStatus.PUBLISHED))
 
     val page1 = repository.getLearningPathByPage(2, 0)
     val page2 = repository.getLearningPathByPage(2, 2)
@@ -342,7 +342,7 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     )
 
     val path = DefaultLearningPath.copy(
-      learningsteps = steps,
+      learningsteps = Some(steps),
       status = LearningPathStatus.PRIVATE,
       owner = "123",
       message = Some(Message("this is message", "kwawk", clock.now()))

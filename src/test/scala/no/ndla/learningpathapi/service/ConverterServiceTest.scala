@@ -82,7 +82,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     List(LearningPathTags(List("tag"), Language.DefaultLanguage)),
     "me",
     Copyright(CC_BY.toString, List.empty),
-    List.empty
+    None
   )
 
   override def beforeEach() = {
