@@ -89,6 +89,6 @@ object ComponentRegistry
   lazy val titleValidator = new TitleValidator
   lazy val learningPathValidator = new LearningPathValidator
   lazy val learningStepValidator = new LearningStepValidator
-  lazy val e4sClient: NdlaE4sClient = Elastic4sClientFactory.getClient()
+  var e4sClient: NdlaE4sClient = Elastic4sClientFactory.getClient()
   lazy val searchApiClient = new SearchApiClient
 }

@@ -81,7 +81,7 @@ trait TestEnvironment
   val learningStepValidator: LearningStepValidator = mock[LearningStepValidator]
   val learningPathValidator: LearningPathValidator = mock[LearningPathValidator]
   val titleValidator: TitleValidator = mock[TitleValidator]
-  val e4sClient: NdlaE4sClient = mock[NdlaE4sClient]
+  var e4sClient: NdlaE4sClient = mock[NdlaE4sClient]
   val searchApiClient: SearchApiClient = mock[SearchApiClient]
 
   def resetMocks(): Unit = {

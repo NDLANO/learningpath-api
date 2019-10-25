@@ -11,11 +11,20 @@ import java.net.Socket
 
 import com.zaxxer.hikari.HikariDataSource
 import no.ndla.learningpathapi.integration.DataSource
+import org.testcontainers.elasticsearch.ElasticsearchContainer
 import scalikejdbc._
 
 import scala.util.{Success, Try}
 
 trait IntegrationTestEnvironment extends TestEnvironment {
+
+  val elasticSearchContainer = Try {
+    val esVersion = "6.3.2"
+    val c = new ElasticsearchContainer(s"docker.elastic.co/elasticsearch/elasticsearch:$esVersion")
+    c.start()
+    c
+  }
+  val elasticSearchHost = elasticSearchContainer.map(c => s"http://${c.getHttpHostAddress}")
 
   def databaseIsAvailable(implicit session: DBSession = ReadOnlyAutoSession): Boolean = {
     val version = Try(
