@@ -8,25 +8,26 @@
 
 package no.ndla.learningpathapi.service.search
 
-import java.nio.file.{Files, Path}
-
-import com.sksamuel.elastic4s.embedded.{InternalLocalNode, LocalNode}
 import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPageSize}
-import no.ndla.learningpathapi.integration.NdlaE4sClient
+import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{IntegrationTestEnvironment, LearningpathApiProperties, TestEnvironment, UnitSuite}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
+import org.scalatest.Outcome
 
 import scala.util.Success
 
-class SearchServiceTest extends UnitSuite with TestEnvironment {
-  val tmpDir: Path = Files.createTempDirectory(this.getClass.getName)
-  val localNodeSettings: Map[String, String] = LocalNode.requiredSettings(this.getClass.getName, tmpDir.toString)
-  val localNode: InternalLocalNode = LocalNode(localNodeSettings)
-  override val e4sClient: NdlaE4sClient = NdlaE4sClient(localNode.client(true))
+class SearchServiceTest extends UnitSuite with IntegrationTestEnvironment {
+
+  e4sClient = Elastic4sClientFactory.getClient(elasticSearchHost.get)
+  // Skip tests if no docker environment available
+  override def withFixture(test: NoArgTest): Outcome = {
+    assume(elasticSearchContainer.isSuccess)
+    super.withFixture(test)
+  }
 
   override val searchConverterService: SearchConverterService =
     new SearchConverterService
@@ -60,7 +61,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
   val UnrelatedId = 4
   val EnglandoId = 5
 
-  override def beforeAll(): Unit = {
+  override def beforeAll(): Unit = if (elasticSearchContainer.isSuccess) {
     searchIndexService.createIndexWithName(LearningpathApiProperties.SearchIndex)
 
     doReturn(api.Author("Forfatter", "En eier"), Nil: _*).when(converterService).asAuthor(any[NdlaUserName])
@@ -126,7 +127,7 @@ class SearchServiceTest extends UnitSuite with TestEnvironment {
     blockUntil(() => searchService.countDocuments() == 5)
   }
 
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit = if (elasticSearchContainer.isSuccess) {
     searchIndexService.deleteIndexWithName(Some(LearningpathApiProperties.SearchIndex))
   }
 
