@@ -242,9 +242,11 @@ trait ConverterService {
         .map(converterService.asDomainEmbedUrl(_, newLearningStep.language))
         .toSeq
 
+      val listOfLearningSteps = learningPath.learningsteps.getOrElse(Seq.empty)
+
       val newSeqNo =
-        if (learningPath.learningsteps.isEmpty) 0
-        else learningPath.learningsteps.getOrElse(Seq.empty).map(_.seqNo).max + 1
+        if (listOfLearningSteps.isEmpty) 0
+        else listOfLearningSteps.map(_.seqNo).max + 1
 
       domain.LearningStep(
         None,

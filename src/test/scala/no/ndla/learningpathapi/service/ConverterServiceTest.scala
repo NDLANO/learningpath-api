@@ -13,9 +13,9 @@ import java.util.Date
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
-import no.ndla.learningpathapi.model.api.{CoverPhoto, NewCopyLearningPathV2, NewLearningPathV2}
+import no.ndla.learningpathapi.model.api.{CoverPhoto, NewCopyLearningPathV2, NewLearningPathV2, NewLearningStepV2}
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{UnitSuite, UnitTestEnvironment}
+import no.ndla.learningpathapi.{TestData, UnitSuite, UnitTestEnvironment}
 import no.ndla.mapping.License.CC_BY
 import no.ndla.network.ApplicationUrl
 import org.joda.time.DateTime
@@ -456,5 +456,21 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       LearningPathVerificationStatus.CREATED_BY_NDLA)
     service.newLearningPath(newLp, UserInfo("Me", Set(LearningPathRole.WRITE))).verificationStatus should be(
       LearningPathVerificationStatus.CREATED_BY_NDLA)
+  }
+
+  test("asDomainLearningStep should work with learningpaths no matter the amount of steps") {
+    val newLs =
+      NewLearningStepV2("Tittel", Some("Beskrivelse"), "nb", Some(api.EmbedUrlV2("", "oembed")), true, "TEXT", None)
+    val lpId = 5591
+    val lp1 = TestData.sampleDomainLearningPath.copy(id = Some(lpId), learningsteps = None)
+    val lp2 = TestData.sampleDomainLearningPath.copy(id = Some(lpId), learningsteps = Some(Seq.empty))
+    val lp3 = TestData.sampleDomainLearningPath.copy(
+      id = Some(lpId),
+      learningsteps =
+        Some(Seq(TestData.domainLearningStep1.copy(seqNo = 0), TestData.domainLearningStep2.copy(seqNo = 1))))
+
+    service.asDomainLearningStep(newLs, lp1).seqNo should be(0)
+    service.asDomainLearningStep(newLs, lp2).seqNo should be(0)
+    service.asDomainLearningStep(newLs, lp3).seqNo should be(2)
   }
 }
