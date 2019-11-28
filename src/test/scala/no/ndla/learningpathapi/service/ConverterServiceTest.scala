@@ -15,7 +15,7 @@ import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.{CoverPhoto, NewCopyLearningPathV2, NewLearningPathV2, NewLearningStepV2}
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{TestData, UnitSuite, UnitTestEnvironment}
+import no.ndla.learningpathapi.{LearningpathApiProperties, TestData, UnitSuite, UnitTestEnvironment}
 import no.ndla.mapping.License.CC_BY
 import no.ndla.network.ApplicationUrl
 import org.joda.time.DateTime
@@ -292,11 +292,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     val httpServletRequest = mock[HttpServletRequest]
     when(httpServletRequest.getServerPort).thenReturn(80)
     when(httpServletRequest.getScheme).thenReturn("http")
-    when(httpServletRequest.getServerName).thenReturn("localhost")
+    when(httpServletRequest.getServerName).thenReturn("api-gateway.ndla-local")
     when(httpServletRequest.getServletPath).thenReturn("/servlet")
 
     ApplicationUrl.set(httpServletRequest)
-    service.createUrlToLearningPath(apiLearningPath.copy(status = "PRIVATE")) should equal("http://localhost/servlet/1")
+    service.createUrlToLearningPath(apiLearningPath.copy(status = "PRIVATE")) should equal(
+      s"${LearningpathApiProperties.Domain}/servlet/1")
   }
 
   test("That asApiIntroduction returns an introduction for a given step") {
