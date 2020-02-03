@@ -366,7 +366,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("asDomainEmbed should only use context path if hostname is ndla-frontend but full url when not") {
-    val url = "https://beta.ndla.no/subjects/resource:1234?a=test"
+    val url = "https://ndla.no/subjects/resource:1234?a=test"
     service.asDomainEmbedUrl(api.EmbedUrlV2(url, "oembed"), "nb") should equal(
       EmbedUrl(s"/subjects/resource:1234?a=test", "nb", EmbedType.OEmbed))
 
