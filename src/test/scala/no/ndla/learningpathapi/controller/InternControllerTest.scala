@@ -60,7 +60,7 @@ class InternControllerTest extends UnitSuite with TestEnvironment with ScalatraF
       status should equal(500)
       body should equal("Failed to find indexes")
     }
-    verify(searchIndexService, never()).deleteIndexWithName(any[Option[String]])
+    verify(searchIndexService, never).deleteIndexWithName(any[Option[String]])
   }
 
   test(

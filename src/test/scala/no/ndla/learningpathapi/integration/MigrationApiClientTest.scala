@@ -60,7 +60,7 @@ class MigrationApiClientTest extends UnitSuite with UnitTestEnvironment {
         any[Formats])).thenReturn(Success(mainPackage))
 
     val result = migrationApiClient.getLearningPath("abc")
-    result should be a 'success
+    result.isSuccess should be(true)
     result.success.value should equal(mainPackage)
   }
 

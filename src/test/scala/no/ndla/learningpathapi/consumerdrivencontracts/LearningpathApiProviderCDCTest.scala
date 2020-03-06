@@ -36,8 +36,8 @@ object PactProviderTest extends Tag("PactProviderTest")
 
 class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvironment {
 
-  import com.itv.scalapact.http4s18._
-  import com.itv.scalapact.circe09._
+  import com.itv.scalapact.http4s21._
+  import com.itv.scalapact.circe13._
 
   def findFreePort: Int = {
     def closeQuietly(socket: ServerSocket): Unit = {

@@ -1,13 +1,13 @@
 import java.util.Properties
 
-val Scalaversion = "2.12.10"
-val Scalatraversion = "2.6.5"
-val ScalaLoggingVersion = "3.9.0"
-val ScalaTestVersion = "3.0.5"
+val Scalaversion = "2.13.1"
+val Scalatraversion = "2.7.0"
+val ScalaLoggingVersion = "3.9.2"
+val ScalaTestVersion = "3.1.1"
 val Log4JVersion = "2.11.1"
-val Jettyversion = "9.4.18.v20190429"
+val Jettyversion = "9.4.27.v20200227"
 val AwsSdkversion = "1.11.434"
-val MockitoVersion = "2.23.0"
+val MockitoVersion = "1.11.4"
 val Elastic4sVersion = "6.7.4"
 val JacksonVersion = "2.10.2"
 val ElasticsearchVersion = "6.8.6"
@@ -26,11 +26,11 @@ appProperties := {
 }
 
 import com.itv.scalapact.plugin._
-val pactVersion = "2.3.9"
+val pactVersion = "2.3.16"
 
 val pactTestFramework = Seq(
-  "com.itv" %% "scalapact-circe-0-9" % pactVersion % "test",
-  "com.itv" %% "scalapact-http4s-0-18" % pactVersion % "test",
+  "com.itv" %% "scalapact-circe-0-13" % pactVersion % "test",
+  "com.itv" %% "scalapact-http4s-0-21" % pactVersion % "test",
   "com.itv" %% "scalapact-scalatest" % pactVersion % "test"
 )
 
@@ -53,21 +53,21 @@ lazy val learningpath_api = (project in file("."))
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     scalacOptions := Seq("-target:jvm-1.8", "-deprecation"),
     libraryDependencies ++= pactTestFramework ++ Seq(
-      "ndla" %% "network" % "0.42",
-      "ndla" %% "mapping" % "0.10",
+      "ndla" %% "network" % "0.43",
+      "ndla" %% "mapping" % "0.13",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
+      "org.scalatra" %% "scalatra-json" % Scalatraversion,
+      "org.scalatra" %% "scalatra-swagger" % Scalatraversion,
       "org.eclipse.jetty" % "jetty-webapp" % Jettyversion % "container;compile",
       "org.eclipse.jetty" % "jetty-plus" % Jettyversion % "container",
       "javax.servlet" % "javax.servlet-api" % "4.0.1" % "container;provided;test",
-      "org.scalatra" %% "scalatra-json" % Scalatraversion,
       "org.json4s" %% "json4s-native" % Json4SVersion,
       "org.json4s" %% "json4s-ast" % Json4SVersion,
       "org.json4s" %% "json4s-core" % Json4SVersion,
       "org.json4s" %% "json4s-ext" % Json4SVersion,
-      "org.scalatra" %% "scalatra-swagger" % Scalatraversion,
-      "org.scalikejdbc" %% "scalikejdbc" % "3.3.1",
+      "org.scalikejdbc" %% "scalikejdbc" % "3.4.0",
       "org.postgresql" % "postgresql" % PostgresVersion,
       "com.zaxxer" % "HikariCP" % HikariConnectionPoolVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
@@ -77,7 +77,7 @@ lazy val learningpath_api = (project in file("."))
       "vc.inreach.aws" % "aws-signing-request-interceptor" % "0.0.22",
       "org.apache.httpcomponents" % "httpclient" % "4.5.10", // Overridden because vulnerability in request interceptor
       "com.google.guava" % "guava" % "28.1-jre", // Overridden because vulnerability in request interceptor
-      "org.scalaj" %% "scalaj-http" % "2.4.1",
+      "org.scalaj" %% "scalaj-http" % "2.4.2",
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
@@ -89,7 +89,8 @@ lazy val learningpath_api = (project in file("."))
       "org.jrobin" % "jrobin" % "1.5.9",
       "com.amazonaws" % "aws-java-sdk-cloudwatch" % AwsSdkversion,
       "org.scalatest" %% "scalatest" % ScalaTestVersion % "test",
-      "org.mockito" % "mockito-core" % MockitoVersion % "test",
+      "org.mockito" %% "mockito-scala" % MockitoVersion % "test",
+      "org.mockito" %% "mockito-scala-scalatest" % MockitoVersion % "test",
       "org.flywaydb" % "flyway-core" % FlywayVersion,
       "org.testcontainers" % "elasticsearch" % TestContainersVersion % "test",
       "org.testcontainers" % "testcontainers" % TestContainersVersion % "test",

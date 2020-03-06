@@ -289,11 +289,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   test("That createUrlToLearningPath does not include private in path for private learningpath") {
-    val httpServletRequest = mock[HttpServletRequest]
+    val httpServletRequest = mock[HttpServletRequest](withSettings.lenient())
     when(httpServletRequest.getServerPort).thenReturn(80)
     when(httpServletRequest.getScheme).thenReturn("http")
     when(httpServletRequest.getServerName).thenReturn("api-gateway.ndla-local")
     when(httpServletRequest.getServletPath).thenReturn("/servlet")
+    when(httpServletRequest.getHeader(anyString)).thenReturn(null)
 
     ApplicationUrl.set(httpServletRequest)
     service.createUrlToLearningPath(apiLearningPath.copy(status = "PRIVATE")) should equal(

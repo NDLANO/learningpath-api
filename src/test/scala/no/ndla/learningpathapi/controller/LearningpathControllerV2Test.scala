@@ -14,15 +14,14 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{LearningpathSwagger, TestData, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._
-import org.mockito.ArgumentMatchers.{eq => eqTo, _}
-import org.mockito.Mockito._
+import org.mockito.ArgumentMatchers._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
 
 class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with ScalatraFunSuite {
@@ -206,7 +205,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns empty list when empty param") {
-    implicit val request: HttpServletRequest = mock[HttpServletRequest]
+    implicit val request: HttpServletRequest = mock[HttpServletRequest](withSettings.lenient())
     val paramName = "test"
     val parameterMap = Map("someOther" -> Array(""))
 
@@ -215,7 +214,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns List of longs for all ids specified in input") {
-    implicit val request: HttpServletRequest = mock[HttpServletRequest]
+    implicit val request: HttpServletRequest = mock[HttpServletRequest](withSettings.lenient())
     val expectedList = List(1, 2, 3, 5, 6, 7, 8)
     val paramName = "test"
     val parameterMap = Map(paramName -> Array(expectedList.mkString(" , ")))
@@ -225,7 +224,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That paramAsListOfLong returns validation error when list of ids contains a string") {
-    implicit val request: HttpServletRequest = mock[HttpServletRequest]
+    implicit val request: HttpServletRequest = mock[HttpServletRequest](withSettings.lenient())
     val paramName = "test"
     val parameterMap = Map(paramName -> Array("1,2,abc,3"))
 

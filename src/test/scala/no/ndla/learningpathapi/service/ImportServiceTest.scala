@@ -244,8 +244,8 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val Failure(res) = importService.convert("1", mainImport, CLIENT_ID, IMPORT_ID)
     res.getMessage.contains("Received error 422. H5P is not imported to new service") should be(true)
 
-    verify(learningPathRepository, times(0)).update(any[LearningPath])
-    verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
+    verify(learningPathRepository, times(0)).update(any[LearningPath])(any[DBSession])
+    verify(articleImportClient, times(1)).importArticle(eqTo(nodeId), eqTo(IMPORT_ID))
   }
 
   test("That importNode falls back on direct article link if taxonomy lookup fails") {
@@ -437,7 +437,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val Failure(res) = importService.doImport("1", CLIENT_ID, IMPORT_ID)
     res.getMessage.contains("Received error 422. H5P is not imported to new service") should be(true)
 
-    verify(learningPathRepository, times(0)).update(any[LearningPath])
+    verify(learningPathRepository, times(0)).update(any[LearningPath])(any[DBSession])
     verify(learningPathRepository, times(1)).deletePath(1)
     verify(learningPathRepository, times(1)).deleteStep(234)
     verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
@@ -480,11 +480,11 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     val zhTags = LearningPathTags(Seq("我不懂中文", "亨里克"), "zh")
     val pakke = MainPackageImport(pack1, Seq(pack2))
 
-    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq(nbTags, enTags, zhTags)).thenReturn(Seq(nbTags2))
+    when(keywordsService.forNodeId(any[Long])).thenReturn(Seq(nbTags, enTags, zhTags)).andThen(Seq(nbTags2))
 
     val learningPath = importService.asLearningPath(pakke, None, CLIENT_ID)
 
-    learningPath.tags should be(Seq(enTags, nbMerged))
+    learningPath.tags.sortBy(_.language) should be(Seq(enTags, nbMerged))
   }
 
   test("That imported learningPath gets unknown language if language is unsupported") {
