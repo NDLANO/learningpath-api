@@ -11,12 +11,14 @@ package no.ndla.learningpathapi
 import no.ndla.network.secrets.PropertyKeys
 import org.joda.time.{DateTime, DateTimeUtils}
 import org.scalatest._
-import org.scalatest.mockito.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.mockito.scalatest.MockitoSugar
 
 import scala.util.Properties.setProp
 
 abstract class UnitSuite
-    extends FunSuite
+    extends AnyFunSuite
     with Matchers
     with OptionValues
     with Inside

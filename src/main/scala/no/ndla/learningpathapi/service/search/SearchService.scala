@@ -60,7 +60,7 @@ trait SearchService extends LazyLogging {
     def getHitsV2(response: SearchResponse, language: String): Seq[LearningPathSummaryV2] = {
       response.totalHits match {
         case count if count > 0 =>
-          val resultArray = response.hits.hits
+          val resultArray = response.hits.hits.toList
 
           resultArray.map(result => {
             val matchedLanguage = language match {

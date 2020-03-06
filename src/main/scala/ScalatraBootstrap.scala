@@ -13,7 +13,7 @@ import org.scalatra.LifeCycle
 
 class ScalatraBootstrap extends LifeCycle {
 
-  override def init(context: ServletContext) {
+  override def init(context: ServletContext): Unit = {
     context.mount(ComponentRegistry.learningpathControllerV2, "/learningpath-api/v2/learningpaths", "learningpaths_v2")
     context.mount(ComponentRegistry.internController, "/intern")
     context.mount(ComponentRegistry.resourcesApp, "/learningpath-api/api-docs")

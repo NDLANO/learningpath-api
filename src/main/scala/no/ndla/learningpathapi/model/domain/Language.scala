@@ -71,7 +71,7 @@ object Language {
   }
 
   def findSupportedLanguages[_](fields: Seq[LanguageField[_]]*): Seq[String] = {
-    fields.map(getLanguages).reduce(_ union _).distinct.sortBy { lang =>
+    fields.map(getLanguages).reduce(_ concat _).distinct.sortBy { lang =>
       ISO639.languagePriority.indexOf(lang)
     }
   }

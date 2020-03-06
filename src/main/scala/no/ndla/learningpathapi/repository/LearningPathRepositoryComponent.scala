@@ -273,7 +273,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = Some(learningsteps))
+          learningpath.copy(learningsteps = Some(learningsteps.toSeq))
         }
         .toList()
         .apply()
@@ -335,7 +335,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE)))
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
         .list
         .apply()
@@ -349,7 +349,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lp.resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE)))
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
         .single
         .apply()
@@ -370,7 +370,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .one(LearningPath(lps(lp).resultName))
         .toMany(LearningStep.opt(ls.resultName))
         .map { (learningpath, learningsteps) =>
-          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE)))
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
         .list
         .apply()

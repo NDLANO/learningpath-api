@@ -84,7 +84,7 @@ class KeywordsServiceTest extends UnitSuite with UnitTestEnvironment {
   }
 
   def mockRequestWithResponse(response: HttpResponse[String]) = {
-    val req = mock[HttpRequest]
+    val req = mock[HttpRequest](withSettings.lenient())
     when(req.asString).thenReturn(response)
     when(req.url).thenReturn("http://www.mockrequest.com")
     req

@@ -12,7 +12,7 @@ import no.ndla.learningpathapi.{TestData, UnitSuite, UnitTestEnvironment}
 class ConfigMetaTest extends UnitSuite with UnitTestEnvironment {
 
   test("That validation exists for all configuration parameters") {
-    ConfigKey.values.map(key => {
+    ConfigKey.values.foreach(key => {
       try {
         ConfigMeta(
           key = key,

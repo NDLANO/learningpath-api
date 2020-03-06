@@ -8,6 +8,8 @@
 
 package no.ndla.learningpathapi.repository
 
+import java.util.Date
+
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.tag.IntegrationTest
@@ -335,6 +337,7 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
 
   test("That inserted and fetched entry stays the same") {
     assume(databaseIsAvailable, "Database is unavailable")
+    when(clock.now()).thenReturn(new Date(0))
     val steps = Vector(
       DefaultLearningStep,
       DefaultLearningStep,
