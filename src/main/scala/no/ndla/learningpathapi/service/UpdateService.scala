@@ -73,8 +73,6 @@ trait UpdateService {
     def updateLearningPathV2(id: Long,
                              learningPathToUpdate: UpdatedLearningPathV2,
                              owner: UserInfo): Try[LearningPathV2] = writeDuringWriteRestrictionOrAccessDenied(owner) {
-      // Should not be able to submit with an illegal language
-      learningPathValidator.validate(learningPathToUpdate)
 
       withId(id).flatMap(_.canEditLearningpath(owner)) match {
         case Failure(ex) => Failure(ex)
