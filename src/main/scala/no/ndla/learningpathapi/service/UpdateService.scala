@@ -73,6 +73,7 @@ trait UpdateService {
     def updateLearningPathV2(id: Long,
                              learningPathToUpdate: UpdatedLearningPathV2,
                              owner: UserInfo): Try[LearningPathV2] = writeDuringWriteRestrictionOrAccessDenied(owner) {
+      learningPathValidator.validate(learningPathToUpdate)
 
       withId(id).flatMap(_.canEditLearningpath(owner)) match {
         case Failure(ex) => Failure(ex)
