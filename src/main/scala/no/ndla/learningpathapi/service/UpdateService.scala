@@ -191,7 +191,7 @@ trait UpdateService {
                 s"Could not find learningstep with id '$learningStepId' to update with learningpath id '$learningPathId'."))
             case Some(existing) =>
               val toUpdate = converterService.mergeLearningSteps(existing, learningStepToUpdate)
-              learningStepValidator.validate(toUpdate)
+              learningStepValidator.validate(toUpdate, allowUnknownLanguage = true)
 
               val (updatedStep, updatedPath) = inTransaction { implicit session =>
                 val updatedStep =
