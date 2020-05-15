@@ -37,7 +37,7 @@ trait LearningPathValidator {
     }
 
     def validate(updateLearningPath: UpdatedLearningPathV2): Unit = {
-      languageValidator.validate("language", updateLearningPath.language, allowUnknownLanguage = false) match {
+      languageValidator.validate("language", updateLearningPath.language, allowUnknownLanguage = true) match {
         case None =>
         case Some(validationMessage) =>
           throw new ValidationException(errors = Seq(validationMessage))
