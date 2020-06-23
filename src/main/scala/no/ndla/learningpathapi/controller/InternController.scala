@@ -14,8 +14,9 @@ import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.{ImportService, ReadService}
+import no.ndla.learningpathapi.service.{ImportService, ReadService, UpdateService}
 import no.ndla.learningpathapi.service.search.{SearchIndexService, SearchService}
 import no.ndla.network.AuthUser
 import org.json4s.Formats
@@ -29,7 +30,8 @@ trait InternController {
     with SearchIndexService
     with SearchService
     with LearningPathRepositoryComponent
-    with ReadService =>
+    with ReadService
+    with UpdateService =>
   val internController: InternController
 
   class InternController extends NdlaController {
@@ -105,11 +107,16 @@ trait InternController {
       }
     }
 
-    get("/dump/learningpath") {
+    get("/dump/learningpath/?") {
       val pageNo = intOrDefault("page", 1)
       val pageSize = intOrDefault("page-size", 250)
 
       readService.getLearningPathDomainDump(pageNo, pageSize)
+    }
+
+    post("/dump/learningpath/?") {
+      val dumpToInsert = extract[domain.LearningPath](request.body)
+      updateService.insertDump(dumpToInsert)
     }
 
     get("/containsArticle") {

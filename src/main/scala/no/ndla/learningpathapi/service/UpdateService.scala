@@ -34,6 +34,10 @@ trait UpdateService {
 
   class UpdateService {
 
+    def insertDump(dump: domain.LearningPath) = {
+      learningPathRepository.insert(dump)
+    }
+
     private[service] def writeDuringWriteRestrictionOrAccessDenied[T](owner: UserInfo)(w: => Try[T]): Try[T] =
       writeOrAccessDenied(readService.canWriteNow(owner),
                           "You do not have write access while write restriction is active.")(w)
