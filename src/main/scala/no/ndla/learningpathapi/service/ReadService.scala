@@ -109,7 +109,7 @@ trait ReadService {
       val (safePageNo, safePageSize) = (max(pageNo, 1), max(pageSize, 0))
       val results = learningPathRepository.getLearningPathByPage(safePageSize, (safePageNo - 1) * safePageSize)
 
-      LearningPathDomainDump(learningPathRepository.learningPathCount, safePageNo, safePageSize, results)
+      LearningPathDomainDump(learningPathRepository.publishedLearningPathCount, safePageNo, safePageSize, results)
     }
 
     def learningPathWithStatus(status: String, user: UserInfo): Try[List[LearningPathV2]] = {
