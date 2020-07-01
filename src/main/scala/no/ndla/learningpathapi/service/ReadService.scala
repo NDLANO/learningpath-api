@@ -105,11 +105,20 @@ trait ReadService {
       }
     }
 
-    def getLearningPathDomainDump(pageNo: Int, pageSize: Int): LearningPathDomainDump = {
+    def getLearningPathDomainDump(pageNo: Int, pageSize: Int, onlyIncludePublished: Boolean): LearningPathDomainDump = {
       val (safePageNo, safePageSize) = (max(pageNo, 1), max(pageSize, 0))
-      val results = learningPathRepository.getLearningPathByPage(safePageSize, (safePageNo - 1) * safePageSize)
 
-      LearningPathDomainDump(learningPathRepository.learningPathCount, safePageNo, safePageSize, results)
+      val resultFunc =
+        if (onlyIncludePublished) learningPathRepository.getPublishedLearningPathByPage _
+        else learningPathRepository.getAllLearningPathsByPage _
+
+      val count =
+        if (onlyIncludePublished) learningPathRepository.publishedLearningPathCount
+        else learningPathRepository.learningPathCount
+
+      val results = resultFunc(safePageSize, (safePageNo - 1) * safePageSize)
+
+      LearningPathDomainDump(count, safePageNo, safePageSize, results)
     }
 
     def learningPathWithStatus(status: String, user: UserInfo): Try[List[LearningPathV2]] = {

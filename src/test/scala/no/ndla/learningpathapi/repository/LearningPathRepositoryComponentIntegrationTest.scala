@@ -300,8 +300,8 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     val learningPath =
       repository.insert(DefaultLearningPath.copy(learningsteps = Some(steps), status = LearningPathStatus.PUBLISHED))
 
-    val page1 = repository.getLearningPathByPage(2, 0)
-    val page2 = repository.getLearningPathByPage(2, 2)
+    val page1 = repository.getPublishedLearningPathByPage(2, 0)
+    val page2 = repository.getPublishedLearningPathByPage(2, 2)
 
     page1 should be(List(learningPath))
     page2 should be(List.empty)
@@ -324,8 +324,8 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     val learningPath3 =
       repository.insert(DefaultLearningPath.copy(learningsteps = Some(steps), status = LearningPathStatus.PUBLISHED))
 
-    val page1 = repository.getLearningPathByPage(2, 0)
-    val page2 = repository.getLearningPathByPage(2, 2)
+    val page1 = repository.getPublishedLearningPathByPage(2, 0)
+    val page2 = repository.getPublishedLearningPathByPage(2, 2)
 
     page1 should be(List(learningPath3))
     page2 should be(List.empty)

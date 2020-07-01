@@ -355,7 +355,27 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .apply()
     }
 
-    def getLearningPathByPage(pageSize: Int, offset: Int)(
+    def getAllLearningPathsByPage(pageSize: Int, offset: Int)(
+        implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
+      val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
+      val lps = SubQuery.syntax("lps").include(lp)
+      sql"""
+            select ${lps.resultAll}, ${ls.resultAll} from (select ${lp.resultAll}
+                                                           from ${LearningPath.as(lp)}
+                                                           limit $pageSize
+                                                           offset $offset) lps
+            left join ${LearningStep.as(ls)} on ${lps(lp).id} = ${ls.learningPathId}
+      """
+        .one(LearningPath(lps(lp).resultName))
+        .toMany(LearningStep.opt(ls.resultName))
+        .map { (learningpath, learningsteps) =>
+          learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
+        }
+        .list
+        .apply()
+    }
+
+    def getPublishedLearningPathByPage(pageSize: Int, offset: Int)(
         implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       val lps = SubQuery.syntax("lps").include(lp)
@@ -379,6 +399,15 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     def learningPathsWithStatus(status: LearningPathStatus.Value)(
         implicit session: DBSession = ReadOnlyAutoSession): List[LearningPath] = {
       learningPathsWhere(sqls"lp.document#>>'{status}' = ${status.toString}")
+    }
+
+    def publishedLearningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {
+      val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
+      sql"select count(*) from ${LearningPath.as(lp)} where document#>>'{status}' = ${LearningPathStatus.PUBLISHED.toString}"
+        .map(rs => rs.long("count"))
+        .single
+        .apply()
+        .getOrElse(0)
     }
 
     def learningPathCount(implicit session: DBSession = ReadOnlyAutoSession): Long = {
