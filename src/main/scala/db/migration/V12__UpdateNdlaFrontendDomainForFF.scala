@@ -54,7 +54,7 @@ class V12__UpdateNdlaFrontendDomainForFF extends BaseJavaMigration {
       .map(rs => {
         (rs.long("id"), rs.string("document"))
       })
-      .list
+      .list()
       .apply()
   }
 
@@ -65,7 +65,7 @@ class V12__UpdateNdlaFrontendDomainForFF extends BaseJavaMigration {
 
     sql"update learningsteps set document = $dataObject where id = $id"
       .update()
-      .apply
+      .apply()
   }
 
   def updateNdlaUrl(oldUrl: String): String = {

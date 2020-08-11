@@ -127,7 +127,7 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
       Success(List.empty)
 
   def learningPathCount(implicit session: DBSession): Long = {
-    sql"select count(*) from learningpaths".map(rs => rs.long("count")).single.apply().getOrElse(0)
+    sql"select count(*) from learningpaths".map(rs => rs.long("count")).single().apply().getOrElse(0)
   }
 
   def allLearningPathsWithOwnerInList(ownerList: List[String])(implicit session: DBSession): Seq[(Long, String)] = {
@@ -157,7 +157,7 @@ class V11__CreatedByNdlaStatusForOwnersWithRoles extends BaseJavaMigration with 
 
     sql"update learningpaths set document = $dataObject where id = ${id}"
       .update()
-      .apply
+      .apply()
   }
 
   case class V9__LearningPath(owner: String)

@@ -24,8 +24,8 @@ class ConfigRepositoryTest extends UnitSuite with IntegrationTestEnvironment {
 
   def emptyTestDatabase: Boolean = {
     DB autoCommit (implicit session => {
-      sql"delete from learningpathapi_test.configtable;".execute.apply()(session)
-      sql"delete from learningpathapi_test.configtable;".execute.apply()(session)
+      sql"delete from learningpathapi_test.configtable;".execute().apply()(session)
+      sql"delete from learningpathapi_test.configtable;".execute().apply()(session)
     })
   }
 

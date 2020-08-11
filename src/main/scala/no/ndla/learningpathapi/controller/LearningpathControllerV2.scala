@@ -197,9 +197,9 @@ trait LearningpathControllerV2 {
       "/",
       operation(
         apiOperation[SearchResultV2]("getLearningpaths")
-          summary "Find public learningpaths"
-          description "Show public learningpaths."
-          parameters (
+          .summary("Find public learningpaths")
+          .description("Show public learningpaths.")
+          .parameters(
             asHeaderParam(correlationId),
             asQueryParam(query),
             asQueryParam(tag),
@@ -211,9 +211,10 @@ trait LearningpathControllerV2 {
             asQueryParam(fallback),
             asQueryParam(scrollId),
             asQueryParam(verificationStatus)
-        )
-          responseMessages (response400, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val scrollId = paramOrNone(this.scrollId.paramName)
       val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
@@ -237,15 +238,15 @@ trait LearningpathControllerV2 {
       "/search/",
       operation(
         apiOperation[List[SearchResultV2]]("searchArticles")
-          summary "Find public learningpaths"
-          description "Show public learningpaths"
-          parameters (
+          .summary("Find public learningpaths")
+          .description("Show public learningpaths")
+          .parameters(
             asHeaderParam(correlationId),
             bodyParam[SearchParams],
             asQueryParam(scrollId)
-        )
-          authorizations "oauth2"
-          responseMessages (response400, response500))
+          )
+          .authorizations("oauth2")
+          .responseMessages(response400, response500))
     ) {
       val searchParams = extract[SearchParams](request.body)
       val language = searchParams.language.getOrElse(Language.AllLanguages)
@@ -268,16 +269,17 @@ trait LearningpathControllerV2 {
       "/:learningpath_id",
       operation(
         apiOperation[LearningPathV2]("getLearningpath")
-          summary "Fetch details about the specified learningpath"
-          description "Shows all information about the specified learningpath."
-          parameters (
+          .summary("Fetch details about the specified learningpath")
+          .description("Shows all information about the specified learningpath.")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asQueryParam(language),
             asQueryParam(fallback)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
@@ -295,14 +297,15 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/status/",
       operation(
         apiOperation[LearningPathStatus]("getLearningpathStatus")
-          summary "Show status information for the learningpath"
-          description "Shows publishingstatus for the learningpath"
-          parameters (
+          .summary("Show status information for the learningpath")
+          .description("Shows publishingstatus for the learningpath")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val id = long(this.learningpathId.paramName)
       readService.statusFor(id, UserInfo.get) match {
@@ -315,16 +318,17 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/",
       operation(
         apiOperation[List[LearningStepSummaryV2]]("getLearningsteps")
-          summary "Fetch learningsteps for given learningpath"
-          description "Show all learningsteps for given learningpath id"
-          parameters (
+          .summary("Fetch learningsteps for given learningpath")
+          .description("Show all learningsteps for given learningpath id")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asQueryParam(language),
             asQueryParam(fallback)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
@@ -341,17 +345,18 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/:learningstep_id",
       operation(
         apiOperation[LearningStepV2]("getLearningstep")
-          summary "Fetch details about the specified learningstep"
-          description "Show the given learningstep for the given learningpath"
-          parameters (
+          .summary("Fetch details about the specified learningstep")
+          .description("Show the given learningstep for the given learningpath")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asPathParam(learningstepId),
             asQueryParam(language),
             asQueryParam(fallback)
-        )
-          responseMessages (response403, response404, response500, response502)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500, response502)
+          .authorizations("oauth2")
+      )
     ) {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
@@ -369,16 +374,17 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/trash/",
       operation(
         apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
-          summary "Fetch deleted learningsteps for given learningpath"
-          description "Show all learningsteps for the given learningpath that are marked as deleted"
-          parameters (
+          .summary("Fetch deleted learningsteps for given learningpath")
+          .description("Show all learningsteps for the given learningpath that are marked as deleted")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asQueryParam(language),
             asQueryParam(fallback)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
@@ -396,16 +402,17 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/:learningstep_id/status/",
       operation(
         apiOperation[LearningStepStatus]("getLearningStepStatus")
-          summary "Show status information for learningstep"
-          description "Shows status for the learningstep"
-          parameters (
+          .summary("Show status information for learningstep")
+          .description("Shows status for the learningstep")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asPathParam(learningstepId),
             asQueryParam(fallback)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val pathId = long(this.learningpathId.paramName)
       val stepId = long(this.learningstepId.paramName)
@@ -421,11 +428,12 @@ trait LearningpathControllerV2 {
       "/mine/",
       operation(
         apiOperation[List[LearningPathSummaryV2]]("getMyLearningpaths")
-          summary "Fetch all learningspaths you have created"
-          description "Shows your learningpaths."
-          parameters asHeaderParam(correlationId)
-          responseMessages (response403, response500)
-          authorizations "oauth2")
+          .summary("Fetch all learningspaths you have created")
+          .description("Shows your learningpaths.")
+          .parameters(asHeaderParam(correlationId))
+          .responseMessages(response403, response500)
+          .authorizations("oauth2")
+      )
     ) {
       readService.withOwnerV2(UserInfo(requireUserId))
     }
@@ -434,14 +442,15 @@ trait LearningpathControllerV2 {
       "/licenses/",
       operation(
         apiOperation[List[License]]("getLicenses")
-          summary "Show all valid licenses"
-          description "Shows all valid licenses"
-          parameters (
+          .summary("Show all valid licenses")
+          .description("Shows all valid licenses")
+          .parameters(
             asHeaderParam(correlationId),
             asQueryParam(licenseFilter)
-        )
-          responseMessages (response403, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val licenses: Seq[LicenseDefinition] =
         paramOrNone(this.licenseFilter.paramName) match {
@@ -458,14 +467,15 @@ trait LearningpathControllerV2 {
       "/",
       operation(
         apiOperation[LearningPathV2]("addLearningpath")
-          summary "Store new learningpath"
-          description "Adds the given learningpath"
-          parameters (
+          .summary("Store new learningpath")
+          .description("Adds the given learningpath")
+          .parameters(
             asHeaderParam(correlationId),
             bodyParam[NewLearningPathV2]
-        )
-          responseMessages (response400, response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val newLearningPath = extract[NewLearningPathV2](request.body)
       val userInfo = UserInfo(requireUserId)
@@ -481,15 +491,16 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/copy/",
       operation(
         apiOperation[LearningPathV2]("copyLearningpath")
-          summary "Copy given learningpath and store it as a new learningpath"
-          description "Copies the given learningpath, with the option to override some fields"
-          parameters (
+          .summary("Copy given learningpath and store it as a new learningpath")
+          .description("Copies the given learningpath, with the option to override some fields")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             bodyParam[NewCopyLearningPathV2]
-        )
-          responseMessages (response400, response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val newLearningPath = extract[NewCopyLearningPathV2](request.body)
@@ -506,15 +517,16 @@ trait LearningpathControllerV2 {
       "/:learningpath_id",
       operation(
         apiOperation[LearningPathV2]("updateLearningPath")
-          summary "Update given learningpath"
-          description "Updates the given learningPath"
-          parameters (
+          .summary("Update given learningpath")
+          .description("Updates the given learningPath")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             bodyParam[UpdatedLearningPathV2]
-        )
-          responseMessages (response400, response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val pathId = long(this.learningpathId.paramName)
@@ -528,15 +540,16 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/",
       operation(
         apiOperation[LearningStepV2]("addLearningStep")
-          summary "Add new learningstep to learningpath"
-          description "Adds the given LearningStep"
-          parameters (
+          .summary("Add new learningstep to learningpath")
+          .description("Adds the given LearningStep")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             bodyParam[NewLearningStepV2]
-        )
-          responseMessages (response400, response403, response404, response500, response502)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500, response502)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val newLearningStep = extract[NewLearningStepV2](request.body)
@@ -553,16 +566,17 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/:learningstep_id",
       operation(
         apiOperation[LearningStepV2]("updateLearningStep")
-          summary "Update given learningstep"
-          description "Update the given learningStep"
-          parameters (
+          .summary("Update given learningstep")
+          .description("Update the given learningStep")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asPathParam(learningstepId),
             bodyParam[UpdatedLearningStepV2]
-        )
-          responseMessages (response400, response403, response404, response500, response502)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500, response502)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val updatedLearningStep = extract[UpdatedLearningStepV2](request.body)
@@ -583,16 +597,18 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/:learningstep_id/seqNo/",
       operation(
         apiOperation[LearningStepSeqNo]("updatetLearningstepSeqNo")
-          summary "Store new sequence number for learningstep."
-          description "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this."
-          parameters (
+          .summary("Store new sequence number for learningstep.")
+          .description(
+            "Updates the sequence number for the given learningstep. The sequence number of other learningsteps will be affected by this.")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asPathParam(learningstepId),
             bodyParam[LearningStepSeqNo]
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val newSeqNo = extract[LearningStepSeqNo](request.body)
@@ -609,16 +625,17 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/:learningstep_id/status/",
       operation(
         apiOperation[LearningStepV2]("updateLearningStepStatus")
-          summary "Update status of given learningstep"
-          description "Updates the status of the given learningstep"
-          parameters (
+          .summary("Update status of given learningstep")
+          .description("Updates the status of the given learningstep")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asPathParam(learningstepId),
             bodyParam[LearningStepStatus]
-        )
-          responseMessages (response400, response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val learningStepStatus = extract[LearningStepStatus](request.body)
@@ -641,15 +658,16 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/status/",
       operation(
         apiOperation[LearningPathV2]("updateLearningPathStatus")
-          summary "Update status of given learningpath"
-          description "Updates the status of the given learningPath"
-          parameters (
+          .summary("Update status of given learningpath")
+          .description("Updates the status of the given learningPath")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             bodyParam[UpdateLearningPathStatus]
-        )
-          responseMessages (response400, response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response400, response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val toUpdate = extract[UpdateLearningPathStatus](request.body)
@@ -668,14 +686,15 @@ trait LearningpathControllerV2 {
       s"/status/:${this.learningPathStatus.paramName}",
       operation(
         apiOperation[List[LearningPathV2]]("withStatus")
-          summary "Fetch all learningpaths with specified status"
-          description "Fetch all learningpaths with specified status"
-          parameters (
+          .summary("Fetch all learningpaths with specified status")
+          .description("Fetch all learningpaths with specified status")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningPathStatus)
-        )
-          responseMessages (response500, response400)
-          authorizations "oauth2")
+          )
+          .responseMessages(response500, response400)
+          .authorizations("oauth2")
+      )
     ) {
       val pathStatus = params(this.learningPathStatus.paramName)
       readService.learningPathWithStatus(pathStatus, UserInfo.get) match {
@@ -688,14 +707,14 @@ trait LearningpathControllerV2 {
       "/:learningpath_id",
       operation(
         apiOperation[LearningPathV2]("deleteLearningPath")
-          summary "Delete given learningpath"
-          description "Deletes the given learningPath"
-          parameters (
+          .summary("Delete given learningpath")
+          .description("Deletes the given learningPath")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2"))
     ) {
       val userInfo = UserInfo(requireUserId)
       val pathId = long(this.learningpathId.paramName)
@@ -717,15 +736,16 @@ trait LearningpathControllerV2 {
       "/:learningpath_id/learningsteps/:learningstep_id",
       operation(
         apiOperation[Void]("deleteLearningStep")
-          summary "Delete given learningstep"
-          description "Deletes the given learningStep"
-          parameters (
+          .summary("Delete given learningstep")
+          .description("Deletes the given learningStep")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(learningpathId),
             asPathParam(learningstepId)
-        )
-          responseMessages (response403, response404, response500)
-          authorizations "oauth2")
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
     ) {
       val userInfo = UserInfo(requireUserId)
       val pathId = long(this.learningpathId.paramName)
@@ -743,15 +763,16 @@ trait LearningpathControllerV2 {
       "/tags/",
       operation(
         apiOperation[List[LearningPathTags]]("getTags")
-          summary "Fetch all previously used tags in learningpaths"
-          description "Retrieves a list of all previously used tags in learningpaths"
-          parameters (
+          .summary("Fetch all previously used tags in learningpaths")
+          .description("Retrieves a list of all previously used tags in learningpaths")
+          .parameters(
             asHeaderParam(correlationId),
             asQueryParam(language),
             asQueryParam(fallback)
-        )
-          responseMessages response500
-          authorizations "oauth2")
+          )
+          .responseMessages(response500)
+          .authorizations("oauth2")
+      )
     ) {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
@@ -769,11 +790,12 @@ trait LearningpathControllerV2 {
       "/contributors/",
       operation(
         apiOperation[List[Author]]("getContributors")
-          summary "Fetch all previously used contributors in learningpaths"
-          description "Retrieves a list of all previously used contributors in learningpaths"
-          parameters asHeaderParam(correlationId)
-          responseMessages response500
-          authorizations "oauth2")
+          .summary("Fetch all previously used contributors in learningpaths")
+          .description("Retrieves a list of all previously used contributors in learningpaths")
+          .parameters(asHeaderParam(correlationId))
+          .responseMessages(response500)
+          .authorizations("oauth2")
+      )
     ) {
       readService.contributors
     }

@@ -59,7 +59,7 @@ class V6__UpdateDuration extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${id}"
       .update()
-      .apply
+      .apply()
   }
 
 }

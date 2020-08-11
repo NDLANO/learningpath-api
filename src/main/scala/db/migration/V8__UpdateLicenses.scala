@@ -105,7 +105,7 @@ class V8__UpdateLicenses extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${id}"
       .update()
-      .apply
+      .apply()
   }
 
   def updateLearningStep(id: Long, document: String)(implicit session: DBSession) = {
@@ -115,7 +115,7 @@ class V8__UpdateLicenses extends BaseJavaMigration {
 
     sql"update learningsteps set document = $dataObject where id = ${id}"
       .update()
-      .apply
+      .apply()
   }
 
 }

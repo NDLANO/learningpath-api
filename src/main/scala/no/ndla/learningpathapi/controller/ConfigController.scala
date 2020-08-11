@@ -73,14 +73,14 @@ trait ConfigController {
       "/:config_key",
       operation(
         apiOperation[ConfigMeta]("updateConfig")
-          summary "Update configuration used by api."
-          description "Update configuration used by api."
-          parameters (
+          .summary("Update configuration used by api.")
+          .description("Update configuration used by api.")
+          .parameters(
             asHeaderParam(correlationId),
             asPathParam(configKeyPathParam),
             bodyParam[UpdateConfigValue]
-        )
-          responseMessages (response400, response404, response403, response500)
+          )
+          .responseMessages(response400, response404, response403, response500)
       )
     ) {
       val userInfo = UserInfo(requireUserId)
