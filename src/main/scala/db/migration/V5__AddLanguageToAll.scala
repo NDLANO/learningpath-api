@@ -87,7 +87,7 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
       .update()
-      .apply
+      .apply()
   }
 
   def update(learningStep: V5_LearningStep)(implicit session: DBSession) = {
@@ -97,7 +97,7 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
 
     sql"update learningsteps set document = $dataObject where id = ${learningStep.id}"
       .update()
-      .apply
+      .apply()
   }
 }
 

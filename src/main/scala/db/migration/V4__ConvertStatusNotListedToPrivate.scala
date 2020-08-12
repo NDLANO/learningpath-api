@@ -50,7 +50,7 @@ class V4__ConvertStatusNotListedToPrivate extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
       .update()
-      .apply
+      .apply()
   }
 }
 

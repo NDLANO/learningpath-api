@@ -40,7 +40,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
   val CLIENT_ID = "Klient1"
   val IMPORT_ID = "68875044-50ee-427e-bcd5-eadb52861f65"
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     reset(articleImportClient, taxononyApiClient, learningPathRepository)
     when(learningPathRepository.update(any[LearningPath])(any[DBSession]))
       .thenAnswer((invocation: InvocationOnMock) => {

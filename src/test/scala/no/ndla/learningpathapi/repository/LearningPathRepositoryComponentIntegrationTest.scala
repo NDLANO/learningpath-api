@@ -360,8 +360,8 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
 
   def emptyTestDatabase = {
     DB autoCommit (implicit session => {
-      sql"delete from learningpathapi_test.learningpaths;".execute.apply()(session)
-      sql"delete from learningpathapi_test.learningsteps;".execute.apply()(session)
+      sql"delete from learningpathapi_test.learningpaths;".execute().apply()(session)
+      sql"delete from learningpathapi_test.learningsteps;".execute().apply()(session)
     })
   }
 

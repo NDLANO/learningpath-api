@@ -16,7 +16,7 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
 
   var service: SearchConverterService = _
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     service = new SearchConverterService
   }
 

@@ -116,7 +116,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val learningPathId: Long =
         sql"insert into learningpaths(external_id, document, revision) values(${learningpath.externalId}, $dataObject, $startRevision)"
           .updateAndReturnGeneratedKey()
-          .apply
+          .apply()
 
       val learningSteps = learningpath.learningsteps.map(lsteps =>
         lsteps.map(learningStep => {
@@ -138,7 +138,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val learningPathId: Long =
         sql"insert into learningpaths(external_id, document, revision, import_id) values(${learningpath.externalId}, $dataObject, $startRevision, $importIdUUID)"
           .updateAndReturnGeneratedKey()
-          .apply
+          .apply()
       val learningSteps = learningpath.learningsteps.map(lsteps =>
         lsteps.map(learningStep => {
           insertLearningStep(learningStep.copy(learningPathId = Some(learningPathId)))
@@ -155,7 +155,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
             from ${LearningPath.as(lp)}
             where lp.document is not NULL and lp.external_id = $externalId"""
         .map(rs => (rs.long("id"), rs.stringOpt("import_id")))
-        .single
+        .single()
         .apply()
     }
 
@@ -186,7 +186,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val count =
         sql"update learningpaths set document = $dataObject, revision = ${newRevision} where id = ${learningpath.id} and revision = ${learningpath.revision}"
           .update()
-          .apply
+          .apply()
 
       if (count != 1) {
         val msg =
@@ -214,7 +214,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val count =
         sql"update learningpaths set document = $dataObject, revision = ${newRevision}, import_id = $importIdUUID where id = ${learningpath.id} and revision = ${learningpath.revision}"
           .update()
-          .apply
+          .apply()
 
       if (count != 1) {
         val msg =
@@ -240,7 +240,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val count =
         sql"update learningsteps set document = $dataObject, revision = ${newRevision} where id = ${learningStep.id} and revision = ${learningStep.revision}"
           .update()
-          .apply
+          .apply()
       if (count != 1) {
         val msg =
           s"Conflicting revision is detected for learningStep with id = ${learningStep.id} and revision = ${learningStep.revision}"
@@ -253,11 +253,11 @@ trait LearningPathRepositoryComponent extends LazyLogging {
     }
 
     def deletePath(learningPathId: Long)(implicit session: DBSession = AutoSession) = {
-      sql"delete from learningpaths where id = $learningPathId".update().apply
+      sql"delete from learningpaths where id = $learningPathId".update().apply()
     }
 
     def deleteStep(learningStepId: Long)(implicit session: DBSession = AutoSession) = {
-      sql"delete from learningsteps where id = $learningStepId".update().apply
+      sql"delete from learningsteps where id = $learningStepId".update().apply()
     }
 
     def learningPathsWithIdBetween(min: Long, max: Long)(
@@ -275,7 +275,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map { (learningpath, learningsteps) =>
           learningpath.copy(learningsteps = Some(learningsteps.toSeq))
         }
-        .toList()
+        .list()
         .apply()
     }
 
@@ -337,7 +337,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map { (learningpath, learningsteps) =>
           learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
-        .list
+        .list()
         .apply()
     }
 
@@ -351,7 +351,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map { (learningpath, learningsteps) =>
           learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
-        .single
+        .single()
         .apply()
     }
 
@@ -371,7 +371,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map { (learningpath, learningsteps) =>
           learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
-        .list
+        .list()
         .apply()
     }
 
@@ -392,7 +392,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
         .map { (learningpath, learningsteps) =>
           learningpath.copy(learningsteps = Some(learningsteps.filter(_.status == StepStatus.ACTIVE).toSeq))
         }
-        .list
+        .list()
         .apply()
     }
 
@@ -405,7 +405,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       sql"select count(*) from ${LearningPath.as(lp)} where document#>>'{status}' = ${LearningPathStatus.PUBLISHED.toString}"
         .map(rs => rs.long("count"))
-        .single
+        .single()
         .apply()
         .getOrElse(0)
     }
@@ -414,7 +414,7 @@ trait LearningPathRepositoryComponent extends LazyLogging {
       val (lp, ls) = (LearningPath.syntax("lp"), LearningStep.syntax("ls"))
       sql"select count(*) from ${LearningPath.as(lp)}"
         .map(rs => rs.long("count"))
-        .single
+        .single()
         .apply()
         .getOrElse(0)
     }

@@ -20,7 +20,7 @@ matrix:
 
       language: scala
       dist: trusty
-      scala: 2.13.1
+      scala: 2.13.3
       jdk:
         - oraclejdk8
       cache:
@@ -39,7 +39,7 @@ matrix:
           - LEARNINGPATH_CLIENT_SECRET=""
       dist: trusty
       language: scala
-      scala: 2.13.1
+      scala: 2.13.3
       jdk:
         - openjdk8
       cache:

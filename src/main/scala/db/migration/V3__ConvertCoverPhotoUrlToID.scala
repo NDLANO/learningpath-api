@@ -62,7 +62,7 @@ class V3__ConvertCoverPhotoUrlToID extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
       .update()
-      .apply
+      .apply()
   }
 }
 
