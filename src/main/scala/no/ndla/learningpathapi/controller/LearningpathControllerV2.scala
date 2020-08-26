@@ -284,7 +284,7 @@ trait LearningpathControllerV2 {
       val language =
         paramOrDefault(this.language.paramName, Language.AllLanguages)
       val id = long(this.learningpathId.paramName)
-      val userInfo = UserInfo.get
+      val userInfo = UserInfo.getUserOrPublic
       val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
       readService.withIdV2(id, language, fallback, userInfo) match {
@@ -308,7 +308,7 @@ trait LearningpathControllerV2 {
       )
     ) {
       val id = long(this.learningpathId.paramName)
-      readService.statusFor(id, UserInfo.get) match {
+      readService.statusFor(id, UserInfo.getUserOrPublic) match {
         case Success(status) => Ok(status)
         case Failure(ex)     => errorHandler(ex)
       }
@@ -335,7 +335,7 @@ trait LearningpathControllerV2 {
       val id = long(this.learningpathId.paramName)
       val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
-      readService.learningstepsForWithStatusV2(id, StepStatus.ACTIVE, language, fallback, UserInfo.get) match {
+      readService.learningstepsForWithStatusV2(id, StepStatus.ACTIVE, language, fallback, UserInfo.getUserOrPublic) match {
         case Success(x)  => Ok(x)
         case Failure(ex) => errorHandler(ex)
       }
@@ -364,7 +364,7 @@ trait LearningpathControllerV2 {
       val stepId = long(this.learningstepId.paramName)
       val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
-      readService.learningstepV2For(pathId, stepId, language, fallback, UserInfo.get) match {
+      readService.learningstepV2For(pathId, stepId, language, fallback, UserInfo.getUserOrPublic) match {
         case Success(step) => Ok(step)
         case Failure(ex)   => errorHandler(ex)
       }
@@ -418,7 +418,7 @@ trait LearningpathControllerV2 {
       val stepId = long(this.learningstepId.paramName)
       val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
-      readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, fallback, UserInfo.get) match {
+      readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, fallback, UserInfo.getUserOrPublic) match {
         case Success(status) => Ok(status)
         case Failure(ex)     => errorHandler(ex)
       }
@@ -502,14 +502,17 @@ trait LearningpathControllerV2 {
           .authorizations("oauth2")
       )
     ) {
-      val userInfo = UserInfo(requireUserId)
-      val newLearningPath = extract[NewCopyLearningPathV2](request.body)
-      val pathId = long(this.learningpathId.paramName)
-      updateService.newFromExistingV2(pathId, newLearningPath, userInfo) match {
-        case Success(learningPath) =>
-          logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
-          Created(headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+      UserInfo.getWithUserIdOrAdmin match {
         case Failure(ex) => errorHandler(ex)
+        case Success(userInfo) =>
+          val newLearningPath = extract[NewCopyLearningPathV2](request.body)
+          val pathId = long(this.learningpathId.paramName)
+          updateService.newFromExistingV2(pathId, newLearningPath, userInfo) match {
+            case Success(learningPath) =>
+              logger.info(s"COPIED LearningPath with ID =  ${learningPath.id}")
+              Created(headers = Map("Location" -> learningPath.metaUrl), body = learningPath)
+            case Failure(ex) => errorHandler(ex)
+          }
       }
     }
 
@@ -697,7 +700,7 @@ trait LearningpathControllerV2 {
       )
     ) {
       val pathStatus = params(this.learningPathStatus.paramName)
-      readService.learningPathWithStatus(pathStatus, UserInfo.get) match {
+      readService.learningPathWithStatus(pathStatus, UserInfo.getUserOrPublic) match {
         case Success(lps) => Ok(lps)
         case Failure(ex)  => errorHandler(ex)
       }

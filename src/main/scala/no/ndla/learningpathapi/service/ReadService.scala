@@ -38,7 +38,7 @@ trait ReadService {
       learningPathRepository.allPublishedContributors.map(author => Author(author.`type`, author.name))
     }
 
-    def withOwnerV2(user: UserInfo = UserInfo.get): List[LearningPathSummaryV2] = {
+    def withOwnerV2(user: UserInfo = UserInfo.getUserOrPublic): List[LearningPathSummaryV2] = {
       learningPathRepository
         .withOwner(user.userId)
         .flatMap(value => converterService.asApiLearningpathSummaryV2(value, user).toOption)
@@ -47,12 +47,12 @@ trait ReadService {
     def withIdV2(learningPathId: Long,
                  language: String,
                  fallback: Boolean,
-                 user: UserInfo = UserInfo.get): Try[LearningPathV2] = {
+                 user: UserInfo = UserInfo.getUserOrPublic): Try[LearningPathV2] = {
       withIdAndAccessGranted(learningPathId, user).flatMap(lp =>
         converterService.asApiLearningpathV2(lp, language, fallback, user))
     }
 
-    def statusFor(learningPathId: Long, user: UserInfo = UserInfo.get): Try[LearningPathStatus] = {
+    def statusFor(learningPathId: Long, user: UserInfo = UserInfo.getUserOrPublic): Try[LearningPathStatus] = {
       withIdAndAccessGranted(learningPathId, user).map(lp => LearningPathStatus(lp.status.toString))
     }
 
@@ -60,7 +60,7 @@ trait ReadService {
                                 learningStepId: Long,
                                 language: String,
                                 fallback: Boolean,
-                                user: UserInfo = UserInfo.get): Try[LearningStepStatus] = {
+                                user: UserInfo = UserInfo.getUserOrPublic): Try[LearningStepStatus] = {
       learningstepV2For(learningPathId, learningStepId, language, fallback, user).map(ls =>
         LearningStepStatus(ls.status.toString))
     }
@@ -69,7 +69,7 @@ trait ReadService {
                                      status: StepStatus.Value,
                                      language: String,
                                      fallback: Boolean,
-                                     user: UserInfo = UserInfo.get): Try[LearningStepContainerSummary] = {
+                                     user: UserInfo = UserInfo.getUserOrPublic): Try[LearningStepContainerSummary] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Success(lp) => converterService.asLearningStepContainerSummary(status, lp, language, fallback)
         case Failure(ex) => Failure(ex)
@@ -80,7 +80,7 @@ trait ReadService {
                           learningStepId: Long,
                           language: String,
                           fallback: Boolean,
-                          user: UserInfo = UserInfo.get): Try[LearningStepV2] = {
+                          user: UserInfo = UserInfo.getUserOrPublic): Try[LearningStepV2] = {
       withIdAndAccessGranted(learningPathId, user) match {
         case Success(lp) =>
           learningPathRepository

@@ -404,7 +404,7 @@ trait ConverterService {
     }
 
     def asApiLearningpathSummaryV2(learningpath: domain.LearningPath,
-                                   user: UserInfo = UserInfo.get): Try[api.LearningPathSummaryV2] = {
+                                   user: UserInfo = UserInfo.getUserOrPublic): Try[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 
       val title = findByLanguageOrBestEffort(learningpath.title, Some(Language.AllLanguages))
