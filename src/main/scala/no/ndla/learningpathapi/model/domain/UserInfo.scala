@@ -6,7 +6,10 @@
  */
 
 package no.ndla.learningpathapi.model.domain
+import com.typesafe.scalalogging.LazyLogging
 import no.ndla.network.AuthUser
+
+import scala.util.{Failure, Success}
 
 case class UserInfo(userId: String, roles: Set[LearningPathRole.Value]) {
   def isAdmin: Boolean = roles.contains(LearningPathRole.ADMIN)
@@ -17,7 +20,7 @@ case class UserInfo(userId: String, roles: Set[LearningPathRole.Value]) {
   def isNdla: Boolean = roles.nonEmpty
 }
 
-object UserInfo {
+object UserInfo extends LazyLogging {
   val PublicReadUser = UserInfo("PublicReadUser", Set.empty)
 
   def apply(name: String): UserInfo = {
@@ -27,5 +30,22 @@ object UserInfo {
     )
   }
 
-  def get: UserInfo = AuthUser.get.map(UserInfo.apply).getOrElse(PublicReadUser)
+  def getUser = AuthUser.get.map(UserInfo.apply)
+  def getUserOrPublic: UserInfo = getUser.getOrElse(PublicReadUser)
+
+  def get: Option[UserInfo] = AuthUser.get.orElse(AuthUser.getClientId).map(UserInfo.apply)
+
+  def getWithUserIdOrAdmin = {
+    val failedResponse = Failure(AccessDeniedException("You do not have access to the requested resource."))
+
+    AuthUser.get match {
+      case Some(userId) => Success(UserInfo(userId))
+      case None =>
+        this.get match {
+          case Some(user) if user.isAdmin => Success(user)
+          case _                          => failedResponse
+        }
+      case None => failedResponse
+    }
+  }
 }
