@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.controller
 import java.util.Date
 
 import javax.servlet.http.HttpServletRequest
+import no.ndla.learningpathapi.TestData.searchSettings
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
@@ -71,18 +72,18 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val apiResult = SearchResultV2(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary))
     when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
-    when(
-      searchService.matchingQuery(
-        eqTo(List(1, 2)),
-        eqTo(query),
-        eqTo(Some(tag)),
-        eqTo(language),
-        eqTo(Sort.ByDurationDesc),
-        eqTo(Some(page)),
-        eqTo(Some(pageSize)),
-        eqTo(false),
-        eqTo(Some(verificationStatus))
-      )).thenReturn(Success(result))
+    val expectedSettings = searchSettings.copy(
+      query = Some(query),
+      withIdIn = List(1, 2),
+      taggedWith = Some(tag),
+      searchLanguage = language,
+      sort = Sort.ByDurationDesc,
+      page = Some(page),
+      pageSize = Some(pageSize),
+      verificationStatus = Some(verificationStatus)
+    )
+
+    when(searchService.matchingQuery(eqTo(expectedSettings))).thenReturn(Success(result))
 
     get(
       "/",
@@ -116,15 +117,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val apiResult = SearchResultV2(-1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary))
     when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
-    when(
-      searchService.allV2(any[List[Long]],
-                          any[Option[String]],
-                          any[Sort.Value],
-                          any[String],
-                          any[Option[Int]],
-                          any[Option[Int]],
-                          eqTo(false),
-                          any[Option[String]])).thenReturn(Success(result))
+    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(result))
 
     get("/",
         Map(
@@ -154,16 +147,17 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val apiResult = SearchResultV2(1, Some(page), pageSize, language, Seq(DefaultLearningPathSummary))
     when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
-    when(
-      searchService.matchingQuery(eqTo(List(1, 2)),
-                                  eqTo(query),
-                                  eqTo(Some(tag)),
-                                  eqTo(language),
-                                  eqTo(Sort.ByDurationDesc),
-                                  eqTo(Some(page)),
-                                  eqTo(Some(pageSize)),
-                                  eqTo(false),
-                                  eqTo(None))).thenReturn(Success(result))
+    val expectedSettings = searchSettings.copy(
+      withIdIn = List(1, 2),
+      query = Some(query),
+      taggedWith = Some(tag),
+      searchLanguage = language,
+      sort = Sort.ByDurationDesc,
+      page = Some(page),
+      pageSize = Some(pageSize),
+    )
+
+    when(searchService.matchingQuery(eqTo(expectedSettings))).thenReturn(Success(result))
 
     post(
       "/search/",
@@ -268,18 +262,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       Seq.empty,
       Some(scrollId)
     )
-    when(
-      searchService.allV2(
-        any[List[Long]],
-        any[Option[String]],
-        any[Sort.Value],
-        any[String],
-        any[Option[Int]],
-        any[Option[Int]],
-        any[Boolean],
-        any[Option[String]]
-      ))
-      .thenReturn(Success(searchResponse))
+    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(searchResponse))
 
     get(s"/") {
       status should be(200)
@@ -307,27 +290,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       status should be(200)
     }
 
-    verify(searchService, times(0)).allV2(
-      any[List[Long]],
-      any[Option[String]],
-      any[Sort.Value],
-      any[String],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean],
-      any[Option[String]]
-    )
-    verify(searchService, times(0)).matchingQuery(
-      any[List[Long]],
-      any[String],
-      any[Option[String]],
-      any[String],
-      any[Sort.Value],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean],
-      any[Option[String]]
-    )
+    verify(searchService, times(0)).matchingQuery(any[SearchSettings])
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 
@@ -350,27 +313,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       status should be(200)
     }
 
-    verify(searchService, times(0)).allV2(
-      any[List[Long]],
-      any[Option[String]],
-      any[Sort.Value],
-      any[String],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean],
-      any[Option[String]]
-    )
-    verify(searchService, times(0)).matchingQuery(
-      any[List[Long]],
-      any[String],
-      any[Option[String]],
-      any[String],
-      any[Sort.Value],
-      any[Option[Int]],
-      any[Option[Int]],
-      any[Boolean],
-      any[Option[String]]
-    )
+    verify(searchService, times(0)).matchingQuery(any[SearchSettings])
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
   }
 }

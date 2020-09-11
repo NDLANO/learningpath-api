@@ -82,21 +82,53 @@ trait SearchService extends LazyLogging {
       searchConverterService.asApiLearningPathSummaryV2(read[SearchableLearningPath](hitString), language)
     }
 
-    def allV2(withIdIn: List[Long],
-              taggedWith: Option[String],
-              sort: Sort.Value,
-              searchLanguage: String,
-              page: Option[Int],
-              pageSize: Option[Int],
-              fallback: Boolean,
-              verificationStatus: Option[String]): Try[SearchResult] = {
-      val language = if (searchLanguage == Language.AllLanguages || fallback) "*" else searchLanguage
-      val fullQuery = language match {
-        case "*" => boolQuery()
-        case lang =>
-          val titleSearch = existsQuery(s"titles.$lang")
-          val descSearch = existsQuery(s"descriptions.$lang")
+    def containsPath(paths: List[String]): Try[SearchResult] = {
+      val settings = SearchSettings(
+        query = None,
+        withIdIn = List.empty,
+        withPaths = paths,
+        taggedWith = None,
+        searchLanguage = Language.AllLanguages,
+        sort = Sort.ByTitleAsc,
+        page = None,
+        pageSize = None,
+        fallback = false,
+        verificationStatus = None,
+        shouldScroll = false
+      )
 
+      executeSearch(boolQuery(), settings)
+    }
+
+    def matchingQuery(settings: SearchSettings): Try[SearchResult] = {
+      val language =
+        if (settings.searchLanguage == Language.AllLanguages || settings.fallback) "*"
+        else settings.searchLanguage
+
+      val fullQuery = settings.query match {
+        case Some(query) =>
+          val titleSearch = simpleStringQuery(query).field(s"titles.$language", 2)
+          val descSearch = simpleStringQuery(query).field(s"descriptions.$language", 2)
+          val stepTitleSearch = simpleStringQuery(query).field(s"learningsteps.titles.$language", 1)
+          val stepDescSearch = simpleStringQuery(query).field(s"learningsteps.descriptions.$language", 1)
+          val tagSearch = simpleStringQuery(query).field(s"tags.$language", 2)
+          val authorSearch = simpleStringQuery(query).field("author", 1)
+          boolQuery()
+            .must(
+              boolQuery()
+                .should(
+                  nestedQuery("titles", titleSearch),
+                  nestedQuery("descriptions", descSearch),
+                  nestedQuery("learningsteps.titles", stepTitleSearch),
+                  nestedQuery("learningsteps.descriptions", stepDescSearch),
+                  nestedQuery("tags", tagSearch),
+                  authorSearch
+                )
+            )
+        case None if language == "*" => boolQuery()
+        case _ =>
+          val titleSearch = existsQuery(s"titles.$language")
+          val descSearch = existsQuery(s"descriptions.$language")
           boolQuery()
             .should(
               nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg),
@@ -104,109 +136,30 @@ trait SearchService extends LazyLogging {
             )
       }
 
-      executeSearch(
-        fullQuery,
-        withIdIn,
-        taggedWith,
-        List.empty,
-        sort,
-        searchLanguage,
-        page,
-        pageSize,
-        fallback,
-        verificationStatus
-      )
+      executeSearch(fullQuery, settings)
     }
 
-    def containsPath(paths: List[String]): Try[SearchResult] = {
-      executeSearch(
-        boolQuery(),
-        List.empty,
-        None,
-        paths,
-        Sort.ByTitleAsc,
-        Language.AllLanguages,
-        None,
-        None,
-        false,
-        None
+    private def executeSearch(queryBuilder: BoolQuery, settings: SearchSettings) = {
+      val tagFilter: Option[NestedQuery] = settings.taggedWith.map(
+        tag => nestedQuery("tags", termQuery(s"tags.${settings.searchLanguage}.raw", tag)).scoreMode(ScoreMode.None)
       )
-    }
-
-    def matchingQuery(withIdIn: List[Long],
-                      query: String,
-                      taggedWith: Option[String],
-                      searchLanguage: String,
-                      sort: Sort.Value,
-                      page: Option[Int],
-                      pageSize: Option[Int],
-                      fallback: Boolean,
-                      verificationStatus: Option[String]): Try[SearchResult] = {
-      val language =
-        if (searchLanguage == Language.AllLanguages || fallback) "*"
-        else searchLanguage
-
-      val titleSearch = simpleStringQuery(query).field(s"titles.$language", 2)
-      val descSearch = simpleStringQuery(query).field(s"descriptions.$language", 2)
-      val stepTitleSearch = simpleStringQuery(query).field(s"learningsteps.titles.$language", 1)
-      val stepDescSearch = simpleStringQuery(query).field(s"learningsteps.descriptions.$language", 1)
-      val tagSearch = simpleStringQuery(query).field(s"tags.$language", 2)
-      val authorSearch = simpleStringQuery(query).field("author", 1)
-
-      val fullQuery = boolQuery()
-        .must(
-          boolQuery()
-            .should(
-              nestedQuery("titles", titleSearch),
-              nestedQuery("descriptions", descSearch),
-              nestedQuery("learningsteps.titles", stepTitleSearch),
-              nestedQuery("learningsteps.descriptions", stepDescSearch),
-              nestedQuery("tags", tagSearch),
-              authorSearch
-            )
-        )
-
-      executeSearch(fullQuery,
-                    withIdIn,
-                    taggedWith,
-                    List.empty,
-                    sort,
-                    language,
-                    page,
-                    pageSize,
-                    fallback,
-                    verificationStatus)
-    }
-
-    private def executeSearch(queryBuilder: BoolQuery,
-                              withIdIn: List[Long],
-                              taggedWith: Option[String],
-                              withPaths: List[String],
-                              sort: Sort.Value,
-                              language: String,
-                              page: Option[Int],
-                              pageSize: Option[Int],
-                              fallback: Boolean,
-                              verificationStatus: Option[String]) = {
-      val tagFilter: Option[NestedQuery] = taggedWith.map(
-        tag => nestedQuery("tags", termQuery(s"tags.$language.raw", tag)).scoreMode(ScoreMode.None)
-      )
-      val idFilter = if (withIdIn.isEmpty) None else Some(idsQuery(withIdIn))
-      val pathFilter = pathsFilterQuery(withPaths)
-      val (languageFilter, searchLanguage) = language match {
+      val idFilter = if (settings.withIdIn.isEmpty) None else Some(idsQuery(settings.withIdIn))
+      val pathFilter = pathsFilterQuery(settings.withPaths)
+      val (languageFilter, searchLanguage) = settings.searchLanguage match {
         case "" | Language.AllLanguages =>
           (None, "*")
         case lang =>
-          if (fallback) (None, "*") else (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
+          if (settings.fallback) (None, "*")
+          else (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
       }
 
-      val verificationStatusFilter = verificationStatus.map(status => termQuery("verificationStatus", status))
+      val verificationStatusFilter = settings.verificationStatus.map(status => termQuery("verificationStatus", status))
 
       val filters = List(tagFilter, idFilter, pathFilter, languageFilter, verificationStatusFilter)
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
-      val (startAt, numResults) = getStartAtAndNumResults(page, pageSize)
-      val requestedResultWindow = page.getOrElse(1) * numResults
+      val (startAt, numResults) = getStartAtAndNumResults(settings.page, settings.pageSize)
+      val requestedResultWindow = settings.page.getOrElse(1) * numResults
       if (requestedResultWindow > ElasticSearchIndexMaxResultWindow) {
         logger.info(
           s"Max supported results are $ElasticSearchIndexMaxResultWindow, user requested $requestedResultWindow")
@@ -217,21 +170,23 @@ trait SearchService extends LazyLogging {
           .from(startAt)
           .query(filteredSearch)
           .highlighting(highlight("*"))
-          .sortBy(getSortDefinition(sort, searchLanguage))
+          .sortBy(getSortDefinition(settings.sort, searchLanguage))
 
         // Only add scroll param if it is first page
         val searchWithScroll =
-          if (startAt != 0) { searchToExecute } else { searchToExecute.scroll(ElasticSearchScrollKeepAlive) }
+          if (startAt == 0 && settings.shouldScroll) {
+            searchToExecute.scroll(ElasticSearchScrollKeepAlive)
+          } else { searchToExecute }
 
         e4sClient.execute(searchWithScroll) match {
           case Success(response) =>
             Success(
               SearchResult(
                 response.result.totalHits,
-                Some(page.getOrElse(1)),
+                Some(settings.page.getOrElse(1)),
                 numResults,
-                if (language == "*") Language.AllLanguages else language,
-                getHitsV2(response.result, language),
+                if (language == "*") Language.AllLanguages else settings.searchLanguage,
+                getHitsV2(response.result, settings.searchLanguage),
                 response.result.scrollId
               ))
           case Failure(ex) =>
@@ -271,37 +226,37 @@ trait SearchService extends LazyLogging {
         case Sort.ByTitleAsc =>
           language match {
             case "*" | Language.AllLanguages =>
-              fieldSort("defaultTitle").order(SortOrder.ASC).missing("_last")
+              fieldSort("defaultTitle").order(SortOrder.Asc).missing("_last")
             case _ =>
               fieldSort(s"titles.$sortLanguage.raw")
                 .nestedPath("titles")
-                .order(SortOrder.ASC)
+                .order(SortOrder.Asc)
                 .missing("_last")
           }
         case Sort.ByTitleDesc =>
           language match {
             case "*" | Language.AllLanguages =>
-              fieldSort("defaultTitle").order(SortOrder.DESC).missing("_last")
+              fieldSort("defaultTitle").order(SortOrder.Desc).missing("_last")
             case _ =>
               fieldSort(s"titles.$sortLanguage.raw")
                 .nestedPath("titles")
-                .order(SortOrder.DESC)
+                .order(SortOrder.Desc)
                 .missing("_last")
           }
         case Sort.ByDurationAsc =>
-          fieldSort("duration").order(SortOrder.ASC).missing("_last")
+          fieldSort("duration").order(SortOrder.Asc).missing("_last")
         case Sort.ByDurationDesc =>
-          fieldSort("duration").order(SortOrder.DESC).missing("_last")
+          fieldSort("duration").order(SortOrder.Desc).missing("_last")
         case Sort.ByLastUpdatedAsc =>
-          fieldSort("lastUpdated").order(SortOrder.ASC).missing("_last")
+          fieldSort("lastUpdated").order(SortOrder.Asc).missing("_last")
         case Sort.ByLastUpdatedDesc =>
-          fieldSort("lastUpdated").order(SortOrder.DESC).missing("_last")
-        case Sort.ByRelevanceAsc  => fieldSort("_score").order(SortOrder.ASC)
-        case Sort.ByRelevanceDesc => fieldSort("_score").order(SortOrder.DESC)
+          fieldSort("lastUpdated").order(SortOrder.Desc).missing("_last")
+        case Sort.ByRelevanceAsc  => fieldSort("_score").order(SortOrder.Asc)
+        case Sort.ByRelevanceDesc => fieldSort("_score").order(SortOrder.Desc)
         case Sort.ByIdAsc =>
-          fieldSort("id").order(SortOrder.ASC).missing("_last")
+          fieldSort("id").order(SortOrder.Asc).missing("_last")
         case Sort.ByIdDesc =>
-          fieldSort("id").order(SortOrder.DESC).missing("_last")
+          fieldSort("id").order(SortOrder.Desc).missing("_last")
       }
     }
 

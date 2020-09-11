@@ -11,7 +11,7 @@ import java.util.Date
 
 import no.ndla.mapping.License.CC_BY
 import no.ndla.learningpathapi.model.domain
-import no.ndla.learningpathapi.model.domain.{Language, LearningStep}
+import no.ndla.learningpathapi.model.domain.{Language, LearningStep, SearchSettings, Sort}
 import no.ndla.learningpathapi.model.domain.config.ConfigKey
 import org.joda.time.DateTime
 
@@ -84,6 +84,20 @@ object TestData {
     "me",
     domain.Copyright(CC_BY.toString, List.empty),
     Some(List(domainLearningStep1, domainLearningStep2))
+  )
+
+  val searchSettings = SearchSettings(
+    query = None,
+    withIdIn = List.empty,
+    withPaths = List.empty,
+    taggedWith = None,
+    searchLanguage = Language.DefaultLanguage,
+    sort = Sort.ByIdAsc,
+    page = None,
+    pageSize = None,
+    fallback = false,
+    verificationStatus = None,
+    shouldScroll = false
   )
 
 }

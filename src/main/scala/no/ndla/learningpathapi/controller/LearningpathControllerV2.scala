@@ -11,7 +11,8 @@ package no.ndla.learningpathapi.controller
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.{
   ElasticSearchIndexMaxResultWindow,
-  ElasticSearchScrollKeepAlive
+  ElasticSearchScrollKeepAlive,
+  InitialScrollContextKeywords
 }
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
@@ -103,12 +104,12 @@ trait LearningpathControllerV2 {
       Param[String]("STATUS", "Status of LearningPaths")
     private val scrollId = Param[Option[String]](
       "search-context",
-      s"""A search context retrieved from the response header of a previous search.
-         |If search-context is specified, all other query parameters, except '${this.language.paramName}' is ignored.
-         |For the rest of the parameters the original search of the search-context is used.
-         |The search context may change between scrolls. Always use the most recent one (The context if unused dies after $ElasticSearchScrollKeepAlive).
-         |Used to enable scrolling past $ElasticSearchIndexMaxResultWindow results.
-      """.stripMargin
+      s"""A unique string obtained from a search you want to keep scrolling in. To obtain one from a search, provide one of the following values: ${InitialScrollContextKeywords
+           .mkString("[", ",", "]")}.
+         |When scrolling, the parameters from the initial search is used, except in the case of '${this.language.paramName}' and '${this.fallback.paramName}'.
+         |This value may change between scrolls. Always use the one in the latest scroll result (The context, if unused, dies after $ElasticSearchScrollKeepAlive).
+         |If you are not paginating past $ElasticSearchIndexMaxResultWindow hits, you can ignore this and use '${this.pageNo.paramName}' and '${this.pageSize.paramName}' instead.
+         |""".stripMargin
     )
     private val verificationStatus =
       Param[Option[String]]("verificationStatus", "Return only learning paths that have this verification status.")
@@ -157,34 +158,40 @@ trait LearningpathControllerV2 {
                        pageSize: Option[Int],
                        page: Option[Int],
                        fallback: Boolean,
-                       verificationStatus: Option[String]) = {
-      val result = query match {
+                       verificationStatus: Option[String],
+                       shouldScroll: Boolean) = {
+      val settings = query match {
         case Some(q) =>
-          searchService.matchingQuery(
+          SearchSettings(
+            query = Some(q),
             withIdIn = idList,
-            query = q,
             taggedWith = tag,
+            withPaths = List.empty,
             searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
             page = page,
             pageSize = pageSize,
             fallback = fallback,
-            verificationStatus = verificationStatus
+            verificationStatus = verificationStatus,
+            shouldScroll = shouldScroll
           )
         case None =>
-          searchService.allV2(
+          SearchSettings(
+            query = None,
             withIdIn = idList,
             taggedWith = tag,
+            withPaths = List.empty,
             searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
             page = page,
             pageSize = pageSize,
             fallback = fallback,
-            verificationStatus = verificationStatus
+            verificationStatus = verificationStatus,
+            shouldScroll = shouldScroll
           )
       }
 
-      result match {
+      searchService.matchingQuery(settings) match {
         case Success(searchResult) =>
           val responseHeader =
             searchResult.scrollId.map(i => this.scrollId.paramName -> i).toMap
@@ -229,8 +236,9 @@ trait LearningpathControllerV2 {
         val fallback =
           booleanOrDefault(this.fallback.paramName, default = false)
         val verificationStatus = paramOrNone(this.verificationStatus.paramName)
+        val shouldScroll = paramOrNone(this.scrollId.paramName).exists(InitialScrollContextKeywords.contains)
 
-        search(query, language, tag, idList, sort, pageSize, page, fallback, verificationStatus)
+        search(query, language, tag, idList, sort, pageSize, page, fallback, verificationStatus, shouldScroll)
       }
     }
 
@@ -260,8 +268,9 @@ trait LearningpathControllerV2 {
         val page = searchParams.page
         val fallback = searchParams.fallback.getOrElse(false)
         val verificationStatus = searchParams.verificationStatus
+        val shouldScroll = searchParams.scrollId.exists(InitialScrollContextKeywords.contains)
 
-        search(query, language, tag, idList, sort, pageSize, page, fallback, verificationStatus)
+        search(query, language, tag, idList, sort, pageSize, page, fallback, verificationStatus, shouldScroll)
       }
     }
 
