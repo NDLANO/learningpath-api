@@ -63,7 +63,8 @@ object LearningpathApiProperties extends LazyLogging {
   val UsernameHeader = "X-Consumer-Username"
 
   val ElasticSearchIndexMaxResultWindow = 10000
-  val ElasticSearchScrollKeepAlive = "10s"
+  val ElasticSearchScrollKeepAlive = "1m"
+  val InitialScrollContextKeywords = List("0", "initial", "start", "first")
 
   val BasicHtmlTags = List("b",
                            "blockquote",

@@ -36,16 +36,13 @@ object UserInfo extends LazyLogging {
   def get: Option[UserInfo] = AuthUser.get.orElse(AuthUser.getClientId).map(UserInfo.apply)
 
   def getWithUserIdOrAdmin = {
-    val failedResponse = Failure(AccessDeniedException("You do not have access to the requested resource."))
-
     AuthUser.get match {
       case Some(userId) => Success(UserInfo(userId))
       case None =>
         this.get match {
           case Some(user) if user.isAdmin => Success(user)
-          case _                          => failedResponse
+          case _                          => Failure(AccessDeniedException("You do not have access to the requested resource."))
         }
-      case None => failedResponse
     }
   }
 }
