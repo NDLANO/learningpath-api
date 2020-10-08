@@ -42,19 +42,10 @@ object Language {
 
   private val supportedLanguages = languageAnalyzers.map(_.lang)
 
-  def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], lang: Option[String]): Option[P] = {
-    def findFirstLanguageMatching(sequence: Seq[P], lang: Seq[String]): Option[P] = {
-      lang match {
-        case Nil => sequence.headOption
-        case head :: tail =>
-          sequence.find(_.language == head) match {
-            case Some(x) => Some(x)
-            case None    => findFirstLanguageMatching(sequence, tail)
-          }
-      }
-    }
-
-    findFirstLanguageMatching(sequence, lang.toList :+ DefaultLanguage)
+  def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], language: String): Option[P] = {
+    sequence
+      .find(_.language == language)
+      .orElse(sequence.sortBy(lf => ISO639.languagePriority.reverse.indexOf(lf.language)).lastOption)
   }
 
   def getLanguageOrDefaultIfUnsupported(language: String): String =

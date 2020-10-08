@@ -10,6 +10,7 @@ package no.ndla.learningpathapi.service
 
 import java.util.Date
 
+import no.ndla.learningpathapi.integration.TaxonomyApiClient
 import no.ndla.learningpathapi.model.api.{config, _}
 import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.domain
@@ -29,7 +30,8 @@ trait UpdateService {
     with SearchIndexService
     with Clock
     with LearningStepValidator
-    with LearningPathValidator =>
+    with LearningPathValidator
+    with TaxonomyApiClient =>
   val updateService: UpdateService
 
   class UpdateService {
@@ -91,6 +93,7 @@ trait UpdateService {
           val updatedLearningPath = learningPathRepository.update(toUpdate)
           if (updatedLearningPath.isPublished) {
             searchIndexService.indexDocument(updatedLearningPath)
+            taxononyApiClient.updateResource()
           } else {
             deleteIsBasedOnReference(existing)
             searchIndexService.deleteDocument(existing)

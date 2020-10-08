@@ -99,18 +99,18 @@ trait SearchConverterServiceComponent {
       LearningPathSummaryV2(
         searchableLearningPath.id,
         revision = None,
-        findByLanguageOrBestEffort(titles, Some(language))
+        findByLanguageOrBestEffort(titles, language)
           .getOrElse(api.Title("", DefaultLanguage)),
-        findByLanguageOrBestEffort(descriptions, Some(language))
+        findByLanguageOrBestEffort(descriptions, language)
           .getOrElse(api.Description("", DefaultLanguage)),
-        findByLanguageOrBestEffort(introductions, Some(language))
+        findByLanguageOrBestEffort(introductions, language)
           .getOrElse(api.Introduction("", DefaultLanguage)),
         createUrlToLearningPath(searchableLearningPath.id),
         searchableLearningPath.coverPhotoUrl,
         searchableLearningPath.duration,
         searchableLearningPath.status,
         searchableLearningPath.lastUpdated,
-        findByLanguageOrBestEffort(tags, Some(language))
+        findByLanguageOrBestEffort(tags, language)
           .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage)),
         searchableLearningPath.copyright,
         supportedLanguages,
