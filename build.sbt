@@ -10,6 +10,7 @@ val AwsSdkversion = "1.11.434"
 val MockitoVersion = "1.14.8"
 val Elastic4sVersion = "6.7.8"
 val JacksonVersion = "2.11.2"
+val CatsEffectVersion = "2.1.2"
 val ElasticsearchVersion = "6.8.11"
 val Json4SVersion = "3.6.7"
 val FlywayVersion = "5.2.0"
@@ -87,6 +88,7 @@ lazy val learningpath_api = (project in file("."))
       "org.elasticsearch" % "elasticsearch" % ElasticsearchVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-core" % Elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-http" % Elastic4sVersion,
+      "org.typelevel" %% "cats-effect" % CatsEffectVersion,
       "io.lemonlabs" %% "scala-uri" % "1.5.1",
       "org.jsoup" % "jsoup" % "1.11.3",
       "net.bull.javamelody" % "javamelody-core" % "1.74.0",

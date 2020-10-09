@@ -91,18 +91,27 @@ trait UpdateService {
           learningPathValidator.validate(toUpdate, allowUnknownLanguage = true)
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
-          if (updatedLearningPath.isPublished) {
-            searchIndexService.indexDocument(updatedLearningPath)
-            taxononyApiClient.updateResource()
-          } else {
-            deleteIsBasedOnReference(existing)
-            searchIndexService.deleteDocument(existing)
-          }
+          val preTry = updateSearchAndTaxonomy(updatedLearningPath)
+          preTry.flatMap(
+            _ =>
+              converterService.asApiLearningpathV2(
+                updatedLearningPath,
+                learningPathToUpdate.language,
+                fallback = true,
+                owner
+            ))
+      }
+    }
 
-          converterService.asApiLearningpathV2(updatedLearningPath,
-                                               learningPathToUpdate.language,
-                                               fallback = true,
-                                               owner)
+    private def updateSearchAndTaxonomy(learningPath: domain.LearningPath) = {
+      if (learningPath.isPublished) {
+        for {
+          _ <- searchIndexService.indexDocument(learningPath)
+          _ <- taxononyApiClient.updateTaxonomyIfExists(learningPath)
+        } yield ()
+      } else {
+        deleteIsBasedOnReference(learningPath)
+        searchIndexService.deleteDocument(learningPath)
       }
     }
 
@@ -127,14 +136,16 @@ trait UpdateService {
               val updatedLearningPath = learningPathRepository.update(
                 valid.copy(message = newMessage, status = status, lastUpdated = clock.now()))
 
-              if (updatedLearningPath.isPublished) {
-                searchIndexService.indexDocument(updatedLearningPath)
-              } else {
-                deleteIsBasedOnReference(updatedLearningPath)
-                searchIndexService.deleteDocument(updatedLearningPath)
-              }
+              updateSearchAndTaxonomy(updatedLearningPath)
+                .flatMap(
+                  _ =>
+                    converterService.asApiLearningpathV2(
+                      updatedLearningPath,
+                      language,
+                      fallback = true,
+                      owner
+                  ))
 
-              converterService.asApiLearningpathV2(updatedLearningPath, language, fallback = true, owner)
             })
         }
       }
@@ -170,17 +181,18 @@ trait UpdateService {
 
               (insertedStep, updatedPath)
             }
-            if (updatedPath.isPublished) {
-              searchIndexService.indexDocument(updatedPath)
-            } else {
-              deleteIsBasedOnReference(learningPath)
-              searchIndexService.deleteDocument(learningPath)
-            }
-            converterService.asApiLearningStepV2(insertedStep,
-                                                 updatedPath,
-                                                 newLearningStep.language,
-                                                 fallback = true,
-                                                 owner)
+
+            updateSearchAndTaxonomy(updatedPath)
+              .flatMap(
+                _ =>
+                  converterService.asApiLearningStepV2(
+                    insertedStep,
+                    updatedPath,
+                    newLearningStep.language,
+                    fallback = true,
+                    owner
+                ))
+
         }
       }
     }
@@ -209,18 +221,17 @@ trait UpdateService {
                 (updatedStep, updatedPath)
               }
 
-              if (updatedPath.isPublished) {
-                searchIndexService.indexDocument(updatedPath)
-              } else {
-                deleteIsBasedOnReference(updatedPath)
-                searchIndexService.deleteDocument(updatedPath)
-              }
+              updateSearchAndTaxonomy(updatedPath)
+                .flatMap(
+                  _ =>
+                    converterService.asApiLearningStepV2(
+                      updatedStep,
+                      updatedPath,
+                      learningStepToUpdate.language,
+                      fallback = true,
+                      owner
+                  ))
 
-              converterService.asApiLearningStepV2(updatedStep,
-                                                   updatedPath,
-                                                   learningStepToUpdate.language,
-                                                   fallback = true,
-                                                   owner)
           }
       }
     }
@@ -270,18 +281,16 @@ trait UpdateService {
                   (updatedPath, updatedStep)
                 }
 
-                if (updatedPath.isPublished) {
-                  searchIndexService.indexDocument(updatedPath)
-                } else {
-                  deleteIsBasedOnReference(learningPath)
-                  searchIndexService.deleteDocument(learningPath)
-                }
+                updateSearchAndTaxonomy(updatedPath).flatMap(
+                  _ =>
+                    converterService.asApiLearningStepV2(
+                      updatedStep,
+                      updatedPath,
+                      Language.DefaultLanguage,
+                      fallback = true,
+                      owner
+                  ))
 
-                converterService.asApiLearningStepV2(updatedStep,
-                                                     updatedPath,
-                                                     Language.DefaultLanguage,
-                                                     fallback = true,
-                                                     owner)
             }
         }
       }

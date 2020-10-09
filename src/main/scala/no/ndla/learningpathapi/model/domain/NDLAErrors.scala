@@ -32,4 +32,4 @@ case class LanguageNotSupportedException(message: String) extends RuntimeExcepti
 case class InvalidStatusException(message: String) extends RuntimeException(message)
 case class SearchException(message: String) extends RuntimeException(message)
 case class NotFoundException(message: String) extends RuntimeException(message)
-case class InvalidLearningPathException(message: String) extends RuntimeException(message)
+case class TaxonomyUpdateException(message: String) extends RuntimeException(message)
