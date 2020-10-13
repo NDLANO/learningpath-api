@@ -185,7 +185,7 @@ trait SearchService extends LazyLogging {
                 response.result.totalHits,
                 Some(settings.page.getOrElse(1)),
                 numResults,
-                if (language == "*") Language.AllLanguages else settings.searchLanguage,
+                if (searchLanguage == "*") Language.AllLanguages else settings.searchLanguage,
                 getHitsV2(response.result, settings.searchLanguage),
                 response.result.scrollId
               ))

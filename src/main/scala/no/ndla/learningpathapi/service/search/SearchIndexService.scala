@@ -68,21 +68,19 @@ trait SearchIndexService {
         indexed <- {
           val source = write(searchConverterService.asSearchableLearningpath(learningPath))
 
-          val response = e4sClient.execute {
-            indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
-              .doc(source)
-              .id(learningPath.id.get.toString)
-          }
-          response match {
-            case Success(_)  => Success(learningPath)
-            case Failure(ex) => Failure(ex)
-          }
+          e4sClient
+            .execute {
+              indexInto(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
+                .doc(source)
+                .id(learningPath.id.get.toString)
+            }
+            .map(_ => learningPath)
         }
         _ <- searchApiClient.indexLearningPathDocument(learningPath)
       } yield indexed
     }
 
-    def deleteDocument(learningPath: LearningPath): Try[_] = {
+    def deleteDocument(learningPath: LearningPath): Try[LearningPath] = {
       learningPath.id
         .map(id => {
           for {
@@ -91,14 +89,14 @@ trait SearchIndexService {
               case None =>
                 createIndexWithGeneratedName().map(newIndex => updateAliasTarget(None, newIndex))
             }
-            deleted <- {
+            _ <- {
               e4sClient.execute {
                 delete(id.toString)
                   .from(LearningpathApiProperties.SearchIndex / LearningpathApiProperties.SearchDocument)
               }
             }
             _ <- searchApiClient.deleteLearningPathDocument(id)
-          } yield deleted
+          } yield learningPath
         })
         .getOrElse(Success(learningPath))
     }

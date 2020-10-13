@@ -91,8 +91,8 @@ trait UpdateService {
           learningPathValidator.validate(toUpdate, allowUnknownLanguage = true)
 
           val updatedLearningPath = learningPathRepository.update(toUpdate)
-          val preTry = updateSearchAndTaxonomy(updatedLearningPath)
-          preTry.flatMap(
+
+          updateSearchAndTaxonomy(updatedLearningPath).flatMap(
             _ =>
               converterService.asApiLearningpathV2(
                 updatedLearningPath,
@@ -107,8 +107,8 @@ trait UpdateService {
       if (learningPath.isPublished) {
         for {
           _ <- searchIndexService.indexDocument(learningPath)
-          _ <- taxononyApiClient.updateTaxonomyIfExists(learningPath)
-        } yield ()
+          lp <- taxononyApiClient.updateTaxonomyIfExists(learningPath)
+        } yield lp
       } else {
         deleteIsBasedOnReference(learningPath)
         searchIndexService.deleteDocument(learningPath)

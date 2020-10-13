@@ -27,6 +27,7 @@ import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import scalikejdbc.DBSession
 
+import scala.reflect.runtime.universe.Try
 import scala.util.{Failure, Success}
 
 class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
@@ -231,6 +232,12 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     service = new UpdateService
     resetMocks()
     when(readService.canWriteNow(any[UserInfo])).thenReturn(true)
+    when(searchIndexService.deleteDocument(any[domain.LearningPath])).thenAnswer((i: InvocationOnMock) =>
+      Success(i.getArgument[domain.LearningPath](0)))
+    when(searchIndexService.indexDocument(any[domain.LearningPath])).thenAnswer((i: InvocationOnMock) =>
+      Success(i.getArgument[domain.LearningPath](0)))
+    when(taxononyApiClient.updateTaxonomyIfExists(any[domain.LearningPath])).thenAnswer((i: InvocationOnMock) =>
+      Success(i.getArgument[domain.LearningPath](0)))
   }
 
   test("That addLearningPathV2 inserts the given LearningPathV2") {
