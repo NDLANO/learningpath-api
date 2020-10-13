@@ -9,8 +9,9 @@
 package no.ndla.learningpathapi.service
 
 import java.util.Date
+import java.util.concurrent.Executors
 
-import no.ndla.learningpathapi.integration.TaxonomyApiClient
+import no.ndla.learningpathapi.integration.{SearchApiClient, TaxonomyApiClient}
 import no.ndla.learningpathapi.model.api.{config, _}
 import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
 import no.ndla.learningpathapi.model.domain
@@ -20,6 +21,7 @@ import no.ndla.learningpathapi.repository.{ConfigRepository, LearningPathReposit
 import no.ndla.learningpathapi.service.search.SearchIndexService
 import no.ndla.learningpathapi.validation.{LearningPathValidator, LearningStepValidator}
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 trait UpdateService {
@@ -31,7 +33,8 @@ trait UpdateService {
     with Clock
     with LearningStepValidator
     with LearningPathValidator
-    with TaxonomyApiClient =>
+    with TaxonomyApiClient
+    with SearchApiClient =>
   val updateService: UpdateService
 
   class UpdateService {
@@ -105,14 +108,12 @@ trait UpdateService {
 
     private def updateSearchAndTaxonomy(learningPath: domain.LearningPath) = {
       if (learningPath.isPublished) {
-        for {
-          _ <- searchIndexService.indexDocument(learningPath)
-          lp <- taxononyApiClient.updateTaxonomyIfExists(learningPath)
-        } yield lp
+        searchApiClient.indexLearningPathDocument(learningPath)
+        searchIndexService.indexDocument(learningPath)
       } else {
         deleteIsBasedOnReference(learningPath)
         searchIndexService.deleteDocument(learningPath)
-      }
+      }.flatMap(taxononyApiClient.updateTaxonomyIfExists)
     }
 
     def updateLearningPathStatusV2(learningPathId: Long,

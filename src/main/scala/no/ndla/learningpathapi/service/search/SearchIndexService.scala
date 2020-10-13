@@ -76,7 +76,6 @@ trait SearchIndexService {
             }
             .map(_ => learningPath)
         }
-        _ <- searchApiClient.indexLearningPathDocument(learningPath)
       } yield indexed
     }
 

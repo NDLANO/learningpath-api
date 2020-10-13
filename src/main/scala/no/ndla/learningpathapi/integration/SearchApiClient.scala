@@ -6,6 +6,8 @@
  */
 
 package no.ndla.learningpathapi.integration
+import java.util.concurrent.Executors
+
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.network.NdlaClient
 import scalaj.http.{Http, HttpRequest, HttpResponse}
@@ -15,6 +17,7 @@ import org.json4s.Formats
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization.write
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 trait SearchApiClient {
@@ -40,16 +43,37 @@ trait SearchApiClient {
       doRawRequest(req)
     }
 
-    def indexLearningPathDocument(document: LearningPath): Try[_] = {
-      val body = write(document)
+    def indexLearningPathDocument(document: LearningPath): Future[Try[_]] = {
+      val idString = document.id.map(_.toString).getOrElse("<missing id>")
+      implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
+      val future = Future {
+        val body = write(document)
 
-      val req = Http(s"http://$SearchApiHost/intern/learningpath/")
-        .method("POST")
-        .header("Content-Type", "application/json")
-        .postData(body)
-        .timeout(IndexTimeout, IndexTimeout)
+        val req = Http(s"http://$SearchApiHost/intern/learningpath/")
+          .method("POST")
+          .header("Content-Type", "application/json")
+          .postData(body)
+          .timeout(IndexTimeout, IndexTimeout)
 
-      doRawRequest(req)
+        doRawRequest(req)
+      }
+
+      future.onComplete {
+        case Success(req) =>
+          req match {
+            case Failure(ex) =>
+              logger.error(s"Failed when calling search-api for indexing '$idString': '${ex.getMessage}'", ex)
+            case Success(response) if response.isError =>
+              logger.error(
+                s"Failed when calling search-api for indexing '$idString': '${response.code}' -> '${response.body}'")
+            case Success(_) =>
+              logger.info(s"Successfully called search-api for indexing '$idString'")
+          }
+        case Failure(ex) =>
+          logger.error(s"Future failed when calling search-api for indexing '$idString': '${ex.getMessage}'", ex)
+      }
+
+      future
     }
 
     private def doRawRequest(request: HttpRequest): Try[HttpResponse[String]] = {
