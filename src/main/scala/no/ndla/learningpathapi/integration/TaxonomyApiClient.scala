@@ -111,7 +111,7 @@ trait TaxonomyApiClient {
       get[List[Translation]](s"$TaxonomyApiEndpoint/resources/$resourceId/translations")
 
     private def queryResource(contentUri: String): Try[List[TaxonomyResource]] = {
-      get[List[TaxonomyResource]](s"$TaxonomyApiEndpoint/queries/resources", "contentUri" -> contentUri) match {
+      get[List[TaxonomyResource]](s"$TaxonomyApiEndpoint/queries/resources", "contentURI" -> contentUri) match {
         case Success(resources) => Success(resources)
         case Failure(ex)        => Failure(ex)
       }
