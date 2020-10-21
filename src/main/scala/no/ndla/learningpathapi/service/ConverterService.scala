@@ -107,15 +107,15 @@ trait ConverterService {
 
         val searchLanguage = getSearchLanguage(language, supportedLanguages)
 
-        val title = findByLanguageOrBestEffort(lp.title, Some(language))
+        val title = findByLanguageOrBestEffort(lp.title, language)
           .map(asApiTitle)
           .getOrElse(api.Title("", DefaultLanguage))
         val description =
-          findByLanguageOrBestEffort(lp.description, Some(language))
+          findByLanguageOrBestEffort(lp.description, language)
             .map(asApiDescription)
             .getOrElse(api.Description("", DefaultLanguage))
 
-        val tags = findByLanguageOrBestEffort(lp.tags, Some(language))
+        val tags = findByLanguageOrBestEffort(lp.tags, language)
           .map(asApiLearningPathTags)
           .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
         val learningSteps = lp.learningsteps
@@ -407,18 +407,18 @@ trait ConverterService {
                                    user: UserInfo = UserInfo.getUserOrPublic): Try[api.LearningPathSummaryV2] = {
       val supportedLanguages = findSupportedLanguages(learningpath)
 
-      val title = findByLanguageOrBestEffort(learningpath.title, Some(Language.AllLanguages))
+      val title = findByLanguageOrBestEffort(learningpath.title, Language.AllLanguages)
         .map(asApiTitle)
         .getOrElse(api.Title("", DefaultLanguage))
-      val description = findByLanguageOrBestEffort(learningpath.description, Some(Language.AllLanguages))
+      val description = findByLanguageOrBestEffort(learningpath.description, Language.AllLanguages)
         .map(asApiDescription)
         .getOrElse(api.Description("", DefaultLanguage))
-      val tags = findByLanguageOrBestEffort(learningpath.tags, Some(Language.AllLanguages))
+      val tags = findByLanguageOrBestEffort(learningpath.tags, Language.AllLanguages)
         .map(asApiLearningPathTags)
         .getOrElse(api.LearningPathTags(Seq(), DefaultLanguage))
       val introduction =
         findByLanguageOrBestEffort(getApiIntroduction(learningpath.learningsteps.getOrElse(Seq.empty)),
-                                   Some(Language.AllLanguages))
+                                   Language.AllLanguages)
           .getOrElse(api.Introduction("", DefaultLanguage))
 
       val message = learningpath.message.filter(_ => learningpath.canEdit(user)).map(_.message)
@@ -458,13 +458,13 @@ trait ConverterService {
       val supportedLanguages = findSupportedLanguages(ls)
 
       if (languageIsSupported(supportedLanguages, language) || fallback) {
-        val title = findByLanguageOrBestEffort(ls.title, Some(language))
+        val title = findByLanguageOrBestEffort(ls.title, language)
           .map(asApiTitle)
           .getOrElse(api.Title("", DefaultLanguage))
         val description =
-          findByLanguageOrBestEffort(ls.description, Some(language))
+          findByLanguageOrBestEffort(ls.description, language)
             .map(asApiDescription)
-        val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, Some(language))
+        val embedUrl = findByLanguageOrBestEffort(ls.embedUrl, language)
           .map(asApiEmbedUrlV2)
           .map(createEmbedUrl)
 
@@ -493,7 +493,7 @@ trait ConverterService {
     def asApiLearningStepSummaryV2(ls: domain.LearningStep,
                                    lp: domain.LearningPath,
                                    language: String): Option[api.LearningStepSummaryV2] = {
-      findByLanguageOrBestEffort(ls.title, Some(language)).map(
+      findByLanguageOrBestEffort(ls.title, language).map(
         title =>
           api.LearningStepSummaryV2(
             ls.id.get,
