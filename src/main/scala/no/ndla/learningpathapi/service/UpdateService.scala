@@ -41,6 +41,7 @@ trait UpdateService {
 
     def updateTaxonomyForLearningPath(
         pathId: Long,
+        createIfMissing: Boolean,
         language: String,
         fallback: Boolean,
         userInfo: UserInfo
@@ -50,7 +51,7 @@ trait UpdateService {
           case Failure(ex) => Failure(ex)
           case Success(lp) =>
             taxononyApiClient
-              .updateTaxonomyIfExists(lp)
+              .updateTaxonomyForLearningPath(lp, createIfMissing)
               .flatMap(l => converterService.asApiLearningpathV2(l, language, fallback, userInfo))
         }
       }
@@ -130,7 +131,7 @@ trait UpdateService {
       } else {
         deleteIsBasedOnReference(learningPath)
         searchIndexService.deleteDocument(learningPath)
-      }.flatMap(taxononyApiClient.updateTaxonomyIfExists)
+      }.flatMap(lp => taxononyApiClient.updateTaxonomyForLearningPath(lp, false))
     }
 
     def updateLearningPathStatusV2(learningPathId: Long,

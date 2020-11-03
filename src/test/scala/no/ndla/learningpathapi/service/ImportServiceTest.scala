@@ -124,7 +124,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("That importNode inserts for a new node") {
     val mainImport = MainPackageImport(packageWithNodeId(1), Seq())
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, Some("/urn:topic/urn:resource:1:123"))
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String])).thenReturn(None)
@@ -169,7 +169,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       "",
       copyright
     )
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, Some("/urn:topic/urn:resource:1:123"))
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String]))
@@ -195,7 +195,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
     res.isSuccess should be(true)
 
     res.get.learningsteps.get.head.embedUrl should equal(
-      Seq(EmbedUrl(s"/nb/subjects${taxonomyResource.path}", "nb", EmbedType.OEmbed)))
+      Seq(EmbedUrl(s"/nb/subjects${taxonomyResource.path.get}", "nb", EmbedType.OEmbed)))
 
     verify(articleImportClient, times(1)).importArticle(nodeId, IMPORT_ID)
     verify(taxononyApiClient, times(1)).updateResource(any[TaxonomyResource])
@@ -222,7 +222,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       "",
       copyright
     )
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, Some("/urn:topic/urn:resource:1:123"))
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String]))
@@ -269,7 +269,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       "",
       copyright
     )
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, Some("/urn:topic/urn:resource:1:123"))
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String]))
@@ -345,7 +345,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       "",
       copyright
     )
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, Some("/urn:topic/urn:resource:1:123"))
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String]))
@@ -411,7 +411,7 @@ class ImportServiceTest extends UnitSuite with UnitTestEnvironment {
       copyright,
       Some(Seq(learningStep))
     )
-    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, "/urn:topic/urn:resource:1:123")
+    val taxonomyResource = TaxonomyResource("urn:resource:1:123", "test", None, Some("/urn:topic/urn:resource:1:123"))
 
     when(keywordsService.forNodeId(any[Long])).thenReturn(List())
     when(learningPathRepository.withExternalId(any[String]))

@@ -184,9 +184,15 @@ trait ImportService {
         case (Some(Success(resource)), Some(article)) =>
           val taxonomyResource = article.flatMap(a =>
             taxononyApiClient.updateResource(resource.copy(contentUri = Some(s"urn:article:${a.articleId}"))))
-          taxonomyResource
-            .map(r => s"/subjects${r.path}")
-            .orElse(article.map(a => s"/article/${a.articleId}"))
+
+          taxonomyResource match {
+            case Success(res) =>
+              res.path match {
+                case Some(path) => Success(s"/subjects${path}")
+                case None       => article.map(a => s"/article/${a.articleId}")
+              }
+            case _ => article.map(a => s"/article/${a.articleId}")
+          }
         case (Some(Success(_)), None) =>
           Failure(new ImportException("Failed to retrieve main node id for article"))
         case (Some(Failure(ex)), _) => Failure(ex)
