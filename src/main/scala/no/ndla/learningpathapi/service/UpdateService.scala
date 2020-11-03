@@ -39,6 +39,23 @@ trait UpdateService {
 
   class UpdateService {
 
+    def updateTaxonomyForLearningPath(
+        pathId: Long,
+        language: String,
+        fallback: Boolean,
+        userInfo: UserInfo
+    ): Try[LearningPathV2] = {
+      writeOrAccessDenied(userInfo.canPublish) {
+        readService.withIdAndAccessGranted(pathId, userInfo) match {
+          case Failure(ex) => Failure(ex)
+          case Success(lp) =>
+            taxononyApiClient
+              .updateTaxonomyIfExists(lp)
+              .flatMap(l => converterService.asApiLearningpathV2(l, language, fallback, userInfo))
+        }
+      }
+    }
+
     def insertDump(dump: domain.LearningPath) = {
       learningPathRepository.insert(dump)
     }

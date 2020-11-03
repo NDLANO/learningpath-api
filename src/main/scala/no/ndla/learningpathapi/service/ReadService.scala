@@ -96,7 +96,7 @@ trait ReadService {
       }
     }
 
-    private def withIdAndAccessGranted(learningPathId: Long, user: UserInfo): Try[domain.LearningPath] = {
+    def withIdAndAccessGranted(learningPathId: Long, user: UserInfo): Try[domain.LearningPath] = {
       val learningPath = learningPathRepository.withId(learningPathId)
       learningPath.map(_.isOwnerOrPublic(user)) match {
         case Some(Success(lp)) => Success(lp)

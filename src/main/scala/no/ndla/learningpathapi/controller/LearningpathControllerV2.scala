@@ -811,5 +811,32 @@ trait LearningpathControllerV2 {
     ) {
       readService.contributors
     }
+
+    post(
+      "/:learningpath_id/update-taxonomy/",
+      operation(
+        apiOperation[LearningPathV2]("updateLearningPathTaxonomy")
+          .summary("Update taxonomy for specified learningpath")
+          .description("Update taxonomy for specified learningpath")
+          .parameters(
+            asHeaderParam(correlationId),
+            asPathParam(learningpathId),
+            asQueryParam(language),
+            asQueryParam(fallback)
+          )
+          .responseMessages(response403, response404, response500)
+          .authorizations("oauth2")
+      )
+    ) {
+      val userInfo = UserInfo(requireUserId)
+      val pathId = long(this.learningpathId.paramName)
+      val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
+      val fallback = booleanOrDefault(this.fallback.paramName, default = false)
+
+      updateService.updateTaxonomyForLearningPath(pathId, language, fallback, userInfo) match {
+        case Success(lp) => Ok(lp)
+        case Failure(ex) => errorHandler(ex)
+      }
+    }
   }
 }
