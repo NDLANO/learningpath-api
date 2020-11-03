@@ -26,6 +26,7 @@ trait TaxonomyApiClient {
     implicit val formats = org.json4s.DefaultFormats
     private val taxonomyTimeout = 20 * 1000 // 20 Seconds
     private val TaxonomyApiEndpoint = s"http://$ApiGatewayHost/taxonomy/v1"
+    private val LearningPathResourceTypeId = "urn:resourcetype:learningPath"
 
     def updateTaxonomyForLearningPath(learningPath: LearningPath,
                                       createResourceIfMissing: Boolean): Try[LearningPath] = {
@@ -71,8 +72,21 @@ trait TaxonomyApiClient {
                 contentUri = Some(contentUri),
                 path = None
               )
-              updateExistingResources(List(newResource), contentUri, learningPath.title, mainTitle)
+              addLearningPathResourceType(resourceId).flatMap(_ =>
+                updateExistingResources(List(newResource), contentUri, learningPath.title, mainTitle))
           }
+      }
+    }
+
+    private def addLearningPathResourceType(resourceId: String): Try[String] = {
+      val resourceType = ResourceResourceType(
+        resourceId = resourceId,
+        resourceTypeId = LearningPathResourceTypeId
+      )
+      postRaw[ResourceResourceType](s"$TaxonomyApiEndpoint/resource-resourcetypes", resourceType) match {
+        case Failure(ex: HttpRequestException) if ex.httpResponse.exists(_.is2xx) => Success(resourceId)
+        case Failure(ex)                                                          => Failure(ex)
+        case Success(_)                                                           => Success(resourceId)
       }
     }
 
@@ -259,4 +273,9 @@ case class TaxonomyResource(
     name: String,
     contentUri: Option[String],
     path: Option[String],
+)
+
+case class ResourceResourceType(
+    resourceId: String,
+    resourceTypeId: String
 )
