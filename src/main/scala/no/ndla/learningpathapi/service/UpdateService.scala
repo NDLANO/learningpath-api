@@ -39,6 +39,24 @@ trait UpdateService {
 
   class UpdateService {
 
+    def updateTaxonomyForLearningPath(
+        pathId: Long,
+        createResourceIfMissing: Boolean,
+        language: String,
+        fallback: Boolean,
+        userInfo: UserInfo
+    ): Try[LearningPathV2] = {
+      writeOrAccessDenied(userInfo.canPublish) {
+        readService.withIdAndAccessGranted(pathId, userInfo) match {
+          case Failure(ex) => Failure(ex)
+          case Success(lp) =>
+            taxononyApiClient
+              .updateTaxonomyForLearningPath(lp, createResourceIfMissing)
+              .flatMap(l => converterService.asApiLearningpathV2(l, language, fallback, userInfo))
+        }
+      }
+    }
+
     def insertDump(dump: domain.LearningPath) = {
       learningPathRepository.insert(dump)
     }
@@ -113,7 +131,7 @@ trait UpdateService {
       } else {
         deleteIsBasedOnReference(learningPath)
         searchIndexService.deleteDocument(learningPath)
-      }.flatMap(taxononyApiClient.updateTaxonomyIfExists)
+      }.flatMap(lp => taxononyApiClient.updateTaxonomyForLearningPath(lp, false))
     }
 
     def updateLearningPathStatusV2(learningPathId: Long,
