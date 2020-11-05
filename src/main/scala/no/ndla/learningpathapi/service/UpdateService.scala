@@ -41,7 +41,7 @@ trait UpdateService {
 
     def updateTaxonomyForLearningPath(
         pathId: Long,
-        createIfMissing: Boolean,
+        createResourceIfMissing: Boolean,
         language: String,
         fallback: Boolean,
         userInfo: UserInfo
@@ -51,7 +51,7 @@ trait UpdateService {
           case Failure(ex) => Failure(ex)
           case Success(lp) =>
             taxononyApiClient
-              .updateTaxonomyForLearningPath(lp, createIfMissing)
+              .updateTaxonomyForLearningPath(lp, createResourceIfMissing)
               .flatMap(l => converterService.asApiLearningpathV2(l, language, fallback, userInfo))
         }
       }

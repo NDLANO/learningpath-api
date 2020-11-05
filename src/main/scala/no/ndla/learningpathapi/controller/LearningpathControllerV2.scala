@@ -100,7 +100,7 @@ trait LearningpathControllerV2 {
       Param[Option[String]]("filter",
                             "Query for filtering licenses. Only licenses containing filter-string are returned.")
     private val fallback = Param[Option[Boolean]]("fallback", "Fallback to existing language if language is specified.")
-    private val createIfMissing =
+    private val createResourceIfMissing =
       Param[Option[Boolean]]("create-if-missing", "Create taxonomy resource if missing for learningPath")
     private val learningPathStatus =
       Param[String]("STATUS", "Status of LearningPaths")
@@ -825,7 +825,7 @@ trait LearningpathControllerV2 {
             asPathParam(learningpathId),
             asQueryParam(language),
             asQueryParam(fallback),
-            asQueryParam(createIfMissing)
+            asQueryParam(createResourceIfMissing)
           )
           .responseMessages(response403, response404, response500)
           .authorizations("oauth2")
@@ -835,9 +835,9 @@ trait LearningpathControllerV2 {
       val pathId = long(this.learningpathId.paramName)
       val language = paramOrDefault(this.language.paramName, Language.AllLanguages)
       val fallback = booleanOrDefault(this.fallback.paramName, default = false)
-      val createTaxonomyIfMissing = booleanOrDefault(this.createIfMissing.paramName, default = false)
+      val createResourceIfMissing = booleanOrDefault(this.createResourceIfMissing.paramName, default = false)
 
-      updateService.updateTaxonomyForLearningPath(pathId, createTaxonomyIfMissing, language, fallback, userInfo) match {
+      updateService.updateTaxonomyForLearningPath(pathId, createResourceIfMissing, language, fallback, userInfo) match {
         case Success(lp) => Ok(lp)
         case Failure(ex) => errorHandler(ex)
       }
