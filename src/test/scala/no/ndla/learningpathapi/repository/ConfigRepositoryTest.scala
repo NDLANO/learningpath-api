@@ -10,26 +10,39 @@ package no.ndla.learningpathapi.repository
 import java.util.Date
 
 import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
-import no.ndla.learningpathapi.{IntegrationTestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{DBMigrator, TestEnvironment, UnitSuite, LearningpathApiProperties}
+import no.ndla.ndla_scalatest.IntegrationSuite
 import no.ndla.tag.IntegrationTest
 import scalikejdbc.{DB, _}
 
 import scala.util.Try
 
 @IntegrationTest
-class ConfigRepositoryTest extends UnitSuite with IntegrationTestEnvironment {
+class ConfigRepositoryTest
+    extends IntegrationSuite(EnablePostgresContainer = true, schemaName = "learningpathapi_test")
+    with UnitSuite
+    with TestEnvironment {
+
+  override val dataSource = testDataSource.get
+
   var repository: ConfigRepository = _
 
-  def databaseIsAvailable: Boolean = Try(repository.configCount).isSuccess
+  def databaseIsAvailable: Boolean = {
+    val res = Try(repository.configCount)
+    res.isSuccess
+  }
 
   def emptyTestDatabase: Boolean = {
     DB autoCommit (implicit session => {
-      sql"delete from learningpathapi_test.configtable;".execute().apply()(session)
-      sql"delete from learningpathapi_test.configtable;".execute().apply()(session)
+      sql"delete from configtable;".execute().apply()(session)
+      sql"delete from configtable;".execute().apply()(session)
     })
   }
 
-  override def beforeAll(): Unit = connectToDatabase()
+  override def beforeAll(): Unit = {
+    Try(ConnectionPool.singleton(new DataSourceConnectionPool(dataSource)))
+    Try(DBMigrator.migrate(dataSource))
+  }
 
   override def beforeEach(): Unit = {
     repository = new ConfigRepository

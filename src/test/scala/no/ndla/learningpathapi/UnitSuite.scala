@@ -8,25 +8,12 @@
 
 package no.ndla.learningpathapi
 
+import no.ndla.ndla_scalatest.UnitTestSuite
 import no.ndla.network.secrets.PropertyKeys
-import org.joda.time.{DateTime, DateTimeUtils}
-import org.scalatest._
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
-import org.mockito.scalatest.MockitoSugar
 
 import scala.util.Properties.setProp
 
-abstract class UnitSuite
-    extends AnyFunSuite
-    with Matchers
-    with OptionValues
-    with Inside
-    with Inspectors
-    with MockitoSugar
-    with BeforeAndAfterAll
-    with BeforeAndAfterEach {
-
+trait UnitSuite extends UnitTestSuite {
   setProp("NDLA_ENVIRONMENT", "local")
 
   setProp("SEARCH_SERVER", "search-server")
@@ -44,10 +31,4 @@ abstract class UnitSuite
   setProp(PropertyKeys.MetaServerKey, "127.0.0.1")
   setProp(PropertyKeys.MetaPortKey, "5432")
   setProp(PropertyKeys.MetaSchemaKey, "learningpathapi_test")
-
-  def withFrozenTime(time: DateTime = new DateTime())(toExecute: => Any) = {
-    DateTimeUtils.setCurrentMillisFixed(time.getMillis)
-    toExecute
-    DateTimeUtils.setCurrentMillisSystem()
-  }
 }

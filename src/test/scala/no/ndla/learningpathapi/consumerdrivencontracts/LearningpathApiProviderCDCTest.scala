@@ -16,12 +16,13 @@ import com.itv.scalapact.shared.{BrokerPublishData, ProviderStateResult, TaggedC
 import no.ndla.learningpathapi.{
   ComponentRegistry,
   DBMigrator,
-  IntegrationTestEnvironment,
   JettyLauncher,
   TestData,
   TestEnvironment,
-  UnitSuite
+  UnitSuite,
+  LearningpathApiProperties
 }
+import no.ndla.ndla_scalatest.IntegrationSuite
 import org.eclipse.jetty.server.Server
 import org.joda.time.DateTime
 import org.scalatest.Tag
@@ -34,7 +35,12 @@ import scala.util.Try
 
 object PactProviderTest extends Tag("PactProviderTest")
 
-class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvironment {
+class LearningpathApiProviderCDCTest
+    extends IntegrationSuite(EnablePostgresContainer = true, schemaName = "cdc_schema")
+    with UnitSuite
+    with TestEnvironment {
+
+  override val dataSource = testDataSource.get
 
   import com.itv.scalapact.http4s21._
   import com.itv.scalapact.circe13._
@@ -71,7 +77,7 @@ class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvir
     DBMigrator.migrate(dataSource)
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
     DB autoCommit (implicit session => {
-      sql"drop schema if exists learningpathapi_test cascade;"
+      sql"drop schema if exists ${dataSource.getSchema} cascade;"
         .execute()
         .apply()
     })
