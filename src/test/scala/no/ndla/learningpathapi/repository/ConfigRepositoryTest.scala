@@ -10,12 +10,14 @@ package no.ndla.learningpathapi.repository
 import java.util.Date
 
 import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
-import no.ndla.learningpathapi.{DBMigrator, TestEnvironment, UnitSuite, LearningpathApiProperties}
-import no.ndla.ndla_scalatest.IntegrationSuite
+import no.ndla.learningpathapi.{DBMigrator, LearningpathApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.scalatestsuite.IntegrationSuite
+import no.ndla.network.secrets.PropertyKeys
 import no.ndla.tag.IntegrationTest
 import scalikejdbc.{DB, _}
 
 import scala.util.Try
+import scala.util.Properties.setProp
 
 @IntegrationTest
 class ConfigRepositoryTest
@@ -40,6 +42,7 @@ class ConfigRepositoryTest
   }
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     Try(ConnectionPool.singleton(new DataSourceConnectionPool(dataSource)))
     Try(DBMigrator.migrate(dataSource))
   }

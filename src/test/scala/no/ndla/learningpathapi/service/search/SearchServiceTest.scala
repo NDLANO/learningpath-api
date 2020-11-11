@@ -14,7 +14,7 @@ import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, NdlaE4sClien
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
-import no.ndla.ndla_scalatest.IntegrationSuite
+import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
