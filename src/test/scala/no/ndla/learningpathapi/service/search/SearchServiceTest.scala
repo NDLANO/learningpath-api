@@ -13,7 +13,8 @@ import no.ndla.learningpathapi.TestData.searchSettings
 import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{IntegrationTestEnvironment, LearningpathApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
+import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -21,7 +22,7 @@ import org.scalatest.Outcome
 
 import scala.util.Success
 
-class SearchServiceTest extends UnitSuite with IntegrationTestEnvironment {
+class SearchServiceTest extends IntegrationSuite(EnableElasticsearchContainer = true) with TestEnvironment {
 
   e4sClient = Elastic4sClientFactory.getClient(elasticSearchHost.get)
   // Skip tests if no docker environment available
@@ -126,10 +127,6 @@ class SearchServiceTest extends UnitSuite with IntegrationTestEnvironment {
     searchIndexService.indexDocument(englando)
 
     blockUntil(() => searchService.countDocuments() == 5)
-  }
-
-  override def afterAll(): Unit = if (elasticSearchContainer.isSuccess) {
-    searchIndexService.deleteIndexWithName(Some(LearningpathApiProperties.SearchIndex))
   }
 
   test("all learningpaths should be returned if fallback is enabled in all-search") {

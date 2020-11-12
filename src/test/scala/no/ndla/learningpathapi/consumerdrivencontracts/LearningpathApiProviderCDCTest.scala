@@ -13,15 +13,8 @@ import java.net.ServerSocket
 import com.itv.scalapact.ScalaPactVerify._
 import com.itv.scalapact.shared.PactBrokerAuthorization.BasicAuthenticationCredentials
 import com.itv.scalapact.shared.{BrokerPublishData, ProviderStateResult, TaggedConsumer}
-import no.ndla.learningpathapi.{
-  ComponentRegistry,
-  DBMigrator,
-  IntegrationTestEnvironment,
-  JettyLauncher,
-  TestData,
-  TestEnvironment,
-  UnitSuite
-}
+import no.ndla.learningpathapi._
+import no.ndla.scalatestsuite.IntegrationSuite
 import org.eclipse.jetty.server.Server
 import org.joda.time.DateTime
 import org.scalatest.Tag
@@ -34,10 +27,15 @@ import scala.util.Try
 
 object PactProviderTest extends Tag("PactProviderTest")
 
-class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvironment {
+class LearningpathApiProviderCDCTest
+    extends IntegrationSuite(EnablePostgresContainer = true, schemaName = "learningpathapi_test")
+    with UnitSuite
+    with TestEnvironment {
 
-  import com.itv.scalapact.http4s21._
+  override val dataSource = testDataSource.get
+
   import com.itv.scalapact.circe13._
+  import com.itv.scalapact.http4s21._
 
   def findFreePort: Int = {
     def closeQuietly(socket: ServerSocket): Unit = {
@@ -71,7 +69,8 @@ class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvir
     DBMigrator.migrate(dataSource)
     ConnectionPool.singleton(new DataSourceConnectionPool(dataSource))
     DB autoCommit (implicit session => {
-      sql"drop schema if exists learningpathapi_test cascade;"
+      val schemaSqlName = SQLSyntax.createUnsafely(dataSource.getSchema)
+      sql"drop schema if exists $schemaSqlName cascade;"
         .execute()
         .apply()
     })
@@ -80,6 +79,7 @@ class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvir
   }
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     println(s"Running CDC tests with component on localhost:$serverPort")
     server = Some(JettyLauncher.startServer(serverPort))
   }
@@ -87,11 +87,15 @@ class LearningpathApiProviderCDCTest extends UnitSuite with IntegrationTestEnvir
   private def setupLearningPaths() = {
     (1 to 10)
       .map(id => {
-        ComponentRegistry.learningPathRepository.insert(TestData.sampleDomainLearningPath.copy(id = Some(id)))
+        ComponentRegistry.learningPathRepository.insert(
+          TestData.sampleDomainLearningPath.copy(id = Some(id), lastUpdated = new DateTime(0).toDate))
       })
   }
 
-  override def afterAll(): Unit = server.foreach(_.stop())
+  override def afterAll(): Unit = {
+    super.afterAll()
+    server.foreach(_.stop())
+  }
 
   private def getGitVersion =
     for {

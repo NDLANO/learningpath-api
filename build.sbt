@@ -64,6 +64,7 @@ lazy val learningpath_api = (project in file("."))
     libraryDependencies ++= pactTestFramework ++ Seq(
       "ndla" %% "network" % "0.44",
       "ndla" %% "mapping" % "0.15",
+      "ndla" %% "scalatestsuite" % "0.1" % "test",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,
       "org.scalatra" %% "scalatra-scalatest" % Scalatraversion % "test",
