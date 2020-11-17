@@ -12,12 +12,21 @@ import java.util.Date
 
 import no.ndla.learningpathapi._
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.scalatestsuite.IntegrationSuite
 import no.ndla.tag.IntegrationTest
 import org.joda.time.DateTime
 import scalikejdbc._
 
+import scala.util.Try
+
 @IntegrationTest
-class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with IntegrationTestEnvironment {
+class LearningPathRepositoryComponentIntegrationTest
+    extends IntegrationSuite(EnablePostgresContainer = true, schemaName = "learningpathapi_test")
+    with UnitSuite
+    with TestEnvironment {
+
+  override val dataSource = testDataSource.get
+
   var repository: LearningPathRepository = _
 
   val clinton = Author("author", "Hilla the Hun")
@@ -56,10 +65,19 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
     StepStatus.ACTIVE
   )
 
-  override def beforeAll(): Unit = connectToDatabase()
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    Try(ConnectionPool.singleton(new DataSourceConnectionPool(dataSource)))
+    Try(DBMigrator.migrate(dataSource))
+  }
+
+  def databaseIsAvailable: Boolean = {
+    val res = Try(repository.learningPathCount)
+    res.isSuccess
+  }
 
   override def beforeEach(): Unit = {
-    repository = new LearningPathRepository()
+    repository = new LearningPathRepository
     if (databaseIsAvailable) {
       emptyTestDatabase
     }
@@ -360,8 +378,8 @@ class LearningPathRepositoryComponentIntegrationTest extends UnitSuite with Inte
 
   def emptyTestDatabase = {
     DB autoCommit (implicit session => {
-      sql"delete from learningpathapi_test.learningpaths;".execute().apply()(session)
-      sql"delete from learningpathapi_test.learningsteps;".execute().apply()(session)
+      sql"delete from learningpaths;".execute().apply()(session)
+      sql"delete from learningsteps;".execute().apply()(session)
     })
   }
 
