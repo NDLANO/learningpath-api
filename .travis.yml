@@ -29,7 +29,7 @@ matrix:
         - find $HOME/.sbt -name "*.lock" -delete
 
     - name: "Pact provider verification tests"
-      script: sbt ++$TRAVIS_SCALA_VERSION "pact:testOnly -- -n PactProviderTest"
+      script: sbt ++$TRAVIS_SCALA_VERSION "pact:testOnly *consumerdrivencontracts*"
       env:
           - LEARNINGPATH_CLIENT_ID=""
           - LEARNINGPATH_CLIENT_SECRET=""
@@ -88,4 +88,4 @@ matrix:
 
   allow_failures:
       - name: "Release"
-    
+
