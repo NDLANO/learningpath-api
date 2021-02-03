@@ -46,7 +46,7 @@ trait UpdateService {
         fallback: Boolean,
         userInfo: UserInfo
     ): Try[LearningPathV2] = {
-      writeOrAccessDenied(userInfo.canPublish) {
+      writeOrAccessDenied(userInfo.isWriter) {
         readService.withIdAndAccessGranted(pathId, userInfo) match {
           case Failure(ex) => Failure(ex)
           case Success(lp) =>
