@@ -18,7 +18,7 @@ matrix:
       dist: focal
       scala: 2.13.3
       jdk:
-        - oraclejdk11
+        - openjdk11
       cache:
         directories:
           - $HOME/.ivy2/cache
@@ -45,6 +45,8 @@ matrix:
       before_cache:
         - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
         - find $HOME/.sbt -name "*.lock" -delete
+      before_script:
+        - echo $DOCKER_HUB_PASSWORD | docker login --username $DOCKER_HUB_USERNAME --password-stdin
 
     - name: "Release"
       language: python
@@ -78,13 +80,14 @@ matrix:
         - SSH_AUTH_SOCK=/tmp/mock_sock
       script:
         - ndla release learningpath-api --update-chart
-
       before_cache: # Save docker image as cache
         - docker push $DEPLOY_DOCKER_REPO:$DEPLOY_VERSION
 
         # Tricks to avoid unnecessary cache updates
         - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
         - find $HOME/.sbt -name "*.lock" -delete
+      before_script:
+        - echo $DOCKER_HUB_PASSWORD | docker login --username $DOCKER_HUB_USERNAME --password-stdin
 
   allow_failures:
       - name: "Release"
