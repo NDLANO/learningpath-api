@@ -9,13 +9,13 @@
 package no.ndla.learningpathapi.controller
 
 import java.util.Date
-
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.TestData.searchSettings
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.{LearningpathSwagger, TestEnvironment, UnitSuite}
+import no.ndla.learningpathapi.model.domain
+import no.ndla.learningpathapi.{LearningpathSwagger, TestData, TestEnvironment, UnitSuite}
 import no.ndla.mapping.License.getLicenses
 import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._
@@ -267,7 +267,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     get(s"/") {
       status should be(200)
       body.contains(scrollId) should be(false)
-      header("search-context") should be(scrollId)
+      response.getHeader("search-context") should be(scrollId)
     }
   }
 
@@ -315,5 +315,32 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
 
     verify(searchService, times(0)).matchingQuery(any[SearchSettings])
     verify(searchService, times(1)).scroll(eqTo(scrollId), any[String])
+  }
+
+  test("that initial search-context doesn't scroll") {
+    reset(searchService)
+
+    val expectedSettings = TestData.searchSettings.copy(
+      searchLanguage = "all",
+      shouldScroll = true,
+      sort = Sort.ByTitleAsc
+    )
+
+    val result = domain.SearchResult(
+      totalCount = 0,
+      page = None,
+      pageSize = 10,
+      language = "all",
+      results = Seq.empty,
+      scrollId = Some("heiheihei")
+    )
+    when(searchService.matchingQuery(any[SearchSettings])).thenReturn(Success(result))
+
+    get("/?search-context=initial") {
+      status should be(200)
+      verify(searchService, times(1)).matchingQuery(expectedSettings)
+      verify(searchService, times(0)).scroll(any[String], any[String])
+    }
+
   }
 }

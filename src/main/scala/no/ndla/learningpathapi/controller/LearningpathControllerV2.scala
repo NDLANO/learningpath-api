@@ -56,15 +56,13 @@ trait LearningpathControllerV2 {
       with CorrelationIdSupport {
     protected implicit override val jsonFormats: Formats = DefaultFormats
 
-    protected val applicationDescription =
-      "API for accessing Learningpaths from ndla.no."
+    protected val applicationDescription = "API for accessing Learningpaths from ndla.no."
 
     // Additional models used in error responses
     registerModel[ValidationError]()
     registerModel[Error]()
 
-    val response400 =
-      ResponseMessage(400, "Validation Error", Some("ValidationError"))
+    val response400 = ResponseMessage(400, "Validation Error", Some("ValidationError"))
     val response403 = ResponseMessage(403, "Access not granted", Some("Error"))
     val response404 = ResponseMessage(404, "Not found", Some("Error"))
     val response500 = ResponseMessage(500, "Unknown error", Some("Error"))
@@ -139,7 +137,7 @@ trait LearningpathControllerV2 {
       */
     private def scrollSearchOr(scrollId: Option[String], language: String)(orFunction: => Any): Any = {
       scrollId match {
-        case Some(scroll) =>
+        case Some(scroll) if !InitialScrollContextKeywords.contains(scroll) =>
           searchService.scroll(scroll, language) match {
             case Success(scrollResult) =>
               val responseHeader = scrollResult.scrollId
@@ -148,7 +146,7 @@ trait LearningpathControllerV2 {
               Ok(searchConverterService.asApiSearchResult(scrollResult), headers = responseHeader)
             case Failure(ex) => errorHandler(ex)
           }
-        case None => orFunction
+        case _ => orFunction
       }
     }
 
