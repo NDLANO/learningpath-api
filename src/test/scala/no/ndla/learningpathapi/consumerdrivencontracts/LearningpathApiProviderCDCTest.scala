@@ -107,9 +107,9 @@ class LearningpathApiProviderCDCTest
     } yield s"$shortCommit$dirtyness"
 
   test("That pacts from broker are working.", PactProviderTest) {
-    val isTravis = envOrElse("TRAVIS", "false").toBoolean
-    val isPullRequest = envOrElse("TRAVIS_PULL_REQUEST", "false") != "false"
-    val publishResults = if (isTravis && !isPullRequest) {
+    val isCI = envOrElse("CI", "false").toBoolean
+    val isPullRequest = envOrElse("GITHUB_EVENT_NAME", "false") == "pull_request"
+    val publishResults = if (isCI && !isPullRequest) {
       getGitVersion.map(version => BrokerPublishData(version, None)).toOption
     } else { None }
 

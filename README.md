@@ -1,5 +1,5 @@
 # Learningpath API
- [![Build Status](https://travis-ci.org/NDLANO/learningpath-api.svg?branch=master)](https://travis-ci.org/NDLANO/learningpath-api)
+![CI](https://github.com/NDLANO/learningpath-api/workflows/CI/badge.svg)
 
 ## Usage
 Creates, updates, deletes and returns a Learningpath. Implements Elasticsearch for search within the learningpath database.
