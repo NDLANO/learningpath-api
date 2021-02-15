@@ -8,15 +8,15 @@
 package no.ndla.learningpathapi.repository
 
 import java.util.Date
-
 import no.ndla.learningpathapi.model.domain.config.{ConfigKey, ConfigMeta}
 import no.ndla.learningpathapi.{DBMigrator, LearningpathApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.scalatestsuite.IntegrationSuite
 import no.ndla.network.secrets.PropertyKeys
 import no.ndla.tag.IntegrationTest
+import org.scalatest.Outcome
 import scalikejdbc.{DB, _}
 
-import scala.util.Try
+import scala.util.{Failure, Try}
 import scala.util.Properties.setProp
 
 @IntegrationTest
@@ -28,6 +28,21 @@ class ConfigRepositoryTest
   override val dataSource = testDataSource.get
 
   var repository: ConfigRepository = _
+
+  // Skip tests if no docker environment available
+  override def withFixture(test: NoArgTest): Outcome = {
+    postgresContainer match {
+      case Failure(ex) =>
+        println(s"Postgres container not running, cancelling '${this.getClass.getName}'")
+        println(s"Got exception: ${ex.getMessage}")
+        ex.printStackTrace()
+      case _ =>
+    }
+    if (!sys.env.getOrElse("CI", "false").toBoolean) {
+      assume(postgresContainer.isSuccess, "Docker environment unavailable for postgres container")
+    }
+    super.withFixture(test)
+  }
 
   def databaseIsAvailable: Boolean = {
     val res = Try(repository.configCount)
@@ -55,8 +70,6 @@ class ConfigRepositoryTest
   }
 
   test("That updating configKey from empty database inserts config") {
-    assume(databaseIsAvailable, "Database is unavailable")
-
     val newConfig = ConfigMeta(
       key = ConfigKey.IsWriteRestricted,
       value = "true",
@@ -71,8 +84,6 @@ class ConfigRepositoryTest
   }
 
   test("That updating config works as expected") {
-    assume(databaseIsAvailable, "Database is unavailable")
-
     val originalConfig = ConfigMeta(
       key = ConfigKey.IsWriteRestricted,
       value = "true",

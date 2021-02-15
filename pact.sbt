@@ -6,13 +6,9 @@ pactBrokerCredentials := (
   sys.env.getOrElse("PACT_BROKER_PASSWORD", "")
 )
 pactContractTags := Seq(
-  sys.env.getOrElse(
-    "TRAVIS_BRANCH",
-    git.gitCurrentBranch.value
-  ) + sys.env
-    .get("TRAVIS_PULL_REQUEST_BRANCH")
-    .filter(_.nonEmpty)
-    .map(prBranch => s"-from-$prBranch")
-    .getOrElse("")
+  (for {
+    head <- sys.env.get("GITHUB_HEAD_REF").filter(_.nonEmpty)
+    base <- sys.env.get("GITHUB_BASE_REF").filter(_.nonEmpty)
+  } yield s"$base-from-$head").getOrElse(git.gitCurrentBranch.value)
 )
 pactContractVersion := ("git rev-parse --short=7 HEAD" !!).trim
