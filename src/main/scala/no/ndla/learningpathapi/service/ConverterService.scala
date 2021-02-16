@@ -121,7 +121,7 @@ trait ConverterService {
         val learningSteps = lp.learningsteps
           .map(lsteps => {
             lsteps
-              .flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage))
+              .flatMap(ls => asApiLearningStepV2(ls, lp, searchLanguage, fallback, userInfo).toOption)
               .toList
               .sortBy(_.seqNo)
           })
