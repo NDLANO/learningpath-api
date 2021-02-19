@@ -13,7 +13,8 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
   Domain,
   InternalImageApiUrl,
   NdlaFrontendHost,
-  NdlaFrontendHostNames
+  NdlaFrontendHostNames,
+  NdlaFrontendProtocol
 }
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
@@ -604,7 +605,7 @@ trait ConverterService {
       embedUrlOrPath.url.hostOption match {
         case Some(_) => embedUrlOrPath
         case None =>
-          embedUrlOrPath.copy(url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
+          embedUrlOrPath.copy(url = s"$NdlaFrontendProtocol://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
     }
 

@@ -33,3 +33,4 @@ case class InvalidStatusException(message: String) extends RuntimeException(mess
 case class SearchException(message: String) extends RuntimeException(message)
 case class NotFoundException(message: String) extends RuntimeException(message)
 case class TaxonomyUpdateException(message: String) extends RuntimeException(message)
+case class InvalidOembedResponse(message: String) extends RuntimeException(message)
