@@ -189,29 +189,34 @@ trait UpdateService {
         withId(learningPathId).flatMap(_.canEditLearningpath(owner)) match {
           case Failure(ex) => Failure(ex)
           case Success(learningPath) =>
-            val newStep = converterService.asDomainLearningStep(newLearningStep, learningPath)
-            learningStepValidator.validate(newStep)
+            val validated = for {
+              newStep <- converterService.asDomainLearningStep(newLearningStep, learningPath)
+              validated <- learningStepValidator.validate(newStep)
+            } yield validated
 
-            val (insertedStep, updatedPath) = inTransaction { implicit session =>
-              val insertedStep =
-                learningPathRepository.insertLearningStep(newStep)
-              val toUpdate = converterService.insertLearningStep(learningPath, insertedStep, owner)
-              val updatedPath = learningPathRepository.update(toUpdate)
+            validated match {
+              case Failure(ex) => Failure(ex)
+              case Success(newStep) =>
+                val (insertedStep, updatedPath) = inTransaction { implicit session =>
+                  val insertedStep =
+                    learningPathRepository.insertLearningStep(newStep)
+                  val toUpdate = converterService.insertLearningStep(learningPath, insertedStep, owner)
+                  val updatedPath = learningPathRepository.update(toUpdate)
 
-              (insertedStep, updatedPath)
+                  (insertedStep, updatedPath)
+                }
+
+                updateSearchAndTaxonomy(updatedPath)
+                  .flatMap(
+                    _ =>
+                      converterService.asApiLearningStepV2(
+                        insertedStep,
+                        updatedPath,
+                        newLearningStep.language,
+                        fallback = true,
+                        owner
+                    ))
             }
-
-            updateSearchAndTaxonomy(updatedPath)
-              .flatMap(
-                _ =>
-                  converterService.asApiLearningStepV2(
-                    insertedStep,
-                    updatedPath,
-                    newLearningStep.language,
-                    fallback = true,
-                    owner
-                ))
-
         }
       }
     }
@@ -228,28 +233,36 @@ trait UpdateService {
               Failure(NotFoundException(
                 s"Could not find learningstep with id '$learningStepId' to update with learningpath id '$learningPathId'."))
             case Some(existing) =>
-              val toUpdate = converterService.mergeLearningSteps(existing, learningStepToUpdate)
-              learningStepValidator.validate(toUpdate, allowUnknownLanguage = true)
+              val validated = for {
+                toUpdate <- converterService.mergeLearningSteps(existing, learningStepToUpdate)
+                validated <- learningStepValidator.validate(toUpdate, allowUnknownLanguage = true)
+              } yield validated
 
-              val (updatedStep, updatedPath) = inTransaction { implicit session =>
-                val updatedStep =
-                  learningPathRepository.updateLearningStep(toUpdate)
-                val pathToUpdate = converterService.insertLearningStep(learningPath, updatedStep, owner)
-                val updatedPath = learningPathRepository.update(pathToUpdate)
+              validated match {
+                case Failure(ex) => Failure(ex)
+                case Success(toUpdate) =>
+                  learningStepValidator.validate(toUpdate, allowUnknownLanguage = true)
 
-                (updatedStep, updatedPath)
+                  val (updatedStep, updatedPath) = inTransaction { implicit session =>
+                    val updatedStep =
+                      learningPathRepository.updateLearningStep(toUpdate)
+                    val pathToUpdate = converterService.insertLearningStep(learningPath, updatedStep, owner)
+                    val updatedPath = learningPathRepository.update(pathToUpdate)
+
+                    (updatedStep, updatedPath)
+                  }
+
+                  updateSearchAndTaxonomy(updatedPath)
+                    .flatMap(
+                      _ =>
+                        converterService.asApiLearningStepV2(
+                          updatedStep,
+                          updatedPath,
+                          learningStepToUpdate.language,
+                          fallback = true,
+                          owner
+                      ))
               }
-
-              updateSearchAndTaxonomy(updatedPath)
-                .flatMap(
-                  _ =>
-                    converterService.asApiLearningStepV2(
-                      updatedStep,
-                      updatedPath,
-                      learningStepToUpdate.language,
-                      fallback = true,
-                      owner
-                  ))
 
           }
       }

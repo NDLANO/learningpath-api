@@ -8,18 +8,16 @@
 package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.LearningpathApiProperties.{ApiGatewayHost, SearchApiHost}
+import no.ndla.learningpathapi.LearningpathApiProperties.ApiGatewayHost
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.network.NdlaClient
 import org.json4s.Formats
-import org.json4s.ext.EnumNameSerializer
-import org.json4s.native.Serialization.write
 import org.jsoup.Jsoup
-import scalaj.http.{Http, HttpRequest, HttpResponse}
+import scalaj.http.Http
 
-import java.util.concurrent.Executors
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+
+case class OembedResponse(html: String)
 
 trait OembedProxyClient {
   this: NdlaClient =>
@@ -29,15 +27,6 @@ trait OembedProxyClient {
     private val OembedProxyTimeout = 90 * 1000 // 90 seconds
     private val OembedProxyBaseUrl = s"http://$ApiGatewayHost/oembed-proxy/v1"
     implicit val formats: Formats = org.json4s.DefaultFormats
-
-    case class OembedResponse(
-        `type`: String,
-        version: String,
-        title: String,
-        width: Int,
-        height: Int,
-        html: String
-    )
 
     def getIframeUrl(url: String): Try[String] = {
       getOembed(url) match {

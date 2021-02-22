@@ -55,14 +55,23 @@ object LearningpathApiProperties extends LazyLogging {
     case _       => "https"
   })
 
+  def EnvironmentUrls(env: String): Set[String] = {
+    Set(
+      s"$env.ndla.no",
+      s"www.$env.ndla.no",
+      s"ndla-frontend.$env.api.ndla.no"
+    )
+  }
+
   val NdlaFrontendHostNames = Set(
     "ndla.no",
     "www.ndla.no",
-    s"$Environment.ndla.no",
-    s"ndla-frontend.$Environment.api.ndla.no",
     s"ndla-frontend.api.ndla.no",
-    s"www.$Environment.ndla.no"
-  )
+    "localhost",
+  ) ++
+    EnvironmentUrls(Environment) ++
+    EnvironmentUrls("test") ++
+    EnvironmentUrls("staging")
 
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"

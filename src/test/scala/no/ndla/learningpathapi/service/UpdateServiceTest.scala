@@ -238,6 +238,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       Success(i.getArgument[domain.LearningPath](0)))
     when(taxononyApiClient.updateTaxonomyForLearningPath(any[domain.LearningPath], any[Boolean]))
       .thenAnswer((i: InvocationOnMock) => Success(i.getArgument[domain.LearningPath](0)))
+    when(learningStepValidator.validate(any[LearningStep], any[Boolean])).thenAnswer((i: InvocationOnMock) =>
+      Success(i.getArgument[LearningStep](0)))
   }
 
   test("That addLearningPathV2 inserts the given LearningPathV2") {

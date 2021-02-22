@@ -47,6 +47,7 @@ object ComponentRegistry
     with ArticleImportClient
     with MigrationApiClient
     with ConverterService
+    with OembedProxyClient
     with Elastic4sClient
     with DataSource
     with ImportService
@@ -91,4 +92,5 @@ object ComponentRegistry
   lazy val learningStepValidator = new LearningStepValidator
   var e4sClient: NdlaE4sClient = Elastic4sClientFactory.getClient()
   lazy val searchApiClient = new SearchApiClient
+  lazy val oembedProxyClient = new OembedProxyClient
 }

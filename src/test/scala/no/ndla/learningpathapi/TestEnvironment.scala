@@ -41,6 +41,7 @@ trait TestEnvironment
     with ArticleImportClient
     with MigrationApiClient
     with ConverterService
+    with OembedProxyClient
     with Elastic4sClient
     with DataSource
     with MockitoSugar
@@ -83,6 +84,7 @@ trait TestEnvironment
   val titleValidator: TitleValidator = mock[TitleValidator]
   var e4sClient: NdlaE4sClient = mock[NdlaE4sClient]
   val searchApiClient: SearchApiClient = mock[SearchApiClient]
+  val oembedProxyClient: OembedProxyClient = mock[OembedProxyClient]
 
   def resetMocks(): Unit = {
     Mockito.reset(
@@ -98,7 +100,8 @@ trait TestEnvironment
       languageValidator,
       titleValidator,
       e4sClient,
-      articleImportClient
+      articleImportClient,
+      oembedProxyClient
     )
   }
 }
