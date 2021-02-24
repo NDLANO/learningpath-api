@@ -9,11 +9,10 @@
 package no.ndla.learningpathapi.model.domain
 
 import java.util.Date
-
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.validation.DurationValidator
-import org.json4s.FieldSerializer
+import org.json4s.{DefaultFormats, FieldSerializer}
 import org.json4s.FieldSerializer._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
@@ -137,15 +136,28 @@ object LearningPathVerificationStatus extends Enumeration {
 }
 
 object LearningPath extends SQLSyntaxSupport[LearningPath] {
-  implicit val formats = org.json4s.DefaultFormats +
-    new EnumNameSerializer(LearningPathStatus) +
+
+  val jsonSerializer = List(
+    new EnumNameSerializer(LearningPathStatus),
     new EnumNameSerializer(LearningPathVerificationStatus)
+  )
+
+  val repositorySerializer = jsonSerializer :+ FieldSerializer[LearningPath](
+    ignore("id") orElse
+      ignore("learningsteps") orElse
+      ignore("externalId") orElse
+      ignore("revision")
+  )
+
+  val jsonEncoder = DefaultFormats ++ jsonSerializer
+
   override val tableName = "learningpaths"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
   def apply(lp: SyntaxProvider[LearningPath])(rs: WrappedResultSet): LearningPath = apply(lp.resultName)(rs)
 
   def apply(lp: ResultName[LearningPath])(rs: WrappedResultSet): LearningPath = {
+    implicit val formats = jsonEncoder
     val meta = read[LearningPath](rs.string(lp.c("document")))
     meta.copy(
       id = Some(rs.long(lp.c("id"))),
@@ -154,10 +166,4 @@ object LearningPath extends SQLSyntaxSupport[LearningPath] {
     )
   }
 
-  val JSonSerializer = FieldSerializer[LearningPath](
-    ignore("id") orElse
-      ignore("learningsteps") orElse
-      ignore("externalId") orElse
-      ignore("revision")
-  )
 }

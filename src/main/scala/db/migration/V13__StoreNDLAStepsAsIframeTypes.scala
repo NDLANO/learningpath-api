@@ -143,7 +143,7 @@ class V13__StoreNDLAStepsAsIframeTypes extends BaseJavaMigration with LazyLoggin
           if (!isRelativeUrl) { embedUrlObject } else {
             val h = s"$NdlaFrontendProtocol://$NdlaFrontendHost$url"
             getNewUrl(h) match {
-              case Failure(_) => oldLs
+              case Failure(_) => embedUrlObject
               case Success(newUrl) =>
                 val newRelative = Url.parse(newUrl).toRelativeUrl.toString
                 embedUrlObject.mapField {

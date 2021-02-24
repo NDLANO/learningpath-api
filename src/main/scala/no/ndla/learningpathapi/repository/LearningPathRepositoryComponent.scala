@@ -9,10 +9,10 @@
 package no.ndla.learningpathapi.repository
 
 import java.util.UUID
-
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.integration.DataSource
 import no.ndla.learningpathapi.model.domain._
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization._
@@ -37,16 +37,11 @@ trait LearningPathRepositoryComponent extends LazyLogging {
   }
 
   class LearningPathRepository {
-    implicit val formats = org.json4s.DefaultFormats +
-      LearningPath.JSonSerializer +
-      LearningStep.JSonSerializer +
-      new EnumNameSerializer(StepType) +
-      new EnumNameSerializer(StepStatus) +
-      new EnumNameSerializer(EmbedType) +
-      new EnumNameSerializer(LearningPathStatus) +
-      new EnumNameSerializer(LearningPathVerificationStatus) +
-      new EnumNameSerializer(StepType) ++
-      org.json4s.ext.JodaTimeSerializers.all
+    implicit val formats: Formats =
+      DefaultFormats ++
+        LearningPath.jsonSerializer ++
+        LearningStep.jsonSerializer ++
+        org.json4s.ext.JodaTimeSerializers.all
 
     def withId(id: Long)(implicit session: DBSession = AutoSession): Option[LearningPath] = {
       learningPathWhere(sqls"lp.id = $id AND lp.document->>'status' <> ${LearningPathStatus.DELETED.toString}")
