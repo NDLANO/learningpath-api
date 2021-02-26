@@ -155,7 +155,17 @@ trait SearchService extends LazyLogging {
 
       val verificationStatusFilter = settings.verificationStatus.map(status => termQuery("verificationStatus", status))
 
-      val filters = List(tagFilter, idFilter, pathFilter, languageFilter, verificationStatusFilter)
+      val statusFilter = Some(termQuery("status", "PUBLISHED"))
+
+      val filters = List(
+        tagFilter,
+        idFilter,
+        pathFilter,
+        languageFilter,
+        verificationStatusFilter,
+        statusFilter
+      )
+
       val filteredSearch = queryBuilder.filter(filters.flatten)
 
       val (startAt, numResults) = getStartAtAndNumResults(settings.page, settings.pageSize)
@@ -176,7 +186,7 @@ trait SearchService extends LazyLogging {
         val searchWithScroll =
           if (startAt == 0 && settings.shouldScroll) {
             searchToExecute.scroll(ElasticSearchScrollKeepAlive)
-          } else { searchToExecute }
+          } else { searchToExecute.explain(true) }
 
         e4sClient.execute(searchWithScroll) match {
           case Success(response) =>

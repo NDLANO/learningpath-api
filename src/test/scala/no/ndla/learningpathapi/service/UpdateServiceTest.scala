@@ -272,7 +272,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
         .id
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
 
   }
 
@@ -289,7 +289,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
         .id
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test(
@@ -357,8 +357,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
         .status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, times(1))
-      .deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test(
@@ -380,8 +379,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
         .status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, times(1))
-      .deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(0)).deleteDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatusV2 updates the status when the given user is the owner and the status is PRIVATE") {
@@ -414,7 +413,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
         .status
     }
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, times(0)).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatusV2 updates the status when the given user is publisher and the status is DELETED") {
@@ -459,7 +458,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     verify(learningPathRepository, times(3)).update(any[domain.LearningPath])
     verify(learningPathRepository, times(1)).learningPathsWithIsBasedOn(any[Long])
     verify(searchIndexService, times(1))
-      .deleteDocument(any[domain.LearningPath])
+      .indexDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatusV2 throws an AccessDeniedException when non-admin tries to publish") {
@@ -484,7 +483,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     }
     verify(learningPathRepository, times(1)).learningPathsWithIsBasedOn(any[Long])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatusV2 allows owner to edit PUBLISHED to UNLISTED") {
@@ -502,7 +501,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     }
     verify(learningPathRepository, times(1)).learningPathsWithIsBasedOn(any[Long])
     verify(learningPathRepository, times(1)).update(any[domain.LearningPath])
-    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningPathStatusV2 throws an AccessDeniedException when non-owner tries to change status") {
@@ -578,8 +577,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .insertLearningStep(any[domain.LearningStep])(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
-    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(0)).deleteDocument(any[domain.LearningPath])
   }
 
   test(
@@ -599,8 +598,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .insertLearningStep(any[domain.LearningStep])(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, times(0)).indexDocument(any[domain.LearningPath])
-    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(0)).deleteDocument(any[domain.LearningPath])
   }
 
   test("That addLearningStepV2 throws an AccessDeniedException when the given user is NOT the owner") {
@@ -676,7 +675,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(any[domain.LearningStep])(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That updateLearningStepV2 throws an AccessDeniedException when the given user is NOT the owner") {
@@ -728,7 +727,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(eqTo(STEP1.copy(status = StepStatus.DELETED)))(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test(
@@ -760,8 +759,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
           status = LearningPathStatus.UNLISTED,
           lastUpdated = updatedDate
         )))(any[DBSession])
-    verify(searchIndexService, times(0)).indexDocument(any[domain.LearningPath])
-    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(0)).deleteDocument(any[domain.LearningPath])
   }
 
   test("That marking the first learningStep as deleted changes the seqNo for all other learningsteps") {
@@ -790,7 +789,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo - 1)))(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That marking the first learningStep as active changes the seqNo for all other learningsteps") {
@@ -821,7 +820,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo + 1)))(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That marking the last learningStep as deleted does not affect any of the other learningsteps") {
@@ -846,7 +845,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(any[LearningStep])(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That marking the last learningStep as active does not affect any of the other learningsteps") {
@@ -873,7 +872,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(any[LearningStep])(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That marking the middle learningStep as deleted only affects subsequent learningsteps") {
@@ -900,7 +899,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo - 1)))(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That marking the middle learningStep as active only affects subsequent learningsteps") {
@@ -929,7 +928,7 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
       .updateLearningStep(eqTo(STEP3.copy(seqNo = STEP3.seqNo + 1)))(any[DBSession])
     verify(learningPathRepository, times(1))
       .update(any[domain.LearningPath])(any[DBSession])
-    verify(searchIndexService, never).indexDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(any[domain.LearningPath])
   }
 
   test("That deleteLearningStep throws an AccessDeniedException when the given user is NOT the owner") {
@@ -1081,8 +1080,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
     verify(learningPathRepository, times(1)).update(eqTo(updatedPath))(any[DBSession])
-    verify(searchIndexService, times(0)).indexDocument(updatedPath)
-    verify(searchIndexService, times(1)).deleteDocument(updatedPath)
+    verify(searchIndexService, times(1)).indexDocument(updatedPath)
+    verify(searchIndexService, times(0)).deleteDocument(updatedPath)
   }
 
   test("owner updates published path should update status to unlisted") {
@@ -1106,8 +1105,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
     )
 
     verify(learningPathRepository, times(1)).update(eqTo(expectedUpdatedPath))(any[DBSession])
-    verify(searchIndexService, times(0)).indexDocument(expectedUpdatedPath)
-    verify(searchIndexService, times(1)).deleteDocument(any[domain.LearningPath])
+    verify(searchIndexService, times(1)).indexDocument(expectedUpdatedPath)
+    verify(searchIndexService, times(0)).deleteDocument(any[domain.LearningPath])
   }
 
   test("owner updates step private should not update status") {
@@ -1133,8 +1132,8 @@ class UpdateServiceTest extends UnitSuite with UnitTestEnvironment {
 
     verify(learningPathRepository, times(1)).updateLearningStep(eqTo(stepWithBadTitle))(any[DBSession])
     verify(learningPathRepository, times(1)).update(eqTo(updatedPath))(any[DBSession])
-    verify(searchIndexService, times(0)).indexDocument(updatedPath)
-    verify(searchIndexService, times(1)).deleteDocument(updatedPath)
+    verify(searchIndexService, times(1)).indexDocument(updatedPath)
+    verify(searchIndexService, times(0)).deleteDocument(updatedPath)
   }
 
   test("admin updates step should not update status") {

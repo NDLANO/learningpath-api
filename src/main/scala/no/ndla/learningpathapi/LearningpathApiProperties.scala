@@ -120,9 +120,9 @@ object LearningpathApiProperties extends LazyLogging {
   val RunWithSignedSearchRequests =
     propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
-  val MigrationHost = prop("MIGRATION_HOST")
-  val MigrationUser = prop("MIGRATION_USER")
-  val MigrationPassword = prop("MIGRATION_PASSWORD")
+  lazy val MigrationHost = prop("MIGRATION_HOST")
+  lazy val MigrationUser = prop("MIGRATION_USER")
+  lazy val MigrationPassword = prop("MIGRATION_PASSWORD")
 
   lazy val secrets = {
     val SecretsFile = "learningpath-api.secrets"

@@ -125,13 +125,15 @@ trait UpdateService {
     }
 
     private def updateSearchAndTaxonomy(learningPath: domain.LearningPath) = {
+      val sRes = searchIndexService.indexDocument(learningPath)
+
       if (learningPath.isPublished) {
         searchApiClient.indexLearningPathDocument(learningPath)
-        searchIndexService.indexDocument(learningPath)
       } else {
         deleteIsBasedOnReference(learningPath)
-        searchIndexService.deleteDocument(learningPath)
-      }.flatMap(lp => taxononyApiClient.updateTaxonomyForLearningPath(lp, false))
+      }
+
+      sRes.flatMap(lp => taxononyApiClient.updateTaxonomyForLearningPath(lp, false))
     }
 
     def updateLearningPathStatusV2(learningPathId: Long,

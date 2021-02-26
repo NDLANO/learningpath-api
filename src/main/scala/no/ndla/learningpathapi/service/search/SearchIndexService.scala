@@ -10,9 +10,9 @@ package no.ndla.learningpathapi.service.search
 
 import java.text.SimpleDateFormat
 import java.util.Calendar
-
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.RequestSuccess
+import com.sksamuel.elastic4s.indexes.CreateIndexRequest
 import com.sksamuel.elastic4s.mappings.NestedField
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
@@ -100,8 +100,14 @@ trait SearchIndexService {
         .getOrElse(Success(learningPath))
     }
 
-    def createIndexWithGeneratedName(): Try[String] = {
+    private def createIndexWithGeneratedName(): Try[String] = {
       createIndexWithName(LearningpathApiProperties.SearchIndex + "_" + getTimestamp)
+    }
+
+    protected def buildCreateIndexRequest(indexName: String): CreateIndexRequest = {
+      createIndex(indexName)
+        .mappings(buildMapping)
+        .indexSetting("max_result_window", LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
     }
 
     def createIndexWithName(indexName: String): Try[String] = {
@@ -109,9 +115,7 @@ trait SearchIndexService {
         Success(indexName)
       } else {
         val response = e4sClient.execute {
-          createIndex(indexName)
-            .mappings(buildMapping)
-            .indexSetting("max_result_window", LearningpathApiProperties.ElasticSearchIndexMaxResultWindow)
+          buildCreateIndexRequest(indexName)
         }
 
         response match {
@@ -236,14 +240,14 @@ trait SearchIndexService {
       }
     }
 
-    private def buildMapping = {
+    protected def buildMapping = {
       mapping(LearningpathApiProperties.SearchDocument).fields(
         intField("id"),
         languageSupportedField("titles", keepRaw = true),
         languageSupportedField("descriptions"),
         textField("coverPhotoUrl"),
         intField("duration"),
-        textField("status"),
+        keywordField("status"),
         keywordField("verificationStatus"),
         dateField("lastUpdated"),
         keywordField("defaultTitle"),
