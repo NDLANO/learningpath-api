@@ -8,11 +8,14 @@
 
 package no.ndla.learningpathapi.service.search
 
+import com.sksamuel.elastic4s.ElasticApi.createIndex
+import com.sksamuel.elastic4s.indexes.CreateIndexRequest
 import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.learningpathapi.TestData.searchSettings
 import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.DateTime
@@ -22,7 +25,10 @@ import org.scalatest.Outcome
 
 import scala.util.Success
 
-class SearchServiceTest extends IntegrationSuite(EnableElasticsearchContainer = true) with TestEnvironment {
+class SearchServiceTest
+    extends IntegrationSuite(EnableElasticsearchContainer = true)
+    with UnitSuite
+    with TestEnvironment {
 
   e4sClient = Elastic4sClientFactory.getClient(elasticSearchHost.get)
   // Skip tests if no docker environment available
@@ -33,7 +39,10 @@ class SearchServiceTest extends IntegrationSuite(EnableElasticsearchContainer = 
 
   override val searchConverterService: SearchConverterService =
     new SearchConverterService
-  override val searchIndexService: SearchIndexService = new SearchIndexService
+  override val searchIndexService: SearchIndexService = new SearchIndexService {
+    override def buildCreateIndexRequest(indexName: String): CreateIndexRequest =
+      super.buildCreateIndexRequest(indexName).shards(1) // 1 shard for accurate scoring in tests
+  }
   override val searchService: SearchService = new SearchService
 
   val paul = Author("author", "Truly Weird Rand Paul")
@@ -62,71 +71,86 @@ class SearchServiceTest extends IntegrationSuite(EnableElasticsearchContainer = 
   val DonaldId = 3
   val UnrelatedId = 4
   val EnglandoId = 5
+  val BrumleId = 6
 
-  override def beforeAll(): Unit = if (elasticSearchContainer.isSuccess) {
-    searchIndexService.createIndexWithName(LearningpathApiProperties.SearchIndex)
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    if (elasticSearchContainer.isSuccess) {
+      searchIndexService.createIndexWithName(LearningpathApiProperties.SearchIndex)
 
-    doReturn(api.Author("Forfatter", "En eier"), Nil: _*).when(converterService).asAuthor(any[NdlaUserName])
+      doReturn(api.Author("Forfatter", "En eier"), Nil: _*).when(converterService).asAuthor(any[NdlaUserName])
 
-    val today = new DateTime().toDate
-    val yesterday = new DateTime().minusDays(1).toDate
-    val tomorrow = new DateTime().plusDays(1).toDate
-    val tomorrowp1 = new DateTime().plusDays(2).toDate
-    val tomorrowp2 = new DateTime().plusDays(3).toDate
+      val today = new DateTime().toDate
+      val yesterday = new DateTime().minusDays(1).toDate
+      val tomorrow = new DateTime().plusDays(1).toDate
+      val tomorrowp1 = new DateTime().plusDays(2).toDate
+      val tomorrowp2 = new DateTime().plusDays(3).toDate
 
-    val thePenguin = DefaultLearningPath.copy(
-      id = Some(PenguinId),
-      title = List(Title("Pingvinen er en kjeltring", "nb")),
-      description = List(Description("Dette handler om fugler", "nb")),
-      duration = Some(1),
-      lastUpdated = yesterday,
-      tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), "nb"))
-    )
+      val thePenguin = DefaultLearningPath.copy(
+        id = Some(PenguinId),
+        title = List(Title("Pingvinen er en kjeltring", "nb")),
+        description = List(Description("Dette handler om fugler", "nb")),
+        duration = Some(1),
+        lastUpdated = yesterday,
+        tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), "nb"))
+      )
 
-    val batman = DefaultLearningPath.copy(
-      id = Some(BatmanId),
-      title = List(Title("Batman er en tøff og morsom helt", "nb"), Title("Batman is a tough guy", "en")),
-      description = List(Description("Dette handler om flaggermus, som kan ligne litt på en fugl", "nb")),
-      duration = Some(2),
-      lastUpdated = today,
-      tags = List(LearningPathTags(Seq("superhelt", "kanfly"), "nb"))
-    )
+      val batman = DefaultLearningPath.copy(
+        id = Some(BatmanId),
+        title = List(Title("Batman er en tøff og morsom helt", "nb"), Title("Batman is a tough guy", "en")),
+        description = List(Description("Dette handler om flaggermus, som kan ligne litt på en fugl", "nb")),
+        duration = Some(2),
+        lastUpdated = today,
+        tags = List(LearningPathTags(Seq("superhelt", "kanfly"), "nb"))
+      )
 
-    val theDuck = DefaultLearningPath.copy(
-      id = Some(DonaldId),
-      title = List(Title("Donald er en tøff, rar og morsom and", "nb"), Title("Donald is a weird duck", "en")),
-      description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", "nb")),
-      duration = Some(3),
-      lastUpdated = tomorrow,
-      tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb")),
-      verificationStatus = LearningPathVerificationStatus.CREATED_BY_NDLA
-    )
+      val theDuck = DefaultLearningPath.copy(
+        id = Some(DonaldId),
+        title = List(Title("Donald er en tøff, rar og morsom and", "nb"), Title("Donald is a weird duck", "en")),
+        description = List(Description("Dette handler om en and, som også minner om både flaggermus og fugler.", "nb")),
+        duration = Some(3),
+        lastUpdated = tomorrow,
+        tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb")),
+        verificationStatus = LearningPathVerificationStatus.CREATED_BY_NDLA
+      )
 
-    val unrelated = DefaultLearningPath.copy(
-      id = Some(UnrelatedId),
-      title = List(Title("Unrelated", "en"), Title("Urelatert", "nb")),
-      description = List(Description("This is unrelated", "en"), Description("Dette er en urelatert", "nb")),
-      duration = Some(4),
-      lastUpdated = tomorrowp1,
-      tags = List()
-    )
+      val unrelated = DefaultLearningPath.copy(
+        id = Some(UnrelatedId),
+        title = List(Title("Unrelated", "en"), Title("Urelatert", "nb")),
+        description = List(Description("This is unrelated", "en"), Description("Dette er en urelatert", "nb")),
+        duration = Some(4),
+        lastUpdated = tomorrowp1,
+        tags = List()
+      )
 
-    val englando = DefaultLearningPath.copy(
-      id = Some(EnglandoId),
-      title = List(Title("Englando", "en")),
-      description = List(Description("This is a englando learningpath", "en")),
-      duration = Some(5),
-      lastUpdated = tomorrowp2,
-      tags = List()
-    )
+      val englando = DefaultLearningPath.copy(
+        id = Some(EnglandoId),
+        title = List(Title("Englando", "en")),
+        description = List(Description("This is a englando learningpath", "en")),
+        duration = Some(5),
+        lastUpdated = tomorrowp2,
+        tags = List()
+      )
 
-    searchIndexService.indexDocument(thePenguin)
-    searchIndexService.indexDocument(batman)
-    searchIndexService.indexDocument(theDuck)
-    searchIndexService.indexDocument(unrelated)
-    searchIndexService.indexDocument(englando)
+      val brumle = DefaultLearningPath.copy(
+        id = Some(BrumleId),
+        title = List(Title("Brumle", "nb")),
+        description = List(Description("Dette er brumle", "nb")),
+        duration = Some(5),
+        lastUpdated = tomorrowp2,
+        tags = List(),
+        status = LearningPathStatus.UNLISTED
+      )
 
-    blockUntil(() => searchService.countDocuments() == 5)
+      searchIndexService.indexDocument(thePenguin)
+      searchIndexService.indexDocument(batman)
+      searchIndexService.indexDocument(theDuck)
+      searchIndexService.indexDocument(unrelated)
+      searchIndexService.indexDocument(englando)
+      searchIndexService.indexDocument(brumle)
+
+      blockUntil(() => searchService.countDocuments() == 6)
+    }
   }
 
   test("all learningpaths should be returned if fallback is enabled in all-search") {
@@ -461,14 +485,12 @@ class SearchServiceTest extends IntegrationSuite(EnableElasticsearchContainer = 
     val Success(searchResult3) = searchService.matchingQuery(
       searchSettings.copy(
         query = Some("tøff | morsom | kjeltring"),
-        sort = Sort.ByRelevanceAsc
+        sort = Sort.ByIdAsc
       ))
     val hits3 = searchResult3.results
 
     searchResult3.totalCount should be(3)
-    hits3.head.id should be(PenguinId)
-    hits3(1).id should be(DonaldId)
-    hits3.last.id should be(BatmanId)
+    hits3.map(_.id) should be(Seq(PenguinId, BatmanId, DonaldId))
   }
 
   test("That searching for multiple languages returns result in matched language") {
@@ -594,6 +616,39 @@ class SearchServiceTest extends IntegrationSuite(EnableElasticsearchContainer = 
 
     searchResult.totalCount should be(1)
     hits.head.id should be(DonaldId)
+  }
+
+  test("That regular searches only includes published learningpaths") {
+    val Success(searchResult) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages
+      ))
+
+    searchResult.totalCount should be(5)
+    searchResult.results.map(_.id) should be(Seq(1, 2, 3, 4, 5))
+  }
+
+  test("That searching for statuses works as expected") {
+    val Success(searchResult) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages,
+        status = List(domain.LearningPathStatus.PUBLISHED, domain.LearningPathStatus.UNLISTED)
+      ))
+
+    searchResult.totalCount should be(6)
+    searchResult.results.map(_.id) should be(Seq(1, 2, 3, 4, 5, 6))
+
+    val Success(searchResult2) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages,
+        status = List(domain.LearningPathStatus.UNLISTED)
+      ))
+
+    searchResult2.totalCount should be(1)
+    searchResult2.results.map(_.id) should be(Seq(6))
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

@@ -16,6 +16,8 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization._
 import scalikejdbc._
 
+import scala.util.Try
+
 case class LearningStep(id: Option[Long],
                         revision: Option[Int],
                         externalId: Option[String],
@@ -72,25 +74,30 @@ object StepType extends Enumeration {
 
 object LearningStep extends SQLSyntaxSupport[LearningStep] {
 
-  val JSonSerializer = FieldSerializer[LearningStep](
+  val jsonSerializer = List(
+    new EnumNameSerializer(StepType),
+    new EnumNameSerializer(StepStatus),
+    new EnumNameSerializer(EmbedType)
+  )
+
+  val repositorySerializer = jsonSerializer :+ FieldSerializer[LearningStep](
     serializer =
       ignore("id") orElse
         ignore("learningPathId") orElse
         ignore("externalId") orElse
-        ignore("revision"))
+        ignore("revision")
+  )
 
-  implicit val formats =
-    org.json4s.DefaultFormats +
-      new EnumNameSerializer(StepType) +
-      new EnumNameSerializer(StepStatus) +
-      new EnumNameSerializer(EmbedType) +
-      JSonSerializer
+  val jsonEncoder = DefaultFormats ++ jsonSerializer
+
   override val tableName = "learningsteps"
   override val schemaName = Some(LearningpathApiProperties.MetaSchema)
 
   def apply(ls: SyntaxProvider[LearningStep])(rs: WrappedResultSet): LearningStep = apply(ls.resultName)(rs)
 
   def apply(ls: ResultName[LearningStep])(rs: WrappedResultSet): LearningStep = {
+    implicit val formats = jsonEncoder
+
     val meta = read[LearningStep](rs.string(ls.c("document")))
     LearningStep(
       Some(rs.long(ls.c("id"))),

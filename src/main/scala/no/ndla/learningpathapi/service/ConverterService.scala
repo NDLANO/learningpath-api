@@ -13,7 +13,8 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
   Domain,
   InternalImageApiUrl,
   NdlaFrontendHost,
-  NdlaFrontendHostNames
+  NdlaFrontendHostNames,
+  NdlaFrontendProtocol
 }
 import no.ndla.learningpathapi.integration._
 import no.ndla.learningpathapi.model.api.{LearningPathStatus => _, _}
@@ -33,6 +34,7 @@ trait ConverterService {
     with LearningPathRepositoryComponent
     with LanguageValidator
     with LearningPathValidator
+    with OembedProxyClient
     with Clock =>
 
   val converterService: ConverterService
@@ -121,7 +123,7 @@ trait ConverterService {
         val learningSteps = lp.learningsteps
           .map(lsteps => {
             lsteps
-              .flatMap(ls => asApiLearningStepSummaryV2(ls, lp, searchLanguage))
+              .flatMap(ls => asApiLearningStepV2(ls, lp, searchLanguage, fallback, userInfo).toOption)
               .toList
               .sortBy(_.seqNo)
           })
@@ -234,13 +236,15 @@ trait ConverterService {
       )
     }
 
-    def asDomainLearningStep(newLearningStep: NewLearningStepV2, learningPath: LearningPath): LearningStep = {
+    def asDomainLearningStep(newLearningStep: NewLearningStepV2, learningPath: LearningPath): Try[LearningStep] = {
       val description = newLearningStep.description
         .map(domain.Description(_, newLearningStep.language))
         .toSeq
-      val embedUrl = newLearningStep.embedUrl
+
+      val embedUrlT = newLearningStep.embedUrl
         .map(converterService.asDomainEmbedUrl(_, newLearningStep.language))
-        .toSeq
+        .map(t => t.map(embed => Seq(embed)))
+        .getOrElse(Success(Seq.empty))
 
       val listOfLearningSteps = learningPath.learningsteps.getOrElse(Seq.empty)
 
@@ -248,19 +252,21 @@ trait ConverterService {
         if (listOfLearningSteps.isEmpty) 0
         else listOfLearningSteps.map(_.seqNo).max + 1
 
-      domain.LearningStep(
-        None,
-        None,
-        None,
-        learningPath.id,
-        newSeqNo,
-        Seq(domain.Title(newLearningStep.title, newLearningStep.language)),
-        description,
-        embedUrl,
-        StepType.valueOfOrError(newLearningStep.`type`),
-        newLearningStep.license,
-        newLearningStep.showTitle
-      )
+      embedUrlT.map(
+        embedUrl =>
+          domain.LearningStep(
+            None,
+            None,
+            None,
+            learningPath.id,
+            newSeqNo,
+            Seq(domain.Title(newLearningStep.title, newLearningStep.language)),
+            description,
+            embedUrl,
+            StepType.valueOfOrError(newLearningStep.`type`),
+            newLearningStep.license,
+            newLearningStep.showTitle
+        ))
     }
 
     def insertLearningSteps(learningPath: LearningPath, steps: Seq[LearningStep], user: UserInfo): LearningPath = {
@@ -278,7 +284,7 @@ trait ConverterService {
       learningPath.copy(learningsteps = Some(steps), status = status, lastUpdated = clock.now())
     }
 
-    def mergeLearningSteps(existing: LearningStep, updated: UpdatedLearningStepV2): LearningStep = {
+    def mergeLearningSteps(existing: LearningStep, updated: UpdatedLearningStepV2): Try[LearningStep] = {
       val titles = updated.title match {
         case None => existing.title
         case Some(value) =>
@@ -291,24 +297,27 @@ trait ConverterService {
           converterService.mergeLanguageFields(existing.description, Seq(domain.Description(value, updated.language)))
       }
 
-      val embedUrls = updated.embedUrl match {
-        case None => existing.embedUrl
+      val embedUrlsT = updated.embedUrl match {
+        case None => Success(existing.embedUrl)
         case Some(value) =>
-          converterService.mergeLanguageFields(existing.embedUrl,
-                                               Seq(converterService.asDomainEmbedUrl(value, updated.language)))
+          converterService
+            .asDomainEmbedUrl(value, updated.language)
+            .map(newEmbedUrl => converterService.mergeLanguageFields(existing.embedUrl, Seq(newEmbedUrl)))
       }
 
-      existing.copy(
-        revision = Some(updated.revision),
-        title = titles,
-        description = descriptions,
-        embedUrl = embedUrls,
-        showTitle = updated.showTitle.getOrElse(existing.showTitle),
-        `type` = updated.`type`
-          .map(domain.StepType.valueOfOrError)
-          .getOrElse(existing.`type`),
-        license = updated.license
-      )
+      embedUrlsT.map(
+        embedUrls =>
+          existing.copy(
+            revision = Some(updated.revision),
+            title = titles,
+            description = descriptions,
+            embedUrl = embedUrls,
+            showTitle = updated.showTitle.getOrElse(existing.showTitle),
+            `type` = updated.`type`
+              .map(domain.StepType.valueOfOrError)
+              .getOrElse(existing.`type`),
+            license = updated.license
+        ))
     }
 
     private def getVerificationStatus(user: UserInfo): LearningPathVerificationStatus.Value =
@@ -569,15 +578,28 @@ trait ConverterService {
       api.EmbedUrlV2(embedUrl.url, embedUrl.embedType.toString)
     }
 
-    def asDomainEmbedUrl(embedUrl: api.EmbedUrlV2, language: String): domain.EmbedUrl = {
-      val url = embedUrl.url.hostOption match {
+    def asDomainEmbedUrl(embedUrl: api.EmbedUrlV2, language: String): Try[domain.EmbedUrl] = {
+      val hostOpt = embedUrl.url.hostOption
+      hostOpt match {
         case Some(host) if NdlaFrontendHostNames.contains(host.toString) =>
-          val pathAndQueryParams: String = embedUrl.url.path.toString.withQueryString(embedUrl.url.query)
-          pathAndQueryParams
-        case _ => embedUrl.url
+          oembedProxyClient
+            .getIframeUrl(embedUrl.url)
+            .map(newUrl => {
+              val pathAndQueryParams: String = newUrl.url.path.toString.withQueryString(newUrl.url.query)
+              domain.EmbedUrl(
+                url = pathAndQueryParams,
+                language = language,
+                embedType = EmbedType.IFrame
+              )
+            })
+        case _ =>
+          Success(
+            domain.EmbedUrl(
+              embedUrl.url,
+              language,
+              EmbedType.valueOfOrError(embedUrl.embedType)
+            ))
       }
-
-      domain.EmbedUrl(url, language, EmbedType.valueOfOrError(embedUrl.embedType))
     }
 
     def createUrlToLearningStep(ls: domain.LearningStep, lp: domain.LearningPath): String = {
@@ -604,7 +626,7 @@ trait ConverterService {
       embedUrlOrPath.url.hostOption match {
         case Some(_) => embedUrlOrPath
         case None =>
-          embedUrlOrPath.copy(url = s"https://$NdlaFrontendHost${embedUrlOrPath.url}")
+          embedUrlOrPath.copy(url = s"$NdlaFrontendProtocol://$NdlaFrontendHost${embedUrlOrPath.url}")
       }
     }
 

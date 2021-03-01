@@ -44,20 +44,34 @@ object LearningpathApiProperties extends LazyLogging {
   val InternalImageApiUrl = s"$ImageApiHost/image-api/v2/images"
   val SearchApiHost = propOrElse("SEARCH_API_HOST", "search-api.ndla-local")
 
-  val NdlaFrontendHost = Environment match {
+  val NdlaFrontendHost = propOrElse("NDLA_FRONTEND_HOST", Environment match {
     case "prod"  => "ndla.no"
     case "local" => "localhost:30017"
     case _       => s"$Environment.ndla.no"
+  })
+
+  val NdlaFrontendProtocol = propOrElse("NDLA_FRONTEND_PROTOCOL", Environment match {
+    case "local" => "http"
+    case _       => "https"
+  })
+
+  def EnvironmentUrls(env: String): Set[String] = {
+    Set(
+      s"$env.ndla.no",
+      s"www.$env.ndla.no",
+      s"ndla-frontend.$env.api.ndla.no"
+    )
   }
 
   val NdlaFrontendHostNames = Set(
     "ndla.no",
     "www.ndla.no",
-    s"$Environment.ndla.no",
-    s"ndla-frontend.$Environment.api.ndla.no",
     s"ndla-frontend.api.ndla.no",
-    s"www.$Environment.ndla.no"
-  )
+    "localhost",
+  ) ++
+    EnvironmentUrls(Environment) ++
+    EnvironmentUrls("test") ++
+    EnvironmentUrls("staging")
 
   val DefaultLanguage = Language.NORWEGIAN_BOKMAL
   val UsernameHeader = "X-Consumer-Username"
@@ -106,9 +120,9 @@ object LearningpathApiProperties extends LazyLogging {
   val RunWithSignedSearchRequests =
     propOrElse("RUN_WITH_SIGNED_SEARCH_REQUESTS", "true").toBoolean
 
-  val MigrationHost = prop("MIGRATION_HOST")
-  val MigrationUser = prop("MIGRATION_USER")
-  val MigrationPassword = prop("MIGRATION_PASSWORD")
+  lazy val MigrationHost = prop("MIGRATION_HOST")
+  lazy val MigrationUser = prop("MIGRATION_USER")
+  lazy val MigrationPassword = prop("MIGRATION_PASSWORD")
 
   lazy val secrets = {
     val SecretsFile = "learningpath-api.secrets"

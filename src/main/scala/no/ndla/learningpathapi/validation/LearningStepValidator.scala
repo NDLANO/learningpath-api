@@ -11,6 +11,8 @@ package no.ndla.learningpathapi.validation
 import no.ndla.learningpathapi.model.api.ValidationMessage
 import no.ndla.learningpathapi.model.domain._
 
+import scala.util.{Failure, Success, Try}
+
 trait LearningStepValidator {
   this: TitleValidator with LanguageValidator =>
   val learningStepValidator: LearningStepValidator
@@ -23,11 +25,10 @@ trait LearningStepValidator {
     val MISSING_DESCRIPTION_OR_EMBED_URL =
       "A learningstep is required to have either a description, embedUrl or both."
 
-    def validate(newLearningStep: LearningStep, allowUnknownLanguage: Boolean = false): LearningStep = {
+    def validate(newLearningStep: LearningStep, allowUnknownLanguage: Boolean = false): Try[LearningStep] = {
       validateLearningStep(newLearningStep, allowUnknownLanguage) match {
-        case head :: tail =>
-          throw new ValidationException(errors = head :: tail)
-        case _ => newLearningStep
+        case head :: tail => Failure(new ValidationException(errors = head :: tail))
+        case _            => Success(newLearningStep)
       }
     }
 

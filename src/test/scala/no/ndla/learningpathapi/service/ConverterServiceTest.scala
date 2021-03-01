@@ -368,12 +368,13 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("asDomainEmbed should only use context path if hostname is ndla-frontend but full url when not") {
     val url = "https://ndla.no/subjects/resource:1234?a=test"
+    when(oembedProxyClient.getIframeUrl(eqTo(url))).thenReturn(Success(url))
     service.asDomainEmbedUrl(api.EmbedUrlV2(url, "oembed"), "nb") should equal(
-      EmbedUrl(s"/subjects/resource:1234?a=test", "nb", EmbedType.OEmbed))
+      Success(EmbedUrl(s"/subjects/resource:1234?a=test", "nb", EmbedType.IFrame)))
 
     val externalUrl = "https://youtube.com/watch?v=8992BFHks"
     service.asDomainEmbedUrl(api.EmbedUrlV2(externalUrl, "oembed"), "nb") should equal(
-      EmbedUrl(externalUrl, "nb", EmbedType.OEmbed))
+      Success(EmbedUrl(externalUrl, "nb", EmbedType.OEmbed)))
   }
 
   test("That mergeLanguageFields returns original list when updated is empty") {
@@ -471,8 +472,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       learningsteps =
         Some(Seq(TestData.domainLearningStep1.copy(seqNo = 0), TestData.domainLearningStep2.copy(seqNo = 1))))
 
-    service.asDomainLearningStep(newLs, lp1).seqNo should be(0)
-    service.asDomainLearningStep(newLs, lp2).seqNo should be(0)
-    service.asDomainLearningStep(newLs, lp3).seqNo should be(2)
+    service.asDomainLearningStep(newLs, lp1).get.seqNo should be(0)
+    service.asDomainLearningStep(newLs, lp2).get.seqNo should be(0)
+    service.asDomainLearningStep(newLs, lp3).get.seqNo should be(2)
   }
 }
