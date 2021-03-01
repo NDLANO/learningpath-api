@@ -15,6 +15,7 @@ import no.ndla.learningpathapi.TestData.searchSettings
 import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.DateTime
@@ -625,14 +626,29 @@ class SearchServiceTest
       ))
 
     searchResult.totalCount should be(5)
-    searchResult.results.map(_.id) should be(
-      Seq(
-        1,
-        2,
-        3,
-        4,
-        5
+    searchResult.results.map(_.id) should be(Seq(1, 2, 3, 4, 5))
+  }
+
+  test("That searching for statuses works as expected") {
+    val Success(searchResult) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages,
+        status = List(domain.LearningPathStatus.PUBLISHED, domain.LearningPathStatus.UNLISTED)
       ))
+
+    searchResult.totalCount should be(6)
+    searchResult.results.map(_.id) should be(Seq(1, 2, 3, 4, 5, 6))
+
+    val Success(searchResult2) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages,
+        status = List(domain.LearningPathStatus.UNLISTED)
+      ))
+
+    searchResult2.totalCount should be(1)
+    searchResult2.results.map(_.id) should be(Seq(6))
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

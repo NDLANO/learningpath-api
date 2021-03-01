@@ -94,7 +94,12 @@ trait SearchService extends LazyLogging {
         pageSize = None,
         fallback = false,
         verificationStatus = None,
-        shouldScroll = false
+        shouldScroll = false,
+        status = List(
+          LearningPathStatus.PUBLISHED,
+          LearningPathStatus.SUBMITTED,
+          LearningPathStatus.UNLISTED
+        )
       )
 
       executeSearch(boolQuery(), settings)
@@ -139,6 +144,11 @@ trait SearchService extends LazyLogging {
       executeSearch(fullQuery, settings)
     }
 
+    private def getStatusFilter(settings: SearchSettings) = settings.status match {
+      case Nil      => Some(termQuery("status", "PUBLISHED"))
+      case statuses => Some(termsQuery("status", statuses))
+    }
+
     private def executeSearch(queryBuilder: BoolQuery, settings: SearchSettings) = {
       val tagFilter: Option[NestedQuery] = settings.taggedWith.map(
         tag => nestedQuery("tags", termQuery(s"tags.${settings.searchLanguage}.raw", tag)).scoreMode(ScoreMode.None)
@@ -155,7 +165,7 @@ trait SearchService extends LazyLogging {
 
       val verificationStatusFilter = settings.verificationStatus.map(status => termQuery("verificationStatus", status))
 
-      val statusFilter = Some(termQuery("status", "PUBLISHED"))
+      val statusFilter = getStatusFilter(settings)
 
       val filters = List(
         tagFilter,

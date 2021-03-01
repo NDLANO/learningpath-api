@@ -97,7 +97,8 @@ object TestData {
     pageSize = None,
     fallback = false,
     verificationStatus = None,
-    shouldScroll = false
+    shouldScroll = false,
+    status = List(domain.LearningPathStatus.PUBLISHED)
   )
 
 }

@@ -11,5 +11,6 @@ case class SearchSettings(
     pageSize: Option[Int],
     fallback: Boolean,
     verificationStatus: Option[String],
-    shouldScroll: Boolean
+    shouldScroll: Boolean,
+    status: List[LearningPathStatus.Value]
 )

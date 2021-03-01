@@ -173,7 +173,8 @@ trait LearningpathControllerV2 {
             pageSize = pageSize,
             fallback = fallback,
             verificationStatus = verificationStatus,
-            shouldScroll = shouldScroll
+            shouldScroll = shouldScroll,
+            status = List(domain.LearningPathStatus.PUBLISHED)
           )
         case None =>
           SearchSettings(
@@ -187,7 +188,8 @@ trait LearningpathControllerV2 {
             pageSize = pageSize,
             fallback = fallback,
             verificationStatus = verificationStatus,
-            shouldScroll = shouldScroll
+            shouldScroll = shouldScroll,
+            status = List(domain.LearningPathStatus.PUBLISHED)
           )
       }
 
