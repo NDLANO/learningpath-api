@@ -205,6 +205,12 @@ trait TaxonomyApiClient {
       }
     }
 
+    def queryResource(articleId: Long): Try[List[Resource]] =
+      get[List[Resource]](s"$TaxonomyApiEndpoint/queries/resources", "contentURI" -> s"urn:article:$articleId")
+
+    def queryTopic(articleId: Long): Try[List[Topic]] =
+      get[List[Topic]](s"$TaxonomyApiEndpoint/queries/topics", "contentURI" -> s"urn:article:$articleId")
+
     private def get[A](url: String, params: (String, String)*)(implicit mf: Manifest[A]): Try[A] = {
       ndlaClient.fetchWithForwardedAuth[A](Http(url).timeout(taxonomyTimeout, taxonomyTimeout).params(params))
     }
@@ -279,3 +285,17 @@ case class ResourceResourceType(
     resourceId: String,
     resourceTypeId: String
 )
+
+trait Taxonomy[E <: Taxonomy[E]] {
+  val id: String
+  def name: String
+  def withName(name: String): E
+}
+
+case class Resource(id: String, name: String, contentUri: Option[String], paths: List[String])
+    extends Taxonomy[Resource] {
+  def withName(name: String): Resource = this.copy(name = name)
+}
+case class Topic(id: String, name: String, contentUri: Option[String], paths: List[String]) extends Taxonomy[Topic] {
+  def withName(name: String): Topic = this.copy(name = name)
+}
