@@ -14,6 +14,7 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
   ElasticSearchScrollKeepAlive,
   InitialScrollContextKeywords
 }
+import no.ndla.learningpathapi.integration.TaxonomyApiClient
 import no.ndla.learningpathapi.model.api._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{
@@ -44,6 +45,7 @@ trait LearningpathControllerV2 {
     with SearchService
     with LanguageValidator
     with ConverterService
+    with TaxonomyApiClient
     with SearchConverterServiceComponent =>
   val learningpathControllerV2: LearningpathControllerV2
 
@@ -70,6 +72,8 @@ trait LearningpathControllerV2 {
 
     case class Param[T](paramName: String, description: String)
 
+    private val articleId =
+      Param[String]("article_id", "Id of the article to search with")
     private val correlationId =
       Param[Option[String]]("X-Correlation-ID", "User supplied correlation-id. May be omitted.")
     private val query =
@@ -840,6 +844,35 @@ trait LearningpathControllerV2 {
       updateService.updateTaxonomyForLearningPath(pathId, createResourceIfMissing, language, fallback, userInfo) match {
         case Success(lp) => Ok(lp)
         case Failure(ex) => errorHandler(ex)
+      }
+    }
+
+    get(
+      "/contains-article/:article_id",
+      operation(
+        apiOperation[LearningPathV2]("fetchLearningPathContainingArticle")
+          .summary("Fetch learningpaths containing specified article")
+          .description("Fetch learningpaths containing specified article")
+          .parameters(
+            asPathParam(articleId)
+          )
+      )
+    ) {
+      val articleId = long(this.articleId.paramName)
+      val resources = taxononyApiClient.queryResource(articleId).getOrElse(List.empty).flatMap(_.paths)
+      val topics = taxononyApiClient.queryTopic(articleId).getOrElse(List.empty).flatMap(_.paths)
+      val plainPaths = List(
+        s"/article-iframe/*/$articleId",
+        s"/article-iframe/*/$articleId/",
+        s"/article-iframe/*/$articleId/\\?*",
+        s"/article-iframe/*/$articleId\\?*",
+        s"/article/$articleId"
+      )
+      val paths = resources ++ topics ++ plainPaths
+
+      searchService.containsPath(paths) match {
+        case Success(result) => result.results
+        case Failure(ex)     => errorHandler(ex)
       }
     }
   }
