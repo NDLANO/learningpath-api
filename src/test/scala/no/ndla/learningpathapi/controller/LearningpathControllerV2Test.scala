@@ -11,6 +11,7 @@ package no.ndla.learningpathapi.controller
 import java.util.Date
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.TestData.searchSettings
+import no.ndla.learningpathapi.integration.{Resource, Topic}
 import no.ndla.learningpathapi.model.api
 import no.ndla.learningpathapi.model.api.SearchResultV2
 import no.ndla.learningpathapi.model.domain._
@@ -21,6 +22,7 @@ import org.json4s.DefaultFormats
 import org.json4s.native.Serialization._
 import org.mockito.ArgumentMatchers._
 import org.scalatra.test.scalatest.ScalatraFunSuite
+import scalikejdbc.TxBoundary.Try
 
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
@@ -344,10 +346,34 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
   }
 
   test("That GET /contains-article returns 200") {
-    reset(searchService);
+    reset(taxononyApiClient)
+
+    val result = domain.SearchResult(
+      totalCount = 0,
+      page = None,
+      pageSize = 10,
+      language = "all",
+      results = Seq.empty,
+      scrollId = Some("heiheihei")
+    )
+    when(taxononyApiClient.queryResource(any[Long])).thenReturn(Success(List[Resource]()))
+    when(taxononyApiClient.queryTopic(any[Long])).thenReturn(Success(List[Topic]()))
+    when(searchService.containsPath(any[List[String]])).thenReturn(Success(result))
 
     get("/contains-article/123") {
       status should be(200)
+    }
+  }
+
+  test("That GET /contains-article returns correct errors when id is a string or nothing") {
+    reset(taxononyApiClient)
+
+    get("/contains-article/hallohallo") {
+      status should be(400)
+    }
+
+    get("/contains-article/") {
+      status should be(404)
     }
   }
 }
