@@ -341,6 +341,13 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       verify(searchService, times(1)).matchingQuery(expectedSettings)
       verify(searchService, times(0)).scroll(any[String], any[String])
     }
+  }
 
+  test("That GET /contains-article returns 200") {
+    reset(searchService);
+
+    get("/contains-article/123") {
+      status should be(200)
+    }
   }
 }
