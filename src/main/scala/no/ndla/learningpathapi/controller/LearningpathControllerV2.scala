@@ -869,17 +869,14 @@ trait LearningpathControllerV2 {
         s"/article/$articleId"
       )
       val paths = resources ++ topics ++ plainPaths
-      val userInfo = UserInfo.getUserOrPublic
 
       searchService.containsPath(paths) match {
         case Success(result) =>
           result.results.filter(learningpath => {
-            readService.withIdV2(learningpath.id, learningpath.title.language, fallback = true, userInfo) match {
+            readService.withIdV2(learningpath.id, learningpath.title.language, fallback = true) match {
               case Success(steps) =>
-                val r = s".*\\/article.*\\/$articleId.*".r
-                steps.learningsteps.exists(_.embedUrl.get.url match {
-                  case r(_*) => true
-                })
+                steps.learningsteps.exists(_.embedUrl.get.url.contains(articleId))
+              case Failure(ex) => false
             }
           })
         case Failure(ex) => errorHandler(ex)
