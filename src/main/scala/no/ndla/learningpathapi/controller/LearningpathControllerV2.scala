@@ -875,7 +875,13 @@ trait LearningpathControllerV2 {
           result.results.filter(learningpath => {
             readService.withIdV2(learningpath.id, learningpath.title.language, fallback = true) match {
               case Success(steps) =>
-                steps.learningsteps.exists(_.embedUrl.get.url.contains(articleId))
+                steps.learningsteps.exists(step => {
+                  step.embedUrl match {
+                    case Some(embedUrl) =>
+                      embedUrl.url.contains(articleId.toString)
+                    case None => false
+                  }
+                })
               case Failure(ex) => false
             }
           })
