@@ -871,21 +871,8 @@ trait LearningpathControllerV2 {
       val paths = resources ++ topics ++ plainPaths
 
       searchService.containsPath(paths) match {
-        case Success(result) =>
-          result.results.filter(learningpath => {
-            readService.withIdV2(learningpath.id, learningpath.title.language, fallback = true) match {
-              case Success(steps) =>
-                steps.learningsteps.exists(step => {
-                  step.embedUrl match {
-                    case Some(embedUrl) =>
-                      embedUrl.url.contains(articleId.toString)
-                    case None => false
-                  }
-                })
-              case Failure(ex) => false
-            }
-          })
-        case Failure(ex) => errorHandler(ex)
+        case Success(result) => result.results
+        case Failure(ex)     => errorHandler(ex)
       }
     }
   }
