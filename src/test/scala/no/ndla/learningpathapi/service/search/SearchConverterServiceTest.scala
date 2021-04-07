@@ -173,7 +173,8 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
       None
     )
     val embedUrls = List("https://ndla.no/article/123")
-    val learningStep = SearchableLearningStep("INTRODUCTION", embedUrls, searchableTitles, searchableDescriptions)
+    val learningStep =
+      SearchableLearningStep("INTRODUCTION", embedUrls, "ACTIVE", searchableTitles, searchableDescriptions)
 
     val apiIntroductions = service.asApiIntroduction(Some(learningStep))
     apiIntroductions.size should be(3)
@@ -187,7 +188,8 @@ class SearchConverterServiceTest extends UnitSuite with TestEnvironment {
       SearchableTitles(None, None, None, None, None, None, None, None, None)
     val searchableDescriptions = SearchableDescriptions(None, None, None, None, None, None, None, None, None)
     val embedUrls = List("https://ndla.no/article/123")
-    val learningStep = SearchableLearningStep("INTRODUCTION", embedUrls, searchableTitles, searchableDescriptions)
+    val learningStep =
+      SearchableLearningStep("INTRODUCTION", embedUrls, "ACTIVE", searchableTitles, searchableDescriptions)
 
     val apiIntroductions = service.asApiIntroduction(Some(learningStep))
     apiIntroductions.size should be(0)
