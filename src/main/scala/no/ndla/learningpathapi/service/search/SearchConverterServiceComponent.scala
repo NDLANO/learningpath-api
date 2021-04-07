@@ -197,6 +197,7 @@ trait SearchConverterServiceComponent {
       SearchableLearningStep(
         learningStep.`type`.toString,
         learningStep.embedUrl.map(_.url).toList,
+        learningStep.status.toString,
         asSearchableTitles(learningStep.title),
         asSearchableDescriptions(learningStep.description)
       )
