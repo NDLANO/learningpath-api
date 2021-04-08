@@ -224,8 +224,8 @@ trait SearchService extends LazyLogging {
             "learningsteps",
             boolQuery()
               .should(paths.map(p => wildcardQuery("learningsteps.embedUrl", s"*$p")))
+              .must(matchQuery("learningsteps.status", "ACTIVE"))
               .minimumShouldMatch(1)
-              .filter(matchQuery("learningsteps.status", "ACTIVE"))
           )
         )
       }
