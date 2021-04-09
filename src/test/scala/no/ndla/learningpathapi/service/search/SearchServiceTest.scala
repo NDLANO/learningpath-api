@@ -66,6 +66,20 @@ class SearchServiceTest
     copyright = copyright
   )
 
+  val DefaultLearningStep = LearningStep(
+    id = None,
+    revision = None,
+    externalId = None,
+    learningPathId = None,
+    seqNo = 0,
+    title = List(),
+    description = List(),
+    embedUrl = List(),
+    `type` = StepType.INTRODUCTION,
+    license = Some(license),
+    status = StepStatus.ACTIVE
+  )
+
   val PenguinId = 1
   val BatmanId = 2
   val DonaldId = 3
@@ -86,13 +100,29 @@ class SearchServiceTest
       val tomorrowp1 = new DateTime().plusDays(2).toDate
       val tomorrowp2 = new DateTime().plusDays(3).toDate
 
+      val activeStep = DefaultLearningStep.copy(
+        id = Some(1),
+        revision = Some(1),
+        title = List(Title("Active step", "nb")),
+        embedUrl = List(EmbedUrl("https://ndla.no/article/1", "nb", EmbedType.OEmbed))
+      )
+
+      val deletedStep = DefaultLearningStep.copy(
+        id = Some(2),
+        revision = Some(1),
+        title = List(Title("Deleted step", "nb")),
+        embedUrl = List(EmbedUrl("https://ndla.no/article/2", "nb", EmbedType.OEmbed)),
+        status = StepStatus.DELETED
+      )
+
       val thePenguin = DefaultLearningPath.copy(
         id = Some(PenguinId),
         title = List(Title("Pingvinen er en kjeltring", "nb")),
         description = List(Description("Dette handler om fugler", "nb")),
         duration = Some(1),
         lastUpdated = yesterday,
-        tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), "nb"))
+        tags = List(LearningPathTags(Seq("superhelt", "kanikkefly"), "nb")),
+        learningsteps = Some(List(activeStep))
       )
 
       val batman = DefaultLearningPath.copy(
@@ -101,7 +131,8 @@ class SearchServiceTest
         description = List(Description("Dette handler om flaggermus, som kan ligne litt på en fugl", "nb")),
         duration = Some(2),
         lastUpdated = today,
-        tags = List(LearningPathTags(Seq("superhelt", "kanfly"), "nb"))
+        tags = List(LearningPathTags(Seq("superhelt", "kanfly"), "nb")),
+        learningsteps = Some(List(activeStep, deletedStep))
       )
 
       val theDuck = DefaultLearningPath.copy(
@@ -111,6 +142,7 @@ class SearchServiceTest
         duration = Some(3),
         lastUpdated = tomorrow,
         tags = List(LearningPathTags(Seq("disney", "kanfly"), "nb")),
+        learningsteps = Some(List(deletedStep)),
         verificationStatus = LearningPathVerificationStatus.CREATED_BY_NDLA
       )
 
@@ -649,6 +681,27 @@ class SearchServiceTest
 
     searchResult2.totalCount should be(1)
     searchResult2.results.map(_.id) should be(Seq(6))
+  }
+
+  test("That searching for step urls only returns active steps") {
+    val Success(searchResult) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages,
+        withPaths = List("https://ndla.no/article/1", "https://ndla.no/article/2")
+      ))
+
+    searchResult.totalCount should be(2)
+    searchResult.results.map(_.id) should be(Seq(1, 2))
+
+    val Success(searchResult2) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByIdAsc,
+        searchLanguage = Language.AllLanguages,
+        withPaths = List("https://ndla.no/article/2")
+      ))
+
+    searchResult2.totalCount should be(0)
   }
 
   def blockUntil(predicate: () => Boolean): Unit = {

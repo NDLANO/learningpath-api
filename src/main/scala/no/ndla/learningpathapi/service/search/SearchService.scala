@@ -220,8 +220,14 @@ trait SearchService extends LazyLogging {
       if (paths.isEmpty) None
       else {
         Some(
-          nestedQuery("learningsteps",
-                      boolQuery().should(paths.map(p => wildcardQuery("learningsteps.embedUrl", s"*$p")))))
+          nestedQuery(
+            "learningsteps",
+            boolQuery()
+              .should(paths.map(p => wildcardQuery("learningsteps.embedUrl", s"*$p")))
+              .must(matchQuery("learningsteps.status", "ACTIVE"))
+              .minimumShouldMatch(1)
+          )
+        )
       }
     }
 
