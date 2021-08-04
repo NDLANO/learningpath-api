@@ -44,14 +44,10 @@ object ComponentRegistry
     with TaxonomyApiClient
     with NdlaClient
     with ImageApiClientComponent
-    with ArticleImportClient
-    with MigrationApiClient
     with ConverterService
     with OembedProxyClient
     with Elastic4sClient
     with DataSource
-    with ImportService
-    with KeywordsServiceComponent
     with Clock
     with LanguageValidator
     with LearningPathValidator
@@ -81,10 +77,6 @@ object ComponentRegistry
   lazy val taxononyApiClient = new TaxonomyApiClient
   lazy val ndlaClient = new NdlaClient
   lazy val imageApiClient = new ImageApiClient
-  lazy val articleImportClient = new ArticleImportClient
-  lazy val importService = new ImportService
-  lazy val keywordsService = new KeywordsService
-  lazy val migrationApiClient = new MigrationApiClient
   lazy val healthController = new HealthController
   lazy val languageValidator = new LanguageValidator
   lazy val titleValidator = new TitleValidator

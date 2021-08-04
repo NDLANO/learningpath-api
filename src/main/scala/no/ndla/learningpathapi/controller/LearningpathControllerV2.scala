@@ -10,6 +10,7 @@ package no.ndla.learningpathapi.controller
 
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties.{
+  DefaultLanguage,
   ElasticSearchIndexMaxResultWindow,
   ElasticSearchScrollKeepAlive,
   InitialScrollContextKeywords
@@ -433,7 +434,7 @@ trait LearningpathControllerV2 {
       val stepId = long(this.learningstepId.paramName)
       val fallback = booleanOrDefault(this.fallback.paramName, default = false)
 
-      readService.learningStepStatusForV2(pathId, stepId, Language.DefaultLanguage, fallback, UserInfo.getUserOrPublic) match {
+      readService.learningStepStatusForV2(pathId, stepId, DefaultLanguage, fallback, UserInfo.getUserOrPublic) match {
         case Success(status) => Ok(status)
         case Failure(ex)     => errorHandler(ex)
       }
@@ -692,7 +693,7 @@ trait LearningpathControllerV2 {
       val pathStatus = domain.LearningPathStatus.valueOfOrError(toUpdate.status)
       val pathId = long(this.learningpathId.paramName)
 
-      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, Language.DefaultLanguage, toUpdate.message) match {
+      updateService.updateLearningPathStatusV2(pathId, pathStatus, userInfo, DefaultLanguage, toUpdate.message) match {
         case Failure(ex) => errorHandler(ex)
         case Success(learningPath) =>
           logger.info(s"UPDATED status of LearningPath with ID = ${learningPath.id}")
@@ -741,7 +742,7 @@ trait LearningpathControllerV2 {
         pathId,
         domain.LearningPathStatus.DELETED,
         userInfo,
-        Language.DefaultLanguage
+        DefaultLanguage
       ) match {
         case Failure(ex) => errorHandler(ex)
         case Success(_) =>

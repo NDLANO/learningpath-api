@@ -7,8 +7,9 @@
 
 package no.ndla.learningpathapi
 
-import java.util.Date
+import no.ndla.learningpathapi.LearningpathApiProperties.DefaultLanguage
 
+import java.util.Date
 import no.ndla.mapping.License.CC_BY
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.model.domain.{Language, LearningStep, SearchSettings, Sort}
@@ -73,14 +74,14 @@ object TestData {
     Some(1),
     None,
     None,
-    List(domain.Title("tittel", Language.DefaultLanguage)),
-    List(domain.Description("deskripsjon", Language.DefaultLanguage)),
+    List(domain.Title("tittel", DefaultLanguage)),
+    List(domain.Description("deskripsjon", DefaultLanguage)),
     None,
     Some(60),
     domain.LearningPathStatus.PUBLISHED,
     domain.LearningPathVerificationStatus.CREATED_BY_NDLA,
     today,
-    List(domain.LearningPathTags(List("tag"), Language.DefaultLanguage)),
+    List(domain.LearningPathTags(List("tag"), DefaultLanguage)),
     "me",
     domain.Copyright(CC_BY.toString, List.empty),
     Some(List(domainLearningStep1, domainLearningStep2))
@@ -91,7 +92,7 @@ object TestData {
     withIdIn = List.empty,
     withPaths = List.empty,
     taggedWith = None,
-    searchLanguage = Language.DefaultLanguage,
+    searchLanguage = DefaultLanguage,
     sort = Sort.ByIdAsc,
     page = None,
     pageSize = None,

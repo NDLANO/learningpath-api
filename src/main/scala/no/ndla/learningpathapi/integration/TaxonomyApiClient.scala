@@ -8,7 +8,7 @@
 package no.ndla.learningpathapi.integration
 
 import com.typesafe.scalalogging.LazyLogging
-import no.ndla.learningpathapi.LearningpathApiProperties.ApiGatewayHost
+import no.ndla.learningpathapi.LearningpathApiProperties.{ApiGatewayHost, DefaultLanguage}
 import no.ndla.learningpathapi.model.domain.{Language, LearningPath, TaxonomyUpdateException, Title}
 import no.ndla.network.NdlaClient
 import no.ndla.network.model.HttpRequestException
@@ -36,7 +36,7 @@ trait TaxonomyApiClient {
         case Some(learningPathId) =>
           val contentUri = s"urn:learningpath:$learningPathId"
 
-          Language.findByLanguageOrBestEffort(learningPath.title, Language.DefaultLanguage) match {
+          Language.findByLanguageOrBestEffort(learningPath.title, DefaultLanguage) match {
             case None =>
               Failure(TaxonomyUpdateException("Can't update taxonomy resource when learningpath is missing titles."))
             case Some(mainTitle) =>

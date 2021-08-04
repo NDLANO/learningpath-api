@@ -19,21 +19,21 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 
 object LearningpathApiInfo {
 
-  val contactInfo = ContactInfo(
-    "NDLA",
-    "ndla.no",
+  val contactInfo: ContactInfo = ContactInfo(
+    LearningpathApiProperties.ContactName,
+    LearningpathApiProperties.ContactUrl,
     LearningpathApiProperties.ContactEmail
   )
 
-  val licenseInfo = LicenseInfo(
+  val licenseInfo: LicenseInfo = LicenseInfo(
     "GPL v3.0",
     "http://www.gnu.org/licenses/gpl-3.0.en.html"
   )
 
-  val apiInfo = ApiInfo(
+  val apiInfo: ApiInfo = ApiInfo(
     "Learningpath API",
     "Services for accessing learningpaths",
-    "http://ndla.no",
+    LearningpathApiProperties.TermsUrl,
     contactInfo,
     licenseInfo
   )

@@ -9,6 +9,7 @@
 package no.ndla.learningpathapi.model.domain
 
 import com.sksamuel.elastic4s.analyzers._
+import no.ndla.learningpathapi.LearningpathApiProperties.DefaultLanguage
 import no.ndla.learningpathapi.model.domain
 import no.ndla.mapping.ISO639
 
@@ -23,7 +24,6 @@ object Language {
   val SPANISH = "es"
   val UNKNOWN = "unknown"
 
-  val DefaultLanguage = NORWEGIAN_BOKMAL
   val NoLanguage = ""
   val AllLanguages = "all"
   val UnknownLanguage = "unknown"

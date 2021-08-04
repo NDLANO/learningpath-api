@@ -10,6 +10,7 @@ package no.ndla.learningpathapi.service
 
 import io.lemonlabs.uri.dsl._
 import no.ndla.learningpathapi.LearningpathApiProperties.{
+  DefaultLanguage,
   Domain,
   InternalImageApiUrl,
   NdlaFrontendHost,

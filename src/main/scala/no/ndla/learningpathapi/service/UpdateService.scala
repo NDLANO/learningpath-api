@@ -8,9 +8,10 @@
 
 package no.ndla.learningpathapi.service
 
+import no.ndla.learningpathapi.LearningpathApiProperties.DefaultLanguage
+
 import java.util.Date
 import java.util.concurrent.Executors
-
 import no.ndla.learningpathapi.integration.{SearchApiClient, TaxonomyApiClient}
 import no.ndla.learningpathapi.model.api.{config, _}
 import no.ndla.learningpathapi.model.api.config.UpdateConfigValue
@@ -320,7 +321,7 @@ trait UpdateService {
                     converterService.asApiLearningStepV2(
                       updatedStep,
                       updatedPath,
-                      Language.DefaultLanguage,
+                      DefaultLanguage,
                       fallback = true,
                       owner
                   ))

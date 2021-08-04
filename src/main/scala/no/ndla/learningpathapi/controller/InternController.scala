@@ -16,7 +16,7 @@ import no.ndla.learningpathapi.model.api.ImportReport
 import no.ndla.learningpathapi.model.domain._
 import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
-import no.ndla.learningpathapi.service.{ImportService, ReadService, UpdateService}
+import no.ndla.learningpathapi.service.{ReadService, UpdateService}
 import no.ndla.learningpathapi.service.search.{SearchIndexService, SearchService}
 import no.ndla.network.AuthUser
 import org.json4s.Formats
@@ -26,8 +26,7 @@ import org.scalatra._
 import scala.util.{Failure, Success}
 
 trait InternController {
-  this: ImportService
-    with SearchIndexService
+  this: SearchIndexService
     with SearchService
     with LearningPathRepositoryComponent
     with ReadService
@@ -92,18 +91,6 @@ trait InternController {
         halt(status = 500, body = message)
       } else {
         Ok(body = s"Deleted ${pluralIndex(successes.length)}")
-      }
-    }
-
-    post("/import/:node_id") {
-      val importId = paramOrDefault("importId", UUID.randomUUID().toString)
-      val nodeId = params("node_id")
-      val clientId = requireClientId
-
-      importService.doImport(nodeId, clientId, importId) match {
-        case Success(report)           => report
-        case Failure(ex: ImportReport) => errorHandler(ex)
-        case Failure(ex)               => errorHandler(ex)
       }
     }
 
