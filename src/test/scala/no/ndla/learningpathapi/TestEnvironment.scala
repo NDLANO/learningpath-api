@@ -38,15 +38,11 @@ trait TestEnvironment
     with TaxonomyApiClient
     with NdlaClient
     with ImageApiClientComponent
-    with ArticleImportClient
-    with MigrationApiClient
     with ConverterService
     with OembedProxyClient
     with Elastic4sClient
     with DataSource
     with MockitoSugar
-    with KeywordsServiceComponent
-    with ImportService
     with Clock
     with HealthController
     with LanguageValidator
@@ -70,10 +66,6 @@ trait TestEnvironment
   val taxononyApiClient: TaxonomyApiClient = mock[TaxonomyApiClient]
   val ndlaClient: NdlaClient = mock[NdlaClient]
   val imageApiClient: ImageApiClient = mock[ImageApiClient]
-  val articleImportClient: ArticleImportClient = mock[ArticleImportClient]
-  val keywordsService: KeywordsService = mock[KeywordsService]
-  val migrationApiClient: MigrationApiClient = mock[MigrationApiClient]
-  val importService: ImportService = mock[ImportService]
   val languageValidator: LanguageValidator = mock[LanguageValidator]
   val learningpathControllerV2: LearningpathControllerV2 = mock[LearningpathControllerV2]
   val configController: ConfigController = mock[ConfigController]
@@ -100,7 +92,6 @@ trait TestEnvironment
       languageValidator,
       titleValidator,
       e4sClient,
-      articleImportClient,
       oembedProxyClient
     )
   }

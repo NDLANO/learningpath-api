@@ -9,7 +9,6 @@
 package no.ndla.learningpathapi.service.search
 
 import java.util.concurrent.Executors
-
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.searches.ScoreMode
@@ -18,6 +17,7 @@ import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.LearningpathApiProperties.{
+  DefaultLanguage,
   ElasticSearchIndexMaxResultWindow,
   ElasticSearchScrollKeepAlive
 }
@@ -244,7 +244,7 @@ trait SearchService extends LazyLogging {
 
     private def getSortDefinition(sort: Sort.Value, language: String) = {
       val sortLanguage = language match {
-        case Language.NoLanguage => Language.DefaultLanguage
+        case Language.NoLanguage => DefaultLanguage
         case _                   => language
       }
 

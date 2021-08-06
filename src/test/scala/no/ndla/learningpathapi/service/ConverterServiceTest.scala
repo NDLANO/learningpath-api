@@ -8,8 +8,9 @@
 
 package no.ndla.learningpathapi.service
 
-import java.util.Date
+import no.ndla.learningpathapi.LearningpathApiProperties.DefaultLanguage
 
+import java.util.Date
 import javax.servlet.http.HttpServletRequest
 import no.ndla.learningpathapi.integration.ImageMetaInformation
 import no.ndla.learningpathapi.model.api
@@ -62,7 +63,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
                                          List(),
                                          StepType.INTRODUCTION,
                                          None)
-  val apiTags = List(api.LearningPathTags(Seq("tag"), Language.DefaultLanguage))
+  val apiTags = List(api.LearningPathTags(Seq("tag"), DefaultLanguage))
 
   val randomDate = DateTime.now().toDate
   var service: ConverterService = _
@@ -72,14 +73,14 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
     Some(1),
     None,
     None,
-    List(Title("tittel", Language.DefaultLanguage)),
-    List(Description("deskripsjon", Language.DefaultLanguage)),
+    List(Title("tittel", DefaultLanguage)),
+    List(Description("deskripsjon", DefaultLanguage)),
     None,
     Some(60),
     LearningPathStatus.PRIVATE,
     LearningPathVerificationStatus.CREATED_BY_NDLA,
     randomDate,
-    List(LearningPathTags(List("tag"), Language.DefaultLanguage)),
+    List(LearningPathTags(List("tag"), DefaultLanguage)),
     "me",
     Copyright(CC_BY.toString, List.empty),
     None
@@ -95,8 +96,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         1,
         1,
         None,
-        api.Title("tittel", Language.DefaultLanguage),
-        api.Description("deskripsjon", Language.DefaultLanguage),
+        api.Title("tittel", DefaultLanguage),
+        api.Description("deskripsjon", DefaultLanguage),
         "null1",
         List.empty,
         "null1/learningsteps",
@@ -105,7 +106,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathStatus.PRIVATE.toString,
         LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
         randomDate,
-        api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
+        api.LearningPathTags(Seq("tag"), DefaultLanguage),
         api.Copyright(api.License(CC_BY.toString,
                                   Some("Creative Commons Attribution 4.0 International"),
                                   Some("https://creativecommons.org/licenses/by/4.0/")),
@@ -116,7 +117,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         None
       ))
     service.asApiLearningpathV2(domainLearningPath.copy(title = domainLearningPath.title :+ Title("test", "en")),
-                                Language.DefaultLanguage,
+                                DefaultLanguage,
                                 false,
                                 UserInfo("me", Set.empty)) should equal(expected)
   }
@@ -132,8 +133,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         1,
         1,
         None,
-        api.Title("tittel", Language.DefaultLanguage),
-        api.Description("deskripsjon", Language.DefaultLanguage),
+        api.Title("tittel", DefaultLanguage),
+        api.Description("deskripsjon", DefaultLanguage),
         "null1",
         List.empty,
         "null1/learningsteps",
@@ -142,7 +143,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         LearningPathStatus.PRIVATE.toString,
         LearningPathVerificationStatus.CREATED_BY_NDLA.toString,
         randomDate,
-        api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
+        api.LearningPathTags(Seq("tag"), DefaultLanguage),
         api.Copyright(api.License(CC_BY.toString,
                                   Some("Creative Commons Attribution 4.0 International"),
                                   Some("https://creativecommons.org/licenses/by/4.0/")),
@@ -163,15 +164,15 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       api.LearningPathSummaryV2(
         1,
         Some(1),
-        api.Title("tittel", Language.DefaultLanguage),
-        api.Description("deskripsjon", Language.DefaultLanguage),
-        api.Introduction("", Language.DefaultLanguage),
+        api.Title("tittel", DefaultLanguage),
+        api.Description("deskripsjon", DefaultLanguage),
+        api.Introduction("", DefaultLanguage),
         "null1",
         None,
         Some(60),
         LearningPathStatus.PRIVATE.toString,
         randomDate,
-        api.LearningPathTags(Seq("tag"), Language.DefaultLanguage),
+        api.LearningPathTags(Seq("tag"), DefaultLanguage),
         api.Copyright(api.License(CC_BY.toString,
                                   Some("Creative Commons Attribution 4.0 International"),
                                   Some("https://creativecommons.org/licenses/by/4.0/")),
@@ -190,8 +191,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         1,
         1,
         1,
-        api.Title("tittel", Language.DefaultLanguage),
-        Some(api.Description("deskripsjon", Language.DefaultLanguage)),
+        api.Title("tittel", DefaultLanguage),
+        Some(api.Description("deskripsjon", DefaultLanguage)),
         None,
         showTitle = false,
         "INTRODUCTION",
@@ -199,11 +200,11 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         "null1/learningsteps/1",
         canEdit = true,
         "ACTIVE",
-        Seq(Language.DefaultLanguage)
+        Seq(DefaultLanguage)
       ))
     service.asApiLearningStepV2(domainLearningStep2,
                                 domainLearningPath,
-                                Language.DefaultLanguage,
+                                DefaultLanguage,
                                 false,
                                 UserInfo("me", Set.empty)) should equal(learningstep)
   }
@@ -225,8 +226,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         1,
         1,
         1,
-        api.Title("tittel", Language.DefaultLanguage),
-        Some(api.Description("deskripsjon", Language.DefaultLanguage)),
+        api.Title("tittel", DefaultLanguage),
+        Some(api.Description("deskripsjon", DefaultLanguage)),
         None,
         showTitle = false,
         "INTRODUCTION",
@@ -234,7 +235,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
         "null1/learningsteps/1",
         canEdit = true,
         "ACTIVE",
-        Seq(Language.DefaultLanguage)
+        Seq(DefaultLanguage)
       ))
     service.asApiLearningStepV2(domainLearningStep2,
                                 domainLearningPath,
@@ -248,13 +249,12 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       api.LearningStepSummaryV2(
         1,
         1,
-        api.Title("tittel", Language.DefaultLanguage),
+        api.Title("tittel", DefaultLanguage),
         "INTRODUCTION",
         "null1/learningsteps/1"
       ))
 
-    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, Language.DefaultLanguage) should equal(
-      expected)
+    service.asApiLearningStepSummaryV2(domainLearningStep2, domainLearningPath, DefaultLanguage) should equal(expected)
   }
 
   test("asApiLearningStepSummaryV2 returns what we have when not supported language is given") {
@@ -262,7 +262,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
       api.LearningStepSummaryV2(
         1,
         1,
-        api.Title("tittel", Language.DefaultLanguage),
+        api.Title("tittel", DefaultLanguage),
         "INTRODUCTION",
         "null1/learningsteps/1"
       ))
@@ -273,8 +273,8 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
 
   test("asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary") {
     val expected =
-      Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
-    service.asApiLearningPathTagsSummary(apiTags, Language.DefaultLanguage, false) should equal(expected)
+      Some(api.LearningPathTagsSummary(DefaultLanguage, Seq(DefaultLanguage), Seq("tag")))
+    service.asApiLearningPathTagsSummary(apiTags, DefaultLanguage, false) should equal(expected)
   }
 
   test("asApiLearningPathTagsSummary returns None if fallback is false and language is unsupported") {
@@ -284,7 +284,7 @@ class ConverterServiceTest extends UnitSuite with UnitTestEnvironment {
   test(
     "asApiLearningPathTagsSummary converts api LearningPathTags to api LearningPathTagsSummary if language is undefined and fallback is true") {
     val expected =
-      Some(api.LearningPathTagsSummary(Language.DefaultLanguage, Seq(Language.DefaultLanguage), Seq("tag")))
+      Some(api.LearningPathTagsSummary(DefaultLanguage, Seq(DefaultLanguage), Seq("tag")))
     service.asApiLearningPathTagsSummary(apiTags, "hurr durr I'm a language", true) should equal(expected)
   }
 
