@@ -32,7 +32,6 @@ class V3__ConvertCoverPhotoUrlToID extends BaseJavaMigration {
     sql"select id, document from learningpaths"
       .map(rs => V3_DBLearningPath(rs.long("id"), rs.string("document")))
       .list()
-      .apply()
   }
 
   def convertCoverPhotoUrl(learningPath: V3_DBLearningPath): Option[V3_DBLearningPath] = {
@@ -62,7 +61,6 @@ class V3__ConvertCoverPhotoUrlToID extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
       .update()
-      .apply()
   }
 }
 

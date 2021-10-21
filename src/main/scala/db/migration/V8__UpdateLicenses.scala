@@ -38,7 +38,6 @@ class V8__UpdateLicenses extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def allLearningSteps(implicit session: DBSession): Seq[(Long, String)] = {
@@ -47,7 +46,6 @@ class V8__UpdateLicenses extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def updateLicense(license: String): String = {
@@ -105,7 +103,6 @@ class V8__UpdateLicenses extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${id}"
       .update()
-      .apply()
   }
 
   def updateLearningStep(id: Long, document: String)(implicit session: DBSession) = {
@@ -115,7 +112,6 @@ class V8__UpdateLicenses extends BaseJavaMigration {
 
     sql"update learningsteps set document = $dataObject where id = ${id}"
       .update()
-      .apply()
   }
 
 }

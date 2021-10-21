@@ -38,7 +38,7 @@ trait ConfigRepository {
       val c = ConfigMeta.syntax("c")
       withSQL {
         select(count(c.column("configkey"))).from(ConfigMeta as c)
-      }.map(_.int(1)).single().apply().getOrElse(0)
+      }.map(_.int(1)).single().getOrElse(0)
     }
 
     def updateConfigParam(config: ConfigMeta)(implicit session: DBSession = AutoSession): Try[ConfigMeta] = {
@@ -47,7 +47,7 @@ trait ConfigRepository {
           .set(ConfigMeta.column.column("value") -> config)
           .where
           .eq(ConfigMeta.column.column("configkey"), config.key.toString)
-      }.update().apply()
+      }.update()
 
       if (updatedCount != 1) {
         logger.info(s"No existing value for ${config.key}, inserting the value.")
@@ -56,7 +56,7 @@ trait ConfigRepository {
             ConfigMeta.column.c("configkey") -> config.key.toString,
             ConfigMeta.column.c("value") -> config,
           )
-        }.update().apply()
+        }.update()
         Success(config)
       } else {
         logger.info(s"Value for ${config.key} updated.")
@@ -74,7 +74,6 @@ trait ConfigRepository {
         """
         .map(ConfigMeta(c))
         .single()
-        .apply()
     }
   }
 }
