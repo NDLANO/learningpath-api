@@ -46,7 +46,6 @@ class V12__UpdateNdlaFrontendDomainForFF extends BaseJavaMigration {
     sql"select count(*) from learningsteps where document is not NULL"
       .map(rs => rs.long("count"))
       .single()
-      .apply()
   }
 
   def allLearingSteps(offset: Long)(implicit session: DBSession): Seq[(Long, String)] = {
@@ -55,7 +54,6 @@ class V12__UpdateNdlaFrontendDomainForFF extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def updateLearningStep(document: String, id: Long)(implicit session: DBSession): Int = {
@@ -65,7 +63,6 @@ class V12__UpdateNdlaFrontendDomainForFF extends BaseJavaMigration {
 
     sql"update learningsteps set document = $dataObject where id = $id"
       .update()
-      .apply()
   }
 
   def updateNdlaUrl(oldUrl: String): String = {

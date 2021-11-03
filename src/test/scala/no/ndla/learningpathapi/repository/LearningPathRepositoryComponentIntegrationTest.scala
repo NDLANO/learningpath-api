@@ -379,8 +379,8 @@ class LearningPathRepositoryComponentIntegrationTest
 
   def emptyTestDatabase = {
     DB autoCommit (implicit session => {
-      sql"delete from learningpaths;".execute().apply()(session)
-      sql"delete from learningsteps;".execute().apply()(session)
+      sql"delete from learningpaths;".execute()(session)
+      sql"delete from learningsteps;".execute()(session)
     })
   }
 

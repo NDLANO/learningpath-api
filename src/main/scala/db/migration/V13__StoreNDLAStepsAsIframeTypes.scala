@@ -76,7 +76,6 @@ class V13__StoreNDLAStepsAsIframeTypes extends BaseJavaMigration with LazyLoggin
     sql"select count(*) from learningsteps where document is not NULL"
       .map(rs => rs.long("count"))
       .single()
-      .apply()
   }
 
   def allLearningSteps(offset: Long)(implicit session: DBSession): Seq[(Long, String)] = {
@@ -85,7 +84,6 @@ class V13__StoreNDLAStepsAsIframeTypes extends BaseJavaMigration with LazyLoggin
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def updateLearningStep(document: String, id: Long)(implicit session: DBSession): Int = {
@@ -95,7 +93,6 @@ class V13__StoreNDLAStepsAsIframeTypes extends BaseJavaMigration with LazyLoggin
 
     sql"update learningsteps set document = $dataObject where id = $id"
       .update()
-      .apply()
   }
 
   def updateNdlaUrl(oldUrl: String): String = {
