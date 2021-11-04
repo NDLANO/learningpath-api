@@ -110,8 +110,9 @@ lazy val learningpath_api = (project in file("."))
 assemblyJarName in assembly := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
-  case "module-info.class" => MergeStrategy.discard
-  case "mime.types"        => MergeStrategy.filterDistinctLines
+  case "module-info.class"                   => MergeStrategy.discard
+  case x if x.endsWith("/module-info.class") => MergeStrategy.discard
+  case "mime.types"                          => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class") =>
     MergeStrategy.first
   case PathList("org", "joda", "convert", "FromString.class") =>
@@ -119,7 +120,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("org", "joda", "time", "base", "BaseDateTime.class") =>
     MergeStrategy.first
   case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
     oldStrategy(x)
 }
 
