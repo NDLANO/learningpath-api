@@ -1,3 +1,10 @@
+/*
+ * Part of NDLA learningpath-api
+ * Copyright (C) 2020 NDLA
+ *
+ * See LICENSE
+ */
+
 package no.ndla.learningpathapi.model.domain
 
 case class SearchSettings(
