@@ -8,19 +8,15 @@
 
 package no.ndla.learningpathapi.service.search
 
-import com.sksamuel.elastic4s.ElasticApi.createIndex
 import com.sksamuel.elastic4s.indexes.CreateIndexRequest
 import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPageSize}
 import no.ndla.learningpathapi.TestData.searchSettings
-import no.ndla.learningpathapi.integration.{Elastic4sClientFactory, NdlaE4sClient}
-import no.ndla.learningpathapi.model.api
+import no.ndla.learningpathapi.integration.Elastic4sClientFactory
+import no.ndla.learningpathapi.model.{api, domain}
 import no.ndla.learningpathapi.model.domain._
-import no.ndla.learningpathapi.model.domain
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
 import org.scalatest.Outcome
 
 import scala.util.Success
@@ -45,11 +41,11 @@ class SearchServiceTest
   }
   override val searchService: SearchService = new SearchService
 
-  val paul = Author("author", "Truly Weird Rand Paul")
+  val paul: Author = Author("author", "Truly Weird Rand Paul")
   val license = "publicdomain"
-  val copyright = Copyright(license, List(paul))
+  val copyright: Copyright = Copyright(license, List(paul))
 
-  val DefaultLearningPath = LearningPath(
+  val DefaultLearningPath: LearningPath = LearningPath(
     id = None,
     revision = None,
     externalId = None,
@@ -66,7 +62,7 @@ class SearchServiceTest
     copyright = copyright
   )
 
-  val DefaultLearningStep = LearningStep(
+  val DefaultLearningStep: LearningStep = LearningStep(
     id = None,
     revision = None,
     externalId = None,
@@ -188,7 +184,7 @@ class SearchServiceTest
   test("all learningpaths should be returned if fallback is enabled in all-search") {
     val Success(res) = searchService.matchingQuery(
       searchSettings.copy(
-        searchLanguage = "hurr durr I'm a language",
+        language = Some("hurr durr I'm a language"),
         page = Some(1),
         fallback = true,
         sort = Sort.ByIdDesc,
@@ -200,7 +196,7 @@ class SearchServiceTest
   test("no learningpaths should be returned if fallback is disabled with an unsupported language in all-search") {
     val Success(res) = searchService.matchingQuery(
       searchSettings.copy(
-        searchLanguage = "hurr durr I'm a language",
+        language = Some("hurr durr I'm a language"),
         page = Some(1),
         fallback = false,
         sort = Sort.ByIdDesc,
@@ -278,7 +274,7 @@ class SearchServiceTest
     val Success(searchResult) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByIdAsc,
-        searchLanguage = "all"
+        language = Some("*")
       ))
     val hits = searchResult.results
 
@@ -341,7 +337,7 @@ class SearchServiceTest
       searchSettings.copy(
         withIdIn = List(1, 2),
         sort = Sort.ByTitleAsc,
-        searchLanguage = Language.AllLanguages
+        language = Some(Language.AllLanguages)
       ))
     val hits = searchResult.results
 
@@ -355,7 +351,7 @@ class SearchServiceTest
       searchSettings.copy(
         query = Some("Pingvinen"),
         sort = Sort.ByTitleAsc,
-        searchLanguage = "en",
+        language = Some("en"),
         fallback = true
       ))
 
@@ -367,7 +363,7 @@ class SearchServiceTest
       searchSettings.copy(
         query = Some("Pingvinen"),
         sort = Sort.ByTitleAsc,
-        searchLanguage = "en",
+        language = Some("en"),
         fallback = false
       ))
 
@@ -392,7 +388,7 @@ class SearchServiceTest
         withIdIn = List(3),
         query = Some("morsom"),
         sort = Sort.ByTitleAsc,
-        searchLanguage = Language.AllLanguages
+        language = Some(Language.AllLanguages)
       ))
     val hits = searchResult.results
 
@@ -405,7 +401,7 @@ class SearchServiceTest
       searchSettings.copy(
         query = Some("guy"),
         sort = Sort.ByTitleAsc,
-        searchLanguage = "en"
+        language = Some("en")
       ))
     val hits = searchResult.results
 
@@ -418,7 +414,7 @@ class SearchServiceTest
       searchSettings.copy(
         sort = Sort.ByTitleAsc,
         taggedWith = Some("superhelt"),
-        searchLanguage = "nb"
+        language = Some("nb")
       ))
     val hits = searchResult.results
 
@@ -529,13 +525,13 @@ class SearchServiceTest
     val Success(searchNb) = searchService.matchingQuery(
       searchSettings.copy(
         query = Some("Urelatert"),
-        searchLanguage = "all",
+        language = Some(Language.AllLanguages),
         sort = Sort.ByTitleAsc
       ))
     val Success(searchEn) = searchService.matchingQuery(
       searchSettings.copy(
         query = Some("Unrelated"),
-        searchLanguage = "all",
+        language = Some(Language.AllLanguages),
         sort = Sort.ByTitleAsc
       ))
 
@@ -558,7 +554,7 @@ class SearchServiceTest
     val Success(search) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByTitleAsc,
-        searchLanguage = "all"
+        language = Some(Language.AllLanguages)
       ))
 
     search.totalCount should be(5)
@@ -576,7 +572,7 @@ class SearchServiceTest
       searchSettings.copy(
         query = Some("Batman"),
         sort = Sort.ByTitleAsc,
-        searchLanguage = "all"
+        language = Some(Language.AllLanguages)
       ))
     search.results.head.supportedLanguages should be(Seq("nb", "en"))
   }
@@ -584,7 +580,7 @@ class SearchServiceTest
   test("That searching with fallback still returns searched language if specified") {
     val Success(search) = searchService.matchingQuery(
       searchSettings.copy(
-        searchLanguage = "en",
+        language = Some("en"),
         fallback = true
       ))
 
@@ -605,7 +601,7 @@ class SearchServiceTest
 
     val Success(initialSearch) = searchService.matchingQuery(
       searchSettings.copy(
-        searchLanguage = "all",
+        language = Some(Language.AllLanguages),
         pageSize = Some(pageSize),
         fallback = true,
         shouldScroll = true
@@ -626,7 +622,7 @@ class SearchServiceTest
     val Success(searchResult) = searchService.matchingQuery(
       searchSettings.copy(
         query = Some("flaggermus"),
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         verificationStatus = Some("EXTERNAL"),
         sort = Sort.ByTitleAsc
       ))
@@ -640,7 +636,7 @@ class SearchServiceTest
     "That search combined with filter by verification status only returns documents with the given verification status") {
     val Success(searchResult) = searchService.matchingQuery(
       searchSettings.copy(
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         verificationStatus = Some("CREATED_BY_NDLA"),
         sort = Sort.ByTitleAsc
       ))
@@ -654,7 +650,7 @@ class SearchServiceTest
     val Success(searchResult) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByIdAsc,
-        searchLanguage = Language.AllLanguages
+        language = Some(Language.AllLanguages)
       ))
 
     searchResult.totalCount should be(5)
@@ -665,7 +661,7 @@ class SearchServiceTest
     val Success(searchResult) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByIdAsc,
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         status = List(domain.LearningPathStatus.PUBLISHED, domain.LearningPathStatus.UNLISTED)
       ))
 
@@ -675,7 +671,7 @@ class SearchServiceTest
     val Success(searchResult2) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByIdAsc,
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         status = List(domain.LearningPathStatus.UNLISTED)
       ))
 
@@ -687,7 +683,7 @@ class SearchServiceTest
     val Success(searchResult) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByIdAsc,
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         withPaths = List("https://ndla.no/article/1", "https://ndla.no/article/2")
       ))
 
@@ -697,7 +693,7 @@ class SearchServiceTest
     val Success(searchResult2) = searchService.matchingQuery(
       searchSettings.copy(
         sort = Sort.ByIdAsc,
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         withPaths = List("https://ndla.no/article/2")
       ))
 

@@ -8,7 +8,11 @@
 
 package no.ndla.learningpathapi.model.domain
 
-trait LanguageField[T] {
+trait WithLanguage {
+  def language: String
+}
+
+trait LanguageField[T] extends WithLanguage {
   def value: T
   def language: String
 }

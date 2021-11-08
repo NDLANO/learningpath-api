@@ -12,7 +12,7 @@ case class SearchSettings(
     withIdIn: List[Long],
     withPaths: List[String],
     taggedWith: Option[String],
-    searchLanguage: String,
+    language: Option[String],
     sort: Sort.Value,
     page: Option[Int],
     pageSize: Option[Int],

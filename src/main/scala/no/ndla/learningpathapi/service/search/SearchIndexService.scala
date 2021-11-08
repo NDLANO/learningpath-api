@@ -8,20 +8,25 @@
 
 package no.ndla.learningpathapi.service.search
 
-import java.text.SimpleDateFormat
-import java.util.Calendar
+import com.sksamuel.elastic4s.analyzers.{Analyzer, StandardAnalyzer}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.RequestSuccess
 import com.sksamuel.elastic4s.indexes.CreateIndexRequest
-import com.sksamuel.elastic4s.mappings.NestedField
+import com.sksamuel.elastic4s.mappings.dynamictemplate.DynamicTemplateRequest
+import com.sksamuel.elastic4s.mappings.{FieldDefinition, MappingDefinition}
 import com.typesafe.scalalogging.LazyLogging
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.integration.{Elastic4sClient, SearchApiClient}
 import no.ndla.learningpathapi.model.domain.Language._
 import no.ndla.learningpathapi.model.domain.{ElasticIndexingException, LearningPath, ReindexResult}
+import no.ndla.learningpathapi.model.search.SearchableLanguageFormats
 import no.ndla.learningpathapi.repository.LearningPathRepositoryComponent
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization._
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
 trait SearchIndexService {
@@ -32,7 +37,7 @@ trait SearchIndexService {
   val searchIndexService: SearchIndexService
 
   class SearchIndexService extends LazyLogging {
-    implicit val formats = org.json4s.DefaultFormats
+    implicit val formats: Formats = SearchableLanguageFormats.JSonFormats
 
     def indexDocuments: Try[ReindexResult] = {
       synchronized {
@@ -240,25 +245,20 @@ trait SearchIndexService {
       }
     }
 
-    protected def buildMapping = {
-      mapping(LearningpathApiProperties.SearchDocument).fields(
+    protected def buildMapping: MappingDefinition = {
+      val fields = List(
         intField("id"),
-        languageSupportedField("titles", keepRaw = true),
-        languageSupportedField("descriptions"),
         textField("coverPhotoUrl"),
         intField("duration"),
         keywordField("status"),
         keywordField("verificationStatus"),
         dateField("lastUpdated"),
         keywordField("defaultTitle"),
-        languageSupportedField("tags", keepRaw = true),
         textField("author"),
         nestedField("learningsteps").fields(
           textField("stepType"),
           keywordField("embedUrl"),
           keywordField("status"),
-          languageSupportedField("titles"),
-          languageSupportedField("descriptions")
         ),
         objectField("copyright").fields(
           objectField("license").fields(
@@ -273,28 +273,50 @@ trait SearchIndexService {
         ),
         intField("isBasedOn")
       )
+      val dynamics = generateLanguageSupportedDynamicTemplates("titles", keepRaw = true) ++
+        generateLanguageSupportedDynamicTemplates("descriptions") ++
+        generateLanguageSupportedDynamicTemplates("tags", keepRaw = true)
+
+      mapping(LearningpathApiProperties.SearchDocument).fields(fields).dynamicTemplates(dynamics)
     }
 
-    private def languageSupportedField(fieldName: String, keepRaw: Boolean = false) = {
-      val languageSupportedField = NestedField(fieldName).fields(
-        keepRaw match {
-          case true =>
-            languageAnalyzers.map(
-              langAnalyzer =>
-                textField(langAnalyzer.lang)
-                  .fielddata(true)
-                  .analyzer(langAnalyzer.analyzer)
-                  .fields(keywordField("raw")))
-          case false =>
-            languageAnalyzers.map(
-              langAnalyzer =>
-                textField(langAnalyzer.lang)
-                  .fielddata(true)
-                  .analyzer(langAnalyzer.analyzer))
+    /**
+      * Returns Sequence of DynamicTemplateRequest for a given field.
+      *
+      * @param fieldName Name of field in mapping.
+      * @param keepRaw   Whether to add a keywordField named raw.
+      *                  Usually used for sorting, aggregations or scripts.
+      * @return Sequence of DynamicTemplateRequest for a field.
+      */
+    protected def generateLanguageSupportedDynamicTemplates(fieldName: String,
+                                                            keepRaw: Boolean = false): Seq[DynamicTemplateRequest] = {
+
+      val dynamicFunc = (name: String, analyzer: Analyzer, subFields: List[FieldDefinition]) => {
+        DynamicTemplateRequest(
+          name = name,
+          mapping = textField(name).analyzer(analyzer).fields(subFields),
+          matchMappingType = Some("string"),
+          pathMatch = Some(name)
+        )
+      }
+      val fields = new ListBuffer[FieldDefinition]()
+      if (keepRaw) {
+        fields += keywordField("raw")
+      }
+      val languageTemplates = languageAnalyzers.map(
+        languageAnalyzer => {
+          val name = s"$fieldName.${languageAnalyzer.languageTag.toString()}"
+          dynamicFunc(name, languageAnalyzer.analyzer, fields.toList)
         }
       )
-      languageSupportedField
-
+      val languageSubTemplates = languageAnalyzers.map(
+        languageAnalyzer => {
+          val name = s"*.$fieldName.${languageAnalyzer.languageTag.toString()}"
+          dynamicFunc(name, languageAnalyzer.analyzer, fields.toList)
+        }
+      )
+      val catchAllTemplate = dynamicFunc(s"$fieldName.*", StandardAnalyzer, fields.toList)
+      languageTemplates ++ languageSubTemplates ++ Seq(catchAllTemplate)
     }
 
     def indexWithNameExists(indexName: String): Try[Boolean] = {
