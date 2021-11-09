@@ -13,7 +13,7 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{DefaultPageSize, MaxPa
 import no.ndla.learningpathapi.TestData.searchSettings
 import no.ndla.learningpathapi.integration.Elastic4sClientFactory
 import no.ndla.learningpathapi.model.{api, domain}
-import no.ndla.learningpathapi.model.domain._
+import no.ndla.learningpathapi.model.domain.{Description, _}
 import no.ndla.learningpathapi.{LearningpathApiProperties, TestEnvironment, UnitSuite}
 import no.ndla.scalatestsuite.IntegrationSuite
 import org.joda.time.DateTime
@@ -153,8 +153,8 @@ class SearchServiceTest
 
       val englando = DefaultLearningPath.copy(
         id = Some(EnglandoId),
-        title = List(Title("Englando", "en")),
-        description = List(Description("This is a englando learningpath", "en")),
+        title = List(Title("Englando", "en"), Title("Djinba", "djb")),
+        description = List(Description("This is a englando learningpath", "en"), Description("This is djinba", "djb")),
         duration = Some(5),
         lastUpdated = tomorrowp2,
         tags = List()
@@ -407,6 +407,30 @@ class SearchServiceTest
 
     searchResult.totalCount should be(1)
     hits.head.id should be(BatmanId)
+  }
+
+  test("That searching only returns documents matching the query in the specified standard analyzed language") {
+    val Success(searchResult) = searchService.matchingQuery(
+      searchSettings.copy(
+        query = Some("djinba"),
+        sort = Sort.ByTitleAsc,
+        language = Some("djb")
+      ))
+    val hits = searchResult.results
+
+    searchResult.totalCount should be(1)
+    hits.head.id should be(EnglandoId)
+  }
+
+  test("That searching returns nothing if language is not indexed") {
+    val Success(searchResult) = searchService.matchingQuery(
+      searchSettings.copy(
+        sort = Sort.ByTitleAsc,
+        language = Some("kra")
+      ))
+    val hits = searchResult.results
+
+    searchResult.totalCount should be(0)
   }
 
   test("That filtering on tag only returns documents where the tag is present") {
