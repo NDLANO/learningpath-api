@@ -1,13 +1,11 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2017 NDLA
  *
  * See LICENSE
  */
 
 package db.migration
-
-import java.util.Date
 
 import no.ndla.learningpathapi.model.domain._
 import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
@@ -17,6 +15,8 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.Serialization.{read, write}
 import org.postgresql.util.PGobject
 import scalikejdbc.{DB, DBSession, _}
+
+import java.util.Date
 
 class V5__AddLanguageToAll extends BaseJavaMigration {
 
@@ -53,10 +53,10 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
         val meta = read[V5_LearningPath](rs.string("document"))
         meta.copy(
           id = Some(rs.long("id")),
-          title = meta.title.map(t => V5_Title(t.title, Some(Language.languageOrUnknown(t.language)))),
-          description =
-            meta.description.map(d => V5_Description(d.description, Some(Language.languageOrUnknown(d.language)))),
-          tags = meta.tags.map(t => V5_LearningPathTags(t.tags, Some(Language.languageOrUnknown(t.language))))
+          title = meta.title.map(t => V5_Title(t.title, Some(Language.languageOrUnknown(t.language).toString))),
+          description = meta.description.map(d =>
+            V5_Description(d.description, Some(Language.languageOrUnknown(d.language).toString))),
+          tags = meta.tags.map(t => V5_LearningPathTags(t.tags, Some(Language.languageOrUnknown(t.language).toString)))
         )
       })
       .list()
@@ -68,11 +68,11 @@ class V5__AddLanguageToAll extends BaseJavaMigration {
         val meta = read[V5_LearningStep](rs.string("document"))
         meta.copy(
           id = Some(rs.long("id")),
-          title = meta.title.map(t => V5_Title(t.title, Some(Language.languageOrUnknown(t.language)))),
-          description =
-            meta.description.map(t => V5_Description(t.description, Some(Language.languageOrUnknown(t.language)))),
-          embedUrl =
-            meta.embedUrl.map(t => V5_EmbedUrl(t.url, Some(Language.languageOrUnknown(t.language)), t.embedType))
+          title = meta.title.map(t => V5_Title(t.title, Some(Language.languageOrUnknown(t.language).toString))),
+          description = meta.description.map(t =>
+            V5_Description(t.description, Some(Language.languageOrUnknown(t.language).toString))),
+          embedUrl = meta.embedUrl.map(t =>
+            V5_EmbedUrl(t.url, Some(Language.languageOrUnknown(t.language).toString), t.embedType))
         )
       })
       .list()

@@ -1,5 +1,5 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -9,38 +9,57 @@
 package no.ndla.learningpathapi.model.domain
 
 import com.sksamuel.elastic4s.analyzers._
+import no.ndla.language.model.{Iso639, LanguageTag}
 import no.ndla.learningpathapi.LearningpathApiProperties.DefaultLanguage
 import no.ndla.learningpathapi.model.domain
 import no.ndla.mapping.ISO639
 
 object Language {
-  val CHINESE = "zh"
-  val ENGLISH = "en"
-  val FRENCH = "fr"
-  val GERMAN = "de"
-  val NORWEGIAN_BOKMAL = "nb"
-  val NORWEGIAN_NYNORSK = "nn"
-  val SAMI = "se"
-  val SPANISH = "es"
-  val UNKNOWN = "unknown"
-
   val NoLanguage = ""
-  val AllLanguages = "all"
-  val UnknownLanguage = "unknown"
+  val AllLanguages = "*"
+  val UnknownLanguage: LanguageTag = LanguageTag("und")
 
-  val languageAnalyzers = Seq(
-    LanguageAnalyzer(NORWEGIAN_BOKMAL, NorwegianLanguageAnalyzer),
-    LanguageAnalyzer(NORWEGIAN_NYNORSK, NorwegianLanguageAnalyzer),
-    LanguageAnalyzer(ENGLISH, EnglishLanguageAnalyzer),
-    LanguageAnalyzer(FRENCH, FrenchLanguageAnalyzer),
-    LanguageAnalyzer(GERMAN, GermanLanguageAnalyzer),
-    LanguageAnalyzer(SPANISH, SpanishLanguageAnalyzer),
-    LanguageAnalyzer(SAMI, StandardAnalyzer), // SAMI
-    LanguageAnalyzer(CHINESE, ChineseLanguageAnalyzer),
-    LanguageAnalyzer(UnknownLanguage, NorwegianLanguageAnalyzer)
+  val languageAnalyzers: Seq[LanguageAnalyzer] = Seq(
+    LanguageAnalyzer(LanguageTag("nb"), NorwegianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("nn"), NorwegianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("sma"), StandardAnalyzer), // Southern sami
+    LanguageAnalyzer(LanguageTag("se"), StandardAnalyzer), // Northern Sami
+    LanguageAnalyzer(LanguageTag("en"), EnglishLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ar"), ArabicLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("hy"), ArmenianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("eu"), BasqueLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("pt-br"), BrazilianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("bg"), BulgarianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ca"), CatalanLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ja"), CjkLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ko"), CjkLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("zh"), CjkLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("cs"), CzechLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("da"), DanishLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("nl"), DutchLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("fi"), FinnishLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("fr"), FrenchLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("gl"), GalicianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("de"), GermanLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("el"), GreekLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("hi"), HindiLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("hu"), HungarianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("id"), IndonesianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ga"), IrishLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("it"), ItalianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("lt"), LithuanianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("lv"), LatvianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("fa"), PersianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("pt"), PortugueseLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ro"), RomanianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("ru"), RussianLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("srb"), SoraniLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("es"), SpanishLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("sv"), SwedishLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("th"), ThaiLanguageAnalyzer),
+    LanguageAnalyzer(LanguageTag("tr"), TurkishLanguageAnalyzer),
+    LanguageAnalyzer(UnknownLanguage, StandardAnalyzer)
   )
-
-  private val supportedLanguages = languageAnalyzers.map(_.lang)
 
   def findByLanguageOrBestEffort[P <: LanguageField[_]](sequence: Seq[P], language: String): Option[P] = {
     sequence
@@ -48,22 +67,17 @@ object Language {
       .orElse(sequence.sortBy(lf => ISO639.languagePriority.reverse.indexOf(lf.language)).lastOption)
   }
 
-  def getLanguageOrDefaultIfUnsupported(language: String): String =
-    supportedLanguages.find(_ == language.toLowerCase()).getOrElse(AllLanguages)
-
-  def languageOrUnknown(language: String): String =
-    languageOrUnknown(Option(language))
-
-  def languageOrUnknown(language: Option[String]): String = {
-    language match {
-      case Some(lang) if ISO639.languagePriority.contains(lang) => lang
-      case _                                                    => UnknownLanguage
+  def languageOrUnknown(language: Option[String]): LanguageTag = {
+    language.filter(_.nonEmpty) match {
+      case Some(x) if x == "unknown" => UnknownLanguage
+      case Some(x)                   => LanguageTag(x)
+      case None                      => UnknownLanguage
     }
   }
 
   def findSupportedLanguages[_](fields: Seq[LanguageField[_]]*): Seq[String] = {
-    fields.map(getLanguages).reduce(_ concat _).distinct.sortBy { lang =>
-      ISO639.languagePriority.indexOf(lang)
+    fields.flatMap(_.map(_.language)).distinct.sortBy { lang =>
+      languageAnalyzers.map(la => la.languageTag.toString).indexOf(lang)
     }
   }
 
@@ -115,4 +129,4 @@ object Language {
   }
 }
 
-case class LanguageAnalyzer(lang: String, analyzer: Analyzer)
+case class LanguageAnalyzer(languageTag: LanguageTag, analyzer: Analyzer)

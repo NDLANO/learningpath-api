@@ -1,5 +1,5 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -70,15 +70,15 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     val ids = "1,2"
     val verificationStatus = "EXTERNAL"
 
-    val result = SearchResult(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary), None)
-    val apiResult = SearchResultV2(1, Some(1), 1, "nb", Seq(DefaultLearningPathSummary))
+    val result = SearchResult(1, Some(1), 1, language, Seq(DefaultLearningPathSummary), None)
+    val apiResult = SearchResultV2(1, Some(1), 1, language, Seq(DefaultLearningPathSummary))
     when(searchConverterService.asApiSearchResult(result)).thenReturn(apiResult)
 
     val expectedSettings = searchSettings.copy(
       query = Some(query),
       withIdIn = List(1, 2),
       taggedWith = Some(tag),
-      searchLanguage = language,
+      language = Some(language),
       sort = Sort.ByDurationDesc,
       page = Some(page),
       pageSize = Some(pageSize),
@@ -153,7 +153,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
       withIdIn = List(1, 2),
       query = Some(query),
       taggedWith = Some(tag),
-      searchLanguage = language,
+      language = Some(language),
       sort = Sort.ByDurationDesc,
       page = Some(page),
       pageSize = Some(pageSize),
@@ -323,7 +323,7 @@ class LearningpathControllerV2Test extends UnitSuite with TestEnvironment with S
     reset(searchService)
 
     val expectedSettings = TestData.searchSettings.copy(
-      searchLanguage = "all",
+      language = Some("*"),
       shouldScroll = true,
       sort = Sort.ByTitleAsc
     )

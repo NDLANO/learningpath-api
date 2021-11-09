@@ -1,3 +1,10 @@
+/*
+ * Part of NDLA learningpath-api
+ * Copyright (C) 2020 NDLA
+ *
+ * See LICENSE
+ */
+
 package no.ndla.learningpathapi.model.domain
 
 case class SearchSettings(
@@ -5,7 +12,7 @@ case class SearchSettings(
     withIdIn: List[Long],
     withPaths: List[String],
     taggedWith: Option[String],
-    searchLanguage: String,
+    language: Option[String],
     sort: Sort.Value,
     page: Option[Int],
     pageSize: Option[Int],

@@ -1,5 +1,5 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -172,7 +172,7 @@ trait LearningpathControllerV2 {
             withIdIn = idList,
             taggedWith = tag,
             withPaths = List.empty,
-            searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
+            language = Some(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByRelevanceDesc),
             page = page,
             pageSize = pageSize,
@@ -187,7 +187,7 @@ trait LearningpathControllerV2 {
             withIdIn = idList,
             taggedWith = tag,
             withPaths = List.empty,
-            searchLanguage = Language.getLanguageOrDefaultIfUnsupported(searchLanguage),
+            language = Some(searchLanguage),
             sort = Sort.valueOf(sort).getOrElse(Sort.ByTitleAsc),
             page = page,
             pageSize = pageSize,

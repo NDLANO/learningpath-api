@@ -1,5 +1,5 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -8,7 +8,11 @@
 
 package no.ndla.learningpathapi.model.domain
 
-trait LanguageField[T] {
+trait WithLanguage {
+  def language: String
+}
+
+trait LanguageField[T] extends WithLanguage {
   def value: T
   def language: String
 }

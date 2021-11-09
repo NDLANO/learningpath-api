@@ -1,5 +1,5 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -12,9 +12,10 @@ import java.util.concurrent.Executors
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.searches.ScoreMode
-import com.sksamuel.elastic4s.searches.queries.{BoolQuery, NestedQuery}
+import com.sksamuel.elastic4s.searches.queries.{BoolQuery, NestedQuery, Query}
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import com.typesafe.scalalogging.LazyLogging
+import no.ndla.language.model.Iso639
 import no.ndla.learningpathapi.LearningpathApiProperties
 import no.ndla.learningpathapi.LearningpathApiProperties.{
   DefaultLanguage,
@@ -24,10 +25,10 @@ import no.ndla.learningpathapi.LearningpathApiProperties.{
 import no.ndla.learningpathapi.integration.Elastic4sClient
 import no.ndla.learningpathapi.model.api.{Copyright, Error, LearningPathSummaryV2, License}
 import no.ndla.learningpathapi.model.domain.{Sort, _}
-import no.ndla.learningpathapi.model.search.SearchableLearningPath
+import no.ndla.learningpathapi.model.search.{SearchableLanguageFormats, SearchableLearningPath}
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.index.IndexNotFoundException
-import org.json4s.DefaultFormats
+import org.json4s.{DefaultFormats, Formats}
 import org.json4s.native.Serialization._
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future}
@@ -51,7 +52,7 @@ trait SearchService extends LazyLogging {
             totalCount = response.result.totalHits,
             page = None,
             pageSize = response.result.hits.hits.length,
-            language = if (language == "*") Language.AllLanguages else language,
+            language = language,
             results = hits,
             scrollId = response.result.scrollId
           )
@@ -64,7 +65,7 @@ trait SearchService extends LazyLogging {
 
           resultArray.map(result => {
             val matchedLanguage = language match {
-              case Language.AllLanguages | "*" =>
+              case Language.AllLanguages =>
                 searchConverterService
                   .getLanguageFromHit(result)
                   .getOrElse(language)
@@ -78,7 +79,7 @@ trait SearchService extends LazyLogging {
     }
 
     def hitAsLearningPathSummaryV2(hitString: String, language: String): LearningPathSummaryV2 = {
-      implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
+      implicit val formats: Formats = SearchableLanguageFormats.JSonFormats
       searchConverterService.asApiLearningPathSummaryV2(read[SearchableLearningPath](hitString), language)
     }
 
@@ -88,7 +89,7 @@ trait SearchService extends LazyLogging {
         withIdIn = List.empty,
         withPaths = paths,
         taggedWith = None,
-        searchLanguage = Language.AllLanguages,
+        language = Some(Language.AllLanguages),
         sort = Sort.ByTitleAsc,
         page = None,
         pageSize = None,
@@ -105,39 +106,45 @@ trait SearchService extends LazyLogging {
       executeSearch(boolQuery(), settings)
     }
 
+    private def languageSpecificSearch(searchField: String, language: String, query: String, boost: Float): Query =
+      simpleStringQuery(query).field(s"$searchField.$language", boost)
+
     def matchingQuery(settings: SearchSettings): Try[SearchResult] = {
-      val language =
-        if (settings.searchLanguage == Language.AllLanguages || settings.fallback) "*"
-        else settings.searchLanguage
+      val searchLanguage = settings.language match {
+        case Some(lang) if Iso639.get(lang).isSuccess => lang
+        case _                                        => Language.AllLanguages
+      }
 
       val fullQuery = settings.query match {
         case Some(query) =>
-          val titleSearch = simpleStringQuery(query).field(s"titles.$language", 2)
-          val descSearch = simpleStringQuery(query).field(s"descriptions.$language", 2)
-          val stepTitleSearch = simpleStringQuery(query).field(s"learningsteps.titles.$language", 1)
-          val stepDescSearch = simpleStringQuery(query).field(s"learningsteps.descriptions.$language", 1)
-          val tagSearch = simpleStringQuery(query).field(s"tags.$language", 2)
+          val language =
+            if (settings.fallback) "*" else searchLanguage
+          val titleSearch = languageSpecificSearch("titles", language, query, 2)
+          val descSearch = languageSpecificSearch("descriptions", language, query, 2)
+          val stepTitleSearch = languageSpecificSearch("titles", language, query, 1)
+          val stepDescSearch = languageSpecificSearch("descriptions", language, query, 1)
+          val tagSearch = languageSpecificSearch("tags", language, query, 2)
           val authorSearch = simpleStringQuery(query).field("author", 1)
           boolQuery()
             .must(
               boolQuery()
                 .should(
-                  nestedQuery("titles", titleSearch),
-                  nestedQuery("descriptions", descSearch),
-                  nestedQuery("learningsteps.titles", stepTitleSearch),
-                  nestedQuery("learningsteps.descriptions", stepDescSearch),
-                  nestedQuery("tags", tagSearch),
+                  titleSearch,
+                  descSearch,
+                  nestedQuery("learningsteps").query(stepTitleSearch),
+                  nestedQuery("learningsteps").query(stepDescSearch),
+                  tagSearch,
                   authorSearch
                 )
             )
-        case None if language == "*" => boolQuery()
+        case None if searchLanguage == "*" => boolQuery()
         case _ =>
-          val titleSearch = existsQuery(s"titles.$language")
-          val descSearch = existsQuery(s"descriptions.$language")
+          val titleSearch = existsQuery(s"titles.$searchLanguage")
+          val descSearch = existsQuery(s"descriptions.$searchLanguage")
           boolQuery()
             .should(
-              nestedQuery("titles", titleSearch).scoreMode(ScoreMode.Avg),
-              nestedQuery("descriptions", descSearch).scoreMode(ScoreMode.Avg)
+              titleSearch,
+              descSearch
             )
       }
 
@@ -149,19 +156,18 @@ trait SearchService extends LazyLogging {
       case statuses => Some(termsQuery("status", statuses))
     }
 
-    private def executeSearch(queryBuilder: BoolQuery, settings: SearchSettings) = {
-      val tagFilter: Option[NestedQuery] = settings.taggedWith.map(
-        tag => nestedQuery("tags", termQuery(s"tags.${settings.searchLanguage}.raw", tag)).scoreMode(ScoreMode.None)
+    private def executeSearch(queryBuilder: BoolQuery, settings: SearchSettings): Try[SearchResult] = {
+      val (languageFilter, searchLanguage) = settings.language match {
+        case Some(lang) if (settings.fallback) => (None, lang)
+        case Some(lang)                        => (Some(existsQuery(s"titles.$lang")), lang)
+        case _                                 => (None, "*")
+      }
+
+      val tagFilter: Option[Query] = settings.taggedWith.map(
+        tag => termQuery(s"tags.${searchLanguage}.raw", tag)
       )
       val idFilter = if (settings.withIdIn.isEmpty) None else Some(idsQuery(settings.withIdIn))
       val pathFilter = pathsFilterQuery(settings.withPaths)
-      val (languageFilter, searchLanguage) = settings.searchLanguage match {
-        case "" | Language.AllLanguages =>
-          (None, "*")
-        case lang =>
-          if (settings.fallback) (None, "*")
-          else (Some(nestedQuery("titles").query(existsQuery(s"titles.$lang"))), lang)
-      }
 
       val verificationStatusFilter = settings.verificationStatus.map(status => termQuery("verificationStatus", status))
 
@@ -205,8 +211,8 @@ trait SearchService extends LazyLogging {
                 response.result.totalHits,
                 Some(settings.page.getOrElse(1)),
                 numResults,
-                if (searchLanguage == "*") Language.AllLanguages else settings.searchLanguage,
-                getHitsV2(response.result, settings.searchLanguage),
+                searchLanguage,
+                getHitsV2(response.result, searchLanguage),
                 response.result.scrollId
               ))
           case Failure(ex) =>
@@ -251,23 +257,23 @@ trait SearchService extends LazyLogging {
       sort match {
         case Sort.ByTitleAsc =>
           language match {
-            case "*" | Language.AllLanguages =>
+            case Language.AllLanguages =>
               fieldSort("defaultTitle").order(SortOrder.Asc).missing("_last")
             case _ =>
               fieldSort(s"titles.$sortLanguage.raw")
-                .nestedPath("titles")
                 .order(SortOrder.Asc)
                 .missing("_last")
+                .unmappedType("long")
           }
         case Sort.ByTitleDesc =>
           language match {
-            case "*" | Language.AllLanguages =>
+            case Language.AllLanguages =>
               fieldSort("defaultTitle").order(SortOrder.Desc).missing("_last")
             case _ =>
               fieldSort(s"titles.$sortLanguage.raw")
-                .nestedPath("titles")
                 .order(SortOrder.Desc)
                 .missing("_last")
+                .unmappedType("long")
           }
         case Sort.ByDurationAsc =>
           fieldSort("duration").order(SortOrder.Asc).missing("_last")

@@ -1,5 +1,5 @@
 /*
- * Part of NDLA learningpath_api.
+ * Part of NDLA learningpath-api.
  * Copyright (C) 2016 NDLA
  *
  * See LICENSE
@@ -24,7 +24,7 @@ object LearningpathApiProperties extends LazyLogging {
   val Auth0LoginEndpoint = s"https://${AuthUser.getAuth0HostForEnv(Environment)}/authorize"
 
   val ApplicationPort: Int = propOrElse("APPLICATION_PORT", "80").toInt
-  val DefaultLanguage: String = propOrElse("DEFAULT_LANGUAGE", Language.NORWEGIAN_BOKMAL)
+  val DefaultLanguage: String = propOrElse("DEFAULT_LANGUAGE", "nb")
   val ContactName: String = propOrElse("CONTACT_NAME", "NDLA")
   val ContactUrl: String = propOrElse("CONTACT_URL", "ndla.no")
   val ContactEmail: String = propOrElse("CONTACT_EMAIL", "support+api@ndla.no")

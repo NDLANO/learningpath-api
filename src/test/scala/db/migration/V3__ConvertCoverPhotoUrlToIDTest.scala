@@ -1,3 +1,10 @@
+/*
+ * Part of NDLA learningpath-api
+ * Copyright (C) 2017 NDLA
+ *
+ * See LICENSE
+ */
+
 package db.migration
 
 import no.ndla.learningpathapi.UnitSuite
