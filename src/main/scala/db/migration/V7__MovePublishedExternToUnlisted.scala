@@ -40,7 +40,6 @@ class V7__MovePublishedExternToUnlisted extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def updateStatus(document: String): String = {
@@ -66,7 +65,6 @@ class V7__MovePublishedExternToUnlisted extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${id}"
       .update()
-      .apply()
   }
 
 }

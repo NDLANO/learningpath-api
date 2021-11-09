@@ -1,7 +1,7 @@
 import java.util.Properties
 
 val Scalaversion = "2.13.3"
-val Scalatraversion = "2.7.1"
+val Scalatraversion = "2.8.2"
 val ScalaLoggingVersion = "3.9.2"
 val ScalaTestVersion = "3.2.1"
 val Log4JVersion = "2.13.3"
@@ -12,7 +12,7 @@ val Elastic4sVersion = "6.7.8"
 val JacksonVersion = "2.12.1"
 val CatsEffectVersion = "2.1.2"
 val ElasticsearchVersion = "6.8.13"
-val Json4SVersion = "3.6.10"
+val Json4SVersion = "4.0.3"
 val FlywayVersion = "7.1.1"
 val PostgresVersion = "42.2.14"
 val HikariConnectionPoolVersion = "3.4.5"
@@ -66,7 +66,7 @@ lazy val learningpath_api = (project in file("."))
     libraryDependencies ++= pactTestFramework ++ Seq(
       "ndla" %% "language" % "1.0.0",
       "ndla" %% "mapping" % "0.15",
-      "ndla" %% "network" % "0.44",
+      "ndla" %% "network" % "0.47",
       "ndla" %% "scalatestsuite" % "0.3" % "test",
       "joda-time" % "joda-time" % "2.10",
       "org.scalatra" %% "scalatra" % Scalatraversion,
@@ -80,7 +80,7 @@ lazy val learningpath_api = (project in file("."))
       "org.json4s" %% "json4s-ast" % Json4SVersion,
       "org.json4s" %% "json4s-core" % Json4SVersion,
       "org.json4s" %% "json4s-ext" % Json4SVersion,
-      "org.scalikejdbc" %% "scalikejdbc" % "3.5.0",
+      "org.scalikejdbc" %% "scalikejdbc" % "4.0.0-RC2",
       "org.postgresql" % "postgresql" % PostgresVersion,
       "com.zaxxer" % "HikariCP" % HikariConnectionPoolVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % ScalaLoggingVersion,
@@ -111,8 +111,9 @@ lazy val learningpath_api = (project in file("."))
 assemblyJarName in assembly := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
 assemblyMergeStrategy in assembly := {
-  case "module-info.class" => MergeStrategy.discard
-  case "mime.types"        => MergeStrategy.filterDistinctLines
+  case "module-info.class"                   => MergeStrategy.discard
+  case x if x.endsWith("/module-info.class") => MergeStrategy.discard
+  case "mime.types"                          => MergeStrategy.filterDistinctLines
   case PathList("org", "joda", "convert", "ToString.class") =>
     MergeStrategy.first
   case PathList("org", "joda", "convert", "FromString.class") =>
@@ -120,7 +121,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("org", "joda", "time", "base", "BaseDateTime.class") =>
     MergeStrategy.first
   case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
     oldStrategy(x)
 }
 

@@ -38,7 +38,6 @@ class V6__UpdateDuration extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def updateDuration(document: String): String = {
@@ -59,7 +58,6 @@ class V6__UpdateDuration extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${id}"
       .update()
-      .apply()
   }
 
 }

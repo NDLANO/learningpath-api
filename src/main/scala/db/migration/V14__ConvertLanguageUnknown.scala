@@ -38,7 +38,6 @@ class V14__ConvertLanguageUnknown extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def allLearningSteps(implicit session: DBSession): Seq[(Long, String)] = {
@@ -47,7 +46,6 @@ class V14__ConvertLanguageUnknown extends BaseJavaMigration {
         (rs.long("id"), rs.string("document"))
       })
       .list()
-      .apply()
   }
 
   def convertLearningStepDocument(document: String): String = {
@@ -113,7 +111,6 @@ class V14__ConvertLanguageUnknown extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = $id"
       .update()
-      .apply()
   }
 
   def updateLearningStep(id: Long, document: String)(implicit session: DBSession): Int = {
@@ -123,7 +120,6 @@ class V14__ConvertLanguageUnknown extends BaseJavaMigration {
 
     sql"update learningsteps set document = $dataObject where id = $id"
       .update()
-      .apply()
   }
 
   case class V14_Title(title: String, language: String)

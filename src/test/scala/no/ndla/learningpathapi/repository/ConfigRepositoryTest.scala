@@ -51,8 +51,8 @@ class ConfigRepositoryTest
 
   def emptyTestDatabase: Boolean = {
     DB autoCommit (implicit session => {
-      sql"delete from configtable;".execute().apply()(session)
-      sql"delete from configtable;".execute().apply()(session)
+      sql"delete from configtable;".execute()(session)
+      sql"delete from configtable;".execute()(session)
     })
   }
 

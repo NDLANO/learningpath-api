@@ -31,7 +31,6 @@ class V4__ConvertStatusNotListedToPrivate extends BaseJavaMigration {
     sql"select id, document from learningpaths where document ->> 'status' = 'NOT_LISTED'"
       .map(rs => V4_DBLearningPath(rs.long("id"), rs.string("document")))
       .list()
-      .apply()
   }
 
   def convertLearningPathStatus(learningPath: V4_DBLearningPath): V4_DBLearningPath = {
@@ -50,7 +49,6 @@ class V4__ConvertStatusNotListedToPrivate extends BaseJavaMigration {
 
     sql"update learningpaths set document = $dataObject where id = ${learningPath.id}"
       .update()
-      .apply()
   }
 }
 
