@@ -128,9 +128,9 @@ lazy val learningpath_api = (project in file("."))
     typescriptOutputFile := baseDirectory.value / "typescript" / "index.ts"
   )
 
-assemblyJarName in assembly := "learningpath-api.jar"
+assembly / assemblyJarName := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
-assemblyMergeStrategy in assembly := {
+assembly / assemblyMergeStrategy := {
   case "module-info.class"                   => MergeStrategy.discard
   case x if x.endsWith("/module-info.class") => MergeStrategy.discard
   case "mime.types"                          => MergeStrategy.filterDistinctLines
@@ -167,7 +167,7 @@ fmt := {
 docker := (docker dependsOn assembly).value
 
 docker / dockerfile := {
-  val artifact = (assemblyOutputPath in assembly).value
+  val artifact = (assembly / assemblyOutputPath).value
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("adoptopenjdk/openjdk11:alpine-slim")
