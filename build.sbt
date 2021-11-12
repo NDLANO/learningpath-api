@@ -106,6 +106,27 @@ lazy val learningpath_api = (project in file("."))
   .enablePlugins(DockerPlugin)
   .enablePlugins(JettyPlugin)
   .enablePlugins(ScalaPactPlugin)
+  .enablePlugins(ScalaTsiPlugin)
+  .settings(
+    typescriptGenerationImports := Seq("no.ndla.learningpathapi.model.api._"),
+    typescriptExports := Seq(
+      "Author",
+      "Error",
+      "LearningPathStatus",
+      "LearningPathSummaryV2",
+      "LearningPathTagsSummary",
+      "LearningPathV2",
+      "LearningStepContainerSummary",
+      "LearningStepSeqNo",
+      "LearningStepStatus",
+      "LearningStepSummaryV2",
+      "LearningStepV2",
+      "License",
+      "SearchResultV2",
+      "config.ConfigMeta"
+    ),
+    typescriptOutputFile := baseDirectory.value / "typescript" / "index.ts"
+  )
 
 assemblyJarName in assembly := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
