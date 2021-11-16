@@ -333,7 +333,7 @@ trait LearningpathControllerV2 {
     get(
       "/:learningpath_id/learningsteps/",
       operation(
-        apiOperation[List[LearningStepSummaryV2]]("getLearningsteps")
+        apiOperation[List[LearningStepContainerSummary]]("getLearningsteps")
           .summary("Fetch learningsteps for given learningpath")
           .description("Show all learningsteps for given learningpath id")
           .parameters(
@@ -389,7 +389,7 @@ trait LearningpathControllerV2 {
     get(
       "/:learningpath_id/learningsteps/trash/",
       operation(
-        apiOperation[List[LearningStepSummaryV2]]("getLearningStepsInTrash")
+        apiOperation[List[LearningStepContainerSummary]]("getLearningStepsInTrash")
           .summary("Fetch deleted learningsteps for given learningpath")
           .description("Show all learningsteps for the given learningpath that are marked as deleted")
           .parameters(
@@ -725,7 +725,7 @@ trait LearningpathControllerV2 {
     delete(
       "/:learningpath_id",
       operation(
-        apiOperation[LearningPathV2]("deleteLearningPath")
+        apiOperation[Unit]("deleteLearningPath")
           .summary("Delete given learningpath")
           .description("Deletes the given learningPath")
           .parameters(
@@ -754,7 +754,7 @@ trait LearningpathControllerV2 {
     delete(
       "/:learningpath_id/learningsteps/:learningstep_id",
       operation(
-        apiOperation[Void]("deleteLearningStep")
+        apiOperation[Unit]("deleteLearningStep")
           .summary("Delete given learningstep")
           .description("Deletes the given learningStep")
           .parameters(
@@ -781,7 +781,7 @@ trait LearningpathControllerV2 {
     get(
       "/tags/",
       operation(
-        apiOperation[List[LearningPathTags]]("getTags")
+        apiOperation[LearningPathTagsSummary]("getTags")
           .summary("Fetch all previously used tags in learningpaths")
           .description("Retrieves a list of all previously used tags in learningpaths")
           .parameters(
@@ -851,7 +851,7 @@ trait LearningpathControllerV2 {
     get(
       "/contains-article/:article_id",
       operation(
-        apiOperation[LearningPathV2]("fetchLearningPathContainingArticle")
+        apiOperation[List[LearningPathSummaryV2]]("fetchLearningPathContainingArticle")
           .summary("Fetch learningpaths containing specified article")
           .description("Fetch learningpaths containing specified article")
           .parameters(

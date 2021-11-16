@@ -107,10 +107,31 @@ lazy val learningpath_api = (project in file("."))
   .enablePlugins(DockerPlugin)
   .enablePlugins(JettyPlugin)
   .enablePlugins(ScalaPactPlugin)
+  .enablePlugins(ScalaTsiPlugin)
+  .settings(
+    typescriptGenerationImports := Seq("no.ndla.learningpathapi.model.api._"),
+    typescriptExports := Seq(
+      "Author",
+      "Error",
+      "LearningPathStatus",
+      "LearningPathSummaryV2",
+      "LearningPathTagsSummary",
+      "LearningPathV2",
+      "LearningStepContainerSummary",
+      "LearningStepSeqNo",
+      "LearningStepStatus",
+      "LearningStepSummaryV2",
+      "LearningStepV2",
+      "License",
+      "SearchResultV2",
+      "config.ConfigMeta"
+    ),
+    typescriptOutputFile := baseDirectory.value / "typescript" / "index.ts"
+  )
 
-assemblyJarName in assembly := "learningpath-api.jar"
+assembly / assemblyJarName := "learningpath-api.jar"
 assembly / mainClass := Some("no.ndla.learningpathapi.JettyLauncher")
-assemblyMergeStrategy in assembly := {
+assembly / assemblyMergeStrategy := {
   case "module-info.class"                   => MergeStrategy.discard
   case x if x.endsWith("/module-info.class") => MergeStrategy.discard
   case "mime.types"                          => MergeStrategy.filterDistinctLines
@@ -147,7 +168,7 @@ fmt := {
 docker := (docker dependsOn assembly).value
 
 docker / dockerfile := {
-  val artifact = (assemblyOutputPath in assembly).value
+  val artifact = (assembly / assemblyOutputPath).value
   val artifactTargetPath = s"/app/${artifact.name}"
   new Dockerfile {
     from("adoptopenjdk/openjdk11:alpine-slim")

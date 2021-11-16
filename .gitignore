@@ -12,3 +12,6 @@
 project/metals.sbt
 .bsp/
 
+node_modules/
+typescript/build/
+*.log
