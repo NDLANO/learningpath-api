@@ -81,6 +81,7 @@ trait ConfigController {
             bodyParam[UpdateConfigValue]
           )
           .responseMessages(response400, response404, response403, response500)
+          .authorizations("oauth2")
       )
     ) {
       val userInfo = UserInfo(requireUserId)
